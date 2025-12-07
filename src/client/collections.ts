@@ -8,7 +8,7 @@ import { UserSchema, type User } from '../db/schemas'
 
 const queryClient = new QueryClient();
 
-const API_BASE = `http://localhost:3000/api`;
+const API_BASE = `http://localhost:${import.meta.env.VITE_PORT}/api`;
 console.log('=========API_BASE',API_BASE)
 export const userCollection = createCollection(
   queryCollectionOptions({

@@ -9,8 +9,9 @@ import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import { getDatabase, initializeSchema } from "../db";
 import usersRoutes from "./routes/users";
+import { createMiddleware } from "hono/factory";
 
-const THROTTLE_DELAY = 10000;
+const THROTTLE_DELAY = 0;
 
 // Initialize database
 const db = getDatabase();
@@ -20,12 +21,10 @@ initializeSchema(db);
 const app = new Hono();
 
 // Throttle middleware for testing purposes
-const throttleMiddleware = (delayMs = 500) => {
-  return async (c, next) => {
-    await new Promise(resolve => setTimeout(resolve, delayMs));
-    await next();
-  };
-};
+const throttleMiddleware = (delayMs = 500) => createMiddleware(async (c, next) => {
+        await new Promise(resolve => setTimeout(resolve, delayMs));
+        await next();
+    })
 
 // Middleware
 app.use("*", logger());
@@ -33,7 +32,7 @@ app.use("*", cors());
 
 // Apply throttle to API routes if THROTTLE_DELAY env var is set
 if (THROTTLE_DELAY > 0) {
-  app.use("/api/*", throttleMiddleware(THROTTLE_DELAY));
+    app.use("/api/*", throttleMiddleware(THROTTLE_DELAY));
 }
 
 // Health check
@@ -47,16 +46,16 @@ app.notFound((c) => c.json({ error: "Not found" }, 404));
 
 // Error handler
 app.onError((err, c) => {
-  console.error("Server error:", err);
-  return c.json({ error: "Internal server error" }, 500);
+    console.error("Server error:", err);
+    return c.json({ error: "Internal server error" }, 500);
 });
 
 // Start server
 const port = Number(process.env.PORT) || 3000;
 
 export default {
-  port,
-  fetch: app.fetch,
+    port,
+    fetch: app.fetch,
 };
 
 console.log(`🚀 Server running on http://localhost:${port}`);

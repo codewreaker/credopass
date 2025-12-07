@@ -17,16 +17,7 @@ try {
             phone: "+1234567890",
             createdAt: Date.now(),
             updatedAt: Date.now(),
-        },
-        {
-            id: crypto.randomUUID(),
-            email: "jane.smith@example.com",
-            firstName: "Jane",
-            lastName: "Smith",
-            phone: null,
-            createdAt: Date.now(),
-            updatedAt: Date.now(),
-        },
+        }
     ];
 
     const existingUsers = db.query("SELECT COUNT(*) as count FROM users").get() as { count: number };

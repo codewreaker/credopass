@@ -73,17 +73,3 @@ export function initializeSchema(db: Database) {
     throw error;
   }
 }
-
-
-
-// function checkDatabaseSeeded(db: Database): boolean {
-//   try {
-//     const result = db
-//       .query(`SELECT name FROM sqlite_master WHERE type='table' AND name='users'`)
-//       .get();
-//     return result !== null;
-//   } catch (error) {
-//     console.error(String(error))
-//     return false;
-//   }
-// }

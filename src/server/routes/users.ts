@@ -20,10 +20,11 @@ const CreateUserSchema = UserSchema.omit({ createdAt: true, updatedAt: true });
 const UpdateUserSchema = CreateUserSchema.partial().omit({ id: true });
 
 // GET /api/users - Get all users
-users.get("/", (c) => {
+users.get("/",(c) => {
     try {
         const allUsers = userOps.findAll();
-        return c.json(allUsers);
+        const d = c.json(allUsers)
+        return d;
     } catch (error) {
         console.error("Error fetching users:", error);
         return c.json({ error: "Failed to fetch users" }, 500);
@@ -50,7 +51,6 @@ users.get("/:id", (c) => {
 // POST /api/users - Create new user
 users.post("/", async (c) => {
     try {
-        throw new Error("Testio")
         const body = await c.req.json();
         const validated = CreateUserSchema.parse(body);
 
