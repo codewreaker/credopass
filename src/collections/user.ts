@@ -3,7 +3,7 @@ import { QueryClient } from '@tanstack/query-core'
 import {
     queryCollectionOptions
 } from '@tanstack/query-db-collection'
-import { UserSchema, type User } from '../db/schemas'
+import { UserSchema, type User } from '../schemas'
 
 
 const queryClient = new QueryClient();

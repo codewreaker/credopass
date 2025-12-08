@@ -1,5 +1,5 @@
 import { useLiveQuery } from '@tanstack/react-db'
-import { userCollection } from './client/collections';
+import { userCollection } from './collections/user';
 import './App.css'
 
 

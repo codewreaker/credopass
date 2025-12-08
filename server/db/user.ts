@@ -1,6 +1,6 @@
 import type {
     User
-} from './schemas'
+} from '../../src/schemas'
 
 import type { Database } from "bun:sqlite";
 

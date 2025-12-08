@@ -7,7 +7,7 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
-import { getDatabase, initializeSchema } from "../db";
+import { getDatabase, initializeSchema } from "./db";
 import usersRoutes from "./routes/users";
 import { createMiddleware } from "hono/factory";
 

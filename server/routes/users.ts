@@ -5,9 +5,8 @@
 
 import { Hono } from "hono";
 import { z } from "zod";
-import { getDatabase } from "../../db";
-import { UserOperations } from "../../db";
-import { UserSchema } from '../../db/schemas'
+import { getDatabase, UserOperations } from "../db";
+import { UserSchema } from '../../src/schemas'
 
 const users = new Hono();
 
