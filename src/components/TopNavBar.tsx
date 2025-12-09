@@ -13,8 +13,8 @@ export const TopNavBar: React.FC<TopNavBarProps> = ({ onNewEventClick }) => {
     <nav className="top-navbar">
       <div className="navbar-left">
         <div className="logo">
-          <div className="logo-icon">L</div>
-          <span className="logo-text">LoyaltyTrack</span>
+          <div className="logo-icon">DP</div>
+          <span className="logo-text">DwellPass</span>
         </div>
         <div className="nav-links">
           <a href="#dashboard" className="nav-link active">Dashboard</a>

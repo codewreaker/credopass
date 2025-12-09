@@ -1,8 +1,6 @@
-import React, { useMemo } from 'react';
-import { AgGridReact } from 'ag-grid-react';
-import 'ag-grid-community/styles/ag-grid.css';
-import 'ag-grid-community/styles/ag-theme-alpine.css';
+import React, { useMemo } from 'react'
 import { MoreVertical, Download, Filter } from 'lucide-react';
+import GridTable from '../ui/grid-table';
 import './AttendanceTable.css';
 import type { UserType } from '../entities/schemas';
 
@@ -41,7 +39,7 @@ const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
 
 const MembershipBadge: React.FC<{ level: string }> = ({ level }) => {
   return (
-    <span className={`membership-badge ${level.toLowerCase()}`}>
+    <span className={`membership-badge ${level?.toLowerCase()}`}>
       {level}
     </span>
   );
@@ -166,8 +164,8 @@ export const AttendanceTable: React.FC<{rowData:UserType[]}> = ({rowData}) => {
         </div>
       </div>
       
-      <div className="ag-theme-alpine-dark table-wrapper" style={{height:800}}>
-        <AgGridReact
+      <div className="ag-theme-alpine-dark table-wrapper">
+        <GridTable
           rowData={rowData}
           columnDefs={columnDefs}
           defaultColDef={defaultColDef}

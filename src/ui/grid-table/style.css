@@ -1,0 +1,24 @@
+.table-wrapper {
+  width: 100%;
+  height: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+}
+
+/* AG Grid Dark Theme Customization */
+.ag-theme-alpine-dark {
+  --ag-background-color: var(--card-bg);
+  --ag-header-background-color: var(--darker-bg);
+  --ag-odd-row-background-color: var(--card-bg);
+  --ag-row-hover-color: rgba(212, 255, 0, 0.05);
+  --ag-selected-row-background-color: rgba(212, 255, 0, 0.1);
+  --ag-border-color: var(--border-color);
+  --ag-header-foreground-color: var(--text-primary);
+  --ag-foreground-color: var(--text-primary);
+  --ag-data-color: var(--text-primary);
+  --ag-secondary-foreground-color: var(--text-secondary);
+  --ag-checkbox-unchecked-color: var(--border-color);
+  --ag-checkbox-checked-color: var(--primary-yellow);
+  --ag-checkbox-indeterminate-color: var(--primary-yellow);
+}
