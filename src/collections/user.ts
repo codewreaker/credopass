@@ -3,17 +3,17 @@ import { QueryClient } from '@tanstack/query-core'
 import {
     queryCollectionOptions
 } from '@tanstack/query-db-collection'
-import { UserSchema, type User } from '../schemas'
+import { UserSchema, type UserType } from '../entities/schemas'
 
 
 const queryClient = new QueryClient();
 
-const API_BASE = `http://localhost:${import.meta.env.VITE_PORT}/api`;
-console.log('=========API_BASE',API_BASE)
+const API_BASE = `/api`;
+
 export const userCollection = createCollection(
   queryCollectionOptions({
     queryKey: ["users"],
-    queryFn: async (): Promise<User[]> => {
+    queryFn: async (): Promise<UserType[]> => {
       const response = await fetch(`${API_BASE}/users`);
       if (!response.ok) throw new Error("Failed to fetch users");
       return response.json();
@@ -24,6 +24,7 @@ export const userCollection = createCollection(
     // Handle INSERT
     onInsert: async ({ transaction }) => {
       const { modified: newUser } = transaction.mutations[0];
+      console.log('newUser', newUser);
       const response = await fetch(`${API_BASE}/users`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

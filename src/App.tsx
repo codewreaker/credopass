@@ -1,30 +1,37 @@
 import { useLiveQuery } from '@tanstack/react-db'
 import { userCollection } from './collections/user';
 import './App.css'
+import { User } from './entities/user';
 
 
 function App() {
 
   const { data } = useLiveQuery(q => q.from({ userCollection }))
 
-  const addUser = () => userCollection.insert({
-    createdAt: Date.now(),
-    email: `user${crypto.randomUUID()}@email.com`,
-    firstName: 'Israel',
-    lastName: 'Agyeman-Prmepeh',
-    id: crypto.randomUUID(),
-    updatedAt: Date.now(),
-    phone: ''
+  // const addUser = () => userCollection.insert({
+  //   createdAt: Date.now(),
+  //   email: `user${crypto.randomUUID()}@email.com`,
+  //   firstName: 'Day',
+  //   lastName: 'Agyeman-Prmepeh',
+  //   id: crypto.randomUUID(),
+  //   updatedAt: Date.now(),
+  //   phone: '+563456765'
 
-  })
+  // })
 
-  console.dir(data)
+  const createUser = () => {
+    const user = new User('Israel', 'Agyeman-Prmepeh', `user${crypto.randomUUID()}@email.com`, '+563456765');
+    user.validate();
+    console.log('user', user.loyaltyTier);
+    userCollection.insert(user)
+  }
+
   const rows = Array.isArray(data) ? data : [];
 
   return (
     <>
       <h1>LocalFirst</h1>
-      <button onClick={addUser}>Add User</button>
+      <button onClick={createUser}>Add User</button>
 
       <table className='datatable compact'>
         <thead>

@@ -1,15 +1,16 @@
-
 // ============================================================================
-// FILE: src/server/index.ts
+// FILE: server/index.ts
 // Main Hono server entry point
 // ============================================================================
 
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
+import { serveStatic } from "hono/bun";
 import { getDatabase, initializeSchema } from "./db";
 import usersRoutes from "./routes/users";
 import { createMiddleware } from "hono/factory";
+import { isDevelopment } from 'std-env'
 
 const THROTTLE_DELAY = 0;
 
@@ -22,9 +23,9 @@ const app = new Hono();
 
 // Throttle middleware for testing purposes
 const throttleMiddleware = (delayMs = 500) => createMiddleware(async (c, next) => {
-        await new Promise(resolve => setTimeout(resolve, delayMs));
-        await next();
-    })
+    await new Promise(resolve => setTimeout(resolve, delayMs));
+    await next();
+});
 
 // Middleware
 app.use("*", logger());
@@ -36,10 +37,16 @@ if (THROTTLE_DELAY > 0) {
 }
 
 // Health check
-app.get("/health", (c) => c.json({ status: "ok", timestamp: Date.now() }));
+app.get("/api/health", (c) => c.json({ status: "ok", timestamp: Date.now() }));
 
 // API routes
 app.route("/api/users", usersRoutes);
+
+// Serve static files in production
+if (!isDevelopment) {
+    app.use("/*", serveStatic({ root: "./dist" }));
+    app.get("*", serveStatic({ path: "./dist/index.html" }));
+}
 
 // 404 handler
 app.notFound((c) => c.json({ error: "Not found" }, 404));
@@ -59,3 +66,4 @@ export default {
 };
 
 console.log(`🚀 Server running on http://localhost:${port}`);
+console.log(`📦 Mode: ${isDevelopment ? "development" : "production"}`);
