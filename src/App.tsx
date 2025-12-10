@@ -17,6 +17,8 @@ import type { UserType } from './entities/schemas';
 function App() {
   const [activeMode, setActiveMode] = useState('dashboard');
   const [showSignInModal, setShowSignInModal] = useState(false);
+  const [leftSidebarCollapsed, setLeftSidebarCollapsed] = useState(false);
+  const [rightSidebarCollapsed, setRightSidebarCollapsed] = useState(false);
 
     const { data } = useLiveQuery(q => q.from({ userCollection }))
 
@@ -34,7 +36,12 @@ function App() {
       <TopNavBar onNewEventClick={() => setShowSignInModal(true)} />
       
       <div className="app-layout">
-        <LeftSidebar activeMode={activeMode} onModeChange={setActiveMode} />
+        <LeftSidebar 
+          activeMode={activeMode} 
+          onModeChange={setActiveMode}
+          isCollapsed={leftSidebarCollapsed}
+          onToggleCollapse={() => setLeftSidebarCollapsed(!leftSidebarCollapsed)}
+        />
         
         <main className="main-content">
           {activeMode === 'dashboard' && (

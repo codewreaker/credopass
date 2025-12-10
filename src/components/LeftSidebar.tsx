@@ -1,24 +1,32 @@
 import React from 'react';
-import { LayoutDashboard, Users, Calendar, BarChart3, Settings, FileText, LogOut } from 'lucide-react';
+import { LayoutDashboard, Users, Calendar, LogOut, ChevronLeft, ChevronRight } from 'lucide-react';
 import './LeftSidebar.css';
 
 interface LeftSidebarProps {
   activeMode: string;
   onModeChange: (mode: string) => void;
+  isCollapsed: boolean;
+  onToggleCollapse: () => void;
 }
 
-export const LeftSidebar: React.FC<LeftSidebarProps> = ({ activeMode, onModeChange }) => {
+export const LeftSidebar: React.FC<LeftSidebarProps> = ({ 
+  activeMode, 
+  onModeChange,
+  isCollapsed,
+  onToggleCollapse
+}) => {
   const menuItems = [
     { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { id: 'members', icon: Users, label: 'Members' },
     { id: 'events', icon: Calendar, label: 'Events' },
-    { id: 'analytics', icon: BarChart3, label: 'Analytics' },
-    { id: 'reports', icon: FileText, label: 'Reports' },
-    { id: 'settings', icon: Settings, label: 'Settings' },
   ];
 
   return (
-    <aside className="left-sidebar">
+    <aside className={`left-sidebar ${isCollapsed ? 'collapsed' : ''}`}>
+      <button className="collapse-toggle" onClick={onToggleCollapse}>
+        {isCollapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
+      </button>
+      
       <div className="sidebar-menu">
         {menuItems.map((item) => {
           const Icon = item.icon;
@@ -30,7 +38,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({ activeMode, onModeChan
               title={item.label}
             >
               <Icon size={22} />
-              <span className="sidebar-label">{item.label}</span>
+              {!isCollapsed && <span className="sidebar-label">{item.label}</span>}
             </button>
           );
         })}
@@ -39,7 +47,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({ activeMode, onModeChan
       <div className="sidebar-footer">
         <button className="sidebar-item" title="Logout">
           <LogOut size={22} />
-          <span className="sidebar-label">Logout</span>
+          {!isCollapsed && <span className="sidebar-label">Logout</span>}
         </button>
       </div>
     </aside>
