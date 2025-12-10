@@ -2,36 +2,13 @@ import React, { useMemo } from 'react'
 import { MoreVertical, Download, Filter } from 'lucide-react';
 import GridTable from '../ui/grid-table';
 import './AttendanceTable.css';
-import type { UserType } from '../entities/schemas';
+import { LoyaltyTierEnum, type AttendanceType, type LoyaltyType, type UserType } from '../entities/schemas';
 import type { ColDef } from 'ag-grid-community';
 
-//@ts-ignore
-const mockData: {
-  id: string;
-  memberName: string;
-  email: string;
-  membershipLevel: string;
-  lastAttended: string;
-  totalEvents: number;
-  attendanceRate: number;
-  points: number;
-  status: string;
-}[] = [
-  { id: 'M001', memberName: 'John Smith', email: 'john.smith@email.com', membershipLevel: 'Platinum', lastAttended: '2024-12-08', totalEvents: 45, attendanceRate: 95, points: 4500, status: 'Active' },
-  { id: 'M002', memberName: 'Sarah Johnson', email: 'sarah.j@email.com', membershipLevel: 'Gold', lastAttended: '2024-12-07', totalEvents: 38, attendanceRate: 89, points: 3800, status: 'Active' },
-  { id: 'M003', memberName: 'Michael Chen', email: 'mchen@email.com', membershipLevel: 'Silver', lastAttended: '2024-12-05', totalEvents: 28, attendanceRate: 76, points: 2800, status: 'Active' },
-  { id: 'M004', memberName: 'Emily Davis', email: 'emily.d@email.com', membershipLevel: 'Gold', lastAttended: '2024-12-08', totalEvents: 42, attendanceRate: 92, points: 4200, status: 'Active' },
-  { id: 'M005', memberName: 'Robert Wilson', email: 'rwilson@email.com', membershipLevel: 'Platinum', lastAttended: '2024-12-06', totalEvents: 50, attendanceRate: 98, points: 5000, status: 'Active' },
-  { id: 'M006', memberName: 'Lisa Anderson', email: 'lisa.a@email.com', membershipLevel: 'Silver', lastAttended: '2024-11-30', totalEvents: 22, attendanceRate: 68, points: 2200, status: 'Inactive' },
-  { id: 'M007', memberName: 'David Martinez', email: 'dmartinez@email.com', membershipLevel: 'Gold', lastAttended: '2024-12-07', totalEvents: 35, attendanceRate: 85, points: 3500, status: 'Active' },
-  { id: 'M008', memberName: 'Jennifer Taylor', email: 'jtaylor@email.com', membershipLevel: 'Bronze', lastAttended: '2024-12-02', totalEvents: 18, attendanceRate: 62, points: 1800, status: 'Active' },
-  { id: 'M009', memberName: 'James Brown', email: 'jbrown@email.com', membershipLevel: 'Platinum', lastAttended: '2024-12-08', totalEvents: 48, attendanceRate: 96, points: 4800, status: 'Active' },
-  { id: 'M010', memberName: 'Patricia Garcia', email: 'pgarcia@email.com', membershipLevel: 'Gold', lastAttended: '2024-12-06', totalEvents: 40, attendanceRate: 90, points: 4000, status: 'Active' },
-];
 
 const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
   return (
-    <span className={`status-badge ${status.toLowerCase()}`}>
+    <span className={`status-badge ${status ? 'active' : 'inactive'}`}>
       {status}
     </span>
   );
@@ -51,12 +28,12 @@ const AttendanceBar: React.FC<{ rate: number }> = ({ rate }) => {
     if (rate >= 75) return '#00ff88';
     return '#ff9800';
   };
-  
+
   return (
     <div className="attendance-bar-container">
       <div className="attendance-bar">
-        <div 
-          className="attendance-fill" 
+        <div
+          className="attendance-fill"
           style={{ width: `${rate}%`, backgroundColor: getColor(rate) }}
         />
       </div>
@@ -65,79 +42,88 @@ const AttendanceBar: React.FC<{ rate: number }> = ({ rate }) => {
   );
 };
 
-export const AttendanceTable: React.FC<{rowData:UserType[]}> = ({rowData}) => {
-  
-  const columnDefs = useMemo<ColDef[]>(() => [
-    { 
-      field: 'id', 
-      headerName: 'Member ID',
-      width: 120,
-      checkboxSelection: true,
-      headerCheckboxSelection: true,
+const columnDefs: ColDef<UserType & LoyaltyType & AttendanceType>[] = [
+  {
+    field: 'id',
+    headerName: 'Member ID',
+    width: 120
+  },
+  {
+    field: 'firstName',
+    headerName: 'Member Name',
+    width: 180,
+    filter: true,
+  },
+  {
+    field: 'lastName',
+    headerName: 'Member Name',
+    width: 180,
+    filter: true,
+  },
+  {
+    field: 'email',
+    headerName: 'Email',
+    width: 220,
+    filter: true,
+  },
+  {
+    field: 'tier',
+    headerName: 'Tier',
+    width: 130,
+    cellRenderer: (params: any) => {
+      const enums = Object.keys(LoyaltyTierEnum.enum);
+      const idx = Math.floor(Math.random() * enums.length);
+      const rand = enums[idx]
+      return <MembershipBadge level={params.value || rand} />
     },
-    { 
-      field: 'memberName', 
-      headerName: 'Member Name',
-      width: 180,
-      filter: true,
-    },
-    { 
-      field: 'email', 
-      headerName: 'Email',
-      width: 220,
-      filter: true,
-    },
-    { 
-      field: 'membershipLevel', 
-      headerName: 'Level',
-      width: 130,
-      cellRenderer: (params: any) => <MembershipBadge level={params.value} />,
-      filter: true,
-    },
-    { 
-      field: 'lastAttended', 
-      headerName: 'Last Attended',
-      width: 140,
-      filter: 'agDateColumnFilter',
-    },
-    { 
-      field: 'totalEvents', 
-      headerName: 'Total Events',
-      width: 130,
-      filter: 'agNumberColumnFilter',
-    },
-    { 
-      field: 'attendanceRate', 
-      headerName: 'Attendance Rate',
-      width: 200,
-      cellRenderer: (params: any) => <AttendanceBar rate={params.value} />,
-      filter: 'agNumberColumnFilter',
-    },
-    { 
-      field: 'points', 
-      headerName: 'Points',
-      width: 120,
-      filter: 'agNumberColumnFilter',
-      valueFormatter: (params: any) => params.value.toLocaleString(),
-    },
-    { 
-      field: 'status', 
-      headerName: 'Status',
-      width: 120,
-      cellRenderer: (params: any) => <StatusBadge status={params.value} />,
-      filter: true,
-    },
-    {
-      headerName: 'Actions',
-      width: 100,
-      cellRenderer: () => (
-        <button className="action-btn">
-          <MoreVertical size={18} />
-        </button>
-      ),
-      pinned: 'right',
-    },
-  ], []);
+    filter: true,
+  },
+  {
+    field: 'updatedAt',
+    headerName: 'Last Attended',
+    width: 140,
+    filter: 'agDateColumnFilter',
+  },
+  {
+    headerName: 'Total Events',
+    width: 130,
+    filter: 'agNumberColumnFilter',
+    cellRenderer: () => (<>{Math.floor(Math.random() * 100)}</>)
+  },
+  {
+    field: 'checkInTime',
+    headerName: 'Attendance Rate',
+    width: 200,
+    cellRenderer: (params: any) => <AttendanceBar rate={params.value} />,
+    filter: 'agNumberColumnFilter',
+  },
+  {
+    field: 'points',
+    headerName: 'Points',
+    width: 120,
+    filter: 'agNumberColumnFilter',
+    valueFormatter: (params: any) => (params.value || String(Math.floor(Math.random() * 100))).toLocaleString(),
+  },
+  {
+    field: 'attended',
+    headerName: 'Status',
+    width: 120,
+    cellRenderer: (params: any) => <StatusBadge status={params.value} />,
+    filter: true,
+  },
+  {
+    headerName: 'Actions',
+    width: 100,
+    cellRenderer: () => (
+      <button className="action-btn">
+        <MoreVertical size={18} />
+      </button>
+    ),
+    pinned: 'right',
+  },
+];
+
+export const AttendanceTable: React.FC<{ rowData: UserType[] }> = ({ rowData }) => {
 
   const defaultColDef = useMemo(() => ({
     sortable: true,
@@ -162,15 +148,18 @@ export const AttendanceTable: React.FC<{rowData:UserType[]}> = ({rowData}) => {
           </button>
         </div>
       </div>
-      
+
       <div className="ag-theme-alpine-dark table-wrapper">
         <GridTable
           rowData={rowData}
           columnDefs={columnDefs}
           defaultColDef={defaultColDef}
-          rowSelection="multiple"
-          pagination={true}
-          paginationPageSize={10}
+          suppressCellFocus={true}
+          rowSelection={{
+            mode: 'singleRow',
+            checkboxes: false,
+            enableClickSelection: true
+          }}
           domLayout="autoHeight"
         />
       </div>
