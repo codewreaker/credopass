@@ -40,14 +40,14 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({ isCollapsed, onToggl
   return (
     <aside className={`right-sidebar ${isCollapsed ? 'collapsed' : ''}`}>
       <button className="collapse-toggle-right" onClick={onToggleCollapse}>
-        {isCollapsed ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
+        {isCollapsed ? <ChevronLeft size={15} /> : <ChevronRight size={15} />}
       </button>
       
       {!isCollapsed && (
         <>
           <div className="loyalty-card">
             <div className="card-header">
-              <Star className="star-icon" size={24} fill="var(--primary-yellow)" />
+              <Star className="star-icon" size={18} fill="var(--primary-yellow)" />
               <h3>Loyalty Status</h3>
             </div>
             <div className="card-content">
@@ -78,11 +78,11 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({ isCollapsed, onToggl
               <h3>Calendar</h3>
               <div className="calendar-controls">
                 <button onClick={previousMonth} className="calendar-nav-btn">
-                  <ChevronLeft size={18} />
+                  <ChevronLeft size={14} />
                 </button>
                 <span className="calendar-month">{monthName}</span>
                 <button onClick={nextMonth} className="calendar-nav-btn">
-                  <ChevronRight size={18} />
+                  <ChevronRight size={14} />
                 </button>
               </div>
             </div>
@@ -121,7 +121,7 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({ isCollapsed, onToggl
             <div className="event-list">
               <div className="event-item">
                 <div className="event-date">
-                  <CalendarIcon size={16} />
+                  <CalendarIcon size={12} />
                   <span>Dec 12</span>
                 </div>
                 <div className="event-info">
@@ -131,7 +131,7 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({ isCollapsed, onToggl
               </div>
               <div className="event-item">
                 <div className="event-date">
-                  <CalendarIcon size={16} />
+                  <CalendarIcon size={12} />
                   <span>Dec 18</span>
                 </div>
                 <div className="event-info">
@@ -141,7 +141,7 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({ isCollapsed, onToggl
               </div>
               <div className="event-item">
                 <div className="event-date">
-                  <CalendarIcon size={16} />
+                  <CalendarIcon size={12} />
                   <span>Dec 25</span>
                 </div>
                 <div className="event-info">

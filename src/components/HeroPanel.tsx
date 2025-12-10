@@ -38,7 +38,7 @@ export const HeroPanel: React.FC = () => {
             <div key={stat.id} className="stat-card">
               <div className="stat-header">
                 <div className="stat-icon">
-                  <Icon size={22} />
+                  <Icon size={16} />
                 </div>
                 <span className={`stat-change ${stat.trend}`}>{stat.change}</span>
               </div>
@@ -62,11 +62,11 @@ export const HeroPanel: React.FC = () => {
             </select>
           </div>
           <div className="chart-container">
-            <ResponsiveContainer width="100%" height={200}>
+            <ResponsiveContainer width="100%" height={150}>
               <BarChart data={activityData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-                <XAxis dataKey="month" stroke="#a0a0a0" fontSize={12} />
-                <YAxis stroke="#a0a0a0" fontSize={12} />
+                <XAxis dataKey="month" stroke="#a0a0a0" fontSize={9} />
+                <YAxis stroke="#a0a0a0" fontSize={9} />
                 <Tooltip 
                   contentStyle={{ 
                     backgroundColor: '#252525', 
@@ -86,14 +86,14 @@ export const HeroPanel: React.FC = () => {
             <span className="chart-subtitle">This Month</span>
           </div>
           <div className="chart-container">
-            <ResponsiveContainer width="100%" height={200}>
+            <ResponsiveContainer width="100%" height={150}>
               <PieChart>
                 <Pie
                   data={pieData}
                   cx="50%"
                   cy="50%"
-                  innerRadius={50}
-                  outerRadius={80}
+                  innerRadius={37.5}
+                  outerRadius={60}
                   paddingAngle={2}
                   dataKey="value"
                 >

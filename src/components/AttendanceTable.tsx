@@ -46,30 +46,30 @@ const columnDefs: ColDef<UserType & LoyaltyType & AttendanceType>[] = [
   {
     field: 'id',
     headerName: 'Member ID',
-    width: 120
+    width: 90
   },
   {
     field: 'firstName',
     headerName: 'Member Name',
-    width: 180,
+    width: 135,
     filter: true,
   },
   {
     field: 'lastName',
     headerName: 'Member Name',
-    width: 180,
+    width: 135,
     filter: true,
   },
   {
     field: 'email',
     headerName: 'Email',
-    width: 220,
+    width: 165,
     filter: true,
   },
   {
     field: 'tier',
     headerName: 'Tier',
-    width: 130,
+    width: 98,
     cellRenderer: (params: any) => {
       const enums = Object.keys(LoyaltyTierEnum.enum);
       const idx = Math.floor(Math.random() * enums.length);
@@ -81,42 +81,42 @@ const columnDefs: ColDef<UserType & LoyaltyType & AttendanceType>[] = [
   {
     field: 'updatedAt',
     headerName: 'Last Attended',
-    width: 140,
+    width: 105,
     filter: 'agDateColumnFilter',
   },
   {
     headerName: 'Total Events',
-    width: 130,
+    width: 98,
     filter: 'agNumberColumnFilter',
     cellRenderer: () => (<>{Math.floor(Math.random() * 100)}</>)
   },
   {
     field: 'checkInTime',
     headerName: 'Attendance Rate',
-    width: 200,
+    width: 150,
     cellRenderer: (params: any) => <AttendanceBar rate={params.value} />,
     filter: 'agNumberColumnFilter',
   },
   {
     field: 'points',
     headerName: 'Points',
-    width: 120,
+    width: 90,
     filter: 'agNumberColumnFilter',
     valueFormatter: (params: any) => (params.value || String(Math.floor(Math.random() * 100))).toLocaleString(),
   },
   {
     field: 'attended',
     headerName: 'Status',
-    width: 120,
+    width: 90,
     cellRenderer: (params: any) => <StatusBadge status={params.value} />,
     filter: true,
   },
   {
     headerName: 'Actions',
-    width: 100,
+    width: 75,
     cellRenderer: () => (
       <button className="action-btn">
-        <MoreVertical size={18} />
+        <MoreVertical size={14} />
       </button>
     ),
     pinned: 'right',
@@ -139,11 +139,11 @@ export const AttendanceTable: React.FC<{ rowData: UserType[] }> = ({ rowData }) 
         </div>
         <div className="table-actions">
           <button className="table-action-btn">
-            <Filter size={18} />
+            <Filter size={14} />
             <span>Filter</span>
           </button>
           <button className="table-action-btn">
-            <Download size={18} />
+            <Download size={14} />
             <span>Export</span>
           </button>
         </div>

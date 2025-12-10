@@ -26,7 +26,7 @@ export const TopNavBar: React.FC<TopNavBarProps> = ({ onNewEventClick }) => {
       
       <div className="navbar-right">
         <div className="search-container">
-          <Search className="search-icon" size={18} />
+          <Search className="search-icon" size={14} />
           <input 
             type="text" 
             placeholder="Search members, events..." 
@@ -35,12 +35,12 @@ export const TopNavBar: React.FC<TopNavBarProps> = ({ onNewEventClick }) => {
         </div>
         
         <button className="new-event-btn" onClick={onNewEventClick}>
-          <Calendar size={18} />
+          <Calendar size={14} />
           <span>New Event</span>
         </button>
         
         <button className="icon-btn">
-          <Bell size={20} />
+          <Bell size={15} />
           <span className="notification-badge">3</span>
         </button>
         
@@ -50,9 +50,9 @@ export const TopNavBar: React.FC<TopNavBarProps> = ({ onNewEventClick }) => {
             onClick={() => setShowDropdown(!showDropdown)}
           >
             <div className="avatar">
-              <User size={20} />
+              <User size={15} />
             </div>
-            <ChevronDown size={16} />
+            <ChevronDown size={12} />
           </button>
           
           {showDropdown && (

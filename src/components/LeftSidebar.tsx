@@ -24,7 +24,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
   return (
     <aside className={`left-sidebar ${isCollapsed ? 'collapsed' : ''}`}>
       <button className="collapse-toggle" onClick={onToggleCollapse}>
-        {isCollapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
+        {isCollapsed ? <ChevronRight size={15} /> : <ChevronLeft size={15} />}
       </button>
       
       <div className="sidebar-menu">
@@ -37,7 +37,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
               onClick={() => onModeChange(item.id)}
               title={item.label}
             >
-              <Icon size={22} />
+              <Icon size={16} />
               {!isCollapsed && <span className="sidebar-label">{item.label}</span>}
             </button>
           );
@@ -46,7 +46,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
       
       <div className="sidebar-footer">
         <button className="sidebar-item" title="Logout">
-          <LogOut size={22} />
+          <LogOut size={16} />
           {!isCollapsed && <span className="sidebar-label">Logout</span>}
         </button>
       </div>
