@@ -100,7 +100,7 @@ const stats = [
 ];
 
 
-export const HeroPanel: React.FC = () => {
+const Analytics: React.FC = () => {
   const statCards = useMemo(() => {
     return stats.map((stat) => {
       const Icon = stat.icon;
@@ -223,3 +223,5 @@ export const HeroPanel: React.FC = () => {
     </div>
   );
 };
+
+export default Analytics

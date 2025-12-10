@@ -1,34 +1,29 @@
-import React, { useMemo } from 'react'
-import { 
-  MoreVertical, PlusCircleIcon, Filter 
-} from 'lucide-react';
-import GridTable from '../../components/GridTable';
-import './style.css';
-import { LoyaltyTierEnum, type AttendanceType, type LoyaltyType, type UserType } from '../../entities/schemas';
-import type { ColDef, RowClickedEvent } from 'ag-grid-community';
+import React, { useMemo } from "react";
+import { PlusCircleIcon, Filter } from "lucide-react";
+import GridTable from "../../components/GridTable";
+import "./style.css";
+import type { UserType } from "../../entities/schemas";
+import type { ColDef, RowClickedEvent } from "ag-grid-community";
 
-
-const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
+export const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
   return (
-    <span className={`status-badge ${status ? 'active' : 'inactive'}`}>
+    <span className={`status-badge ${status ? "active" : "inactive"}`}>
       {status}
     </span>
   );
 };
 
-const MembershipBadge: React.FC<{ level: string }> = ({ level }) => {
+export const MembershipBadge: React.FC<{ level: string }> = ({ level }) => {
   return (
-    <span className={`membership-badge ${level?.toLowerCase()}`}>
-      {level}
-    </span>
+    <span className={`membership-badge ${level?.toLowerCase()}`}>{level}</span>
   );
 };
 
-const AttendanceBar: React.FC<{ rate: number }> = ({ rate }) => {
+export const AttendanceBar: React.FC<{ rate: number }> = ({ rate }) => {
   const getColor = (rate: number) => {
-    if (rate >= 90) return '#d4ff00';
-    if (rate >= 75) return '#00ff88';
-    return '#ff9800';
+    if (rate >= 90) return "#d4ff00";
+    if (rate >= 75) return "#00ff88";
+    return "#ff9800";
   };
 
   return (
@@ -44,96 +39,21 @@ const AttendanceBar: React.FC<{ rate: number }> = ({ rate }) => {
   );
 };
 
-const columnDefs: ColDef<UserType & LoyaltyType & AttendanceType>[] = [
-  {
-    field: 'id',
-    headerName: 'Member ID',
-    width: 90
-  },
-  {
-    field: 'firstName',
-    headerName: 'Member Name',
-    width: 135,
-    filter: true,
-  },
-  {
-    field: 'lastName',
-    headerName: 'Member Name',
-    width: 135,
-    filter: true,
-  },
-  {
-    field: 'email',
-    headerName: 'Email',
-    width: 165,
-    filter: true,
-  },
-  {
-    field: 'tier',
-    headerName: 'Tier',
-    width: 98,
-    cellRenderer: (params: any) => {
-      const enums = Object.keys(LoyaltyTierEnum.enum);
-      const idx = Math.floor(Math.random() * enums.length);
-      const rand = enums[idx]
-      return <MembershipBadge level={params.value || rand} />
-    },
-    filter: true,
-  },
-  {
-    field: 'updatedAt',
-    headerName: 'Last Attended',
-    width: 105,
-    filter: 'agDateColumnFilter',
-  },
-  {
-    headerName: 'Total Events',
-    width: 98,
-    filter: 'agNumberColumnFilter',
-    cellRenderer: () => (<>{Math.floor(Math.random() * 100)}</>)
-  },
-  {
-    field: 'checkInTime',
-    headerName: 'Attendance Rate',
-    width: 150,
-    cellRenderer: (params: any) => <AttendanceBar rate={params.value} />,
-    filter: 'agNumberColumnFilter',
-  },
-  {
-    field: 'points',
-    headerName: 'Points',
-    width: 90,
-    filter: 'agNumberColumnFilter',
-    valueFormatter: (params: any) => (params.value || String(Math.floor(Math.random() * 100))).toLocaleString(),
-  },
-  {
-    field: 'attended',
-    headerName: 'Status',
-    width: 90,
-    cellRenderer: (params: any) => <StatusBadge status={params.value} />,
-    filter: true,
-  },
-  {
-    headerName: 'Actions',
-    width: 75,
-    cellRenderer: () => (
-      <button className="action-btn">
-        <MoreVertical size={14} />
-      </button>
-    ),
-    pinned: 'right',
-  },
-];
-
-export const AttendanceTable: React.FC<{ 
-  rowData: UserType[], 
-  handleAction: (type:string, event?: React.SyntheticEvent | RowClickedEvent)=>void 
-}> = ({ rowData, handleAction }) => {
-
-  const defaultColDef = useMemo(() => ({
-    sortable: true,
-    resizable: true,
-  }), []);
+export const AttendanceTable: React.FC<{
+  columnDefs: ColDef[];
+  rowData: UserType[];
+  handleAction: (
+    type: string,
+    event?: React.SyntheticEvent | RowClickedEvent
+  ) => void;
+}> = ({ columnDefs, rowData, handleAction }) => {
+  const defaultColDef = useMemo(
+    () => ({
+      sortable: true,
+      resizable: true,
+    }),
+    []
+  );
 
   return (
     <div className="attendance-table-container">
@@ -147,7 +67,10 @@ export const AttendanceTable: React.FC<{
             <Filter size={14} />
             <span>Filter</span>
           </button>
-          <button className="table-action-btn" onClick={(e)=>handleAction('add', e)}>
+          <button
+            className="table-action-btn"
+            onClick={(e) => handleAction("add", e)}
+          >
             <PlusCircleIcon size={14} />
             <span>Create User</span>
           </button>
@@ -161,11 +84,11 @@ export const AttendanceTable: React.FC<{
           defaultColDef={defaultColDef}
           suppressCellFocus={true}
           rowSelection={{
-            mode: 'singleRow',
+            mode: "singleRow",
             checkboxes: false,
-            enableClickSelection: true
+            enableClickSelection: true,
           }}
-          onRowClicked={(e)=>handleAction(e.type, e)}
+          onRowClicked={(e) => handleAction(e.type, e)}
           domLayout="autoHeight"
         />
       </div>

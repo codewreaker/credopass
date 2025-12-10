@@ -1,26 +1,27 @@
 import React from 'react';
-import { LayoutDashboard, Users, Calendar, LogOut, ChevronLeft, ChevronRight } from 'lucide-react';
+import { 
+  LogOut, ChevronLeft, ChevronRight
+ } from 'lucide-react';
+import { Link, useLocation } from '@tanstack/react-router';
 import './style.css';
 
 interface LeftSidebarProps {
-  activeMode: string;
-  onModeChange: (mode: string) => void;
   isCollapsed: boolean;
   onToggleCollapse: () => void;
+  menuConfig: Array<{
+    path:string
+    icon: React.ElementType,
+    label: string
+  }>
 }
 
 export const LeftSidebar: React.FC<LeftSidebarProps> = ({ 
-  activeMode, 
-  onModeChange,
   isCollapsed,
-  onToggleCollapse
+  onToggleCollapse,
+  menuConfig
 }) => {
-  const menuItems = [
-    { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-    { id: 'members', icon: Users, label: 'Members' },
-    { id: 'events', icon: Calendar, label: 'Events' },
-  ];
-
+  const {pathname} = useLocation();
+  
   return (
     <aside className={`left-sidebar ${isCollapsed ? 'collapsed' : ''}`}>
       <button className="collapse-toggle" onClick={onToggleCollapse}>
@@ -28,18 +29,20 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
       </button>
       
       <div className="sidebar-menu">
-        {menuItems.map((item) => {
+        {menuConfig.map((item) => {
           const Icon = item.icon;
+          const isActive = item.path === pathname;
+          console.log(item.path, location)
           return (
-            <button
-              key={item.id}
-              className={`sidebar-item ${activeMode === item.id ? 'active' : ''}`}
-              onClick={() => onModeChange(item.id)}
+            <Link
+              key={item.path}
+              to={item.path}
+              className={`sidebar-item ${isActive ? 'active' : ''}`}
               title={item.label}
             >
               <Icon size={16} />
               {!isCollapsed && <span className="sidebar-label">{item.label}</span>}
-            </button>
+            </Link>
           );
         })}
       </div>
