@@ -1,9 +1,11 @@
 // ============================================================================
 // FILE: src/Pages/Database/index.tsx
-// Admin page to view all database tables
+// Admin page to view all database tables using reusable GridTable component
 // ============================================================================
 
 import { useState, useEffect } from 'react';
+import GridTable from '../../components/GridTable';
+import type { ColDef } from 'ag-grid-community';
 import './style.css';
 
 type TableName = 'users' | 'events' | 'attendance' | 'loyalty';
@@ -46,57 +48,35 @@ export default function DatabasePage() {
     fetchTableData(selectedTable);
   }, [selectedTable]);
 
-  const renderTableContent = () => {
-    const data = tableData[selectedTable];
+  // Generate column definitions dynamically from data
+  const generateColumnDefs = (data: any[]): ColDef[] => {
+    if (!data || data.length === 0) return [];
     
-    if (loading) {
-      return <div className="loading">Loading...</div>;
-    }
-    
-    if (error) {
-      return <div className="error">Error: {error}</div>;
-    }
-    
-    if (!data || data.length === 0) {
-      return <div className="empty">No data found</div>;
-    }
-
     const columns = Object.keys(data[0]);
-
-    return (
-      <div className="table-wrapper">
-        <table className="data-table">
-          <thead>
-            <tr>
-              {columns.map(col => (
-                <th key={col}>{col}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {data.map((row, idx) => (
-              <tr key={idx}>
-                {columns.map(col => (
-                  <td key={col}>
-                    {row[col] !== null && row[col] !== undefined
-                      ? typeof row[col] === 'object'
-                        ? JSON.stringify(row[col])
-                        : String(row[col])
-                      : '-'}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    );
+    return columns.map(col => ({
+      field: col,
+      headerName: col.charAt(0).toUpperCase() + col.slice(1),
+      flex: 1,
+      minWidth: 150,
+      valueFormatter: (params: any) => {
+        if (params.value === null || params.value === undefined) return '-';
+        if (typeof params.value === 'object') return JSON.stringify(params.value);
+        return String(params.value);
+      },
+    }));
   };
+
+  const currentData = tableData[selectedTable] || [];
+  const columnDefs = generateColumnDefs(currentData);
 
   return (
     <div className="database-page">
-      <h1>Database Admin</h1>
-      <p className="subtitle">View all database tables</p>
+      <div className="page-header">
+        <div>
+          <h1>Database Admin</h1>
+          <p className="page-subtitle">View all database tables</p>
+        </div>
+      </div>
 
       <div className="table-selector">
         {tables.map(table => (
@@ -113,18 +93,23 @@ export default function DatabasePage() {
         ))}
       </div>
 
-      <div className="table-info">
-        <h2>{selectedTable.charAt(0).toUpperCase() + selectedTable.slice(1)} Table</h2>
-        <button 
-          className="refresh-button"
-          onClick={() => fetchTableData(selectedTable)}
-          disabled={loading}
-        >
-          {loading ? 'Loading...' : 'Refresh'}
-        </button>
-      </div>
+      {error && (
+        <div className="error-message">
+          <p>Error: {error}</p>
+        </div>
+      )}
 
-      {renderTableContent()}
+      {!error && (
+        <GridTable
+          title={`${selectedTable.charAt(0).toUpperCase() + selectedTable.slice(1)} Table`}
+          subtitle={currentData.length > 0 ? `${currentData.length} records` : 'No records found'}
+          showActions={true}
+          onRefresh={() => fetchTableData(selectedTable)}
+          loading={loading}
+          columnDefs={columnDefs}
+          rowData={currentData}
+        />
+      )}
     </div>
   );
 }

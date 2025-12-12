@@ -1,5 +1,4 @@
-import React, { useMemo } from "react";
-import { PlusCircleIcon, Filter } from "lucide-react";
+import React from "react";
 import GridTable from "../../components/GridTable";
 import "./style.css";
 import type { UserType } from "../../entities/schemas";
@@ -48,54 +47,20 @@ export const AttendanceTable: React.FC<{
     event?: React.SyntheticEvent | RowClickedEvent
   ) => void;
 }> = ({ columnDefs, rowData, handleAction }) => {
-    const addEvent = useAppStore((state)=>state.addEvent);
-    const addUser=()=>addEvent('add')
-    
-  const defaultColDef = useMemo(
-    () => ({
-      sortable: true,
-      resizable: true,
-    }),
-    []
-  );
+  const addEvent = useAppStore((state) => state.addEvent);
+  const addUser = () => addEvent('add');
 
   return (
-    <div className="attendance-table-container">
-      <div className="table-header">
-        <div className="table-title-section">
-          <h2>Member Attendance Records</h2>
-          <p className="table-subtitle">{rowData.length} total members</p>
-        </div>
-        <div className="table-actions">
-          <button className="table-action-btn">
-            <Filter size={14} />
-            <span>Filter</span>
-          </button>
-          <button
-            className="table-action-btn"
-            onClick={addUser}
-          >
-            <PlusCircleIcon size={14} />
-            <span>Create User</span>
-          </button>
-        </div>
-      </div>
-
-      <div className="ag-theme-alpine-dark table-wrapper">
-        <GridTable
-          rowData={rowData}
-          columnDefs={columnDefs}
-          defaultColDef={defaultColDef}
-          suppressCellFocus={true}
-          rowSelection={{
-            mode: "singleRow",
-            checkboxes: false,
-            enableClickSelection: true,
-          }}
-          onRowClicked={(e) => handleAction(e.type, e)}
-          domLayout="autoHeight"
-        />
-      </div>
-    </div>
+    <GridTable
+      title="Member Attendance Records"
+      subtitle={`${rowData.length} total members`}
+      showActions={true}
+      onAdd={addUser}
+      onFilter={() => console.log('Filter clicked')}
+      addButtonLabel="Create User"
+      columnDefs={columnDefs}
+      rowData={rowData}
+      onRowClicked={(e) => handleAction(e.type, e)}
+    />
   );
 };
