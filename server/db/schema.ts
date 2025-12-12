@@ -17,10 +17,10 @@ export const users = sqliteTable('users', {
   phone: text('phone'),
   createdAt: integer('createdAt', { mode: 'timestamp_ms' }).notNull(),
   updatedAt: integer('updatedAt', { mode: 'timestamp_ms' }).notNull(),
-}, (table) => ({
-  emailIdx: index('idx_users_email').on(table.email),
-  createdAtIdx: index('idx_users_createdAt').on(table.createdAt),
-}));
+}, (table) => [
+  index('idx_users_email').on(table.email),
+  index('idx_users_createdAt').on(table.createdAt),
+]);
 
 // ============================================================================
 // Events Table
@@ -39,11 +39,11 @@ export const events = sqliteTable('events', {
   hostId: text('hostId').notNull().references(() => users.id, { onDelete: 'cascade' }),
   createdAt: integer('createdAt', { mode: 'timestamp_ms' }).notNull(),
   updatedAt: integer('updatedAt', { mode: 'timestamp_ms' }).notNull(),
-}, (table) => ({
-  statusIdx: index('idx_events_status').on(table.status),
-  hostIdIdx: index('idx_events_hostId').on(table.hostId),
-  startTimeIdx: index('idx_events_startTime').on(table.startTime),
-}));
+}, (table) => [
+  index('idx_events_status').on(table.status),
+  index('idx_events_hostId').on(table.hostId),
+  index('idx_events_startTime').on(table.startTime),
+]);
 
 // ============================================================================
 // Attendance Table
@@ -55,12 +55,12 @@ export const attendance = sqliteTable('attendance', {
   attended: integer('attended', { mode: 'boolean' }).notNull().default(false),
   checkInTime: integer('checkInTime', { mode: 'timestamp_ms' }),
   checkOutTime: integer('checkOutTime', { mode: 'timestamp_ms' }),
-}, (table) => ({
-  eventIdIdx: index('idx_attendance_eventId').on(table.eventId),
-  patronIdIdx: index('idx_attendance_patronId').on(table.patronId),
-  attendedIdx: index('idx_attendance_attended').on(table.attended),
-  uniqueEventPatron: index('idx_attendance_unique').on(table.eventId, table.patronId),
-}));
+}, (table) => [
+  index('idx_attendance_eventId').on(table.eventId),
+  index('idx_attendance_patronId').on(table.patronId),
+  index('idx_attendance_attended').on(table.attended),
+  index('idx_attendance_unique').on(table.eventId, table.patronId),
+]);
 
 // ============================================================================
 // Loyalty Table
@@ -76,10 +76,10 @@ export const loyalty = sqliteTable('loyalty', {
   reward: text('reward'),
   issuedAt: integer('issuedAt', { mode: 'timestamp_ms' }).notNull(),
   expiresAt: integer('expiresAt', { mode: 'timestamp_ms' }),
-}, (table) => ({
-  patronIdIdx: index('idx_loyalty_patronId').on(table.patronId),
-  tierIdx: index('idx_loyalty_tier').on(table.tier),
-}));
+}, (table) => [
+  index('idx_loyalty_patronId').on(table.patronId),
+  index('idx_loyalty_tier').on(table.tier),
+]);
 
 // ============================================================================
 // Relations

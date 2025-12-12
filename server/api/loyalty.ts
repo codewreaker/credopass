@@ -1,14 +1,179 @@
 // ============================================================================
-// FILE: server/routes/loyalty.ts
-// Hono routes for loyalty with Drizzle ORM
+// FILE: server/api/loyalty.ts
+// Loyalty API - Using BaseAPI pattern
 // ============================================================================
 
 import { Hono } from "hono";
 import { z } from "zod";
-import { getDatabase, LoyaltyOperations } from "../db";
+import { eq, and, desc, gte } from 'drizzle-orm';
+import { BaseAPI } from './BaseAPI';
+import { loyalty, type Loyalty, type NewLoyalty } from '../db/schema';
 import { LoyaltySchema } from '../../src/entities/schemas';
 
-const loyalty = new Hono();
+// ============================================================================
+// LoyaltyAPI - Extends BaseAPI with custom methods
+// ============================================================================
+
+class LoyaltyAPI extends BaseAPI<Loyalty, NewLoyalty, typeof loyalty> {
+  protected readonly table = loyalty;
+  protected readonly tableName = 'loyalty';
+
+  /**
+   * Find all loyalty records ordered by issued date
+   */
+  async findAll(): Promise<Loyalty[]> {
+    try {
+      return await this.db
+        .select()
+        .from(loyalty)
+        .orderBy(desc(loyalty.issuedAt));
+    } catch (error) {
+      throw new Error(`Failed to find all loyalty records: ${error}`);
+    }
+  }
+
+  /**
+   * Find loyalty records by patron ID
+   */
+  async findByPatronId(patronId: string): Promise<Loyalty[]> {
+    try {
+      return await this.db
+        .select()
+        .from(loyalty)
+        .where(eq(loyalty.patronId, patronId))
+        .orderBy(desc(loyalty.issuedAt));
+    } catch (error) {
+      throw new Error(`Failed to find loyalty records by patron: ${error}`);
+    }
+  }
+
+  /**
+   * Find loyalty records by tier
+   */
+  async findByTier(tier: Loyalty['tier']): Promise<Loyalty[]> {
+    try {
+      if (tier === null) {
+        return await this.db
+          .select()
+          .from(loyalty)
+          .orderBy(desc(loyalty.issuedAt));
+      }
+      return await this.db
+        .select()
+        .from(loyalty)
+        .where(eq(loyalty.tier, tier))
+        .orderBy(desc(loyalty.issuedAt));
+    } catch (error) {
+      throw new Error(`Failed to find loyalty records by tier: ${error}`);
+    }
+  }
+
+  /**
+   * Find active loyalty records for a patron (not expired)
+   */
+  async findActiveByPatronId(patronId: string): Promise<Loyalty[]> {
+    try {
+      const now = new Date();
+      return await this.db
+        .select()
+        .from(loyalty)
+        .where(
+          and(
+            eq(loyalty.patronId, patronId),
+            gte(loyalty.expiresAt, now)
+          )
+        )
+        .orderBy(desc(loyalty.issuedAt));
+    } catch (error) {
+      throw new Error(`Failed to find active loyalty records: ${error}`);
+    }
+  }
+
+  /**
+   * Get total points for a patron (only active/non-expired points)
+   */
+  async getTotalPoints(patronId: string): Promise<number> {
+    try {
+      const records = await this.findActiveByPatronId(patronId);
+      return records.reduce((sum, record) => sum + (record.points || 0), 0);
+    } catch (error) {
+      throw new Error(`Failed to get total points: ${error}`);
+    }
+  }
+
+  /**
+   * Award points to a patron
+   */
+  async awardPoints(patronId: string, points: number, description: string, id: string): Promise<Loyalty> {
+    try {
+      return await this.create({
+        id,
+        patronId,
+        description,
+        points,
+        tier: null,
+        reward: null,
+        issuedAt: new Date(),
+        expiresAt: null, // Points don't expire by default
+      });
+    } catch (error) {
+      throw new Error(`Failed to award points: ${error}`);
+    }
+  }
+
+  /**
+   * Award a reward to a patron
+   */
+  async awardReward(
+    patronId: string,
+    reward: string,
+    description: string,
+    id: string,
+    expiresAt?: Date
+  ): Promise<Loyalty> {
+    try {
+      return await this.create({
+        id,
+        patronId,
+        description,
+        reward,
+        tier: null,
+        points: null,
+        issuedAt: new Date(),
+        expiresAt: expiresAt || null,
+      });
+    } catch (error) {
+      throw new Error(`Failed to award reward: ${error}`);
+    }
+  }
+
+  /**
+   * Calculate and return patron's tier based on total points
+   */
+  async calculatePatronTier(patronId: string): Promise<Loyalty['tier']> {
+    try {
+      const totalPoints = await this.getTotalPoints(patronId);
+      
+      let tier: Loyalty['tier'] = 'bronze';
+      if (totalPoints >= 10000) tier = 'platinum';
+      else if (totalPoints >= 5000) tier = 'gold';
+      else if (totalPoints >= 2000) tier = 'silver';
+      
+      return tier;
+    } catch (error) {
+      throw new Error(`Failed to calculate patron tier: ${error}`);
+    }
+  }
+}
+
+// Initialize API
+const loyaltyAPI = new LoyaltyAPI();
+
+// ============================================================================
+// HTTP Routes
+// ============================================================================
+
+const loyaltyRouter = new Hono();
 
 // Validation schemas
 const CreateLoyaltySchema = LoyaltySchema.omit({});
@@ -28,21 +193,18 @@ const AwardRewardSchema = z.object({
 });
 
 // GET /api/loyalty - Get all loyalty records
-loyalty.get("/", async (c) => {
+loyaltyRouter.get("/", async (c) => {
     try {
-        const db = getDatabase();
-        const loyaltyOps = new LoyaltyOperations(db);
-        
         const patronId = c.req.query("patronId");
         const tier = c.req.query("tier");
         
         let records;
         if (patronId) {
-            records = await loyaltyOps.findByPatronId(patronId);
+            records = await loyaltyAPI.findByPatronId(patronId);
         } else if (tier) {
-            records = await loyaltyOps.findByTier(tier as any);
+            records = await loyaltyAPI.findByTier(tier as any);
         } else {
-            records = await loyaltyOps.findAll();
+            records = await loyaltyAPI.findAll();
         }
         
         return c.json(records);
@@ -53,12 +215,10 @@ loyalty.get("/", async (c) => {
 });
 
 // GET /api/loyalty/:id - Get loyalty record by ID
-loyalty.get("/:id", async (c) => {
+loyaltyRouter.get("/:id", async (c) => {
     try {
-        const db = getDatabase();
-        const loyaltyOps = new LoyaltyOperations(db);
         const id = c.req.param("id");
-        const record = await loyaltyOps.findById(id);
+        const record = await loyaltyAPI.findById(id);
 
         if (!record) {
             return c.json({ error: "Loyalty record not found" }, 404);
@@ -72,12 +232,10 @@ loyalty.get("/:id", async (c) => {
 });
 
 // GET /api/loyalty/patron/:patronId/points - Get patron's total points
-loyalty.get("/patron/:patronId/points", async (c) => {
+loyaltyRouter.get("/patron/:patronId/points", async (c) => {
     try {
-        const db = getDatabase();
-        const loyaltyOps = new LoyaltyOperations(db);
         const patronId = c.req.param("patronId");
-        const totalPoints = await loyaltyOps.getTotalPoints(patronId);
+        const totalPoints = await loyaltyAPI.getTotalPoints(patronId);
 
         return c.json({ patronId, totalPoints });
     } catch (error) {
@@ -87,12 +245,10 @@ loyalty.get("/patron/:patronId/points", async (c) => {
 });
 
 // GET /api/loyalty/patron/:patronId/tier - Get/calculate patron's tier
-loyalty.get("/patron/:patronId/tier", async (c) => {
+loyaltyRouter.get("/patron/:patronId/tier", async (c) => {
     try {
-        const db = getDatabase();
-        const loyaltyOps = new LoyaltyOperations(db);
         const patronId = c.req.param("patronId");
-        const tier = await loyaltyOps.updatePatronTier(patronId);
+        const tier = await loyaltyAPI.calculatePatronTier(patronId);
 
         return c.json({ patronId, tier });
     } catch (error) {
@@ -102,10 +258,8 @@ loyalty.get("/patron/:patronId/tier", async (c) => {
 });
 
 // POST /api/loyalty - Create loyalty record
-loyalty.post("/", async (c) => {
+loyaltyRouter.post("/", async (c) => {
     try {
-        const db = getDatabase();
-        const loyaltyOps = new LoyaltyOperations(db);
         const body = await c.req.json();
         
         // Convert date strings to Date objects
@@ -114,7 +268,7 @@ loyalty.post("/", async (c) => {
         if (body.expiresAt) processedBody.expiresAt = new Date(body.expiresAt);
         
         const validated = CreateLoyaltySchema.parse(processedBody);
-        const record = await loyaltyOps.create(validated);
+        const record = await loyaltyAPI.create(validated);
         
         return c.json(record, 201);
     } catch (error) {
@@ -127,15 +281,13 @@ loyalty.post("/", async (c) => {
 });
 
 // POST /api/loyalty/award-points - Award points to patron
-loyalty.post("/award-points", async (c) => {
+loyaltyRouter.post("/award-points", async (c) => {
     try {
-        const db = getDatabase();
-        const loyaltyOps = new LoyaltyOperations(db);
         const body = await c.req.json();
         const validated = AwardPointsSchema.parse(body);
         
         const id = crypto.randomUUID();
-        const record = await loyaltyOps.awardPoints(
+        const record = await loyaltyAPI.awardPoints(
             validated.patronId,
             validated.points,
             validated.description,
@@ -153,17 +305,15 @@ loyalty.post("/award-points", async (c) => {
 });
 
 // POST /api/loyalty/award-reward - Award reward to patron
-loyalty.post("/award-reward", async (c) => {
+loyaltyRouter.post("/award-reward", async (c) => {
     try {
-        const db = getDatabase();
-        const loyaltyOps = new LoyaltyOperations(db);
         const body = await c.req.json();
         const validated = AwardRewardSchema.parse(body);
         
         const id = crypto.randomUUID();
         const expiresAt = validated.expiresAt ? new Date(validated.expiresAt) : undefined;
         
-        const record = await loyaltyOps.awardReward(
+        const record = await loyaltyAPI.awardReward(
             validated.patronId,
             validated.reward,
             validated.description,
@@ -182,10 +332,8 @@ loyalty.post("/award-reward", async (c) => {
 });
 
 // PUT /api/loyalty/:id - Update loyalty record
-loyalty.put("/:id", async (c) => {
+loyaltyRouter.put("/:id", async (c) => {
     try {
-        const db = getDatabase();
-        const loyaltyOps = new LoyaltyOperations(db);
         const id = c.req.param("id");
         const body = await c.req.json();
         
@@ -195,7 +343,7 @@ loyalty.put("/:id", async (c) => {
         if (body.expiresAt) processedBody.expiresAt = new Date(body.expiresAt);
         
         const validated = UpdateLoyaltySchema.parse(processedBody);
-        const record = await loyaltyOps.update(id, validated);
+        const record = await loyaltyAPI.update(id, validated);
 
         if (!record) {
             return c.json({ error: "Loyalty record not found" }, 404);
@@ -212,12 +360,10 @@ loyalty.put("/:id", async (c) => {
 });
 
 // DELETE /api/loyalty/:id - Delete loyalty record
-loyalty.delete("/:id", async (c) => {
+loyaltyRouter.delete("/:id", async (c) => {
     try {
-        const db = getDatabase();
-        const loyaltyOps = new LoyaltyOperations(db);
         const id = c.req.param("id");
-        const deleted = await loyaltyOps.delete(id);
+        const deleted = await loyaltyAPI.delete(id);
 
         if (!deleted) {
             return c.json({ error: "Loyalty record not found" }, 404);
@@ -230,4 +376,4 @@ loyalty.delete("/:id", async (c) => {
     }
 });
 
-export default loyalty;
+export default loyaltyRouter;

@@ -3,7 +3,9 @@
 // Database seeding script with Drizzle ORM
 // ============================================================================
 
-import { getDatabase, UserOperations, EventOperations, AttendanceOperations, LoyaltyOperations } from "./index";
+import { desc } from 'drizzle-orm';
+import { getDatabase } from "./index";
+import { users, events, attendance, loyalty } from "./schema";
 import type { NewUser, NewEvent, NewAttendance, NewLoyalty } from "./schema";
 
 console.log("🌱 Starting database seed...\n");
@@ -11,15 +13,9 @@ console.log("🌱 Starting database seed...\n");
 async function seed() {
     try {
         const db = getDatabase();
-        
-        // Initialize operations
-        const userOps = new UserOperations(db);
-        const eventOps = new EventOperations(db);
-        const attendanceOps = new AttendanceOperations(db);
-        const loyaltyOps = new LoyaltyOperations(db);
 
         // Check if data already exists
-        const existingUsers = await userOps.findAll();
+        const existingUsers = await db.select().from(users).orderBy(desc(users.createdAt));
 
         if (existingUsers.length > 0) {
             console.log(`ℹ️  Database already has ${existingUsers.length} user(s), skipping seed`);
@@ -44,21 +40,24 @@ async function seed() {
         ];
 
         console.log("👥 Creating users...");
-        const users: Awaited<ReturnType<typeof userOps.create>>[] = [];
+        const createdUsers: NewUser[] = [];
+        const now = new Date();
         
         for (let i = 0; i < 25; i++) {
-            const userData: Omit<NewUser, 'createdAt' | 'updatedAt'> = {
+            const userData: NewUser = {
                 id: crypto.randomUUID(),
                 email: `${firstNames[i]?.toLowerCase()}.${lastNames[i]?.toLowerCase()}@example.com`,
                 firstName: firstNames[i]!,
                 lastName: lastNames[i]!,
                 phone: `+1${Math.floor(Math.random() * 9000000000 + 1000000000)}`,
+                createdAt: now,
+                updatedAt: now,
             };
-            const user = await userOps.create(userData);
-            users.push(user);
+            createdUsers.push(userData);
         }
         
-        console.log(`✓ Created ${users.length} users\n`);
+        await db.insert(users).values(createdUsers);
+        console.log(`✓ Created ${createdUsers.length} users\n`);
 
         // 2. Create Events
         const eventNames: string[] = [
@@ -88,19 +87,20 @@ async function seed() {
         ];
 
         console.log("🎉 Creating events...");
-        const events: Awaited<ReturnType<typeof eventOps.create>>[] = [];
-        const now = Date.now();
+        const createdEvents: NewEvent[] = [];
+        const nowTime = Date.now();
+        const nowDate = new Date();
 
         for (let i = 0; i < 10; i++) {
             const daysOffset = Math.floor(Math.random() * 60) - 30; // -30 to +30 days
-            const startTime = new Date(now + daysOffset * 24 * 60 * 60 * 1000);
+            const startTime = new Date(nowTime + daysOffset * 24 * 60 * 60 * 1000);
             const duration = (Math.floor(Math.random() * 6) + 2) * 60 * 60 * 1000; // 2-8 hours
             const endTime = new Date(startTime.getTime() + duration);
 
             let status: 'draft' | 'scheduled' | 'ongoing' | 'completed' | 'cancelled' = 'scheduled';
-            if (startTime.getTime() < now - 24 * 60 * 60 * 1000) {
+            if (startTime.getTime() < nowTime - 24 * 60 * 60 * 1000) {
                 status = 'completed';
-            } else if (startTime.getTime() < now && endTime.getTime() > now) {
+            } else if (startTime.getTime() < nowTime && endTime.getTime() > nowTime) {
                 status = 'ongoing';
             } else if (Math.random() < 0.1) {
                 status = 'cancelled';
@@ -108,7 +108,7 @@ async function seed() {
                 status = 'draft';
             }
 
-            const eventData: Omit<NewEvent, 'createdAt' | 'updatedAt'> = {
+            const eventData: NewEvent = {
                 id: crypto.randomUUID(),
                 name: eventNames[i]!,
                 description: `Join us for an amazing ${eventNames[i]?.toLowerCase()}! This will be an unforgettable experience.`,
@@ -117,29 +117,31 @@ async function seed() {
                 endTime,
                 location: locations[Math.floor(Math.random() * locations.length)]!,
                 capacity: Math.floor(Math.random() * 150) + 50, // 50-200 capacity
-                hostId: users[Math.floor(Math.random() * Math.min(5, users.length))]!.id,
+                hostId: createdUsers[Math.floor(Math.random() * Math.min(5, createdUsers.length))]!.id,
+                createdAt: nowDate,
+                updatedAt: nowDate,
             };
 
-            const event = await eventOps.create(eventData);
-            events.push(event);
+            createdEvents.push(eventData);
         }
 
-        console.log(`✓ Created ${events.length} events\n`);
+        await db.insert(events).values(createdEvents);
+        console.log(`✓ Created ${createdEvents.length} events\n`);
 
         // 3. Create Attendance Records
         console.log("✓ Creating attendance records...");
-        let attendanceCount = 0;
+        const attendanceRecords: NewAttendance[] = [];
 
-        for (const event of events) {
+        for (const event of createdEvents) {
             // Skip draft and cancelled events
             if (event.status === 'draft' || event.status === 'cancelled') continue;
 
             // Random number of attendees (40-90% of capacity or all users, whichever is smaller)
-            const maxAttendees = Math.min(event.capacity || 100, users.length);
+            const maxAttendees = Math.min(event.capacity || 100, createdUsers.length);
             const numAttendees = Math.floor(maxAttendees * (0.4 + Math.random() * 0.5));
 
             // Randomly select attendees
-            const shuffledUsers = [...users].sort(() => Math.random() - 0.5);
+            const shuffledUsers = [...createdUsers].sort(() => Math.random() - 0.5);
             const attendees = shuffledUsers.slice(0, numAttendees);
 
             for (const patron of attendees) {
@@ -165,12 +167,12 @@ async function seed() {
                     checkOutTime,
                 };
 
-                await attendanceOps.create(attendanceData);
-                attendanceCount++;
+                attendanceRecords.push(attendanceData);
             }
         }
 
-        console.log(`✓ Created ${attendanceCount} attendance records\n`);
+        await db.insert(attendance).values(attendanceRecords);
+        console.log(`✓ Created ${attendanceRecords.length} attendance records\n`);
 
         // 4. Create Loyalty Records
         console.log("🏆 Creating loyalty records...");
@@ -187,12 +189,12 @@ async function seed() {
             'Limited Edition Swag'
         ];
 
-        let loyaltyCount = 0;
+        const loyaltyRecords: NewLoyalty[] = [];
 
-        for (const user of users) {
+        for (const user of createdUsers) {
             // Calculate user's event attendance
-            const userAttendance = await attendanceOps.findByPatronId(user.id);
-            const attendedCount = userAttendance.filter(a => a.attended).length;
+            const userAttendance = attendanceRecords.filter(a => a.patronId === user.id && a.attended);
+            const attendedCount = userAttendance.length;
             const points = attendedCount * 10; // 10 points per event
 
             // Determine tier based on points
@@ -215,8 +217,7 @@ async function seed() {
                 expiresAt: null,
             };
 
-            await loyaltyOps.create(loyaltyData);
-            loyaltyCount++;
+            loyaltyRecords.push(loyaltyData);
 
             // Add some rewards for active users
             if (points > 50 && Math.random() > 0.3) {
@@ -236,20 +237,20 @@ async function seed() {
                         expiresAt: rewardExpiresAt,
                     };
 
-                    await loyaltyOps.create(rewardData);
-                    loyaltyCount++;
+                    loyaltyRecords.push(rewardData);
                 }
             }
         }
 
-        console.log(`✓ Created ${loyaltyCount} loyalty records\n`);
+        await db.insert(loyalty).values(loyaltyRecords);
+        console.log(`✓ Created ${loyaltyRecords.length} loyalty records\n`);
 
         // Summary
         console.log("📊 Seed Summary:");
-        console.log(`   Users: ${users.length}`);
-        console.log(`   Events: ${events.length}`);
-        console.log(`   Attendance Records: ${attendanceCount}`);
-        console.log(`   Loyalty Records: ${loyaltyCount}`);
+        console.log(`   Users: ${createdUsers.length}`);
+        console.log(`   Events: ${createdEvents.length}`);
+        console.log(`   Attendance Records: ${attendanceRecords.length}`);
+        console.log(`   Loyalty Records: ${loyaltyRecords.length}`);
         console.log("\n✅ Database seed completed successfully!");
         process.exit(0);
 

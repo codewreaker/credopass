@@ -8,17 +8,17 @@ import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import { serveStatic } from "hono/bun";
 import { getDatabase } from "./db";
-import usersRoutes from "./routes/users";
-import eventsRoutes from "./routes/events";
-import attendanceRoutes from "./routes/attendance";
-import loyaltyRoutes from "./routes/loyalty";
+import usersRoutes from "./api/users";
+import eventsRoutes from "./api/events";
+import attendanceRoutes from "./api/attendance";
+import loyaltyRoutes from "./api/loyalty";
 import { createMiddleware } from "hono/factory";
 import { isDevelopment } from 'std-env';
 
 const THROTTLE_DELAY = 0;
 
 // Initialize database connection
-const db = getDatabase();
+getDatabase();
 console.log("✓ Database initialized");
 
 // Create Hono app

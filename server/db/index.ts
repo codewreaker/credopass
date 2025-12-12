@@ -7,12 +7,8 @@ import { Database } from "bun:sqlite";
 import path from "node:path";
 import * as schema from './schema';
 
-// Export schema and operations
+// Export schema
 export * from './schema';
-export { default as UserOperations } from './operations/users';
-export { default as EventOperations } from './operations/events';
-export { default as AttendanceOperations } from './operations/attendance';
-export { default as LoyaltyOperations } from './operations/loyalty';
 
 // Singleton database instance
 let db: BunSQLiteDatabase<typeof schema> | null = null;
