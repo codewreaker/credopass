@@ -4,6 +4,7 @@ import HomePage from './Pages/Home'
 import MembersPage from './Pages/Members'
 import CalendarPage from './Pages/Calendar'
 import Analytics from './Pages/Analytics'
+import DatabasePage from './Pages/Database'
 
 // Root route - wraps all pages with layout (sidebar, topbar, etc.)
 const rootRoute = createRootRoute({
@@ -37,12 +38,20 @@ const analyticsRoute = createRoute({
   component: Analytics,
 })
 
+// Database route - Admin page to view all database tables
+const databaseRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/database',
+  component: DatabasePage,
+})
+
 // Route tree - explicitly defines the structure
 export const routeTree = rootRoute.addChildren([
   indexRoute,
   membersRoute,
   calendarRoute,
-  analyticsRoute
+  analyticsRoute,
+  databaseRoute
 ])
 
 // Export individual routes for type safety and easy access

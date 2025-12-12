@@ -1,22 +1,25 @@
 // ============================================================================
 // FILE: server/index.ts
-// Main Hono server entry point
+// Main Hono server entry point with Drizzle ORM
 // ============================================================================
 
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import { serveStatic } from "hono/bun";
-import { getDatabase, initializeSchema } from "./db";
+import { getDatabase } from "./db";
 import usersRoutes from "./routes/users";
+import eventsRoutes from "./routes/events";
+import attendanceRoutes from "./routes/attendance";
+import loyaltyRoutes from "./routes/loyalty";
 import { createMiddleware } from "hono/factory";
-import { isDevelopment } from 'std-env'
+import { isDevelopment } from 'std-env';
 
 const THROTTLE_DELAY = 0;
 
-// Initialize database
+// Initialize database connection
 const db = getDatabase();
-initializeSchema(db);
+console.log("✓ Database initialized");
 
 // Create Hono app
 const app = new Hono();
@@ -41,6 +44,9 @@ app.get("/api/health", (c) => c.json({ status: "ok", timestamp: Date.now() }));
 
 // API routes
 app.route("/api/users", usersRoutes);
+app.route("/api/events", eventsRoutes);
+app.route("/api/attendance", attendanceRoutes);
+app.route("/api/loyalty", loyaltyRoutes);
 
 // Serve static files in production
 if (!isDevelopment) {

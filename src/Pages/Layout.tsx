@@ -8,6 +8,7 @@ import {
   Users,
   Calendar,
   ChartNoAxesCombined,
+  Database,
 } from "lucide-react";
 import "../App.css";
 
@@ -29,6 +30,7 @@ export function RootLayout() {
               label: "Analytics",
             },
             { path: "/calendar", icon: Calendar, label: "Calendar" },
+            { path: "/database", icon: Database, label: "Tables" },
           ]}
         />
 

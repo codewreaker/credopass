@@ -1,29 +1,26 @@
 // ============================================================================
-// FILE: src/server/routes/users.ts
-// Hono routes for users
+// FILE: server/routes/users.ts
+// Hono routes for users with Drizzle ORM
 // ============================================================================
 
 import { Hono } from "hono";
 import { z } from "zod";
 import { getDatabase, UserOperations } from "../db";
-import { UserSchema } from '../../src/entities/schemas'
+import { UserSchema } from '../../src/entities/schemas';
 
 const users = new Hono();
-
-// Get database and operations
-const db = getDatabase();
-const userOps = new UserOperations(db);
 
 // Validation schemas
 const CreateUserSchema = UserSchema.omit({ createdAt: true, updatedAt: true });
 const UpdateUserSchema = CreateUserSchema.partial().omit({ id: true });
 
 // GET /api/users - Get all users
-users.get("/",(c) => {
+users.get("/", async (c) => {
     try {
-        const allUsers = userOps.findAll();
-        const d = c.json(allUsers)
-        return d;
+        const db = getDatabase();
+        const userOps = new UserOperations(db);
+        const allUsers = await userOps.findAll();
+        return c.json(allUsers);
     } catch (error) {
         console.error("Error fetching users:", error);
         return c.json({ error: "Failed to fetch users" }, 500);
@@ -31,10 +28,12 @@ users.get("/",(c) => {
 });
 
 // GET /api/users/:id - Get user by ID
-users.get("/:id", (c) => {
+users.get("/:id", async (c) => {
     try {
+        const db = getDatabase();
+        const userOps = new UserOperations(db);
         const id = c.req.param("id");
-        const user = userOps.findById(id);
+        const user = await userOps.findById(id);
 
         if (!user) {
             return c.json({ error: "User not found" }, 404);
@@ -50,10 +49,12 @@ users.get("/:id", (c) => {
 // POST /api/users - Create new user
 users.post("/", async (c) => {
     try {
+        const db = getDatabase();
+        const userOps = new UserOperations(db);
         const body = await c.req.json();
         const validated = CreateUserSchema.parse(body);
 
-        const user = userOps.create(validated);
+        const user = await userOps.create(validated);
         return c.json(user, 201);
     } catch (error) {
         if (error instanceof z.ZodError) {
@@ -67,11 +68,13 @@ users.post("/", async (c) => {
 // PUT /api/users/:id - Update user
 users.put("/:id", async (c) => {
     try {
+        const db = getDatabase();
+        const userOps = new UserOperations(db);
         const id = c.req.param("id");
         const body = await c.req.json();
         const validated = UpdateUserSchema.parse(body);
 
-        const user = userOps.update(id, validated);
+        const user = await userOps.update(id, validated);
 
         if (!user) {
             return c.json({ error: "User not found" }, 404);
@@ -88,10 +91,12 @@ users.put("/:id", async (c) => {
 });
 
 // DELETE /api/users/:id - Delete user
-users.delete("/:id", (c) => {
+users.delete("/:id", async (c) => {
     try {
+        const db = getDatabase();
+        const userOps = new UserOperations(db);
         const id = c.req.param("id");
-        const deleted = userOps.delete(id);
+        const deleted = await userOps.delete(id);
 
         if (!deleted) {
             return c.json({ error: "User not found" }, 404);

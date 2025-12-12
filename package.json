@@ -8,8 +8,12 @@
     "start": "NODE_ENV=production bun run build && bun server/index.ts",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "db:reset": "rm -rf data/* && bun run setup",
-    "setup": "touch data/dwellpass.db && bun server/db/seed.ts"
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "bun server/db/migrate.ts",
+    "db:push": "bun server/db/push.ts",
+    "db:studio": "drizzle-kit studio",
+    "db:reset": "rm -rf data/* && touch data/dwellpass.db && bun run db:push && bun server/db/seed.ts",
+    "setup": "mkdir -p data && touch data/dwellpass.db && bun run db:push && bun server/db/seed.ts"
   },
   "dependencies": {
     "@hono/zod-validator": "^0.7.5",

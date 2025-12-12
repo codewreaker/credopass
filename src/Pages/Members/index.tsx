@@ -17,17 +17,6 @@ const hdl = (type: string, e?: React.SyntheticEvent | RowClickedEvent) => {
 }
 
 
-// const createUser = () => {
-//   const user = new User(
-//     'Israel',
-//     'Agyeman-Prmepeh',
-//     `user${crypto.randomUUID()}@email.com`,
-//     '+563456765'
-//   )
-//   user.validate()
-//   console.log('user', user.loyaltyTier)
-//   userCollection.insert(user)
-// }
 
 const columnDefs: ColDef<UserType & LoyaltyType & AttendanceType>[] = [
   {
