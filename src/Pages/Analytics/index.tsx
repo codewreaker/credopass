@@ -12,7 +12,7 @@ import {
   Pie,
   Cell,
 } from "recharts";
-import { GridLayout } from "../../utils/GridLayout";
+import GridLayout from "../../lib/grid-layout";
 import "./style.css";
 
 const activityData = [
@@ -120,18 +120,14 @@ const Analytics: React.FC = () => {
         </div>
       );
     });
-  }, [stats]);
+  }, []);
 
   return (
     <div className="hero-panel">
       <GridLayout
         layouts={layouts}
-        rowHeight={30}
-        cols={{ lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 }}
-        breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
-        margin={[10, 10]}
-        containerPadding={[0, 0]}
-        onLayoutChange={console.log}
+        gridConfig={{ containerPadding: [0, 0] }}
+        onLayoutChange={(layout, allLayouts) => console.log(layout, allLayouts)}
       >
         {statCards}
         <div key="chart-1" className="grid-item chart-card">
@@ -145,7 +141,7 @@ const Analytics: React.FC = () => {
             </select>
           </div>
           <div className="chart-container">
-            <ResponsiveContainer width="100%" height={150}>
+            <ResponsiveContainer width="100%" height="95%">
               <BarChart data={activityData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#333" />
                 <XAxis dataKey="month" stroke="#a0a0a0" fontSize={9} />
@@ -174,7 +170,7 @@ const Analytics: React.FC = () => {
             <span className="chart-subtitle">This Month</span>
           </div>
           <div className="chart-container">
-            <ResponsiveContainer width="100%" height={150}>
+            <ResponsiveContainer width="100%" height="95%">
               <PieChart>
                 <Pie
                   data={pieData}
@@ -224,4 +220,4 @@ const Analytics: React.FC = () => {
   );
 };
 
-export default Analytics
+export default Analytics;
