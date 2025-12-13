@@ -32,4 +32,4 @@ data/*.db-shm
 data/*.db-wal
 
 # But keep the directory structure
-!data/.gitkeep
+!data/.gitkeepcerts/

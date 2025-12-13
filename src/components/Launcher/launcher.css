@@ -131,7 +131,7 @@
 /* Dark theme support */
 @media (prefers-color-scheme: dark) {
   .modal-container {
-    background: #1f2937;
+    background: var(--dark-bg);
     color: #f9fafb;
   }
 
@@ -157,9 +157,6 @@
   }
 
   .loading-overlay {
-    background: rgba(31, 41, 55, 0.8);
-  }
-}
     background: rgba(31, 41, 55, 0.8);
   }
 }

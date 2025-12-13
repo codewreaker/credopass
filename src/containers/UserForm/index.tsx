@@ -1,10 +1,12 @@
 /* eslint-disable react-refresh/only-export-components */
 import { useState } from 'react';
 import {
-  User,
+  UserPlus,
   Mail,
   Phone,
-  Trash2
+  User as UserIcon,
+  Trash2,
+  Sparkles
 } from 'lucide-react';
 import { userCollection } from '../../collections/user';
 import type { UserType } from '../../entities/schemas';
@@ -108,58 +110,88 @@ const UserForm = ({ initialData = {}, isEditing = false, onClose }: UserFormProp
   return (
     <div className="user-modal">
       <div className="modal-header">
-        <h2>{isEditing ? 'Edit User' : 'Add New User'}</h2>
-        <p>{isEditing ? 'Update user details' : 'Create a new community member'}</p>
+        <div className="header-icon">
+          <UserPlus size={24} />
+        </div>
+        <div className="header-text">
+          <h2>{isEditing ? 'Edit Attendee' : 'Register New Attendee'}</h2>
+          <p>{isEditing ? 'Update attendee information' : 'Add a new community member to your events'}</p>
+        </div>
       </div>
 
       <div className="modal-body">
         <form className="user-form" onSubmit={handleSubmit}>
+          {/* Welcome Message for New Users */}
+          {!isEditing && (
+            <div className="welcome-banner">
+              <Sparkles size={16} />
+              <span>Welcome! Let's get you registered for our community events</span>
+            </div>
+          )}
+
           {/* First Name & Last Name */}
           <div className="form-row">
             <Input
               label="First Name"
               type="text"
               name="firstName"
-              placeholder="Enter first name"
+              placeholder="John"
               value={formData.firstName}
               onChange={handleInputChange}
               required
-              leftIcon={<User size={14} />}
+              leftIcon={<UserIcon size={14} />}
             />
             <Input
               label="Last Name"
               type="text"
               name="lastName"
-              placeholder="Enter last name"
+              placeholder="Doe"
               value={formData.lastName}
               onChange={handleInputChange}
               required
-              leftIcon={<User size={14} />}
+              leftIcon={<UserIcon size={14} />}
             />
           </div>
 
           {/* Email */}
-          <Input
-            label="Email Address"
-            type="email"
-            name="email"
-            placeholder="Enter email address"
-            value={formData.email}
-            onChange={handleInputChange}
-            required
-            leftIcon={<Mail size={14} />}
-          />
+          <div className="form-field-wrapper">
+            <Input
+              label="Email Address"
+              type="email"
+              name="email"
+              placeholder="john.doe@example.com"
+              value={formData.email}
+              onChange={handleInputChange}
+              required
+              leftIcon={<Mail size={14} />}
+            />
+            <p className="field-hint">We'll use this to send you event updates</p>
+          </div>
 
           {/* Phone Number */}
-          <Input
-            label="Phone Number"
-            type="tel"
-            name="phone"
-            placeholder="Enter phone number"
-            value={formData.phone}
-            onChange={handleInputChange}
-            leftIcon={<Phone size={14} />}
-          />
+          <div className="form-field-wrapper">
+            <Input
+              label="Phone Number"
+              type="tel"
+              name="phone"
+              placeholder="+1 (555) 000-0000"
+              value={formData.phone}
+              onChange={handleInputChange}
+              leftIcon={<Phone size={14} />}
+            />
+            <p className="field-hint">Optional - For important event notifications</p>
+          </div>
+
+          {/* Info Box */}
+          {!isEditing && (
+            <div className="info-box">
+              <div className="info-icon">ℹ️</div>
+              <div className="info-text">
+                <strong>What happens next?</strong>
+                <p>You'll be added to our community and can start attending events immediately. Track your attendance and earn loyalty rewards!</p>
+              </div>
+            </div>
+          )}
 
           {/* Form Actions */}
           <div className="form-actions">
@@ -187,8 +219,9 @@ const UserForm = ({ initialData = {}, isEditing = false, onClose }: UserFormProp
                 type="submit"
                 variant="primary"
                 disabled={isMutating}
+                leftIcon={!isMutating && <UserPlus size={14} />}
               >
-                {isMutating ? 'Saving...' : isEditing ? 'Update User' : 'Add User'}
+                {isMutating ? 'Saving...' : isEditing ? 'Update Attendee' : 'Register Attendee'}
               </Button>
             </div>
           </div>
