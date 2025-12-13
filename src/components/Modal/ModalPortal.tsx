@@ -29,7 +29,7 @@ const MODAL_COMPONENTS: Record<ModalId | 'default', React.ComponentType<any>> = 
  * - Applies consistent animations
  */
 export default function ModalPortal() {
-  const { modal, closeModal, openModal } = useAppStore();
+  const { modal, closeModal } = useAppStore();
 
   const handleOpenChange = (open: boolean) => {
     if (!open) {

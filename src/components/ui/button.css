@@ -2,182 +2,199 @@
 
 /* Base button styles */
 .btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.375rem;
-  font-family: inherit;
-  font-weight: 600;
-  border: 1px solid transparent;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  white-space: nowrap;
-  outline: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.375rem;
+    font-family: inherit;
+    font-weight: 600;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    outline: none;
 }
 
 .btn:focus-visible {
-  outline: 2px solid var(--primary-yellow);
-  outline-offset: 2px;
+    outline: 2px solid var(--primary-yellow);
+    outline-offset: 2px;
 }
 
 .btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 /* Size variants */
 .btn-sm {
-  padding: 0.375rem 0.5rem;
-  font-size: 0.75rem;
+    height: 28px;
+    padding: 0.375rem 0.5rem;
+    font-size: 0.75rem;
+
+    .btn-icon svg{
+        width: 16px;
+        height: 16px;
+        padding: 0;
+    }
 }
 
 .btn-md {
-  padding: 0.6rem 0.9375rem;
-  font-size: 0.875rem;
+    height: 30px;
+    padding: 0.6rem 0.9375rem;
+    font-size: 0.875rem;
+
+    .btn-icon svg{
+        width: 24px;
+        height: 24px;
+        padding: 0;
+    }
 }
 
 .btn-lg {
-  padding: 0.75rem 1.25rem;
-  font-size: 1rem;
+    padding: 0.75rem 1.25rem;
+    font-size: 1rem;
+
+    .btn-icon svg{
+        width: 32px;
+        height: 32px;
+        padding: 0;
+    }
 }
 
 /* Primary variant - Neon lime */
 .btn-primary {
-  background-color: var(--primary-yellow);
-  color: var(--darker-bg);
-  border-color: var(--primary-yellow);
+    background-color: var(--primary-yellow);
+    color: var(--darker-bg);
+    border-color: var(--primary-yellow);
 }
 
 .btn-primary:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 3px 9px rgba(212, 255, 0, 0.3);
+    transform: translateY(-1px);
+    box-shadow: 0 3px 9px rgba(212, 255, 0, 0.3);
 }
 
 .btn-primary:active:not(:disabled) {
-  transform: translateY(0);
-  box-shadow: none;
+    transform: translateY(0);
+    box-shadow: none;
 }
 
 /* Secondary variant - Ghost with border */
 .btn-secondary {
-  background-color: var(--card-bg);
-  color: var(--text-primary);
-  border-color: var(--border-color);
+    background-color: var(--card-bg);
+    color: var(--text-primary);
+    border-color: var(--border-color);
 }
 
 .btn-secondary:hover:not(:disabled) {
-  background-color: var(--border-color);
+    background-color: var(--border-color);
 }
 
 .btn-secondary:active:not(:disabled) {
-  background-color: var(--darker-bg);
+    background-color: var(--darker-bg);
 }
 
 /* Ghost variant - Transparent */
 .btn-ghost {
-  background-color: transparent;
-  color: var(--text-secondary);
-  border-color: transparent;
+    background-color: transparent;
+    color: var(--text-secondary);
+    border-color: transparent;
 }
 
 .btn-ghost:hover:not(:disabled) {
-  background-color: var(--card-bg);
-  color: var(--text-primary);
+    background-color: var(--card-bg);
+    color: var(--text-primary);
 }
 
 /* Icon variant - Square icon button */
 .btn-icon {
-  background-color: var(--card-bg);
-  color: var(--text-secondary);
-  border-color: var(--border-color);
-  padding: 0;
-  aspect-ratio: 1;
+    padding: 0;
+    aspect-ratio: 1;
 }
 
 .btn-icon.btn-sm {
-  width: 24px;
-  height: 24px;
+    width: 24px;
+    height: 24px;
 }
 
 .btn-icon.btn-md {
-  width: 30px;
-  height: 30px;
+    width: 30px;
+    height: 30px;
 }
 
 .btn-icon.btn-lg {
-  width: 36px;
-  height: 36px;
+    width: 36px;
+    height: 36px;
 }
 
 .btn-icon:hover:not(:disabled) {
-  background-color: var(--border-color);
-  color: var(--text-primary);
+    background-color: var(--border-color);
+    color: var(--text-primary);
 }
 
 /* Danger variant */
 .btn-danger {
-  background-color: transparent;
-  color: var(--error-red);
-  border-color: var(--error-red);
+    background-color: transparent;
+    color: var(--error-red);
+    border-color: var(--error-red);
 }
 
 .btn-danger:hover:not(:disabled) {
-  background-color: rgba(255, 68, 68, 0.1);
+    background-color: rgba(255, 68, 68, 0.1);
 }
 
 /* Loading state */
 .btn-loading {
-  position: relative;
-  pointer-events: none;
+    position: relative;
+    pointer-events: none;
 }
 
 .btn-spinner {
-  width: 14px;
-  height: 14px;
-  border: 2px solid currentColor;
-  border-top-color: transparent;
-  border-radius: 50%;
-  animation: btn-spin 0.6s linear infinite;
+    width: 14px;
+    height: 14px;
+    border: 2px solid currentColor;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: btn-spin 0.6s linear infinite;
 }
 
 @keyframes btn-spin {
-  to {
-    transform: rotate(360deg);
-  }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 /* Icon placement */
 .btn-icon-left,
 .btn-icon-right {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .btn-content {
-  display: inline-flex;
-  align-items: center;
+    display: inline-flex;
+    align-items: center;
 }
 
 /* Active state styles for table selector buttons */
 .btn.active {
-  background-color: rgba(212, 255, 0, 0.1);
-  border-color: var(--primary-yellow);
-  color: var(--primary-yellow);
+    background-color: rgba(212, 255, 0, 0.1);
+    border-color: var(--primary-yellow);
+    color: var(--primary-yellow);
 }
 
 /* Count badge inside button */
 .btn .count {
-  font-size: 0.8125rem;
-  color: var(--text-secondary);
-  background-color: var(--darker-bg);
-  padding: 0.1875rem 0.5rem;
-  border-radius: 12px;
-  margin-left: 0.375rem;
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+    background-color: var(--darker-bg);
+    padding: 0.1875rem 0.5rem;
+    border-radius: 12px;
+    margin-left: 0.375rem;
 }
 
 .btn.active .count {
-  background-color: rgba(212, 255, 0, 0.15);
-  color: var(--primary-yellow);
+    background-color: rgba(212, 255, 0, 0.15);
+    color: var(--primary-yellow);
 }

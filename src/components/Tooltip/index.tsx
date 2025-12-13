@@ -9,57 +9,30 @@ interface TooltipProps {
   children: React.ReactNode;
   position?: TooltipPosition;
   delay?: number;
-  className?: string;
 }
 
-// Map position to Base UI side
-const positionToSide: Record<TooltipPosition, 'top' | 'bottom' | 'left' | 'right'> = {
-  top: 'top',
-  bottom: 'bottom',
-  left: 'left',
-  right: 'right',
-};
-
 /**
- * Tooltip Component using Base UI
+ * Simple Tooltip Component
  * 
- * Features:
- * - Uses Base UI Tooltip for accessible tooltip behavior
- * - Supports 4 position variants (top, bottom, left, right)
- * - Auto-adjusts position via collision detection
- * - Configurable delay before showing
- * - Includes styled arrow pointing to target
+ * Usage:
+ * <Tooltip content="Hello!" position="top">
+ *   <button>Hover me</button>
+ * </Tooltip>
  */
 export const Tooltip: React.FC<TooltipProps> = ({
   content,
   children,
   position = 'top',
-  delay = 200,
-  className = '',
+  delay = 300,
 }) => {
-  const side = positionToSide[position];
-
   return (
     <BaseTooltip.Provider>
-      <BaseTooltip.Root>
-        <BaseTooltip.Trigger
-          className={`tooltip-container ${className}`}
-          render={(props) => (
-            <span {...props} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
-              {children}
-            </span>
-          )}
-          delay={delay}
-        />
+      <BaseTooltip.Root delay={delay}>
+        <BaseTooltip.Trigger render={<span className="tooltip-trigger">{children}</span>} />
         <BaseTooltip.Portal>
-          <BaseTooltip.Positioner
-            side={side}
-            sideOffset={8}
-            className="tooltip-positioner"
-          >
-            <BaseTooltip.Popup className="tooltip">
+          <BaseTooltip.Positioner side={position} sideOffset={6}>
+            <BaseTooltip.Popup className="tooltip-popup">
               {content}
-              <BaseTooltip.Arrow className="tooltip-arrow" />
             </BaseTooltip.Popup>
           </BaseTooltip.Positioner>
         </BaseTooltip.Portal>

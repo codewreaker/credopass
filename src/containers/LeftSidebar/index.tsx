@@ -5,6 +5,7 @@ import {
 import { Link, useLocation } from '@tanstack/react-router';
 import { useAppStore } from "../../store";
 import './style.css';
+import Tooltip from '../../components/ui/Tooltip';
 
 
 
@@ -39,6 +40,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
           const Icon = item.icon;
           const isActive = item.path === pathname;
           return (
+            <Tooltip content={item.label} delay={isCollapsed ? 0 : 500} position='right' key={item.path} >
             <Link
               key={item.path}
               to={item.path}
@@ -48,6 +50,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
               <Icon size={16} />
               {!isCollapsed && <span className="sidebar-label">{item.label}</span>}
             </Link>
+            </Tooltip>
           );
         })}
       </div>

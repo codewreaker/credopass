@@ -36,6 +36,7 @@ const Header: React.FC<HeaderProps> = ({
               <Button
                 key={item.id}
                 variant="secondary"
+                size='sm'
                 onClick={item.action}
                 disabled={item.disabled || loading}
                 leftIcon={

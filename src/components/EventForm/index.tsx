@@ -5,7 +5,6 @@ import {
   MapPin,
   Users,
   FileText,
-  Tag,
   Trash2
 } from 'lucide-react';
 import { eventCollection } from '../../collections/events';
