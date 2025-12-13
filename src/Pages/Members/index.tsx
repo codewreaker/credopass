@@ -15,7 +15,6 @@ const hdl = (type: string, e?: React.SyntheticEvent | RowClickedEvent) => {
   switch (type) {
     default:
       console.log(e)
-      alert(type)
       return
   }
 }

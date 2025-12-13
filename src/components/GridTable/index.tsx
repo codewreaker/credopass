@@ -56,15 +56,26 @@ const GridTable: React.FC<GridTableProps> = ({
   columnDefs,
   rowData,
   defaultColDef,
+  gridOptions,
   ...gridProps
 }) => {
   const defaultColumnDef = useMemo(
     () => ({
+      ...defaultColDef,
       sortable: true,
       resizable: true,
-      ...defaultColDef,
+      editable: true,
     }),
     [defaultColDef]
+  );
+
+  const gridOptionsMemoized = useMemo(
+    () => ({
+      ...gridOptions,
+      cellSelection: true,
+      suppressCellFocus: true
+    }),
+    [gridOptions]
   );
 
   return (
@@ -79,7 +90,6 @@ const GridTable: React.FC<GridTableProps> = ({
           columnDefs={columnDefs}
           rowData={rowData}
           defaultColDef={defaultColumnDef}
-          suppressCellFocus={true}
           theme={theme}
           rowSelection={{
             mode: 'singleRow',
@@ -87,6 +97,7 @@ const GridTable: React.FC<GridTableProps> = ({
             enableClickSelection: true,
           }}
           domLayout="autoHeight"
+          gridOptions={gridOptionsMemoized}
           {...gridProps}
         />
     </div>
