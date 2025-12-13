@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { useState } from 'react';
 import {
   Calendar as CalendarIcon,
@@ -7,11 +8,11 @@ import {
   FileText,
   Trash2
 } from 'lucide-react';
-import { eventCollection } from '../../collections/events';
+import { eventCollection as collection } from '../../collections/events';
 import type { Event, EventStatus } from '../../entities/schemas';
-import { useModal } from '../Modal/useModal';
-import { Button, Input, Select } from '../ui';
+import { Button, Input, Select } from '../../components/ui';
 import './style.css';
+import type { LauncherState } from '../../store';
 
 // Modal form data type - exported for type safety
 export interface EventFormData {
@@ -26,7 +27,7 @@ export interface EventFormData {
   hostId: string;
 }
 
-interface EventFormProps {
+export interface EventFormProps {
   initialData?: Partial<EventFormData>;
   isEditing?: boolean;
   onClose?: () => void;
@@ -52,11 +53,18 @@ const statusOptions = [
   { value: 'cancelled', label: 'Cancelled' },
 ];
 
+export const launchEventForm = (
+  args: Omit<EventFormProps, 'collection'> = {},
+  openLauncher: (args: Omit<LauncherState, "isOpen">) => void
+) => {
+  openLauncher({
+    content: <EventForm {...args} />,
+  });
+};
+
 // Event Form Component
-export const EventForm = ({ initialData = {}, isEditing = false, onClose }: EventFormProps) => {
-  const { closeModal } = useModal();
-  const handleClose = onClose ?? closeModal;
-  
+const EventForm = ({ initialData = {}, isEditing = false, onClose }: EventFormProps) => {
+
   const [formData, setFormData] = useState<EventFormData>({ ...initialFormData, ...initialData });
   const [isMutating, setIsMutating] = useState(false);
 
@@ -89,7 +97,7 @@ export const EventForm = ({ initialData = {}, isEditing = false, onClose }: Even
 
     try {
       if (isEditing && formData.id) {
-        eventCollection.update(formData.id, (draft) => {
+        collection?.update(formData.id, (draft) => {
           draft.name = eventData.name;
           draft.description = eventData.description;
           draft.status = eventData.status;
@@ -101,14 +109,14 @@ export const EventForm = ({ initialData = {}, isEditing = false, onClose }: Even
           draft.updatedAt = now;
         });
       } else {
-        eventCollection.insert({
+        collection?.insert({
           ...eventData,
           id: crypto.randomUUID(),
           createdAt: now,
           updatedAt: now,
         } as Event);
       }
-      handleClose();
+      onClose?.();
     } catch (error) {
       console.error('Failed to save event:', error);
     } finally {
@@ -120,8 +128,8 @@ export const EventForm = ({ initialData = {}, isEditing = false, onClose }: Even
     if (formData.id && confirm('Are you sure you want to delete this event?')) {
       setIsMutating(true);
       try {
-        eventCollection.delete(formData.id);
-        handleClose();
+        collection?.delete(formData.id);
+        onClose?.();
       } catch (error) {
         console.error('Failed to delete event:', error);
       } finally {
@@ -269,7 +277,7 @@ export const EventForm = ({ initialData = {}, isEditing = false, onClose }: Even
             <Button
               type="button"
               variant="secondary"
-              onClick={handleClose}
+              onClick={onClose}
               disabled={isMutating}
             >
               Cancel
@@ -294,3 +302,7 @@ export const EventForm = ({ initialData = {}, isEditing = false, onClose }: Even
     </div>
   );
 };
+
+
+
+export default EventForm;

@@ -9,12 +9,12 @@ import type { EventResizeDoneArg } from '@fullcalendar/interaction';
 import {
   Plus,
 } from 'lucide-react';
-import { useLiveQuery } from '@tanstack/react-db';
-import { eventCollection } from '../../collections/events';
-import type { Event } from '../../entities/schemas';
-import { MODALS, useModal } from '../../components/Modal/useModal';
-import { Button } from '../../components/ui';
+import type { Event } from '../../../entities/schemas';
+import { Button } from '../../../components/ui';
+import type { EventFormProps } from '../../../containers/EventForm';
+import type { EventCollection } from '../../../collections/events';
 import './style.css';
+
 
 // Helper to format date for datetime-local input
 const formatDateForInput = (date: Date): string => {
@@ -30,17 +30,22 @@ const getEndOfDay = (date: Date): Date => {
   return end;
 };
 
-export default function CalendarPage() {
+export default function CalendarPage({
+  launch,
+  events = [],
+  collection
+}: {
+  launch: (args?: Omit<EventFormProps, 'collection'>) => void,
+  events: Event[],
+  collection: EventCollection
+}) {
   const calendarRef = useRef<FullCalendar>(null);
-  const { openModal } = useModal();
+
   const [isMutating, setIsMutating] = useState(false);
 
-  // Fetch events using TanStack DB live query
-  const { data: eventsData } = useLiveQuery((q) => q.from({ eventCollection }));
-  const events = useMemo<Event[]>(() => Array.isArray(eventsData) ? eventsData : [], [eventsData]);
 
   // Transform events for FullCalendar
-  const calendarEvents = useMemo(() => events.map((event) => ({
+  const calendarEvents = useMemo(() => events?.map((event) => ({
     id: event.id,
     title: event.name,
     start: new Date(event.startTime),
@@ -77,24 +82,25 @@ export default function CalendarPage() {
     }
 
     // Open modal with the EventForm component
-    openModal(MODALS.ADD_EVENT, {
+    launch({
       initialData: {
         startTime: formatDateForInput(startTime),
         endTime: formatDateForInput(endTime),
       },
       isEditing: false
-    });
+    })
+
 
     // Clear selection
     const calendarApi = selectInfo.view.calendar;
     calendarApi.unselect();
-  }, [openModal]);
+  }, [launch]);
 
   const handleEventClick = useCallback((clickInfo: EventClickArg) => {
     const event = clickInfo.event;
 
     // Open modal with the EventForm component
-    openModal(MODALS.ADD_EVENT, {
+    launch({
       initialData: {
         id: event.id,
         name: event.title,
@@ -108,14 +114,14 @@ export default function CalendarPage() {
       },
       isEditing: true
     });
-  }, [openModal]);
+  }, [launch]);
 
   const handleEventDrop = useCallback(async (dropInfo: EventDropArg) => {
     const event = dropInfo.event;
 
     try {
       setIsMutating(true);
-      eventCollection.update(event.id, (draft) => {
+      collection.update(event.id, (draft) => {
         draft.startTime = event.start!;
         draft.endTime = event.end || getEndOfDay(event.start!);
         draft.updatedAt = new Date();
@@ -133,7 +139,7 @@ export default function CalendarPage() {
 
     try {
       setIsMutating(true);
-      eventCollection.update(event.id, (draft) => {
+      collection.update(event.id, (draft) => {
         draft.startTime = event.start!;
         draft.endTime = event.end!;
         draft.updatedAt = new Date();
@@ -151,8 +157,7 @@ export default function CalendarPage() {
     now.setMinutes(0, 0, 0);
     const end = new Date(now);
     end.setHours(now.getHours() + 1);
-
-    openModal(MODALS.ADD_EVENT, {
+    launch({
       initialData: {
         startTime: formatDateForInput(now),
         endTime: formatDateForInput(end),

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Mail, Lock, User, Eye, EyeOff } from 'lucide-react';
 import { useAppStore } from '../../store';
-import { useModal } from '../../components/Modal/useModal';
+import { useModal } from '../../components/Launcher/_useLauncher';
 import { Button, Input } from '../../components/ui';
 import './style.css';
 

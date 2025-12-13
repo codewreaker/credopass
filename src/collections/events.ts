@@ -60,3 +60,5 @@ export const eventCollection = createCollection(
     schema: EventSchema,
   })
 );
+
+export type EventCollection = typeof eventCollection;

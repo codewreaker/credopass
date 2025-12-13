@@ -2,7 +2,7 @@ import { createRootRoute, createRoute } from '@tanstack/react-router'
 import { RootLayout } from './Pages/Layout'
 import HomePage from './Pages/Home'
 import MembersPage from './Pages/Members'
-import CalendarPage from './Pages/Calendar'
+import EventsPage from './Pages/Events'
 import Analytics from './Pages/Analytics'
 import TablesPage from './Pages/Tables'
 
@@ -25,11 +25,11 @@ const membersRoute = createRoute({
   component: MembersPage,
 })
 
-// Calendar route - Events calendar page
-const calendarRoute = createRoute({
+// Events route - Events page
+const eventsRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/calendar',
-  component: CalendarPage,
+  path: '/events',
+  component: EventsPage,
 })
 
 const analyticsRoute = createRoute({
@@ -49,7 +49,7 @@ const databaseRoute = createRoute({
 export const routeTree = rootRoute.addChildren([
   indexRoute,
   membersRoute,
-  calendarRoute,
+  eventsRoute,
   analyticsRoute,
   databaseRoute
 ])
@@ -59,6 +59,6 @@ export const routes = {
   root: rootRoute,
   home: indexRoute,
   members: membersRoute,
-  calendar: calendarRoute,
+  events: eventsRoute,
   analytics: analyticsRoute
 } as const

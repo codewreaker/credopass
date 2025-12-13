@@ -7,7 +7,7 @@ import { MoreVertical } from 'lucide-react'
 import React from "react";
 import GridTable, { type MenuItem } from "../../components/GridTable";
 import { PlusCircle, Filter } from "lucide-react";
-import { MODALS, useModal } from '../../components/Modal/useModal'
+import { MODALS, useModal } from '../../components/Launcher/_useLauncher'
 
 
 const hdl = (type: string, e?: React.SyntheticEvent | RowClickedEvent) => {

@@ -1,5 +1,5 @@
-import { useAppStore } from '../../store';
-import type { EventFormData } from '../EventForm';
+import type { EventFormData } from '../../containers/EventForm';
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Modal Registry - Add new modal IDs here
@@ -45,17 +45,20 @@ type OpenModalFn = <T extends ModalId>(
  * closeModal(); // Closes any open modal
  */
 export function useModal() {
-  const { modal, openModal: storeOpenModal, closeModal: storeCloseModal } = useAppStore();
+  const openModal =(...args: any[] )=>{
+    console.log("open modal", args);
+  }
 
-  // Type-safe wrapper around store's openModal
-  const openModal: OpenModalFn = (modalId, props?) => {
-    storeOpenModal(modalId, props ?? {});
-  };
+  const closeModal =()=>{
+    console.log("close modal", closeModal);
+  }
+
+ 
 
   return {
     openModal,
-    closeModal: storeCloseModal,
-    isModalOpen: modal.isOpen,
-    currentModalId: modal.modalId as ModalId | null,
+    closeModal,
+    isModalOpen: false,
+    currentModalId: null,
   };
 }

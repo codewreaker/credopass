@@ -3,7 +3,7 @@ import { TopNavBar } from "../containers/TopNavBar";
 import { LeftSidebar } from "../containers/LeftSidebar";
 import { RightSidebar } from "../containers/RightSidebar";
 //import { SignInModal } from "../containers/SignInModal";
-import ModalPortal from "../components/Modal/ModalPortal";
+import ModalPortal from "../components/Launcher";
 import {
   LayoutDashboard,
   Users,
@@ -30,7 +30,7 @@ export function RootLayout() {
               icon: ChartNoAxesCombined,
               label: "Analytics",
             },
-            { path: "/calendar", icon: Calendar, label: "Calendar" },
+            { path: "/events", icon: Calendar, label: "Events" },
             { path: "/database", icon: Database, label: "Tables" },
           ]}
         />

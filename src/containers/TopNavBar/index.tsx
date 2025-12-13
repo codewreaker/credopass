@@ -3,13 +3,15 @@ import { Search, Bell, Calendar, User, ChevronDown, Settings, LogOut } from 'luc
 import { Menu } from '@base-ui/react/menu';
 import { Button } from '../../components/ui';
 import './style.css';
-import { useModal, MODALS } from '../../components/Modal/useModal';
+import { useLauncher } from '../../store';
+import { launchEventForm } from '../EventForm';
+
 
 
 export const TopNavBar: React.FC = () => {
-  const { openModal } = useModal();
+    const { openLauncher } = useLauncher();
 
-  const onNewEventClick = () => openModal(MODALS.ADD_EVENT, { isEditing: false });
+  const onNewEventClick = () => launchEventForm({ isEditing: false }, openLauncher);
 
   return (
     <nav className="top-navbar">
