@@ -1,4 +1,4 @@
-import { LoyaltyTierEnum, type LoyaltyTier, type LoyaltyType } from "./schemas.js";
+import { LoyaltyTierEnum, type LoyaltyTier, type LoyaltyType } from "../db/schema.js";
 
 
 const LOYALTY_DESCRIPTIONS: Record<LoyaltyTier, string> = {
@@ -15,10 +15,10 @@ export class Loyalty implements LoyaltyType {
     patronId!: string
     description!: string
     issuedAt!: Date
-    tier!: LoyaltyTier
-    points?: number
-    reward?: string
-    expiresAt!: Date
+    tier!: LoyaltyTier | null
+    points: number | null = null
+    reward: string | null = null
+    expiresAt: Date | null = null
 
     constructor(patronId: string ) {
         this.id = crypto.randomUUID()

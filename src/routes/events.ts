@@ -7,14 +7,13 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { desc, eq, and, gte, lte } from 'drizzle-orm';
 import { BaseAPI } from './BaseAPI.js';
-import { events, type Event, type NewEvent } from '../db/schema.js';
-import { EventSchema, CreateEventSchema } from '../entities/schemas.js';
+import { events, type Event, type EventInsert, EventSchema, CreateEventSchema } from '../db/schema.js';
 
 // ============================================================================
 // EventAPI - Extends BaseAPI with custom methods
 // ============================================================================
 
-class EventAPI extends BaseAPI<Event, NewEvent, typeof events> {
+class EventAPI extends BaseAPI<Event, EventInsert, typeof events> {
     protected readonly table = events;
     protected readonly tableName = 'events';
 

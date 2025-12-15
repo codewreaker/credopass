@@ -7,14 +7,13 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { desc, eq } from 'drizzle-orm';
 import { BaseAPI } from './BaseAPI.js';
-import { users, type User, type NewUser } from '../db/schema.js';
-import { UserSchema } from '../entities/schemas.js';
+import { users, type User, type UserInsert, UserSchema } from '../db/schema.js';
 
 // ============================================================================
 // UserAPI - Extends BaseAPI with custom methods
 // ============================================================================
 
-class UserAPI extends BaseAPI<User, NewUser, typeof users> {
+class UserAPI extends BaseAPI<User, UserInsert, typeof users> {
   protected readonly table = users;
   protected readonly tableName = 'users';
 
@@ -103,10 +102,11 @@ usersRouter.post("/", async (c) => {
             return c.json({ error: "User with this email already exists" }, 409);
         }
 
-        // Add timestamps
+        // Add timestamps and id
         const now = new Date();
         const user = await userAPI.create({
             ...validated,
+            id: crypto.randomUUID(),
             createdAt: now,
             updatedAt: now,
         });

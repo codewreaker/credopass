@@ -7,14 +7,13 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { eq, and, desc, gte } from 'drizzle-orm';
 import { BaseAPI } from './BaseAPI.js';
-import { loyalty, type Loyalty, type NewLoyalty } from '../db/schema.js';
-import { LoyaltySchema } from '../entities/schemas.js';
+import { loyalty, type Loyalty, type LoyaltyInsert, LoyaltySchema } from '../db/schema.js';
 
 // ============================================================================
 // LoyaltyAPI - Extends BaseAPI with custom methods
 // ============================================================================
 
-class LoyaltyAPI extends BaseAPI<Loyalty, NewLoyalty, typeof loyalty> {
+class LoyaltyAPI extends BaseAPI<Loyalty, LoyaltyInsert, typeof loyalty> {
   protected readonly table = loyalty;
   protected readonly tableName = 'loyalty';
 

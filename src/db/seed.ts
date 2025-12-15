@@ -6,7 +6,7 @@
 import { desc } from 'drizzle-orm';
 import { getDatabase } from "./index.js";
 import { users, events, attendance, loyalty } from "./schema.js";
-import type { NewUser, NewEvent, NewAttendance, NewLoyalty } from "./schema.js";
+import type { UserInsert, EventInsert, AttendanceInsert, LoyaltyInsert } from "./schema.js";
 
 console.log("🌱 Starting database seed...\n");
 
@@ -40,11 +40,11 @@ async function seed() {
         ];
 
         console.log("👥 Creating users...");
-        const createdUsers: NewUser[] = [];
+        const createdUsers: UserInsert[] = [];
         const now = new Date();
         
         for (let i = 0; i < 25; i++) {
-            const userData: NewUser = {
+            const userData: UserInsert = {
                 id: crypto.randomUUID(),
                 email: `${firstNames[i]?.toLowerCase()}.${lastNames[i]?.toLowerCase()}@example.com`,
                 firstName: firstNames[i]!,
@@ -87,7 +87,7 @@ async function seed() {
         ];
 
         console.log("🎉 Creating events...");
-        const createdEvents: NewEvent[] = [];
+        const createdEvents: EventInsert[] = [];
         const nowTime = Date.now();
         const nowDate = new Date();
 
@@ -108,7 +108,7 @@ async function seed() {
                 status = 'draft';
             }
 
-            const eventData: NewEvent = {
+            const eventData: EventInsert = {
                 id: crypto.randomUUID(),
                 name: eventNames[i]!,
                 description: `Join us for an amazing ${eventNames[i]?.toLowerCase()}! This will be an unforgettable experience.`,
@@ -130,7 +130,7 @@ async function seed() {
 
         // 3. Create Attendance Records
         console.log("✓ Creating attendance records...");
-        const attendanceRecords: NewAttendance[] = [];
+        const attendanceRecords: AttendanceInsert[] = [];
 
         for (const event of createdEvents) {
             // Skip draft and cancelled events
@@ -158,7 +158,7 @@ async function seed() {
                     checkOutTime = null;
                 }
 
-                const attendanceData: NewAttendance = {
+                const attendanceData: AttendanceInsert = {
                     id: crypto.randomUUID(),
                     eventId: event.id,
                     patronId: patron.id,
@@ -189,7 +189,7 @@ async function seed() {
             'Limited Edition Swag'
         ];
 
-        const loyaltyRecords: NewLoyalty[] = [];
+        const loyaltyRecords: LoyaltyInsert[] = [];
 
         for (const user of createdUsers) {
             // Calculate user's event attendance
@@ -206,7 +206,7 @@ async function seed() {
             // Create loyalty account record
             const issuedAt = new Date(Date.now() - Math.floor(Math.random() * 60 * 24 * 60 * 60 * 1000));
             
-            const loyaltyData: NewLoyalty = {
+            const loyaltyData: LoyaltyInsert = {
                 id: crypto.randomUUID(),
                 patronId: user.id,
                 description: `Loyalty account - ${tier.charAt(0).toUpperCase() + tier.slice(1)} member`,
@@ -226,7 +226,7 @@ async function seed() {
                     const rewardIssuedAt = new Date(Date.now() - Math.floor(Math.random() * 30 * 24 * 60 * 60 * 1000));
                     const rewardExpiresAt = new Date(rewardIssuedAt.getTime() + (90 * 24 * 60 * 60 * 1000));
 
-                    const rewardData: NewLoyalty = {
+                    const rewardData: LoyaltyInsert = {
                         id: crypto.randomUUID(),
                         patronId: user.id,
                         description: `Reward earned for attending ${Math.floor(Math.random() * 10) + 5} events`,

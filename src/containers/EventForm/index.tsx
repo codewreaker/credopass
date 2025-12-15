@@ -9,7 +9,7 @@ import {
   Trash2
 } from 'lucide-react';
 import { eventCollection as collection } from '../../collections/events.js';
-import type { Event, EventStatus } from '../../entities/schemas.js';
+import type { Event, EventStatus } from '../../db/schema.js';
 import { Button, Input, Select } from '../../components/ui/index.js';
 import './style.css';
 import type { LauncherState } from '../../store.js';
@@ -86,12 +86,12 @@ const EventForm = ({ initialData = {}, isEditing = false, onClose }: EventFormPr
     const now = new Date();
     const eventData = {
       name: formData.name,
-      description: formData.description || undefined,
+      description: formData.description || null,
       status: formData.status,
       startTime: new Date(formData.startTime),
       endTime: new Date(formData.endTime),
       location: formData.location,
-      capacity: formData.capacity ? parseInt(formData.capacity, 10) : undefined,
+      capacity: formData.capacity ? parseInt(formData.capacity, 10) : null,
       hostId: formData.hostId,
     };
 
@@ -114,7 +114,7 @@ const EventForm = ({ initialData = {}, isEditing = false, onClose }: EventFormPr
           id: crypto.randomUUID(),
           createdAt: now,
           updatedAt: now,
-        } as Event);
+        });
       }
       onClose?.();
     } catch (error) {

@@ -1,13 +1,133 @@
 // ============================================================================
 // FILE: server/db/schema.ts
 // Drizzle ORM schema definitions for all tables
+// Single source of truth for: Zod schemas, TypeScript types, and Drizzle tables
 // ============================================================================
 
 import { sqliteTable, text, integer, index } from 'drizzle-orm/sqlite-core';
 import { relations } from 'drizzle-orm';
+import { z } from 'zod';
 
 // ============================================================================
-// Users Table
+// Zod Enums (Source of Truth)
+// ============================================================================
+export const EventStatusEnum = z.enum(['draft', 'scheduled', 'ongoing', 'completed', 'cancelled']);
+export const LoyaltyTierEnum = z.enum(['bronze', 'silver', 'gold', 'platinum']);
+export const LiveUpdateTypeEnum = z.enum(['attendance_update', 'event_status_change', 'announcement', 'milestone', 'reward_earned']);
+
+// ============================================================================
+// Zod Schemas (Source of Truth)
+// ============================================================================
+
+// User Zod Schemas
+export const UserSchema = z.object({
+  id: z.string().uuid(),
+  email: z.string().email(),
+  firstName: z.string().min(1, "Firstname should be more than a character"),
+  lastName: z.string().min(1),
+  phone: z.string().nullable(),
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
+});
+
+export const CreateUserSchema = UserSchema.omit({ id: true, createdAt: true, updatedAt: true });
+export const UpdateUserSchema = CreateUserSchema.partial();
+
+// Event Zod Schemas
+export const EventSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string().min(1),
+  description: z.string().nullable(),
+  status: EventStatusEnum,
+  startTime: z.coerce.date(),
+  endTime: z.coerce.date(),
+  location: z.string().min(1),
+  capacity: z.number().int().positive().nullable(),
+  hostId: z.string().uuid(),
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
+});
+
+export const CreateEventSchema = EventSchema.omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const UpdateEventSchema = CreateEventSchema.partial();
+
+// Attendance Zod Schemas
+export const AttendanceSchema = z.object({
+  id: z.string().uuid(),
+  eventId: z.string().uuid(),
+  patronId: z.string().uuid(),
+  attended: z.boolean(),
+  checkInTime: z.coerce.date().nullable(),
+  checkOutTime: z.coerce.date().nullable(),
+});
+
+export const CreateAttendanceSchema = AttendanceSchema.omit({ id: true }).extend({
+  attended: z.boolean().default(false),
+  checkInTime: z.coerce.date().nullable().optional(),
+  checkOutTime: z.coerce.date().nullable().optional(),
+});
+
+export const CheckInSchema = z.object({
+  eventId: z.string().uuid(),
+  patronId: z.string().uuid(),
+});
+
+// Loyalty Zod Schemas
+export const LoyaltySchema = z.object({
+  id: z.string().uuid(),
+  patronId: z.string().uuid(),
+  description: z.string(),
+  tier: LoyaltyTierEnum.nullable(),
+  points: z.number().int().nonnegative().nullable(),
+  reward: z.string().nullable(),
+  issuedAt: z.coerce.date(),
+  expiresAt: z.coerce.date().nullable(),
+});
+
+export const CreateLoyaltySchema = LoyaltySchema.omit({ id: true });
+
+// ============================================================================
+// TypeScript Types (Inferred from Zod Schemas)
+// ============================================================================
+export type EventStatus = z.infer<typeof EventStatusEnum>;
+export type LoyaltyTier = z.infer<typeof LoyaltyTierEnum>;
+export type LiveUpdateType = z.infer<typeof LiveUpdateTypeEnum>;
+
+export type User = z.infer<typeof UserSchema>;
+export type NewUser = z.infer<typeof CreateUserSchema>;
+// For database operations that require id, createdAt, updatedAt
+export type UserInsert = z.infer<typeof UserSchema>;
+
+export type Event = z.infer<typeof EventSchema>;
+export type NewEvent = z.infer<typeof CreateEventSchema>;
+export type CreateEventInput = NewEvent;
+// For database operations that require id, createdAt, updatedAt
+export type EventInsert = z.infer<typeof EventSchema>;
+
+export type Attendance = z.infer<typeof AttendanceSchema>;
+export type NewAttendance = z.infer<typeof CreateAttendanceSchema>;
+// For database operations that require id
+export type AttendanceInsert = z.infer<typeof AttendanceSchema>;
+
+export type Loyalty = z.infer<typeof LoyaltySchema>;
+export type NewLoyalty = z.infer<typeof CreateLoyaltySchema>;
+// For database operations that require id
+export type LoyaltyInsert = z.infer<typeof LoyaltySchema>;
+
+export type CheckInInput = z.infer<typeof CheckInSchema>;
+
+// Aliases for backwards compatibility
+export type UserType = User;
+export type AttendanceType = Attendance;
+export type LoyaltyType = Loyalty;
+
+// ============================================================================
+// Drizzle Tables (for database operations)
 // ============================================================================
 export const users = sqliteTable('users', {
   id: text('id').primaryKey(),
@@ -22,9 +142,6 @@ export const users = sqliteTable('users', {
   index('idx_users_createdAt').on(table.createdAt),
 ]);
 
-// ============================================================================
-// Events Table
-// ============================================================================
 export const events = sqliteTable('events', {
   id: text('id').primaryKey(),
   name: text('name').notNull(),
@@ -45,9 +162,6 @@ export const events = sqliteTable('events', {
   index('idx_events_startTime').on(table.startTime),
 ]);
 
-// ============================================================================
-// Attendance Table
-// ============================================================================
 export const attendance = sqliteTable('attendance', {
   id: text('id').primaryKey(),
   eventId: text('eventId').notNull().references(() => events.id, { onDelete: 'cascade' }),
@@ -62,9 +176,6 @@ export const attendance = sqliteTable('attendance', {
   index('idx_attendance_unique').on(table.eventId, table.patronId),
 ]);
 
-// ============================================================================
-// Loyalty Table
-// ============================================================================
 export const loyalty = sqliteTable('loyalty', {
   id: text('id').primaryKey(),
   patronId: text('patronId').notNull().references(() => users.id, { onDelete: 'cascade' }),
@@ -82,7 +193,7 @@ export const loyalty = sqliteTable('loyalty', {
 ]);
 
 // ============================================================================
-// Relations
+// Drizzle Relations
 // ============================================================================
 export const usersRelations = relations(users, ({ many }) => ({
   hostedEvents: many(events),
@@ -115,16 +226,3 @@ export const loyaltyRelations = relations(loyalty, ({ one }) => ({
     references: [users.id],
   }),
 }));
-
-// Export types
-export type User = typeof users.$inferSelect;
-export type NewUser = typeof users.$inferInsert;
-
-export type Event = typeof events.$inferSelect;
-export type NewEvent = typeof events.$inferInsert;
-
-export type Attendance = typeof attendance.$inferSelect;
-export type NewAttendance = typeof attendance.$inferInsert;
-
-export type Loyalty = typeof loyalty.$inferSelect;
-export type NewLoyalty = typeof loyalty.$inferInsert;

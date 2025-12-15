@@ -3,7 +3,7 @@ import { QueryClient } from '@tanstack/query-core'
 import {
     queryCollectionOptions
 } from '@tanstack/query-db-collection'
-import { UserSchema, type UserType } from '../entities/schemas.js'
+import { type UserType } from '../db/schema.js'
 
 
 const queryClient = new QueryClient();
@@ -52,7 +52,5 @@ export const userCollection = createCollection(
       });
       if (!response.ok) throw new Error("Failed to delete user");
     },
-    
-    schema: UserSchema,
   })
 );

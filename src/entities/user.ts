@@ -1,16 +1,15 @@
 import { Loyalty } from "./loyalty.js";
 import { Attendance } from "./attendance.js";
-import { UserSchema } from "./schemas.js";
-import type { UserType, LoyaltyTier} from "./schemas.js";
+import { UserSchema, type UserType, type LoyaltyTier } from "../db/schema.js";
 
 export class User implements UserType {
   id: string;
   email: string;
   firstName: string;
   lastName: string;
-  createdAt: number;
-  updatedAt: number;
-  phone: string | undefined;
+  createdAt: Date;
+  updatedAt: Date;
+  phone: string | null;
   loyaltyTier: Loyalty;
   attendance: Attendance | null;
 
@@ -24,9 +23,9 @@ export class User implements UserType {
     this.email = email;
     this.firstName = firstName;
     this.lastName = lastName;
-    this.createdAt = Date.now();
-    this.updatedAt = Date.now();
-    this.phone = phone;
+    this.createdAt = new Date();
+    this.updatedAt = new Date();
+    this.phone = phone ?? null;
     this.loyaltyTier = new Loyalty(this.id);
     this.attendance = null;
   }

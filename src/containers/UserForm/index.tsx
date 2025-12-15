@@ -9,7 +9,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import { userCollection } from '../../collections/user.js';
-import type { UserType } from '../../entities/schemas.js';
+import type { UserType } from '../../db/schema.js';
 import { Button, Input } from '../../components/ui/index.js';
 import type { LauncherState } from '../../store.js';
 import './style.css';
@@ -60,12 +60,12 @@ const UserForm = ({ initialData = {}, isEditing = false, onClose }: UserFormProp
     e.preventDefault();
 
     setIsMutating(true);
-    const now = Date.now();
+    const now = new Date();
     const userData = {
       firstName: formData.firstName,
       lastName: formData.lastName,
       email: formData.email,
-      phone: formData.phone || undefined,
+      phone: formData.phone || null,
     };
 
     try {
@@ -83,7 +83,7 @@ const UserForm = ({ initialData = {}, isEditing = false, onClose }: UserFormProp
           id: crypto.randomUUID(),
           createdAt: now,
           updatedAt: now,
-        } as UserType);
+        });
       }
       onClose?.();
     } catch (error) {

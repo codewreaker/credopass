@@ -1,7 +1,7 @@
 import { createCollection } from '@tanstack/db'
 import { QueryClient } from '@tanstack/query-core'
 import { queryCollectionOptions } from '@tanstack/query-db-collection'
-import { EventSchema, type Event  } from '../entities/schemas.js'
+import { type Event } from '../db/schema.js'
 
 const queryClient = new QueryClient();
 
@@ -56,8 +56,6 @@ export const eventCollection = createCollection(
       });
       if (!response.ok) throw new Error("Failed to delete event");
     },
-    
-    schema: EventSchema,
   })
 );
 

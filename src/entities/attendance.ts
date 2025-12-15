@@ -1,4 +1,4 @@
-import type {  AttendanceType } from "./schemas.js";
+import type { AttendanceType } from "../db/schema.js";
 
 export class Attendance implements AttendanceType {
     id: string;
