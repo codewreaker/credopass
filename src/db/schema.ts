@@ -21,7 +21,7 @@ export const LiveUpdateTypeEnum = z.enum(['attendance_update', 'event_status_cha
 
 // User Zod Schemas
 export const UserSchema = z.object({
-  id: z.string().uuid(),
+  id: z.uuid(),
   email: z.string().email(),
   firstName: z.string().min(1, "Firstname should be more than a character"),
   lastName: z.string().min(1),
@@ -35,7 +35,7 @@ export const UpdateUserSchema = CreateUserSchema.partial();
 
 // Event Zod Schemas
 export const EventSchema = z.object({
-  id: z.string().uuid(),
+  id: z.uuid(),
   name: z.string().min(1),
   description: z.string().nullable(),
   status: EventStatusEnum,
@@ -43,7 +43,7 @@ export const EventSchema = z.object({
   endTime: z.coerce.date(),
   location: z.string().min(1),
   capacity: z.number().int().positive().nullable(),
-  hostId: z.string().uuid(),
+  hostId: z.uuid(),
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
 });
@@ -58,9 +58,9 @@ export const UpdateEventSchema = CreateEventSchema.partial();
 
 // Attendance Zod Schemas
 export const AttendanceSchema = z.object({
-  id: z.string().uuid(),
-  eventId: z.string().uuid(),
-  patronId: z.string().uuid(),
+  id: z.uuid(),
+  eventId: z.uuid(),
+  patronId: z.uuid(),
   attended: z.boolean(),
   checkInTime: z.coerce.date().nullable(),
   checkOutTime: z.coerce.date().nullable(),
@@ -73,14 +73,14 @@ export const CreateAttendanceSchema = AttendanceSchema.omit({ id: true }).extend
 });
 
 export const CheckInSchema = z.object({
-  eventId: z.string().uuid(),
-  patronId: z.string().uuid(),
+  eventId: z.uuid(),
+  patronId: z.uuid(),
 });
 
 // Loyalty Zod Schemas
 export const LoyaltySchema = z.object({
-  id: z.string().uuid(),
-  patronId: z.string().uuid(),
+  id: z.uuid(),
+  patronId: z.uuid(),
   description: z.string(),
   tier: LoyaltyTierEnum.nullable(),
   points: z.number().int().nonnegative().nullable(),
