@@ -1,25 +1,30 @@
 // ============================================================================
 // FILE: server/db/migrate.ts
-// Database migration script using Drizzle Kit
+// Database migration script using Drizzle Kit with PGlite
 // ============================================================================
 
-import { drizzle } from 'drizzle-orm/bun-sqlite';
-import { migrate } from 'drizzle-orm/bun-sqlite/migrator';
-import { Database } from 'bun:sqlite';
+import { PGlite } from '@electric-sql/pglite';
+import { drizzle } from 'drizzle-orm/pglite';
+import { migrate } from 'drizzle-orm/pglite/migrator';
 import path from 'node:path';
+import fs from 'node:fs';
 
 async function runMigrations() {
-  const dbPath = path.join(process.cwd(), 'data', 'dwellpass.db');
+  const dbPath = path.join(process.cwd(), 'data', 'dwellpass');
   
   console.log('🔄 Running migrations...');
   console.log(`📁 Database: ${dbPath}`);
   
-  const sqlite = new Database(dbPath, { create: true });
+  // Ensure the data directory exists
+  const dataDir = path.join(process.cwd(), 'data');
+  if (!fs.existsSync(dataDir)) {
+    fs.mkdirSync(dataDir, { recursive: true });
+  }
   
-  // Enable foreign keys
-  sqlite.run("PRAGMA foreign_keys = ON;");
+  const pglite = new PGlite(dbPath);
+  await pglite.waitReady;
   
-  const db = drizzle(sqlite);
+  const db = drizzle(pglite);
   
   try {
     await migrate(db, { migrationsFolder: './drizzle' });
@@ -28,7 +33,7 @@ async function runMigrations() {
     console.error('❌ Migration failed:', error);
     process.exit(1);
   } finally {
-    sqlite.close();
+    await pglite.close();
   }
 }
 

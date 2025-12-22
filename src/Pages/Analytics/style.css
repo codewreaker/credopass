@@ -5,8 +5,8 @@
 }
 
 .grid-item {
-  background-color: var(--card-bg);
-  border: 1px solid var(--border-color);
+  background-color: var(--card);
+  border: 1px solid var(--border);
   border-radius: 9px;
   padding: 1.125rem;
   transition: transform 0.2s, box-shadow 0.2s;
@@ -26,12 +26,12 @@
   cursor: move;
   opacity: 0;
   transition: opacity 0.2s;
-  background-color: var(--border-color);
+  background-color: var(--border);
   border-radius: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--text-secondary);
+  color: var(--muted-foreground);
   font-size: 0.7rem;
   z-index: 10;
   user-select: none;
@@ -44,8 +44,8 @@
 }
 
 .grid-item .drag-handle:hover {
-  background-color: var(--primary-yellow);
-  color: var(--darker-bg);
+  background-color: var(--primary);
+  color: var(--background-darker);
 }
 
 .stat-card {
@@ -74,7 +74,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--primary-yellow);
+  color: var(--primary);
 }
 
 .stat-change {
@@ -102,12 +102,12 @@
 .stat-value {
   font-size: 1.5rem;
   font-weight: 700;
-  color: var(--text-primary);
+  color: var(--foreground);
   margin-bottom: 0.1875rem;
 }
 
 .stat-label {
-  color: var(--text-secondary);
+  color: var(--muted-foreground);
   font-size: 1rem;
 }
 
@@ -124,19 +124,19 @@
   margin-bottom: 1.125rem;
 
   h3 {
-    color: var(--text-primary);
+    color: var(--foreground);
   }
 }
 
 .chart-subtitle {
-  color: var(--text-secondary);
+  color: var(--muted-foreground);
   font-size: 0.6375rem;
 }
 
 .chart-filter {
-  background-color: var(--darker-bg);
-  border: 1px solid var(--border-color);
-  color: var(--text-primary);
+  background-color: var(--background-darker);
+  border: 1px solid var(--border);
+  color: var(--foreground);
   padding: 0.375rem 0.75rem;
   border-radius: 4.5px;
   font-size: 0.6375rem;
@@ -161,7 +161,7 @@
   align-items: center;
   gap: 0.375rem;
   font-size: 0.6375rem;
-  color: var(--text-secondary);
+  color: var(--muted-foreground);
 }
 
 .legend-color {

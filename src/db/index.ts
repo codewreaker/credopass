@@ -1,9 +1,9 @@
 // ============================================================================
 // FILE: server/db/index.ts
-// SQLite database connection and configuration with Drizzle ORM
+// PGlite database connection and configuration with Drizzle ORM
 // ============================================================================
-import { drizzle, type BunSQLiteDatabase } from 'drizzle-orm/bun-sqlite';
-import { Database } from "bun:sqlite";
+import { PGlite } from '@electric-sql/pglite';
+import { drizzle, type PgliteDatabase } from 'drizzle-orm/pglite';
 import path from "node:path";
 import * as schema from './schema.js';
 
@@ -11,45 +11,34 @@ import * as schema from './schema.js';
 export * from './schema.js';
 
 // Singleton database instance
-let db: BunSQLiteDatabase<typeof schema> | null = null;
-let client: Database | null = null;
+let db: PgliteDatabase<typeof schema> | null = null;
+let client: PGlite | null = null;
 
 // Singleton client getter
-function getBunClient(dbPath: string = path.join(process.cwd(), "data", "dwellpass.db")): Database {
+async function getPGliteClient(dbPath: string = path.join(process.cwd(), "data", "dwellpass")): Promise<PGlite> {
   if (!client) {
-    client = new Database(dbPath, {
-      create: false,
-      strict: true, // Better error handling for missing params
-    });
-
-    // Enable WAL mode for better concurrent performance
-    client.run("PRAGMA journal_mode = WAL;");
-
-    // Other performance optimizations
-    client.run("PRAGMA synchronous = NORMAL;");
-    client.run("PRAGMA cache_size = -64000;"); // 64MB cache
-    client.run("PRAGMA temp_store = MEMORY;");
-    client.run("PRAGMA foreign_keys = ON;"); // Enable foreign key constraints
-    console.log(`✓ Database connected: ${dbPath}`);
+    client = new PGlite(dbPath);
+    await client.waitReady;
+    console.log(`✓ PGlite database connected: ${dbPath}`);
   }
 
   return client;
 }
 
 // Get Drizzle database instance
-export function getDatabase(): BunSQLiteDatabase<typeof schema> {
+export async function getDatabase(): Promise<PgliteDatabase<typeof schema>> {
   if (!db) {
-    const sqliteClient = getBunClient();
-    db = drizzle(sqliteClient, { schema });
+    const pgliteClient = await getPGliteClient();
+    db = drizzle(pgliteClient, { schema });
   }
 
   return db;
 }
 
 // Close database connection
-export function closeDatabase() {
+export async function closeDatabase() {
   if (client) {
-    client.close();
+    await client.close();
     client = null;
     db = null;
     console.log("✓ Database closed");

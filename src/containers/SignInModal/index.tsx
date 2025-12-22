@@ -1,7 +1,9 @@
 /* eslint-disable react-refresh/only-export-components */
 import React, { useState } from 'react';
 import { Mail, Lock, User, Eye, EyeOff } from 'lucide-react';
-import { Button, Input } from '../../components/ui/index.js';
+import { Button } from '../../components/ui/button.js';
+import { Input } from '../../components/ui/input.js';
+import { Label } from '../../components/ui/label.js';
 import type { LauncherState } from '../../store.js';
 import './style.css';
 
@@ -62,45 +64,59 @@ const SignInForm: React.FC<SignInFormProps> = ({ onClose }) => {
       <div className="modal-body">
         <form className="signin-form" onSubmit={handleSubmit}>
           {isSignUp && (
-            <Input
-              label="Full Name"
-              type="text"
-              id="name"
-              name="name"
-              placeholder="Enter your name"
-              value={formData.name}
-              onChange={handleChange}
-              required={isSignUp}
-              leftIcon={<User size={14} />}
-            />
+            <div className="form-group">
+              <Label className="form-label">
+                <User size={14} />
+                Full Name
+              </Label>
+              <Input
+                type="text"
+                id="name"
+                name="name"
+                placeholder="Enter your name"
+                value={formData.name}
+                onChange={handleChange}
+                required={isSignUp}
+              />
+            </div>
           )}
 
-          <Input
-            label="Email Address"
-            type="email"
-            id="email"
-            name="email"
-            placeholder="Enter your email"
-            value={formData.email}
-            onChange={handleChange}
-            required
-            leftIcon={<Mail size={14} />}
-          />
+          <div className="form-group">
+            <Label className="form-label">
+              <Mail size={14} />
+              Email Address
+            </Label>
+            <Input
+              type="email"
+              id="email"
+              name="email"
+              placeholder="Enter your email"
+              value={formData.email}
+              onChange={handleChange}
+              required
+            />
+          </div>
 
-          <Input
-            label="Password"
-            type={showPassword ? 'text' : 'password'}
-            id="password"
-            name="password"
-            placeholder="Enter your password"
-            value={formData.password}
-            onChange={handleChange}
-            required
-            leftIcon={<Lock size={14} />}
-            rightElement={PasswordToggleButton}
-          />
+          <div className="form-group">
+            <Label className="form-label">
+              <Lock size={14} />
+              Password
+            </Label>
+            <div className="input-wrapper has-right-element">
+              <Input
+                type={showPassword ? 'text' : 'password'}
+                id="password"
+                name="password"
+                placeholder="Enter your password"
+                value={formData.password}
+                onChange={handleChange}
+                required
+              />
+              {PasswordToggleButton}
+            </div>
+          </div>
 
-          <Button type="submit" variant="primary" className="signin-button">
+          <Button type="submit" variant="default" className="signin-button">
             {isSignUp ? 'Create Account' : 'Sign In'}
           </Button>
         </form>

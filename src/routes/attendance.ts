@@ -1,151 +1,12 @@
 // ============================================================================
 // FILE: server/api/attendance.ts
-// Attendance API - Using BaseAPI pattern
+// Attendance API - Direct Drizzle queries
 // ============================================================================
 
 import { Hono } from "hono";
 import { z } from "zod";
 import { eq, and, desc } from 'drizzle-orm';
-import { BaseAPI } from './BaseAPI.js';
-import { attendance, type Attendance, type AttendanceInsert, AttendanceSchema, CheckInSchema } from '../db/schema.js';
-
-// ============================================================================
-// AttendanceAPI - Extends BaseAPI with custom methods
-// ============================================================================
-
-class AttendanceAPI extends BaseAPI<Attendance, AttendanceInsert, typeof attendance> {
-  protected readonly table = attendance;
-  protected readonly tableName = 'attendance';
-
-  async findByEventId(eventId: string): Promise<Attendance[]> {
-    try {
-      return await this.db
-        .select()
-        .from(attendance)
-        .where(eq(attendance.eventId, eventId))
-        .orderBy(desc(attendance.checkInTime));
-    } catch (error) {
-      throw new Error(`Failed to find attendance by event: ${error}`);
-    }
-  }
-
-  async findByPatronId(patronId: string): Promise<Attendance[]> {
-    try {
-      return await this.db
-        .select()
-        .from(attendance)
-        .where(eq(attendance.patronId, patronId))
-        .orderBy(desc(attendance.checkInTime));
-    } catch (error) {
-      throw new Error(`Failed to find attendance by patron: ${error}`);
-    }
-  }
-
-  async findByEventAndPatron(eventId: string, patronId: string): Promise<Attendance | undefined> {
-    try {
-      const result = await this.db
-        .select()
-        .from(attendance)
-        .where(
-          and(
-            eq(attendance.eventId, eventId),
-            eq(attendance.patronId, patronId)
-          )
-        )
-        .limit(1);
-      
-      return result[0];
-    } catch (error) {
-      throw new Error(`Failed to find attendance by event and patron: ${error}`);
-    }
-  }
-
-  async findAttendedByEvent(eventId: string): Promise<Attendance[]> {
-    try {
-      return await this.db
-        .select()
-        .from(attendance)
-        .where(
-          and(
-            eq(attendance.eventId, eventId),
-            eq(attendance.attended, true)
-          )
-        )
-        .orderBy(desc(attendance.checkInTime));
-    } catch (error) {
-      throw new Error(`Failed to find attended records by event: ${error}`);
-    }
-  }
-
-  async checkIn(eventId: string, patronId: string, id: string): Promise<Attendance> {
-    try {
-      const existing = await this.findByEventAndPatron(eventId, patronId);
-      
-      if (existing) {
-        // Update existing record
-        const updated = await this.update(existing.id, {
-          attended: true,
-          checkInTime: new Date(),
-        });
-        
-        if (!updated) throw new Error('Failed to update attendance');
-        return updated;
-      } else {
-        // Create new record
-        return await this.create({
-          id,
-          eventId,
-          patronId,
-          attended: true,
-          checkInTime: new Date(),
-          checkOutTime: null,
-        });
-      }
-    } catch (error) {
-      throw new Error(`Failed to check in: ${error}`);
-    }
-  }
-
-  async checkOut(eventId: string, patronId: string): Promise<Attendance | undefined> {
-    try {
-      const existing = await this.findByEventAndPatron(eventId, patronId);
-      if (!existing) return undefined;
-
-      return await this.update(existing.id, {
-        checkOutTime: new Date(),
-      });
-    } catch (error) {
-      throw new Error(`Failed to check out: ${error}`);
-    }
-  }
-
-  async getEventStats(eventId: string): Promise<{
-    total: number;
-    attended: number;
-    checkedIn: number;
-    checkedOut: number;
-  }> {
-    try {
-      const records = await this.findByEventId(eventId);
-      
-      return {
-        total: records.length,
-        attended: records.filter(r => r.attended).length,
-        checkedIn: records.filter(r => r.checkInTime !== null).length,
-        checkedOut: records.filter(r => r.checkOutTime !== null).length,
-      };
-    } catch (error) {
-      throw new Error(`Failed to get event stats: ${error}`);
-    }
-  }
-}
-
-// Initialize API
-const attendanceAPI = new AttendanceAPI();
-
-// ============================================================================
-// HTTP Routes
-// ============================================================================
+import { getDatabase, attendance, AttendanceSchema, CheckInSchema } from '../db/index.js';
 
 const attendanceRouter = new Hono();
 
@@ -156,19 +17,31 @@ const UpdateAttendanceSchema = AttendanceSchema.partial().omit({ id: true });
 // GET /api/attendance - Get all attendance records
 attendanceRouter.get("/", async (c) => {
     try {
+        const db = await getDatabase();
         const eventId = c.req.query("eventId");
         const patronId = c.req.query("patronId");
         
-        let records;
         if (eventId) {
-            records = await attendanceAPI.findByEventId(eventId);
+            const result = await db
+                .select()
+                .from(attendance)
+                .where(eq(attendance.eventId, eventId))
+                .orderBy(desc(attendance.checkInTime));
+            return c.json(result);
         } else if (patronId) {
-            records = await attendanceAPI.findByPatronId(patronId);
+            const result = await db
+                .select()
+                .from(attendance)
+                .where(eq(attendance.patronId, patronId))
+                .orderBy(desc(attendance.checkInTime));
+            return c.json(result);
         } else {
-            records = await attendanceAPI.findAll();
+            const result = await db
+                .select()
+                .from(attendance)
+                .orderBy(desc(attendance.checkInTime));
+            return c.json(result);
         }
-        
-        return c.json(records);
     } catch (error) {
         console.error("Error fetching attendance:", error);
         return c.json({ error: "Failed to fetch attendance records" }, 500);
@@ -178,14 +51,19 @@ attendanceRouter.get("/", async (c) => {
 // GET /api/attendance/:id - Get attendance by ID
 attendanceRouter.get("/:id", async (c) => {
     try {
+        const db = await getDatabase();
         const id = c.req.param("id");
-        const record = await attendanceAPI.findById(id);
+        const result = await db
+            .select()
+            .from(attendance)
+            .where(eq(attendance.id, id))
+            .limit(1);
 
-        if (!record) {
+        if (!result[0]) {
             return c.json({ error: "Attendance record not found" }, 404);
         }
 
-        return c.json(record);
+        return c.json(result[0]);
     } catch (error) {
         console.error("Error fetching attendance:", error);
         return c.json({ error: "Failed to fetch attendance record" }, 500);
@@ -195,8 +73,20 @@ attendanceRouter.get("/:id", async (c) => {
 // GET /api/attendance/event/:eventId/stats - Get event attendance stats
 attendanceRouter.get("/event/:eventId/stats", async (c) => {
     try {
+        const db = await getDatabase();
         const eventId = c.req.param("eventId");
-        const stats = await attendanceAPI.getEventStats(eventId);
+        
+        const records = await db
+            .select()
+            .from(attendance)
+            .where(eq(attendance.eventId, eventId));
+        
+        const stats = {
+            total: records.length,
+            attended: records.filter(r => r.attended).length,
+            checkedIn: records.filter(r => r.checkInTime !== null).length,
+            checkedOut: records.filter(r => r.checkOutTime !== null).length,
+        };
 
         return c.json(stats);
     } catch (error) {
@@ -208,6 +98,7 @@ attendanceRouter.get("/event/:eventId/stats", async (c) => {
 // POST /api/attendance - Create attendance record
 attendanceRouter.post("/", async (c) => {
     try {
+        const db = await getDatabase();
         const body = await c.req.json();
         
         // Convert date strings to Date objects if present
@@ -216,9 +107,13 @@ attendanceRouter.post("/", async (c) => {
         if (body.checkOutTime) processedBody.checkOutTime = new Date(body.checkOutTime);
         
         const validated = CreateAttendanceSchema.parse(processedBody);
-        const record = await attendanceAPI.create(validated);
         
-        return c.json(record, 201);
+        const result = await db
+            .insert(attendance)
+            .values(validated)
+            .returning();
+        
+        return c.json(result[0], 201);
     } catch (error) {
         if (error instanceof z.ZodError) {
             return c.json({ error: "Validation failed", details: error.issues }, 400);
@@ -231,14 +126,48 @@ attendanceRouter.post("/", async (c) => {
 // POST /api/attendance/checkin - Check-in to event
 attendanceRouter.post("/checkin", async (c) => {
     try {
+        const db = await getDatabase();
         const body = await c.req.json();
         const validated = CheckInSchema.parse(body);
         
-        // Generate UUID for new record
-        const id = crypto.randomUUID();
-        const record = await attendanceAPI.checkIn(validated.eventId, validated.patronId, id);
+        // Check if record exists
+        const existing = await db
+            .select()
+            .from(attendance)
+            .where(
+                and(
+                    eq(attendance.eventId, validated.eventId),
+                    eq(attendance.patronId, validated.patronId)
+                )
+            )
+            .limit(1);
         
-        return c.json(record, 201);
+        if (existing[0]) {
+            // Update existing record
+            const result = await db
+                .update(attendance)
+                .set({
+                    attended: true,
+                    checkInTime: new Date(),
+                })
+                .where(eq(attendance.id, existing[0].id))
+                .returning();
+            return c.json(result[0], 200);
+        } else {
+            // Create new record
+            const result = await db
+                .insert(attendance)
+                .values({
+                    id: crypto.randomUUID(),
+                    eventId: validated.eventId,
+                    patronId: validated.patronId,
+                    attended: true,
+                    checkInTime: new Date(),
+                    checkOutTime: null,
+                })
+                .returning();
+            return c.json(result[0], 201);
+        }
     } catch (error) {
         if (error instanceof z.ZodError) {
             return c.json({ error: "Validation failed", details: error.issues }, 400);
@@ -251,16 +180,32 @@ attendanceRouter.post("/checkin", async (c) => {
 // POST /api/attendance/checkout - Check-out from event
 attendanceRouter.post("/checkout", async (c) => {
     try {
+        const db = await getDatabase();
         const body = await c.req.json();
         const validated = CheckInSchema.parse(body);
         
-        const record = await attendanceAPI.checkOut(validated.eventId, validated.patronId);
+        const existing = await db
+            .select()
+            .from(attendance)
+            .where(
+                and(
+                    eq(attendance.eventId, validated.eventId),
+                    eq(attendance.patronId, validated.patronId)
+                )
+            )
+            .limit(1);
         
-        if (!record) {
+        if (!existing[0]) {
             return c.json({ error: "Attendance record not found" }, 404);
         }
+
+        const result = await db
+            .update(attendance)
+            .set({ checkOutTime: new Date() })
+            .where(eq(attendance.id, existing[0].id))
+            .returning();
         
-        return c.json(record);
+        return c.json(result[0]);
     } catch (error) {
         if (error instanceof z.ZodError) {
             return c.json({ error: "Validation failed", details: error.issues }, 400);
@@ -273,6 +218,7 @@ attendanceRouter.post("/checkout", async (c) => {
 // PUT /api/attendance/:id - Update attendance
 attendanceRouter.put("/:id", async (c) => {
     try {
+        const db = await getDatabase();
         const id = c.req.param("id");
         const body = await c.req.json();
         
@@ -282,13 +228,18 @@ attendanceRouter.put("/:id", async (c) => {
         if (body.checkOutTime) processedBody.checkOutTime = new Date(body.checkOutTime);
         
         const validated = UpdateAttendanceSchema.parse(processedBody);
-        const record = await attendanceAPI.update(id, validated);
+        
+        const result = await db
+            .update(attendance)
+            .set(validated)
+            .where(eq(attendance.id, id))
+            .returning();
 
-        if (!record) {
+        if (!result[0]) {
             return c.json({ error: "Attendance record not found" }, 404);
         }
 
-        return c.json(record);
+        return c.json(result[0]);
     } catch (error) {
         if (error instanceof z.ZodError) {
             return c.json({ error: "Validation failed", details: error.issues }, 400);
@@ -301,12 +252,20 @@ attendanceRouter.put("/:id", async (c) => {
 // DELETE /api/attendance/:id - Delete attendance record
 attendanceRouter.delete("/:id", async (c) => {
     try {
+        const db = await getDatabase();
         const id = c.req.param("id");
-        const deleted = await attendanceAPI.delete(id);
-
-        if (!deleted) {
+        
+        const existing = await db
+            .select()
+            .from(attendance)
+            .where(eq(attendance.id, id))
+            .limit(1);
+            
+        if (!existing[0]) {
             return c.json({ error: "Attendance record not found" }, 404);
         }
+
+        await db.delete(attendance).where(eq(attendance.id, id));
 
         return c.json({ success: true }, 200);
     } catch (error) {

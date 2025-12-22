@@ -1,7 +1,7 @@
 import React from 'react';
 import { Search, Bell, Calendar, User, ChevronDown, Settings, LogOut } from 'lucide-react';
-import { Menu } from '@base-ui/react/menu';
-import { Button } from '../../components/ui/index.js';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '../../components/ui/dropdown-menu.js';
+import { Button } from '../../components/ui/button.js';
 import './style.css';
 import { useLauncher } from '../../store.js';
 import { launchEventForm } from '../EventForm/index.js';
@@ -37,43 +37,40 @@ export const TopNavBar: React.FC = () => {
 
 
       <div className="navbar-right">
-        <Button variant="primary" onClick={onNewEventClick} leftIcon={<Calendar size={14} />}>
+        <Button variant="default" onClick={onNewEventClick}>
+          <Calendar size={14} />
           New Event
         </Button>
 
-        <Button variant="icon" className="notification-btn">
+        <Button variant="ghost" size="icon" className="notification-btn">
           <Bell size={15} />
           <span className="notification-badge">3</span>
         </Button>
 
-        <Menu.Root>
-          <Menu.Trigger className="avatar-btn">
+        <DropdownMenu>
+          <DropdownMenuTrigger className="avatar-btn">
             <div className="avatar">
               <User size={15} />
             </div>
             <ChevronDown size={12} />
-          </Menu.Trigger>
+          </DropdownMenuTrigger>
 
-          <Menu.Portal>
-            <Menu.Positioner side="bottom" align="end" sideOffset={6}>
-              <Menu.Popup className="dropdown-menu">
-                <Menu.Item className="dropdown-item" onClick={onProfileClick}>
-                  <User size={14} />
-                  <span>Profile</span>
-                </Menu.Item>
-                <Menu.Item className="dropdown-item">
-                  <Settings size={14} />
-                  <span>Settings</span>
-                </Menu.Item>
-                <Menu.Separator className="dropdown-divider" />
-                <Menu.Item className="dropdown-item">
-                  <LogOut size={14} />
-                  <span>Logout</span>
-                </Menu.Item>
-              </Menu.Popup>
-            </Menu.Positioner>
-          </Menu.Portal>
-        </Menu.Root>
+          <DropdownMenuContent align="end" sideOffset={6}>
+            <DropdownMenuItem onClick={onProfileClick}>
+              <User size={14} />
+              <span>Profile</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              <Settings size={14} />
+              <span>Settings</span>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem>
+              <LogOut size={14} />
+              <span>Logout</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </nav>
   );

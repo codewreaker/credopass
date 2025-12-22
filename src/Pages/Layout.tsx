@@ -11,7 +11,7 @@ import {
   ChartNoAxesCombined,
   Database,
 } from "lucide-react";
-import "../App.css";
+import "./layout.css";
 
 
 export function RootLayout() {

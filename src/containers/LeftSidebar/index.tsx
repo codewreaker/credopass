@@ -4,7 +4,7 @@ import {
 } from 'lucide-react';
 import { Link, useLocation } from '@tanstack/react-router';
 import { useAppStore } from "../../store.js";
-import { Tooltip } from '../../components/ui/index.js';
+import { Tooltip } from '../../components/Tooltip/index.js';
 import './style.css';
 
 

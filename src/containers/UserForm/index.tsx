@@ -10,7 +10,9 @@ import {
 } from 'lucide-react';
 import { userCollection } from '../../collections/user.js';
 import type { UserType } from '../../db/schema.js';
-import { Button, Input } from '../../components/ui/index.js';
+import { Button } from '../../components/ui/button.js';
+import { Input } from '../../components/ui/input.js';
+import { Label } from '../../components/ui/label.js';
 import type { LauncherState } from '../../store.js';
 import './style.css';
 
@@ -131,53 +133,65 @@ const UserForm = ({ initialData = {}, isEditing = false, onClose }: UserFormProp
 
           {/* First Name & Last Name */}
           <div className="form-row">
-            <Input
-              label="First Name"
-              type="text"
-              name="firstName"
-              placeholder="John"
-              value={formData.firstName}
-              onChange={handleInputChange}
-              required
-              leftIcon={<UserIcon size={14} />}
-            />
-            <Input
-              label="Last Name"
-              type="text"
-              name="lastName"
-              placeholder="Doe"
-              value={formData.lastName}
-              onChange={handleInputChange}
-              required
-              leftIcon={<UserIcon size={14} />}
-            />
+            <div className="form-group">
+              <Label className="form-label">
+                <UserIcon size={14} />
+                First Name
+              </Label>
+              <Input
+                type="text"
+                name="firstName"
+                placeholder="John"
+                value={formData.firstName}
+                onChange={handleInputChange}
+                required
+              />
+            </div>
+            <div className="form-group">
+              <Label className="form-label">
+                <UserIcon size={14} />
+                Last Name
+              </Label>
+              <Input
+                type="text"
+                name="lastName"
+                placeholder="Doe"
+                value={formData.lastName}
+                onChange={handleInputChange}
+                required
+              />
+            </div>
           </div>
 
           {/* Email */}
           <div className="form-field-wrapper">
+            <Label className="form-label">
+              <Mail size={14} />
+              Email Address
+            </Label>
             <Input
-              label="Email Address"
               type="email"
               name="email"
               placeholder="john.doe@example.com"
               value={formData.email}
               onChange={handleInputChange}
               required
-              leftIcon={<Mail size={14} />}
             />
             <p className="field-hint">We'll use this to send you event updates</p>
           </div>
 
           {/* Phone Number */}
           <div className="form-field-wrapper">
+            <Label className="form-label">
+              <Phone size={14} />
+              Phone Number
+            </Label>
             <Input
-              label="Phone Number"
               type="tel"
               name="phone"
               placeholder="+1 (555) 000-0000"
               value={formData.phone}
               onChange={handleInputChange}
-              leftIcon={<Phone size={14} />}
             />
             <p className="field-hint">Optional - For important event notifications</p>
           </div>
@@ -198,11 +212,11 @@ const UserForm = ({ initialData = {}, isEditing = false, onClose }: UserFormProp
             {isEditing && (
               <Button
                 type="button"
-                variant="danger"
+                variant="destructive"
                 onClick={handleDelete}
                 disabled={isMutating}
-                leftIcon={<Trash2 size={14} />}
               >
+                <Trash2 size={14} />
                 Delete
               </Button>
             )}
@@ -217,10 +231,10 @@ const UserForm = ({ initialData = {}, isEditing = false, onClose }: UserFormProp
               </Button>
               <Button
                 type="submit"
-                variant="primary"
+                variant="default"
                 disabled={isMutating}
-                leftIcon={!isMutating && <UserPlus size={14} />}
               >
+                {!isMutating && <UserPlus size={14} />}
                 {isMutating ? 'Saving...' : isEditing ? 'Update Attendee' : 'Register Attendee'}
               </Button>
             </div>

@@ -10,7 +10,11 @@ import {
 } from 'lucide-react';
 import { eventCollection as collection } from '../../collections/events.js';
 import type { Event, EventStatus } from '../../db/schema.js';
-import { Button, Input, Select } from '../../components/ui/index.js';
+import { Button } from '../../components/ui/button.js';
+import { Input } from '../../components/ui/input.js';
+import { Label } from '../../components/ui/label.js';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select.js';
+import { Textarea } from '../../components/ui/textarea.js';
 import './style.css';
 import type { LauncherState } from '../../store.js';
 
@@ -149,14 +153,13 @@ const EventForm = ({ initialData = {}, isEditing = false, onClose }: EventFormPr
         <form className="event-form" onSubmit={handleSubmit}>
           {/* Event Name */}
           <div className="form-group full-width">
-            <label className="form-label">
+            <Label className="form-label">
               <CalendarIcon size={14} />
               Event Name
-            </label>
-            <input
+            </Label>
+            <Input
               type="text"
               name="name"
-              className="form-input"
               placeholder="Enter event name"
               value={formData.name}
               onChange={handleInputChange}
@@ -167,28 +170,26 @@ const EventForm = ({ initialData = {}, isEditing = false, onClose }: EventFormPr
           {/* Start & End Time */}
           <div className="form-row">
             <div className="form-group">
-              <label className="form-label">
+              <Label className="form-label">
                 <Clock size={14} />
                 Start Time
-              </label>
-              <input
+              </Label>
+              <Input
                 type="datetime-local"
                 name="startTime"
-                className="form-input"
                 value={formData.startTime}
                 onChange={handleInputChange}
                 required
               />
             </div>
             <div className="form-group">
-              <label className="form-label">
+              <Label className="form-label">
                 <Clock size={14} />
                 End Time
-              </label>
-              <input
+              </Label>
+              <Input
                 type="datetime-local"
                 name="endTime"
-                className="form-input"
                 value={formData.endTime}
                 onChange={handleInputChange}
                 required
@@ -197,48 +198,64 @@ const EventForm = ({ initialData = {}, isEditing = false, onClose }: EventFormPr
           </div>
 
           {/* Location */}
-          <Input
-            label="Location"
-            type="text"
-            name="location"
-            placeholder="Enter location"
-            value={formData.location}
-            onChange={handleInputChange}
-            required
-            leftIcon={<MapPin size={14} />}
-            className="full-width"
-          />
+          <div className="form-group full-width">
+            <Label className="form-label">
+              <MapPin size={14} />
+              Location
+            </Label>
+            <Input
+              type="text"
+              name="location"
+              placeholder="Enter location"
+              value={formData.location}
+              onChange={handleInputChange}
+              required
+            />
+          </div>
 
           {/* Status & Capacity */}
           <div className="form-row">
-            <Select
-              label="Status"
-              value={formData.status}
-              onValueChange={handleStatusChange}
-              options={statusOptions}
-              name="status"
-            />
-            <Input
-              label="Capacity"
-              type="number"
-              name="capacity"
-              placeholder="Max attendees"
-              value={formData.capacity}
-              onChange={handleInputChange}
-              leftIcon={<Users size={14} />}
-            />
+            <div className="form-group">
+              <Label className="form-label">Status</Label>
+              <Select value={formData.status} onValueChange={handleStatusChange}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    {statusOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="form-group">
+              <Label className="form-label">
+                <Users size={14} />
+                Capacity
+              </Label>
+              <Input
+                type="number"
+                name="capacity"
+                placeholder="Max attendees"
+                value={formData.capacity}
+                onChange={handleInputChange}
+              />
+            </div>
           </div>
 
           {/* Host ID */}
           <div className="form-group full-width">
-            <label className="form-label">
+            <Label className="form-label">
               <Users size={14} />
               Host ID
-            </label>
-            <input
+            </Label>
+            <Input
               type="text"
               name="hostId"
-              className="form-input"
               placeholder="Host ID (Current User)"
               value={formData.hostId}
               onChange={handleInputChange}
@@ -248,13 +265,12 @@ const EventForm = ({ initialData = {}, isEditing = false, onClose }: EventFormPr
 
           {/* Description */}
           <div className="form-group full-width">
-            <label className="form-label">
+            <Label className="form-label">
               <FileText size={14} />
               Description
-            </label>
-            <textarea
+            </Label>
+            <Textarea
               name="description"
-              className="form-textarea"
               placeholder="Enter event description (optional)"
               value={formData.description}
               onChange={handleInputChange}
@@ -267,7 +283,7 @@ const EventForm = ({ initialData = {}, isEditing = false, onClose }: EventFormPr
             {isEditing && (
               <Button
                 type="button"
-                variant="danger"
+                variant="destructive"
                 onClick={handleDelete}
                 disabled={isMutating}
               >
@@ -284,11 +300,10 @@ const EventForm = ({ initialData = {}, isEditing = false, onClose }: EventFormPr
             </Button>
             <Button
               type="submit"
-              variant="primary"
+              variant="default"
               disabled={isMutating}
-              isLoading={isMutating}
             >
-              {isEditing ? 'Update Event' : 'Create Event'}
+              {isMutating ? 'Saving...' : isEditing ? 'Update Event' : 'Create Event'}
             </Button>
           </div>
         </form>

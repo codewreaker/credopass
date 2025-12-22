@@ -1,7 +1,7 @@
 .left-sidebar {
   width: 180px;
-  background-color: var(--darker-bg);
-  border-right: 1px solid var(--border-color);
+  background-color: transparent;
+  border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -22,22 +22,22 @@
   right: -9px;
   width: 18px;
   height: 18px;
-  background-color: var(--card-bg);
-  border: 1px solid var(--border-color);
+  background-color: var(--card);
+  border: 1px solid var(--border);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--text-secondary);
+  color: var(--muted-foreground);
   cursor: pointer;
   z-index: 10;
   transition: all 0.2s;
 }
 
 .collapse-toggle:hover {
-  background-color: var(--primary-yellow);
-  color: var(--darker-bg);
-  border-color: var(--primary-yellow);
+  background-color: var(--primary);
+  color: var(--background-darker);
+  border-color: var(--primary);
 }
 
 .sidebar-menu {
@@ -54,7 +54,7 @@
   gap: 0.75rem;
   padding: 0.6375rem 0.75rem;
   background-color: transparent;
-  color: var(--text-secondary);
+  color: var(--muted-foreground);
   border-radius: 7.5px;
   transition: all 0.2s;
   width: 100%;
@@ -70,14 +70,14 @@
 }
 
 .sidebar-item:hover {
-  background-color: var(--card-bg);
-  color: var(--text-primary);
+  background-color: var(--card);
+  color: var(--foreground);
 }
 
 .sidebar-item.active {
-  background-color: var(--card-bg);
-  color: var(--primary-yellow);
-  box-shadow: 0 0 0 1px var(--primary-yellow);
+  background-color: var(--card);
+  color: var(--primary);
+  box-shadow: 0 0 0 1px var(--primary);
 }
 
 .sidebar-label {
@@ -92,7 +92,7 @@
 
 .sidebar-footer {
   padding: 0 0.5625rem;
-  border-top: 1px solid var(--border-color);
+  border-top: 1px solid var(--border);
   padding-top: 0.75rem;
 }
 
@@ -112,7 +112,7 @@
     width: 100%;
     height: 45px;
     border-right: none;
-    border-top: 1px solid var(--border-color);
+    border-top: 1px solid var(--border);
     padding: 0;
     z-index: 90;
   }

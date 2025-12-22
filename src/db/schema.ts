@@ -1,10 +1,10 @@
 // ============================================================================
 // FILE: server/db/schema.ts
-// Drizzle ORM schema definitions for all tables
+// Drizzle ORM schema definitions for all tables (PostgreSQL/PGlite)
 // Single source of truth for: Zod schemas, TypeScript types, and Drizzle tables
 // ============================================================================
 
-import { sqliteTable, text, integer, index } from 'drizzle-orm/sqlite-core';
+import { pgTable, text, integer, boolean, timestamp, index, uuid } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 import { z } from 'zod';
 
@@ -127,48 +127,48 @@ export type AttendanceType = Attendance;
 export type LoyaltyType = Loyalty;
 
 // ============================================================================
-// Drizzle Tables (for database operations)
+// Drizzle Tables (for database operations) - PostgreSQL/PGlite
 // ============================================================================
-export const users = sqliteTable('users', {
-  id: text('id').primaryKey(),
+export const users = pgTable('users', {
+  id: uuid('id').primaryKey().defaultRandom(),
   email: text('email').notNull().unique(),
   firstName: text('firstName').notNull(),
   lastName: text('lastName').notNull(),
   phone: text('phone'),
-  createdAt: integer('createdAt', { mode: 'timestamp_ms' }).notNull(),
-  updatedAt: integer('updatedAt', { mode: 'timestamp_ms' }).notNull(),
+  createdAt: timestamp('createdAt', { mode: 'date', withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updatedAt', { mode: 'date', withTimezone: true }).notNull().defaultNow(),
 }, (table) => [
   index('idx_users_email').on(table.email),
   index('idx_users_createdAt').on(table.createdAt),
 ]);
 
-export const events = sqliteTable('events', {
-  id: text('id').primaryKey(),
+export const events = pgTable('events', {
+  id: uuid('id').primaryKey().defaultRandom(),
   name: text('name').notNull(),
   description: text('description'),
   status: text('status', { 
     enum: ['draft', 'scheduled', 'ongoing', 'completed', 'cancelled'] 
   }).notNull(),
-  startTime: integer('startTime', { mode: 'timestamp_ms' }).notNull(),
-  endTime: integer('endTime', { mode: 'timestamp_ms' }).notNull(),
+  startTime: timestamp('startTime', { mode: 'date', withTimezone: true }).notNull(),
+  endTime: timestamp('endTime', { mode: 'date', withTimezone: true }).notNull(),
   location: text('location').notNull(),
   capacity: integer('capacity'),
-  hostId: text('hostId').notNull().references(() => users.id, { onDelete: 'cascade' }),
-  createdAt: integer('createdAt', { mode: 'timestamp_ms' }).notNull(),
-  updatedAt: integer('updatedAt', { mode: 'timestamp_ms' }).notNull(),
+  hostId: uuid('hostId').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  createdAt: timestamp('createdAt', { mode: 'date', withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updatedAt', { mode: 'date', withTimezone: true }).notNull().defaultNow(),
 }, (table) => [
   index('idx_events_status').on(table.status),
   index('idx_events_hostId').on(table.hostId),
   index('idx_events_startTime').on(table.startTime),
 ]);
 
-export const attendance = sqliteTable('attendance', {
-  id: text('id').primaryKey(),
-  eventId: text('eventId').notNull().references(() => events.id, { onDelete: 'cascade' }),
-  patronId: text('patronId').notNull().references(() => users.id, { onDelete: 'cascade' }),
-  attended: integer('attended', { mode: 'boolean' }).notNull().default(false),
-  checkInTime: integer('checkInTime', { mode: 'timestamp_ms' }),
-  checkOutTime: integer('checkOutTime', { mode: 'timestamp_ms' }),
+export const attendance = pgTable('attendance', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  eventId: uuid('eventId').notNull().references(() => events.id, { onDelete: 'cascade' }),
+  patronId: uuid('patronId').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  attended: boolean('attended').notNull().default(false),
+  checkInTime: timestamp('checkInTime', { mode: 'date', withTimezone: true }),
+  checkOutTime: timestamp('checkOutTime', { mode: 'date', withTimezone: true }),
 }, (table) => [
   index('idx_attendance_eventId').on(table.eventId),
   index('idx_attendance_patronId').on(table.patronId),
@@ -176,17 +176,17 @@ export const attendance = sqliteTable('attendance', {
   index('idx_attendance_unique').on(table.eventId, table.patronId),
 ]);
 
-export const loyalty = sqliteTable('loyalty', {
-  id: text('id').primaryKey(),
-  patronId: text('patronId').notNull().references(() => users.id, { onDelete: 'cascade' }),
+export const loyalty = pgTable('loyalty', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  patronId: uuid('patronId').notNull().references(() => users.id, { onDelete: 'cascade' }),
   description: text('description').notNull(),
   tier: text('tier', { 
     enum: ['bronze', 'silver', 'gold', 'platinum'] 
   }),
   points: integer('points').default(0),
   reward: text('reward'),
-  issuedAt: integer('issuedAt', { mode: 'timestamp_ms' }).notNull(),
-  expiresAt: integer('expiresAt', { mode: 'timestamp_ms' }),
+  issuedAt: timestamp('issuedAt', { mode: 'date', withTimezone: true }).notNull().defaultNow(),
+  expiresAt: timestamp('expiresAt', { mode: 'date', withTimezone: true }),
 }, (table) => [
   index('idx_loyalty_patronId').on(table.patronId),
   index('idx_loyalty_tier').on(table.tier),

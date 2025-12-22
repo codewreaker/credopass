@@ -1,6 +1,6 @@
 // ============================================================================
 // FILE: server/index.ts
-// Main Hono server entry point with Drizzle ORM
+// Main Hono server entry point with Drizzle ORM (PGlite)
 // ============================================================================
 
 import { Hono } from "hono";
@@ -18,7 +18,7 @@ import { isDevelopment } from 'std-env';
 const THROTTLE_DELAY = 0;
 
 // Initialize database connection
-getDatabase();
+await getDatabase();
 console.log("✓ Database initialized");
 
 // Create Hono app

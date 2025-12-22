@@ -30,6 +30,9 @@ dist-ssr
 data/*.db
 data/*.db-shm
 data/*.db-wal
+data/dwellpass/
+
+drizzle/*
 
 # But keep the directory structure
 !data/.gitkeepcerts/

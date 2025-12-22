@@ -2,7 +2,7 @@
 .grid-table-container {
   border-radius: 8px;
   overflow: hidden;
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--border);
   height: calc(100% - 80px);
 }
 
@@ -25,15 +25,15 @@
     justify-content: space-between;
 
     h2 {
-      color: var(--text-primary);
+      color: var(--foreground);
       margin-bottom: 0.1875rem;
       font-weight: bolder;
       font-size: 1rem;
     }
 
     .subtitle {
-      color: var(--dark-bg);
-      background-color: var(--primary-yellow);
+      color: var(--background);
+      background-color: var(--primary);
       font-size: 0.7rem;
       font-weight: bolder;
       border-radius: 6px;
@@ -104,7 +104,7 @@
 
 .membership-badge.platinum {
   background-color: rgba(212, 255, 0, 0.2);
-  color: var(--primary-yellow);
+  color: var(--primary);
 }
 
 .membership-badge.gold {
@@ -133,7 +133,7 @@
 .attendance-bar {
   flex: 1;
   height: 6px;
-  background-color: var(--darker-bg);
+  background-color: var(--background-darker);
   border-radius: 3px;
   overflow: hidden;
 }
@@ -147,7 +147,7 @@
 .attendance-percentage {
   font-size: 0.6375rem;
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--foreground);
   min-width: 30px;
   text-align: right;
 }
@@ -155,7 +155,7 @@
 /* Action Buttons */
 .action-btn {
   background-color: transparent;
-  color: var(--text-secondary);
+  color: var(--muted-foreground);
   padding: 0.375rem;
   border-radius: 4.5px;
   transition: background-color 0.2s, color 0.2s;
@@ -165,8 +165,8 @@
 }
 
 .action-btn:hover {
-  background-color: var(--border-color);
-  color: var(--primary-yellow);
+  background-color: var(--border);
+  color: var(--primary);
 }
 
 /* Responsive Design */

@@ -10,7 +10,7 @@ import {
   Plus,
 } from 'lucide-react';
 import type { Event } from '../../../db/schema.js';
-import { Button } from '../../../components/ui/index.js';
+import { Button } from '../../../components/ui/button.js';
 import type { EventFormProps } from '../../../containers/EventForm/index.js';
 import type { EventCollection } from '../../../collections/events.js';
 import './style.css';
@@ -170,7 +170,8 @@ export default function CalendarPage({
     <div className="calendar-page">
       <div className="calendar-header">
         <h2>Events Calendar</h2>
-        <Button variant="primary" onClick={handleAddEventClick} leftIcon={<Plus size={16} />}>
+        <Button variant="default" onClick={handleAddEventClick}>
+          <Plus size={16} />
           New Event
         </Button>
       </div>

@@ -25,18 +25,18 @@ interface GridTableProps extends AgGridReactProps {
 // to use myTheme in an application, pass it to the theme grid option
 const theme = themeMaterial
   .withParams({
-    backgroundColor: 'var(--dark-bg)',
-    headerBackgroundColor: 'var(--darker-bg)',
-    headerTextColor: 'var(--primary-yellow)',
-    oddRowBackgroundColor: 'var(--card-bg)',
+    backgroundColor: 'var(--background)',
+    headerBackgroundColor: 'var(--background-darker)',
+    headerTextColor: 'var(--primary)',
+    oddRowBackgroundColor: 'var(--card)',
     rowHoverColor: 'rgba(212, 255, 0, 0.05)',
     selectedRowBackgroundColor: 'rgba(212, 255, 0, 0.1)',
-    borderColor: 'var(--border-color)',
-    foregroundColor: 'var(--text-primary)',
+    borderColor: 'var(--border)',
+    foregroundColor: 'var(--foreground)',
     browserColorScheme: "dark",
-    checkboxUncheckedBackgroundColor: 'var(--primary-yellow)',
-    checkboxCheckedBackgroundColor: 'var(--primary-yellow)',
-    checkboxIndeterminateBackgroundColor: 'var(--primary-yellow)',
+    checkboxUncheckedBackgroundColor: 'var(--primary)',
+    checkboxCheckedBackgroundColor: 'var(--primary)',
+    checkboxIndeterminateBackgroundColor: 'var(--primary)',
     chromeBackgroundColor: {
       ref: "foregroundColor",
       mix: 0.07,

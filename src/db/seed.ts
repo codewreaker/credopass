@@ -1,10 +1,10 @@
 // ============================================================================
 // FILE: server/db/seed.ts
-// Database seeding script with Drizzle ORM
+// Database seeding script with Drizzle ORM (PGlite)
 // ============================================================================
 
 import { desc } from 'drizzle-orm';
-import { getDatabase } from "./index.js";
+import { getDatabase, closeDatabase } from "./index.js";
 import { users, events, attendance, loyalty } from "./schema.js";
 import type { UserInsert, EventInsert, AttendanceInsert, LoyaltyInsert } from "./schema.js";
 
@@ -12,7 +12,7 @@ console.log("🌱 Starting database seed...\n");
 
 async function seed() {
     try {
-        const db = getDatabase();
+        const db = await getDatabase();
 
         // Check if data already exists
         const existingUsers = await db.select().from(users).orderBy(desc(users.createdAt));
@@ -252,11 +252,13 @@ async function seed() {
         console.log(`   Attendance Records: ${attendanceRecords.length}`);
         console.log(`   Loyalty Records: ${loyaltyRecords.length}`);
         console.log("\n✅ Database seed completed successfully!");
+        await closeDatabase();
         process.exit(0);
 
     } catch (error) {
         console.error("\n❌ Seed failed:", error);
         console.error(error);
+        await closeDatabase();
         process.exit(1);
     }
 }

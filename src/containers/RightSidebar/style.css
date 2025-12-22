@@ -1,6 +1,6 @@
 .right-sidebar {
   width: 300px;
-  background-color: var(--darker-bg);
+  background-color: transparent;
   padding: 0.9375rem;
   height: calc(100vh - 52.5px);
   overflow-y: auto;
@@ -30,13 +30,13 @@
   left: -9px;
   width: 18px;
   height: 18px;
-  background-color: var(--card-bg);
-  border: 1px solid var(--border-color);
+  background-color: var(--card);
+  border: 1px solid var(--border);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--text-secondary);
+  color: var(--muted-foreground);
   cursor: pointer;
   z-index: 10;
   transition: all 0.2s;
@@ -44,14 +44,14 @@
 
 
 .collapse-toggle-right:hover {
-  background-color: var(--primary-yellow);
-  color: var(--darker-bg);
-  border-color: var(--primary-yellow);
+  background-color: var(--primary);
+  color: var(--background-darker);
+  border-color: var(--primary);
 }
 
 .loyalty-card {
-  background: linear-gradient(135deg, #2a2a2a 0%, #1f1f1f 100%);
-  border: 1px solid var(--border-color);
+  background: var(--card);
+  border: 1px solid var(--border);
   border-radius: 9px;
   padding: 0.9375rem;
   box-shadow: 0 3px 9px rgba(0, 0, 0, 0.3);
@@ -65,11 +65,11 @@
 }
 
 .star-icon {
-  color: var(--primary-yellow);
+  color: var(--primary);
 }
 
 .card-header h3 {
-  color: var(--text-primary);
+  color: var(--foreground);
 }
 
 .card-content {
@@ -85,8 +85,8 @@
 .level-badge {
   display: inline-block;
   padding: 0.375rem 1.125rem;
-  background: linear-gradient(135deg, var(--primary-yellow), var(--secondary-yellow));
-  color: var(--darker-bg);
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  color: var(--primary);
   border-radius: 15px;
   font-weight: 700;
   font-size: 1rem;
@@ -95,7 +95,7 @@
 
 .level-text {
   margin-top: 0.375rem;
-  color: var(--text-secondary);
+  color: var(--muted-foreground);
   font-size: 0.6375rem;
 }
 
@@ -116,23 +116,23 @@
 .stat-value {
   font-size: 1.125rem;
   font-weight: 700;
-  color: var(--primary-yellow);
+  color: var(--primary);
 }
 
 .stat-label {
   font-size: 0.6rem;
-  color: var(--text-secondary);
+  color: var(--muted-foreground);
 }
 
 .stat-divider {
   width: 1px;
   height: 30px;
-  background-color: var(--border-color);
+  background-color: var(--border);
 }
 
 .progress-bar {
   height: 6px;
-  background-color: var(--card-bg);
+  background-color: var(--card);
   border-radius: 3px;
   overflow: hidden;
   margin-top: 0.375rem;
@@ -140,21 +140,21 @@
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, var(--primary-yellow), var(--secondary-yellow));
+  background: linear-gradient(90deg, var(--primary), var(--secondary));
   border-radius: 3px;
   transition: width 0.3s;
 }
 
 .progress-text {
   text-align: center;
-  color: var(--text-secondary);
+  color: var(--muted-foreground);
   font-size: 0.6rem;
   margin-top: 0.375rem;
 }
 
 .calendar-widget {
-  background-color: var(--card-bg);
-  border: 1px solid var(--border-color);
+  background-color: var(--card);
+  border: 1px solid var(--border);
   border-radius: 9px;
   padding: 0.9375rem;
 }
@@ -176,20 +176,20 @@
 
 .calendar-month {
   font-size: 1rem;
-  color: var(--text-primary);
+  color: var(--foreground);
   font-weight: 600;
 }
 
 .calendar-nav-btn {
   background-color: transparent;
-  color: var(--text-secondary);
+  color: var(--muted-foreground);
   padding: 0.1875rem;
   border-radius: 3px;
   transition: background-color 0.2s;
 }
 
 .calendar-nav-btn:hover {
-  background-color: var(--border-color);
+  background-color: var(--border);
 }
 
 .calendar-grid {
@@ -206,7 +206,7 @@
 .calendar-weekday {
   text-align: center;
   font-size: 0.5625rem;
-  color: var(--text-secondary);
+  color: var(--muted-foreground);
   padding: 0.1875rem;
   font-weight: 600;
 }
@@ -223,7 +223,7 @@
   align-items: center;
   justify-content: center;
   font-size: 0.6375rem;
-  color: var(--text-primary);
+  color: var(--foreground);
   border-radius: 4.5px;
   position: relative;
   cursor: pointer;
@@ -231,7 +231,7 @@
 }
 
 .calendar-day:not(.empty):hover {
-  background-color: var(--border-color);
+  background-color: var(--border);
 }
 
 .calendar-day.empty {
@@ -239,8 +239,8 @@
 }
 
 .calendar-day.today {
-  background-color: var(--primary-yellow);
-  color: var(--darker-bg);
+  background-color: var(--primary);
+  color: var(--background-darker);
   font-weight: 700;
 }
 
@@ -250,12 +250,12 @@
   bottom: 3px;
   width: 3px;
   height: 3px;
-  background-color: var(--primary-yellow);
+  background-color: var(--primary);
   border-radius: 50%;
 }
 
 .calendar-day.today.has-event::after {
-  background-color: var(--darker-bg);
+  background-color: var(--background-darker);
 }
 
 .event-dot {
@@ -263,13 +263,13 @@
   bottom: 3px;
   width: 3px;
   height: 3px;
-  background-color: var(--primary-yellow);
+  background-color: var(--primary);
   border-radius: 50%;
 }
 
 .upcoming-events {
-  background-color: var(--card-bg);
-  border: 1px solid var(--border-color);
+  background-color: var(--card);
+  border: 1px solid var(--border);
   border-radius: 9px;
   padding: 0.9375rem;
 }
@@ -277,7 +277,7 @@
 .upcoming-events h4 {
   font-size: 0.7125rem;
   margin-bottom: 0.75rem;
-  color: var(--text-primary);
+  color: var(--foreground);
 }
 
 .event-list {
@@ -290,7 +290,7 @@
   display: flex;
   gap: 0.75rem;
   padding: 0.5625rem;
-  background-color: var(--darker-bg);
+  background-color: var(--background-darker);
   border-radius: 6px;
   transition: transform 0.2s;
 }
@@ -303,7 +303,7 @@
   display: flex;
   align-items: center;
   gap: 0.375rem;
-  color: var(--primary-yellow);
+  color: var(--primary);
   font-size: 0.6375rem;
   font-weight: 600;
   white-space: nowrap;
@@ -315,14 +315,14 @@
 
 .event-title {
   font-size: 1rem;
-  color: var(--text-primary);
+  color: var(--foreground);
   font-weight: 500;
   margin-bottom: 0.1875rem;
 }
 
 .event-time {
   font-size: 0.6rem;
-  color: var(--text-secondary);
+  color: var(--muted-foreground);
 }
 
 @media (max-width: 1400px) {
