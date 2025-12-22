@@ -14,7 +14,6 @@
 
 :root {
   --primary-yellow: oklch(93.604% 0.22511 121.257);
-  /*--secondary-yellow: #e8ff66;*/
   --success-green: #00ff88;
   --error-red: #ff4444;
   --background: oklch(1 0 0);
@@ -26,7 +25,7 @@
   --popover-foreground: oklch(0.145 0 0);
   --primary: oklch(93.604% 0.22511 121.257);
   --primary-foreground: oklch(0.99 0.02 95);
-  --secondary: oklch(0.967 0.001 286.375);
+  --secondary: oklch(95.471% 0.17671 117.115);
   --secondary-foreground: oklch(0.21 0.006 285.885);
   --muted: oklch(0.97 0 0);
   --muted-foreground: oklch(0.556 0 0);
@@ -62,7 +61,7 @@
   --popover-foreground: oklch(0.985 0 0);
   --primary: oklch(93.604% 0.22511 121.257);
   --primary-foreground: oklch(0.28 0.07 46);
-  --secondary: oklch(0.274 0.006 286.033);
+  --secondary: oklch(95.471% 0.17671 117.115);
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.269 0 0);
   --muted-foreground: oklch(0.708 0 0);
@@ -94,7 +93,7 @@
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: var(--dark-bg);
+  background-color: var(--background);
   color: var(--foreground);
 }
 

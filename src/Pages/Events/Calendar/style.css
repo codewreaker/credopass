@@ -399,7 +399,7 @@
 .btn-save {
   flex: 1;
   padding: 0.625rem;
-  background: linear-gradient(135deg, var(--primary), var(--secondary-yellow));
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
   color: var(--background-darker);
   border-radius: 7.5px;
   font-weight: 700;

@@ -42,7 +42,7 @@
 .logo-icon {
   width: 27px;
   height: 27px;
-  background: linear-gradient(135deg, var(--primary), var(--secondary-yellow));
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
   border-radius: 6px;
   display: flex;
   align-items: center;
@@ -139,67 +139,6 @@
   color: var(--primary);
 }
 
-/* Dropdown menu - Base UI Menu styles */
-.dropdown-menu {
-  min-width: 135px;
-  background-color: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 0.375rem;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
-  outline: none;
-}
-
-/* Animation states for dropdown */
-.dropdown-menu[data-starting-style],
-.dropdown-menu[data-ending-style] {
-  opacity: 0;
-  transform: translateY(-4px);
-}
-
-.dropdown-menu[data-open] {
-  opacity: 1;
-  transform: translateY(0);
-  transition: opacity 0.15s ease-out, transform 0.15s ease-out;
-}
-
-.dropdown-item {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5625rem 0.75rem;
-  color: var(--foreground);
-  cursor: pointer;
-  border-radius: 4.5px;
-  font-size: 0.875rem;
-  transition: background-color 0.2s;
-  outline: none;
-  background: transparent;
-  border: none;
-  width: 100%;
-  text-align: left;
-}
-
-.dropdown-item:hover,
-.dropdown-item[data-highlighted] {
-  background-color: var(--border);
-}
-
-.dropdown-item svg {
-  color: var(--muted-foreground);
-}
-
-.dropdown-item:hover svg,
-.dropdown-item[data-highlighted] svg {
-  color: var(--foreground);
-}
-
-.dropdown-divider {
-  height: 1px;
-  background-color: var(--border);
-  margin: 0.375rem 0;
-}
-
 @media (max-width: 1024px) {
   .nav-links {
     display: none;
@@ -221,13 +160,5 @@
   
   .search-container {
     display: none;
-  }
-  
-  .new-event-btn span {
-    display: none;
-  }
-  
-  .new-event-btn {
-    padding: 0.6rem;
   }
 }

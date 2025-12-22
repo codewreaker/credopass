@@ -25,7 +25,7 @@ interface GridTableProps extends AgGridReactProps {
 // to use myTheme in an application, pass it to the theme grid option
 const theme = themeMaterial
   .withParams({
-    backgroundColor: 'var(--dark-bg)',
+    backgroundColor: 'var(--background)',
     headerBackgroundColor: 'var(--background-darker)',
     headerTextColor: 'var(--primary)',
     oddRowBackgroundColor: 'var(--card)',

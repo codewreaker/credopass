@@ -131,7 +131,7 @@
 /* Dark theme support */
 @media (prefers-color-scheme: dark) {
   .modal-container {
-    background: var(--dark-bg);
+    background: var(--background);
     color: #f9fafb;
   }
 
