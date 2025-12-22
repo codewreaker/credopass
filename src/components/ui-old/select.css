@@ -13,10 +13,10 @@
   justify-content: space-between;
   width: 100%;
   padding: 0.6375rem 0.75rem;
-  background-color: var(--darker-bg);
-  border: 1px solid var(--border-color);
+  background-color: var(--background-darker);
+  border: 1px solid var(--border);
   border-radius: 7.5px;
-  color: var(--text-primary);
+  color: var(--foreground);
   font-size: 0.875rem;
   font-family: inherit;
   cursor: pointer;
@@ -25,7 +25,7 @@
 }
 
 .select-trigger:hover:not(:disabled) {
-  border-color: var(--text-secondary);
+  border-color: var(--muted-foreground);
 }
 
 .select-trigger:focus,
@@ -39,14 +39,14 @@
 }
 
 .select-trigger[data-placeholder] {
-  color: var(--text-secondary);
+  color: var(--muted-foreground);
 }
 
 /* Dropdown icon */
 .select-icon {
   display: flex;
   align-items: center;
-  color: var(--text-secondary);
+  color: var(--muted-foreground);
   transition: transform 0.2s;
 }
 
@@ -62,8 +62,8 @@
 /* Popup container */
 .select-popup {
   min-width: var(--anchor-width);
-  background-color: var(--card-bg);
-  border: 1px solid var(--border-color);
+  background-color: var(--card);
+  border: 1px solid var(--border);
   border-radius: 6px;
   padding: 0.375rem;
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
@@ -91,7 +91,7 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.5625rem 0.75rem;
-  color: var(--text-primary);
+  color: var(--foreground);
   cursor: pointer;
   border-radius: 4.5px;
   font-size: 0.875rem;
@@ -101,7 +101,7 @@
 
 .select-item:hover,
 .select-item[data-highlighted] {
-  background-color: var(--border-color);
+  background-color: var(--border);
 }
 
 .select-item[data-selected] {

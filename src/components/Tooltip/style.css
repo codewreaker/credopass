@@ -8,9 +8,9 @@
 
 .tooltip-popup {
   padding: 6px 10px;
-  background-color: var(--card-bg);
-  color: var(--text-primary);
-  border: 1px solid var(--border-color);
+  background-color: var(--card);
+  color: var(--foreground);
+  border: 1px solid var(--border);
   border-radius: 6px;
   font-size: 0.75rem;
   line-height: 1.4;
@@ -35,8 +35,8 @@
   width: 10px;
   height: 10px;
   transform: rotate(45deg);
-  background: var(--card-bg);
-  border: 1px solid var(--border-color);
+  background: var(--card);
+  border: 1px solid var(--border);
   z-index: -1;
 }
 

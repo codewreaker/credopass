@@ -26,13 +26,13 @@ interface GridTableProps extends AgGridReactProps {
 const theme = themeMaterial
   .withParams({
     backgroundColor: 'var(--dark-bg)',
-    headerBackgroundColor: 'var(--darker-bg)',
+    headerBackgroundColor: 'var(--background-darker)',
     headerTextColor: 'var(--primary)',
-    oddRowBackgroundColor: 'var(--card-bg)',
+    oddRowBackgroundColor: 'var(--card)',
     rowHoverColor: 'rgba(212, 255, 0, 0.05)',
     selectedRowBackgroundColor: 'rgba(212, 255, 0, 0.1)',
-    borderColor: 'var(--border-color)',
-    foregroundColor: 'var(--text-primary)',
+    borderColor: 'var(--border)',
+    foregroundColor: 'var(--foreground)',
     browserColorScheme: "dark",
     checkboxUncheckedBackgroundColor: 'var(--primary)',
     checkboxCheckedBackgroundColor: 'var(--primary)',

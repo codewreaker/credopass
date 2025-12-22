@@ -4,6 +4,7 @@
 @import "@fontsource-variable/inter";
 
 @custom-variant dark (&:is(.dark *));
+
 /* 
 * {
   margin: 0;
@@ -14,16 +15,11 @@
 :root {
   --primary-yellow: oklch(93.604% 0.22511 121.257);
   /*--secondary-yellow: #e8ff66;
-  --dark-bg: #1a1a1a;
-  --darker-bg: #0f0f0f;
-  --card-bg: #252525;
-  --text-primary: #ffffff;
-  --text-secondary: #a0a0a0;
-  --text-accent: var(--primary);
-  --border-color: #333333;*/
+  --text-primary: #ffffff;*/
   --success-green: #00ff88;
-  --error-red: #ff4444; 
+  --error-red: #ff4444;
   --background: oklch(1 0 0);
+  --background-darker: color-mix(in srgb, var(--background) 80%, black);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
@@ -59,6 +55,7 @@
 
 .dark {
   --background: oklch(21.779% 0.00002 271.152);
+  --background-darker: color-mix(in srgb, var(--background) 80%, black);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);
   --card-foreground: oklch(0.985 0 0);
@@ -91,6 +88,7 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
+
 /* body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
@@ -98,7 +96,7 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background-color: var(--dark-bg);
-  color: var(--text-primary);
+  color: var(--foreground);
 }
 
 h1 {
@@ -140,15 +138,15 @@ input {
 }
 */
 .scrollable::-webkit-scrollbar {
-  display: none; 
+  display: none;
 }
 
 .scrollable::-webkit-scrollbar-track {
-  background: var(--darker-bg);
+  background: var(--background-darker);
 }
 
 .scrollable::-webkit-scrollbar-thumb {
-  background: var(--border-color);
+  background: var(--border);
   border-radius: 3px;
 }
 
@@ -163,11 +161,11 @@ input {
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--darker-bg);
+  background: var(--background-darker);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--border-color);
+  background: var(--border);
   border-radius: 3px;
 }
 
@@ -223,9 +221,11 @@ input {
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply font-sans bg-background text-foreground;
   }
+
   html {
     @apply font-sans;
   }
