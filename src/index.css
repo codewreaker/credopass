@@ -5,17 +5,16 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* 
+
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
-*/
+
 :root {
   --primary-yellow: oklch(93.604% 0.22511 121.257);
-  /*--secondary-yellow: #e8ff66;
-  --text-primary: #ffffff;*/
+  /*--secondary-yellow: #e8ff66;*/
   --success-green: #00ff88;
   --error-red: #ff4444;
   --background: oklch(1 0 0);
