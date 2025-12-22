@@ -1,6 +1,6 @@
 .left-sidebar {
   width: 180px;
-  background-color: var(--darker-bg);
+  background-color: transparent;
   border-right: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
@@ -35,9 +35,9 @@
 }
 
 .collapse-toggle:hover {
-  background-color: var(--primary-yellow);
+  background-color: var(--primary);
   color: var(--darker-bg);
-  border-color: var(--primary-yellow);
+  border-color: var(--primary);
 }
 
 .sidebar-menu {
@@ -76,8 +76,8 @@
 
 .sidebar-item.active {
   background-color: var(--card-bg);
-  color: var(--primary-yellow);
-  box-shadow: 0 0 0 1px var(--primary-yellow);
+  color: var(--primary);
+  box-shadow: 0 0 0 1px var(--primary);
 }
 
 .sidebar-label {

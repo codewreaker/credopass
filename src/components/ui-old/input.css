@@ -47,7 +47,7 @@
 }
 
 .form-input:focus {
-  border-color: var(--primary-yellow);
+  border-color: var(--primary);
 }
 
 .form-input::placeholder {
@@ -120,7 +120,7 @@
 
 /* Focus within wrapper */
 .input-wrapper:focus-within .input-icon {
-  color: var(--primary-yellow);
+  color: var(--primary);
 }
 
 /* Select input styling */
@@ -144,7 +144,7 @@
 }
 
 .form-select:focus {
-  border-color: var(--primary-yellow);
+  border-color: var(--primary);
 }
 
 .form-select option {
@@ -169,7 +169,7 @@
 }
 
 .form-textarea:focus {
-  border-color: var(--primary-yellow);
+  border-color: var(--primary);
 }
 
 .form-textarea::placeholder {

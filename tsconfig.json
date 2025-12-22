@@ -4,8 +4,12 @@
     "types": [
       "vite/client",
       "bun"
-    ],
+    ]
   },
   "files": [],
-  "include": [ "src", "src/db", "server.ts" ],
+  "include": [
+    "src",
+    "src/db",
+    "server.ts"
+  ],
 }

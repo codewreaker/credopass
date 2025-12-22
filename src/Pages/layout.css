@@ -1,6 +1,5 @@
 .app-container {
   min-height: 100vh;
-  background-color: var(--dark-bg);
   display: flex;
   flex-direction: column;
 }
@@ -13,7 +12,6 @@
 
 .main-content {
   flex: 1;
-  background-color: var(--dark-bg);
   min-height: calc(100vh - 52.5px);
   overflow-y: auto;
   text-align: center;
@@ -69,7 +67,7 @@
   -ms-user-select: none;
   -o-user-select: none;
   user-select: none;
-  border: 1px dashed var(--primary-yellow);
+  border: 1px dashed var(--primary);
   border-radius: 9px;
 }
 

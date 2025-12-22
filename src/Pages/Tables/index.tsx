@@ -5,7 +5,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import GridTable, { type MenuItem } from '../../components/GridTable/index.js';
-import { Button } from '../../components/ui/index.js';
+import { Button } from '../../components/ui-old/index.js';
 import { RefreshCw } from 'lucide-react';
 import type { ColDef } from 'ag-grid-community';
 import './style.css';

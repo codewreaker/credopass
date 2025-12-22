@@ -49,7 +49,7 @@ export const RightSidebar: React.FC= () => {
         <>
           <div className="loyalty-card">
             <div className="card-header">
-              <Star className="star-icon" size={18} fill="var(--primary-yellow)" />
+              <Star className="star-icon" size={18} fill="var(--primary)" />
               <h3>Loyalty Status</h3>
             </div>
             <div className="card-content">

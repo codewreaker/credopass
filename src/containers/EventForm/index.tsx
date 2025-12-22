@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { eventCollection as collection } from '../../collections/events.js';
 import type { Event, EventStatus } from '../../db/schema.js';
-import { Button, Input, Select } from '../../components/ui/index.js';
+import { Button, Input, Select } from '../../components/ui-old/index.js';
 import './style.css';
 import type { LauncherState } from '../../store.js';
 

@@ -1,7 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import React, { useState } from 'react';
 import { Mail, Lock, User, Eye, EyeOff } from 'lucide-react';
-import { Button, Input } from '../../components/ui/index.js';
+import { Button, Input } from '../../components/ui-old/index.js';
 import type { LauncherState } from '../../store.js';
 import './style.css';
 

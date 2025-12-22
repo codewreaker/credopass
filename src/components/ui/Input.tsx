@@ -1,68 +1,20 @@
-import React, { useId } from 'react';
-import { Field } from '@base-ui/react/field';
-import './input.css';
+import * as React from "react"
+import { Input as InputPrimitive } from "@base-ui/react/input"
 
-export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
-  label?: string;
-  error?: string;
-  leftIcon?: React.ReactNode;
-  rightIcon?: React.ReactNode;
-  rightElement?: React.ReactNode;
-  fullWidth?: boolean;
+import { cn } from "@/lib/utils"
+
+function Input({ className, type, ...props }: React.ComponentProps<"input">) {
+  return (
+    <InputPrimitive
+      type={type}
+      data-slot="input"
+      className={cn(
+        "dark:bg-input/30 border-input focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:aria-invalid:border-destructive/50 disabled:bg-input/50 dark:disabled:bg-input/80 h-8 rounded-lg border bg-transparent px-2.5 py-1 text-base transition-colors file:h-6 file:text-sm file:font-medium focus-visible:ring-[3px] aria-invalid:ring-[3px] md:text-sm file:text-foreground placeholder:text-muted-foreground w-full min-w-0 outline-none file:inline-flex file:border-0 file:bg-transparent disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50",
+        className
+      )}
+      {...props}
+    />
+  )
 }
 
-/**
- * Input Component using Base UI Field
- * 
- * A styled input component that integrates with Base UI's Field for validation.
- * Supports icons, error states, and full-width layouts.
- */
-export const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  (
-    {
-      label,
-      error,
-      leftIcon,
-      rightIcon,
-      rightElement,
-      fullWidth = true,
-      className = '',
-      id,
-      ...props
-    },
-    ref
-  ) => {
-    const generatedId = useId();
-    const inputId = id || props.name || generatedId;
-
-    return (
-      <Field.Root className={`form-field ${fullWidth ? 'full-width' : ''} ${className}`}>
-        {label && (
-          <Field.Label htmlFor={inputId} className="form-label">
-            {label}
-          </Field.Label>
-        )}
-        <div className={`input-wrapper ${error ? 'has-error' : ''}`}>
-          {leftIcon && <span className="input-icon input-icon-left">{leftIcon}</span>}
-          <Field.Control
-            ref={ref}
-            id={inputId}
-            className={`form-input ${leftIcon ? 'has-left-icon' : ''} ${rightIcon || rightElement ? 'has-right-icon' : ''}`}
-            {...props}
-          />
-          {rightIcon && <span className="input-icon input-icon-right">{rightIcon}</span>}
-          {rightElement && <span className="input-element-right">{rightElement}</span>}
-        </div>
-        {error && (
-          <Field.Error className="form-error">
-            {error}
-          </Field.Error>
-        )}
-      </Field.Root>
-    );
-  }
-);
-
-Input.displayName = 'Input';
-
-export default Input;
+export { Input }

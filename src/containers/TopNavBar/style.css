@@ -4,7 +4,7 @@
   left: 0;
   right: 0;
   height: 52.5px;
-  background-color: var(--darker-bg);
+  /* background-color: var(--darker-bg); */
   border-bottom: 1px solid var(--border-color);
   display: flex;
   align-items: center;
@@ -42,7 +42,7 @@
 .logo-icon {
   width: 27px;
   height: 27px;
-  background: linear-gradient(135deg, var(--primary-yellow), var(--secondary-yellow));
+  background: linear-gradient(135deg, var(--primary), var(--secondary-yellow));
   border-radius: 6px;
   display: flex;
   align-items: center;
@@ -91,12 +91,12 @@
 .notification-btn {
   position: relative;
   background-color: var(--card-bg);
-  border: 1.5px solid var(--primary-yellow);
+  border: 1.5px solid var(--primary);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--primary-yellow);
+  color: var(--primary);
 }
 
 .notification-badge {
@@ -105,7 +105,7 @@
   right: -3px;
   width: 13.5px;
   height: 13.5px;
-  background-color: var(--primary-yellow);
+  background-color: var(--primary);
   color: var(--darker-bg);
   border-radius: 50%;
   font-size: 0.525rem;
@@ -131,12 +131,12 @@
   width: 30px;
   height: 30px;
   background-color: var(--card-bg);
-  border: 1.5px solid var(--primary-yellow);
+  border: 1.5px solid var(--primary);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--primary-yellow);
+  color: var(--primary);
 }
 
 /* Dropdown menu - Base UI Menu styles */

@@ -1,6 +1,6 @@
 .right-sidebar {
   width: 300px;
-  background-color: var(--darker-bg);
+  background-color: transparent;
   padding: 0.9375rem;
   height: calc(100vh - 52.5px);
   overflow-y: auto;
@@ -44,9 +44,9 @@
 
 
 .collapse-toggle-right:hover {
-  background-color: var(--primary-yellow);
+  background-color: var(--primary);
   color: var(--darker-bg);
-  border-color: var(--primary-yellow);
+  border-color: var(--primary);
 }
 
 .loyalty-card {
@@ -65,7 +65,7 @@
 }
 
 .star-icon {
-  color: var(--primary-yellow);
+  color: var(--primary);
 }
 
 .card-header h3 {
@@ -85,7 +85,7 @@
 .level-badge {
   display: inline-block;
   padding: 0.375rem 1.125rem;
-  background: linear-gradient(135deg, var(--primary-yellow), var(--secondary-yellow));
+  background: linear-gradient(135deg, var(--primary), var(--secondary-yellow));
   color: var(--darker-bg);
   border-radius: 15px;
   font-weight: 700;
@@ -116,7 +116,7 @@
 .stat-value {
   font-size: 1.125rem;
   font-weight: 700;
-  color: var(--primary-yellow);
+  color: var(--primary);
 }
 
 .stat-label {
@@ -140,7 +140,7 @@
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, var(--primary-yellow), var(--secondary-yellow));
+  background: linear-gradient(90deg, var(--primary), var(--secondary-yellow));
   border-radius: 3px;
   transition: width 0.3s;
 }
@@ -239,7 +239,7 @@
 }
 
 .calendar-day.today {
-  background-color: var(--primary-yellow);
+  background-color: var(--primary);
   color: var(--darker-bg);
   font-weight: 700;
 }
@@ -250,7 +250,7 @@
   bottom: 3px;
   width: 3px;
   height: 3px;
-  background-color: var(--primary-yellow);
+  background-color: var(--primary);
   border-radius: 50%;
 }
 
@@ -263,7 +263,7 @@
   bottom: 3px;
   width: 3px;
   height: 3px;
-  background-color: var(--primary-yellow);
+  background-color: var(--primary);
   border-radius: 50%;
 }
 
@@ -303,7 +303,7 @@
   display: flex;
   align-items: center;
   gap: 0.375rem;
-  color: var(--primary-yellow);
+  color: var(--primary);
   font-size: 0.6375rem;
   font-weight: 600;
   white-space: nowrap;

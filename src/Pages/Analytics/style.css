@@ -44,7 +44,7 @@
 }
 
 .grid-item .drag-handle:hover {
-  background-color: var(--primary-yellow);
+  background-color: var(--primary);
   color: var(--darker-bg);
 }
 
@@ -74,7 +74,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--primary-yellow);
+  color: var(--primary);
 }
 
 .stat-change {

@@ -59,7 +59,7 @@
 }
 
 .form-input:focus {
-  border-color: var(--primary-yellow);
+  border-color: var(--primary);
 }
 
 .form-input::placeholder {
@@ -83,7 +83,7 @@
 }
 
 .form-textarea:focus {
-  border-color: var(--primary-yellow);
+  border-color: var(--primary);
 }
 
 .form-textarea::placeholder {

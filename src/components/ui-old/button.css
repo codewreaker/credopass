@@ -17,7 +17,7 @@
 }
 
 .btn:focus-visible {
-    outline: 2px solid var(--primary-yellow);
+    outline: 2px solid var(--primary);
     outline-offset: 2px;
 }
 
@@ -64,9 +64,9 @@
 
 /* Primary variant - Neon lime */
 .btn-primary {
-    background-color: var(--primary-yellow);
+    background-color: var(--primary);
     color: var(--darker-bg);
-    border-color: var(--primary-yellow);
+    border-color: var(--primary);
 }
 
 .btn-primary:hover:not(:disabled) {
@@ -180,8 +180,8 @@
 /* Active state styles for table selector buttons */
 .btn.active {
     background-color: rgba(212, 255, 0, 0.1);
-    border-color: var(--primary-yellow);
-    color: var(--primary-yellow);
+    border-color: var(--primary);
+    color: var(--primary);
 }
 
 /* Count badge inside button */
@@ -196,5 +196,5 @@
 
 .btn.active .count {
     background-color: rgba(212, 255, 0, 0.15);
-    color: var(--primary-yellow);
+    color: var(--primary);
 }
