@@ -1,13 +1,18 @@
-
 {
   "compilerOptions": {
     // Environment setup & latest features
-    "lib": ["ESNext", "DOM", "DOM.Iterable"],
+    "lib": [
+      "ESNext",
+      "DOM",
+      "DOM.Iterable"
+    ],
     "target": "ESNext",
     "module": "nodenext",
     "allowJs": true,
-    "types": ["vite/client", "bun-types"],
-
+    "types": [
+      "vite/client",
+      "bun-types"
+    ],
     /* Node16/NodeNext mode for explicit extensions */
     "moduleResolution": "nodenext",
     "allowImportingTsExtensions": false,
@@ -16,17 +21,20 @@
     "moduleDetection": "force",
     "noEmit": true,
     "jsx": "react-jsx",
-
     // Best practices
     "strict": true,
     "skipLibCheck": true,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedIndexedAccess": true,
     "noImplicitOverride": true,
-
     // Some stricter flags (disabled by default)
     "noUnusedLocals": false,
     "noUnusedParameters": false,
-    "noPropertyAccessFromIndexSignature": false
+    "noPropertyAccessFromIndexSignature": false,
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ]
+    }
   }
 }

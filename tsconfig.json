@@ -7,8 +7,5 @@
     ],
   },
   "files": [],
-  "include": [
-    "src"
-, "src/db", "server.ts"  ],
-  
+  "include": [ "src", "src/db", "server.ts" ],
 }
