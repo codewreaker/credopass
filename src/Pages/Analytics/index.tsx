@@ -127,18 +127,23 @@ const Analytics: React.FC = () => {
       const Icon = stat.icon;
       return (
         <Card key={stat.id} className="relative h-full flex flex-col p-0 overflow-hidden">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 p-2 pb-1">
-            <div className="stat-icon">
-              <Icon size={10} />
+          <CardHeader className="flex flex-row items-start justify-between space-y-0 p-3 pb-2">
+            <div className="flex flex-col gap-1">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                {stat.label}
+              </CardTitle>
             </div>
             <div className="flex items-center gap-2">
               <span className={`stat-change ${stat.trend}`}>{stat.change}</span>
               <div className="drag-handle">⋮⋮</div>
             </div>
           </CardHeader>
-          <CardContent className="flex flex-col items-center justify-center flex-1 text-center px-2 py-2">
-            <div className="text-2xl font-bold mb-0.5 wrap-break-word w-full">{stat.value}</div>
-            <div className="text-xs text-muted-foreground wrap-break-word w-full">{stat.label}</div>
+          <CardContent className="flex flex-col flex-1 px-3 py-0">
+            <div className="text-3xl font-bold mb-auto">{stat.value}</div>
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-auto pb-3">
+              <Icon size={12} className="text-primary" />
+              <span>{stat.trend === 'up' ? 'Trending up' : 'Trending down'}</span>
+            </div>
           </CardContent>
         </Card>
       );
