@@ -1,15 +1,49 @@
 /* eslint-disable react-refresh/only-export-components */
 import React, { useState } from 'react';
+import { useForm } from '@tanstack/react-form';
+import * as z from 'zod';
 import { Mail, Lock, User, Eye, EyeOff } from 'lucide-react';
-import { Button } from '../../components/ui/button.js';
-import { Input } from '../../components/ui/input.js';
-import { Label } from '../../components/ui/label.js';
+import { Button } from '@/components/ui/button.js';
+import { Input } from '@/components/ui/input.js';
+import {
+  Field,
+  FieldDescription,
+  FieldError,
+  FieldGroup,
+  FieldLabel
+} from '@/components/ui/field.js';
 import type { LauncherState } from '../../store.js';
 import './style.css';
 
 interface SignInFormProps {
   onClose?: () => void;
 }
+
+// Zod validation schemas
+const signInSchema = z.object({
+  email: z.string()
+    .email('Please enter a valid email address.')
+    .min(5, 'Email must be at least 5 characters.'),
+  password: z.string()
+    .min(6, 'Password must be at least 6 characters.')
+    .max(100, 'Password must be at most 100 characters.'),
+});
+
+const signUpSchema = z.object({
+  name: z.string()
+    .min(2, 'Name must be at least 2 characters.')
+    .max(100, 'Name must be at most 100 characters.')
+    .regex(/^[a-zA-Z\s'-]+$/, 'Name can only contain letters, spaces, hyphens, and apostrophes.'),
+  email: z.string()
+    .email('Please enter a valid email address.')
+    .min(5, 'Email must be at least 5 characters.'),
+  password: z.string()
+    .min(8, 'Password must be at least 8 characters.')
+    .max(100, 'Password must be at most 100 characters.')
+    .regex(/[A-Z]/, 'Password must contain at least one uppercase letter.')
+    .regex(/[a-z]/, 'Password must contain at least one lowercase letter.')
+    .regex(/[0-9]/, 'Password must contain at least one number.'),
+});
 
 export const launchSignInForm = (
   args: SignInFormProps = {},
@@ -22,27 +56,41 @@ export const launchSignInForm = (
 
 // The actual SignIn form component with all the logic
 const SignInForm: React.FC<SignInFormProps> = ({ onClose }) => {
-  
   const [isSignUp, setIsSignUp] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    password: '',
+
+  // Create separate form instances for sign in and sign up
+  const signInForm = useForm({
+    defaultValues: {
+      email: '',
+      password: '',
+    },
+    validators: {
+      onSubmit: signInSchema,
+    },
+    onSubmit: async ({ value }) => {
+      console.log('Sign in submitted:', value);
+      onClose?.();
+    },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log('Form submitted:', formData);
-    onClose?.();
-  };
+  const signUpForm = useForm({
+    defaultValues: {
+      name: '',
+      email: '',
+      password: '',
+    },
+    validators: {
+      onSubmit: signUpSchema,
+    },
+    onSubmit: async ({ value }) => {
+      console.log('Sign up submitted:', value);
+      onClose?.();
+    },
+  });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
-  };
+  // Use the appropriate form based on mode
+  const activeForm = isSignUp ? signUpForm : signInForm;
 
   const PasswordToggleButton = (
     <button
@@ -62,59 +110,102 @@ const SignInForm: React.FC<SignInFormProps> = ({ onClose }) => {
       </div>
 
       <div className="modal-body">
-        <form className="signin-form" onSubmit={handleSubmit}>
-          {isSignUp && (
-            <div className="form-group">
-              <Label className="form-label">
-                <User size={14} />
-                Full Name
-              </Label>
-              <Input
-                type="text"
-                id="name"
+        <form 
+          className="signin-form" 
+          onSubmit={(e) => {
+            e.preventDefault();
+            activeForm.handleSubmit();
+          }}
+        >
+          <FieldGroup>
+            {isSignUp && (
+              <activeForm.Field
                 name="name"
-                placeholder="Enter your name"
-                value={formData.name}
-                onChange={handleChange}
-                required={isSignUp}
+                children={(field) => {
+                  const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
+                  return (
+                    <Field data-invalid={isInvalid} className="form-group">
+                      <FieldLabel htmlFor={field.name} className="form-label">
+                        <User size={14} />
+                        Full Name
+                      </FieldLabel>
+                      <Input
+                        id={field.name}
+                        name={field.name}
+                        type="text"
+                        placeholder="Enter your name"
+                        value={field.state.value}
+                        onBlur={field.handleBlur}
+                        onChange={(e) => field.handleChange(e.target.value)}
+                        aria-invalid={isInvalid}
+                      />
+                      {isInvalid && <FieldError errors={field.state.meta.errors} />}
+                    </Field>
+                  );
+                }}
               />
-            </div>
-          )}
+            )}
 
-          <div className="form-group">
-            <Label className="form-label">
-              <Mail size={14} />
-              Email Address
-            </Label>
-            <Input
-              type="email"
-              id="email"
+            <activeForm.Field
               name="email"
-              placeholder="Enter your email"
-              value={formData.email}
-              onChange={handleChange}
-              required
+              children={(field) => {
+                const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
+                return (
+                  <Field data-invalid={isInvalid} className="form-group">
+                    <FieldLabel htmlFor={field.name} className="form-label">
+                      <Mail size={14} />
+                      Email Address
+                    </FieldLabel>
+                    <Input
+                      id={field.name}
+                      name={field.name}
+                      type="email"
+                      placeholder="Enter your email"
+                      value={field.state.value}
+                      onBlur={field.handleBlur}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      aria-invalid={isInvalid}
+                    />
+                    {isInvalid && <FieldError errors={field.state.meta.errors} />}
+                  </Field>
+                );
+              }}
             />
-          </div>
 
-          <div className="form-group">
-            <Label className="form-label">
-              <Lock size={14} />
-              Password
-            </Label>
-            <div className="input-wrapper has-right-element">
-              <Input
-                type={showPassword ? 'text' : 'password'}
-                id="password"
-                name="password"
-                placeholder="Enter your password"
-                value={formData.password}
-                onChange={handleChange}
-                required
-              />
-              {PasswordToggleButton}
-            </div>
-          </div>
+            <activeForm.Field
+              name="password"
+              children={(field) => {
+                const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
+                return (
+                  <Field data-invalid={isInvalid} className="form-group">
+                    <FieldLabel htmlFor={field.name} className="form-label">
+                      <Lock size={14} />
+                      Password
+                    </FieldLabel>
+                    <div className="input-wrapper has-right-element">
+                      <Input
+                        id={field.name}
+                        name={field.name}
+                        type={showPassword ? 'text' : 'password'}
+                        placeholder="Enter your password"
+                        value={field.state.value}
+                        onBlur={field.handleBlur}
+                        onChange={(e) => field.handleChange(e.target.value)}
+                        aria-invalid={isInvalid}
+                      />
+                      {PasswordToggleButton}
+                    </div>
+                    {isSignUp && (
+                      <FieldDescription>
+                        Must be at least 8 characters with uppercase, lowercase, and a number
+                      </FieldDescription>
+                    )}
+                    {isInvalid && <FieldError errors={field.state.meta.errors} />}
+                  </Field>
+                );
+              }}
+            />
+          </FieldGroup>
 
           <Button type="submit" variant="default" className="signin-button">
             {isSignUp ? 'Create Account' : 'Sign In'}
@@ -127,7 +218,12 @@ const SignInForm: React.FC<SignInFormProps> = ({ onClose }) => {
             <button
               type="button"
               className="toggle-mode"
-              onClick={() => setIsSignUp(!isSignUp)}
+              onClick={() => {
+                setIsSignUp(!isSignUp);
+                // Reset forms when switching modes
+                signInForm.reset();
+                signUpForm.reset();
+              }}
             >
               {isSignUp ? 'Sign In' : 'Sign Up'}
             </button>

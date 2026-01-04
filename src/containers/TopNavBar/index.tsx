@@ -1,7 +1,7 @@
 import React from 'react';
 import { Search, Bell, Calendar, User, ChevronDown, Settings, LogOut } from 'lucide-react';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '../../components/ui/dropdown-menu.js';
-import { Button } from '../../components/ui/button.js';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu.js';
+import { Button } from '@/components/ui/button.js';
 import './style.css';
 import { useLauncher } from '../../store.js';
 import { launchEventForm } from '../EventForm';

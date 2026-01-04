@@ -1,5 +1,6 @@
-/* eslint-disable react-refresh/only-export-components */
 import { useState } from 'react';
+import { useForm } from '@tanstack/react-form';
+import * as z from 'zod';
 import {
   Calendar as CalendarIcon,
   Clock,
@@ -9,12 +10,18 @@ import {
   Trash2
 } from 'lucide-react';
 import { eventCollection as collection } from '../../server/collections/events.js';
-import type { Event, EventStatus } from '../../server/db/schema.js';
-import { Button } from '../../components/ui/button.js';
-import { Input } from '../../components/ui/input.js';
-import { Label } from '../../components/ui/label.js';
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select.js';
-import { Textarea } from '../../components/ui/textarea.js';
+import type { EventStatus } from '../../server/db/schema.js';
+import { Button } from '@/components/ui/button.js';
+import { Input } from '@/components/ui/input.js';
+import { 
+  Field, 
+  FieldDescription, 
+  FieldError, 
+  FieldGroup, 
+  FieldLabel 
+} from '@/components/ui/field.js';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select.js';
+import { Textarea } from '@/components/ui/textarea.js';
 import './style.css';
 import type { LauncherState } from '../../store.js';
 
@@ -37,17 +44,6 @@ export interface EventFormProps {
   onClose?: () => void;
 }
 
-const initialFormData: EventFormData = {
-  name: '',
-  description: '',
-  status: 'scheduled',
-  startTime: '',
-  endTime: '',
-  location: '',
-  capacity: '',
-  hostId: '',
-};
-
 // Status options for the select
 const statusOptions = [
   { value: 'draft', label: 'Draft' },
@@ -56,6 +52,24 @@ const statusOptions = [
   { value: 'completed', label: 'Completed' },
   { value: 'cancelled', label: 'Cancelled' },
 ];
+
+// Zod validation schema
+const eventFormSchema = z.object({
+  name: z.string().min(3, 'Event name must be at least 3 characters.').max(100, 'Event name must be at most 100 characters.'),
+  description: z.string().max(500, 'Description must be at most 500 characters.').optional(),
+  status: z.enum(['draft', 'scheduled', 'ongoing', 'completed', 'cancelled'] as const),
+  startTime: z.string().min(1, 'Start time is required.'),
+  endTime: z.string().min(1, 'End time is required.').refine((value, ctx) => {
+    const startTime = ctx.parent.startTime;
+    if (startTime && value) {
+      return new Date(value) > new Date(startTime);
+    }
+    return true;
+  }, 'End time must be after start time.'),
+  location: z.string().min(3, 'Location must be at least 3 characters.').max(200, 'Location must be at most 200 characters.'),
+  capacity: z.string().refine((val) => !val || (!isNaN(Number(val)) && Number(val) > 0), 'Capacity must be a positive number.').optional(),
+  hostId: z.string().min(1, 'Host ID is required.'),
+});
 
 export const launchEventForm = (
   args: Omit<EventFormProps, 'collection'> = {},
@@ -68,71 +82,71 @@ export const launchEventForm = (
 
 // Event Form Component
 const EventForm = ({ initialData = {}, isEditing = false, onClose }: EventFormProps) => {
-
-  const [formData, setFormData] = useState<EventFormData>({ ...initialFormData, ...initialData });
   const [isMutating, setIsMutating] = useState(false);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
+  const form = useForm({
+    defaultValues: {
+      name: initialData.name || '',
+      description: initialData.description || '',
+      status: (initialData.status || 'scheduled') as EventStatus,
+      startTime: initialData.startTime || '',
+      endTime: initialData.endTime || '',
+      location: initialData.location || '',
+      capacity: initialData.capacity || '',
+      hostId: initialData.hostId || '',
+    },
+    validators: {
+      onSubmit: eventFormSchema,
+    },
+    onSubmit: async ({ value }) => {
+      setIsMutating(true);
+      const now = new Date();
+      const eventData = {
+        name: value.name,
+        description: value.description || null,
+        status: value.status,
+        startTime: new Date(value.startTime),
+        endTime: new Date(value.endTime),
+        location: value.location,
+        capacity: value.capacity ? parseInt(value.capacity, 10) : null,
+        hostId: value.hostId,
+      };
 
-  const handleStatusChange = (value: string | null) => {
-    if (value) {
-      setFormData((prev) => ({ ...prev, status: value as EventStatus }));
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    setIsMutating(true);
-    const now = new Date();
-    const eventData = {
-      name: formData.name,
-      description: formData.description || null,
-      status: formData.status,
-      startTime: new Date(formData.startTime),
-      endTime: new Date(formData.endTime),
-      location: formData.location,
-      capacity: formData.capacity ? parseInt(formData.capacity, 10) : null,
-      hostId: formData.hostId,
-    };
-
-    try {
-      if (isEditing && formData.id) {
-        collection?.update(formData.id, (draft) => {
-          draft.name = eventData.name;
-          draft.description = eventData.description;
-          draft.status = eventData.status;
-          draft.startTime = eventData.startTime;
-          draft.endTime = eventData.endTime;
-          draft.location = eventData.location;
-          draft.capacity = eventData.capacity;
-          draft.hostId = eventData.hostId;
-          draft.updatedAt = now;
-        });
-      } else {
-        collection?.insert({
-          ...eventData,
-          id: crypto.randomUUID(),
-          createdAt: now,
-          updatedAt: now,
-        });
+      try {
+        if (isEditing && initialData.id) {
+          collection?.update(initialData.id, (draft) => {
+            draft.name = eventData.name;
+            draft.description = eventData.description;
+            draft.status = eventData.status;
+            draft.startTime = eventData.startTime;
+            draft.endTime = eventData.endTime;
+            draft.location = eventData.location;
+            draft.capacity = eventData.capacity;
+            draft.hostId = eventData.hostId;
+            draft.updatedAt = now;
+          });
+        } else {
+          collection?.insert({
+            ...eventData,
+            id: crypto.randomUUID(),
+            createdAt: now,
+            updatedAt: now,
+          });
+        }
+        onClose?.();
+      } catch (error) {
+        console.error('Failed to save event:', error);
+      } finally {
+        setIsMutating(false);
       }
-      onClose?.();
-    } catch (error) {
-      console.error('Failed to save event:', error);
-    } finally {
-      setIsMutating(false);
-    }
-  };
+    },
+  });
 
   const handleDelete = async () => {
-    if (formData.id && confirm('Are you sure you want to delete this event?')) {
+    if (initialData.id && confirm('Are you sure you want to delete this event?')) {
       setIsMutating(true);
       try {
-        collection?.delete(formData.id);
+        collection?.delete(initialData.id);
         onClose?.();
       } catch (error) {
         console.error('Failed to delete event:', error);
@@ -150,133 +164,235 @@ const EventForm = ({ initialData = {}, isEditing = false, onClose }: EventFormPr
       </div>
 
       <div className="modal-body">
-        <form className="event-form" onSubmit={handleSubmit}>
-          {/* Event Name */}
-          <div className="form-group full-width">
-            <Label className="form-label">
-              <CalendarIcon size={14} />
-              Event Name
-            </Label>
-            <Input
-              type="text"
+        <form 
+          className="event-form" 
+          onSubmit={(e) => {
+            e.preventDefault();
+            form.handleSubmit();
+          }}
+        >
+          <FieldGroup>
+            {/* Event Name */}
+            <form.Field
               name="name"
-              placeholder="Enter event name"
-              value={formData.name}
-              onChange={handleInputChange}
-              required
+              children={(field) => {
+                const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
+                return (
+                  <Field data-invalid={isInvalid} className="form-group full-width">
+                    <FieldLabel htmlFor={field.name} className="form-label">
+                      <CalendarIcon size={14} />
+                      Event Name
+                    </FieldLabel>
+                    <Input
+                      id={field.name}
+                      name={field.name}
+                      type="text"
+                      placeholder="Enter event name"
+                      value={field.state.value}
+                      onBlur={field.handleBlur}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      aria-invalid={isInvalid}
+                    />
+                    {isInvalid && <FieldError errors={field.state.meta.errors} />}
+                  </Field>
+                );
+              }}
             />
-          </div>
 
-          {/* Start & End Time */}
-          <div className="form-row">
-            <div className="form-group">
-              <Label className="form-label">
-                <Clock size={14} />
-                Start Time
-              </Label>
-              <Input
-                type="datetime-local"
+            {/* Start & End Time */}
+            <div className="form-row">
+              <form.Field
                 name="startTime"
-                value={formData.startTime}
-                onChange={handleInputChange}
-                required
+                children={(field) => {
+                  const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
+                  return (
+                    <Field data-invalid={isInvalid} className="form-group">
+                      <FieldLabel htmlFor={field.name} className="form-label">
+                        <Clock size={14} />
+                        Start Time
+                      </FieldLabel>
+                      <Input
+                        id={field.name}
+                        name={field.name}
+                        type="datetime-local"
+                        value={field.state.value}
+                        onBlur={field.handleBlur}
+                        onChange={(e) => field.handleChange(e.target.value)}
+                        aria-invalid={isInvalid}
+                      />
+                      {isInvalid && <FieldError errors={field.state.meta.errors} />}
+                    </Field>
+                  );
+                }}
               />
-            </div>
-            <div className="form-group">
-              <Label className="form-label">
-                <Clock size={14} />
-                End Time
-              </Label>
-              <Input
-                type="datetime-local"
+              <form.Field
                 name="endTime"
-                value={formData.endTime}
-                onChange={handleInputChange}
-                required
+                children={(field) => {
+                  const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
+                  return (
+                    <Field data-invalid={isInvalid} className="form-group">
+                      <FieldLabel htmlFor={field.name} className="form-label">
+                        <Clock size={14} />
+                        End Time
+                      </FieldLabel>
+                      <Input
+                        id={field.name}
+                        name={field.name}
+                        type="datetime-local"
+                        value={field.state.value}
+                        onBlur={field.handleBlur}
+                        onChange={(e) => field.handleChange(e.target.value)}
+                        aria-invalid={isInvalid}
+                      />
+                      {isInvalid && <FieldError errors={field.state.meta.errors} />}
+                    </Field>
+                  );
+                }}
               />
             </div>
-          </div>
 
-          {/* Location */}
-          <div className="form-group full-width">
-            <Label className="form-label">
-              <MapPin size={14} />
-              Location
-            </Label>
-            <Input
-              type="text"
+            {/* Location */}
+            <form.Field
               name="location"
-              placeholder="Enter location"
-              value={formData.location}
-              onChange={handleInputChange}
-              required
+              children={(field) => {
+                const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
+                return (
+                  <Field data-invalid={isInvalid} className="form-group full-width">
+                    <FieldLabel htmlFor={field.name} className="form-label">
+                      <MapPin size={14} />
+                      Location
+                    </FieldLabel>
+                    <Input
+                      id={field.name}
+                      name={field.name}
+                      type="text"
+                      placeholder="Enter location"
+                      value={field.state.value}
+                      onBlur={field.handleBlur}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      aria-invalid={isInvalid}
+                    />
+                    {isInvalid && <FieldError errors={field.state.meta.errors} />}
+                  </Field>
+                );
+              }}
             />
-          </div>
 
-          {/* Status & Capacity */}
-          <div className="form-row">
-            <div className="form-group">
-              <Label className="form-label">Status</Label>
-              <Select value={formData.status} onValueChange={handleStatusChange}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    {statusOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="form-group">
-              <Label className="form-label">
-                <Users size={14} />
-                Capacity
-              </Label>
-              <Input
-                type="number"
+            {/* Status & Capacity */}
+            <div className="form-row">
+              <form.Field
+                name="status"
+                children={(field) => {
+                  const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
+                  return (
+                    <Field data-invalid={isInvalid} className="form-group">
+                      <FieldLabel htmlFor={field.name} className="form-label">Status</FieldLabel>
+                      <Select 
+                        name={field.name}
+                        value={field.state.value} 
+                        onValueChange={field.handleChange}
+                      >
+                        <SelectTrigger id={field.name} aria-invalid={isInvalid}>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectGroup>
+                            {statusOptions.map((option) => (
+                              <SelectItem key={option.value} value={option.value}>
+                                {option.label}
+                              </SelectItem>
+                            ))}
+                          </SelectGroup>
+                        </SelectContent>
+                      </Select>
+                      {isInvalid && <FieldError errors={field.state.meta.errors} />}
+                    </Field>
+                  );
+                }}
+              />
+              <form.Field
                 name="capacity"
-                placeholder="Max attendees"
-                value={formData.capacity}
-                onChange={handleInputChange}
+                children={(field) => {
+                  const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
+                  return (
+                    <Field data-invalid={isInvalid} className="form-group">
+                      <FieldLabel htmlFor={field.name} className="form-label">
+                        <Users size={14} />
+                        Capacity
+                      </FieldLabel>
+                      <Input
+                        id={field.name}
+                        name={field.name}
+                        type="number"
+                        placeholder="Max attendees"
+                        value={field.state.value}
+                        onBlur={field.handleBlur}
+                        onChange={(e) => field.handleChange(e.target.value)}
+                        aria-invalid={isInvalid}
+                      />
+                      <FieldDescription>Optional - Leave blank for unlimited capacity</FieldDescription>
+                      {isInvalid && <FieldError errors={field.state.meta.errors} />}
+                    </Field>
+                  );
+                }}
               />
             </div>
-          </div>
 
-          {/* Host ID */}
-          <div className="form-group full-width">
-            <Label className="form-label">
-              <Users size={14} />
-              Host ID
-            </Label>
-            <Input
-              type="text"
+            {/* Host ID */}
+            <form.Field
               name="hostId"
-              placeholder="Host ID (Current User)"
-              value={formData.hostId}
-              onChange={handleInputChange}
-              required
+              children={(field) => {
+                const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
+                return (
+                  <Field data-invalid={isInvalid} className="form-group full-width">
+                    <FieldLabel htmlFor={field.name} className="form-label">
+                      <Users size={14} />
+                      Host ID
+                    </FieldLabel>
+                    <Input
+                      id={field.name}
+                      name={field.name}
+                      type="text"
+                      placeholder="Host ID (Current User)"
+                      value={field.state.value}
+                      onBlur={field.handleBlur}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      aria-invalid={isInvalid}
+                    />
+                    {isInvalid && <FieldError errors={field.state.meta.errors} />}
+                  </Field>
+                );
+              }}
             />
-          </div>
 
-          {/* Description */}
-          <div className="form-group full-width">
-            <Label className="form-label">
-              <FileText size={14} />
-              Description
-            </Label>
-            <Textarea
+            {/* Description */}
+            <form.Field
               name="description"
-              placeholder="Enter event description (optional)"
-              value={formData.description}
-              onChange={handleInputChange}
-              rows={3}
+              children={(field) => {
+                const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
+                return (
+                  <Field data-invalid={isInvalid} className="form-group full-width">
+                    <FieldLabel htmlFor={field.name} className="form-label">
+                      <FileText size={14} />
+                      Description
+                    </FieldLabel>
+                    <Textarea
+                      id={field.name}
+                      name={field.name}
+                      placeholder="Enter event description (optional)"
+                      value={field.state.value || ''}
+                      onBlur={field.handleBlur}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      rows={3}
+                      aria-invalid={isInvalid}
+                    />
+                    <FieldDescription>Provide details about the event</FieldDescription>
+                    {isInvalid && <FieldError errors={field.state.meta.errors} />}
+                  </Field>
+                );
+              }}
             />
-          </div>
+          </FieldGroup>
 
           {/* Actions */}
           <div className="form-actions">
