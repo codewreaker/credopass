@@ -41,6 +41,7 @@ import {
 } from "lucide-react"
 import { useLocation, useNavigate } from "@tanstack/react-router"
 import UserComponent from "@/components/User"
+import { cn } from "@/lib/utils"
 
 interface SidebarMenuItemType {
     label: string
@@ -267,7 +268,12 @@ const MainSidebar: React.FC<SidebarProps> = ({
                                     </SidebarMenuItem>
                                 </Collapsible>) : (
                                     <SidebarMenuItem key={item.label}>
-                                        <SidebarMenuButton  isActive={isActive(item.url)} onClick={() => navigate({ to: item.url })} tooltip={item.label}>
+                                        <SidebarMenuButton 
+                                            className={cn(isActive(item.url) && "border border-solid border-primary", "cursor-pointer")} 
+                                            isActive={isActive(item.url)} 
+                                            onClick={() => navigate({ to: item.url })} 
+                                            tooltip={item.label}
+                                        >
                                             {item.icon && <item.icon/>}
                                             <span>{item.label}</span>
                                         </SidebarMenuButton>
