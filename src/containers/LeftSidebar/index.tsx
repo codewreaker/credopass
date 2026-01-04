@@ -40,7 +40,7 @@ import {
     ChevronRightIcon,
 } from "lucide-react"
 import { useLocation, useNavigate } from "@tanstack/react-router"
-import UserComponent from "@/components/User"
+import UserComponent from "@/components/user"
 import { cn } from "@/lib/utils"
 
 interface SidebarMenuItemType {

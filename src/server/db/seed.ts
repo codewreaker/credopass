@@ -4,7 +4,7 @@
 // ============================================================================
 
 import { desc } from 'drizzle-orm';
-import { getDatabase, closeDatabase } from "./index.js";
+import { getDatabase, closeDatabase } from ".";
 import { users, events, attendance, loyalty } from "./schema.js";
 import type { UserInsert, EventInsert, AttendanceInsert, LoyaltyInsert } from "./schema.js";
 

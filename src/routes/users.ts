@@ -6,7 +6,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
 import { desc, eq } from 'drizzle-orm';
-import { getDatabase, users, UserSchema } from '../db/index.js';
+import { getDatabase, users, UserSchema } from '../server/db';
 
 const usersRouter = new Hono();
 

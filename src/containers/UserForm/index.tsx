@@ -8,8 +8,8 @@ import {
   Trash2,
   Sparkles
 } from 'lucide-react';
-import { userCollection } from '../../collections/user.js';
-import type { UserType } from '../../db/schema.js';
+import { userCollection } from '../../server/collections/user.js';
+import type { UserType } from '../../server/db/schema.js';
 import { Button } from '../../components/ui/button.js';
 import { Input } from '../../components/ui/input.js';
 import { Label } from '../../components/ui/label.js';

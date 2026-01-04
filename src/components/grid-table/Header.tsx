@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button } from '../ui/button.js';
-import type { MenuItem } from './index.js';
+import type { MenuItem } from '.';
 
 interface HeaderProps {
   title?: string;

@@ -8,8 +8,8 @@ import {
   FileText,
   Trash2
 } from 'lucide-react';
-import { eventCollection as collection } from '../../collections/events.js';
-import type { Event, EventStatus } from '../../db/schema.js';
+import { eventCollection as collection } from '../../server/collections/events.js';
+import type { Event, EventStatus } from '../../server/db/schema.js';
 import { Button } from '../../components/ui/button.js';
 import { Input } from '../../components/ui/input.js';
 import { Label } from '../../components/ui/label.js';

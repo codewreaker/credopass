@@ -9,10 +9,10 @@ import type { EventResizeDoneArg } from '@fullcalendar/interaction';
 import {
   Plus,
 } from 'lucide-react';
-import type { Event } from '../../../db/schema.js';
+import type { Event } from '../../../server/db/schema.js';
 import { Button } from '../../../components/ui/button.js';
-import type { EventFormProps } from '../../../containers/EventForm/index.js';
-import type { EventCollection } from '../../../collections/events.js';
+import type { EventFormProps } from '../../../containers/EventForm';
+import type { EventCollection } from '../../../server/collections/events.js';
 import './style.css';
 
 

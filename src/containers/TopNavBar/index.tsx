@@ -4,8 +4,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { Button } from '../../components/ui/button.js';
 import './style.css';
 import { useLauncher } from '../../store.js';
-import { launchEventForm } from '../EventForm/index.js';
-import { launchSignInForm } from '../SignInModal/index.js';
+import { launchEventForm } from '../EventForm';
+import { launchSignInForm } from '../SignInModal';
 
 
 
