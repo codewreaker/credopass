@@ -1,4 +1,4 @@
-/* eslint-disable react-refresh/only-export-components */
+/* eslint-disable no-useless-escape */
 import { useState } from 'react';
 import { useForm } from '@tanstack/react-form';
 import * as z from 'zod';

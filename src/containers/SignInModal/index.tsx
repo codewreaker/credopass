@@ -1,4 +1,3 @@
-/* eslint-disable react-refresh/only-export-components */
 import React, { useState } from 'react';
 import { useForm } from '@tanstack/react-form';
 import * as z from 'zod';
