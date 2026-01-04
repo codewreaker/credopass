@@ -1,16 +1,8 @@
 .top-navbar {
-  position: sticky;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 52.5px;
-  /* background-color: var(--background-darker); */
-  border-bottom: 1px solid var(--border);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 0.5rem;
-  z-index: 100;
+  width: 100%;
 }
 
 .navbar-left {

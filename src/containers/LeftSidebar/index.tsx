@@ -42,6 +42,7 @@ import {
     ChevronsUpDownIcon,
     ChevronRightIcon,
 } from "lucide-react"
+import { useLocation, useNavigate } from "@tanstack/react-router"
 
 interface SidebarMenuItemType {
     label: string
@@ -94,7 +95,6 @@ const defaultData: SidebarProps = {
             label: "Playground",
             url: "#",
             icon: TerminalSquareIcon,
-            isActive: true,
             items: [
                 {
                     label: "History",
@@ -202,11 +202,15 @@ const MainSidebar: React.FC<SidebarProps> = ({
     children
 }) => {
 
+    const navigate = useNavigate();
+    const location = useLocation();
+    const isActive = (url: string) => location.pathname === url
 
     const [activeTeam, setActiveTeam] = React.useState(teams?.[0] || {
         label: "Acme Inc",
         plan: "Enterprise",
     })
+
 
     const navMain = React.useMemo(() => nav?.main || [], [nav]);
     const navs = React.useMemo(() => {
@@ -214,16 +218,14 @@ const MainSidebar: React.FC<SidebarProps> = ({
     }, [nav]);
 
 
-    console.log('Computed navs:', teams);
-
     return (
         <SidebarProvider>
-            <Sidebar collapsible="icon">
+            <Sidebar collapsible="icon" variant="inset">
                 <SidebarHeader>
                     <SidebarMenu>
                         <SidebarMenuItem>
                             <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
+                                <DropdownMenuTrigger>
                                     <SidebarMenuButton
                                         size="lg"
                                         className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
@@ -283,57 +285,51 @@ const MainSidebar: React.FC<SidebarProps> = ({
                     </SidebarMenu>
                 </SidebarHeader>
                 <SidebarContent>
+
                     <SidebarGroup>
                         <SidebarGroupLabel>Main</SidebarGroupLabel>
                         <SidebarMenu>
                             {navMain.map((item) => (
-                                item.items ? (
-                                    <Collapsible key={item.label} asChild defaultOpen={item.isActive} className="group/collapsible">
-                                        <SidebarMenuItem>
-                                            <CollapsibleTrigger asChild>
-                                                <SidebarMenuButton tooltip={item.label}>
-                                                    {item.icon && <item.icon size={16} />}
-                                                    <span>{item.label}</span>
-                                                    <ChevronRightIcon className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
-                                                </SidebarMenuButton>
-                                            </CollapsibleTrigger>
-                                            <CollapsibleContent>
-                                                <SidebarMenuSub>
-                                                    {item.items?.map((subItem) => (
-                                                        <SidebarMenuSubItem key={subItem.label}>
-                                                            <SidebarMenuSubButton asChild>
-                                                                <a href={subItem.url}>{subItem.label}</a>
-                                                            </SidebarMenuSubButton>
-                                                        </SidebarMenuSubItem>
-                                                    ))}
-                                                </SidebarMenuSub>
-                                            </CollapsibleContent>
-                                        </SidebarMenuItem>
-                                    </Collapsible>
-                                ) : (
-                                    <SidebarMenuItem key={item.label}>
-                                        <SidebarMenuButton asChild tooltip={item.label}>
-                                            <a href={item.url}>
+                                item.items ? (<Collapsible key={item.label} asChild defaultOpen={isActive(item.url)} className="group/collapsible">
+                                    <SidebarMenuItem>
+                                        <CollapsibleTrigger asChild>
+                                            <SidebarMenuButton tooltip={item.label}>
                                                 {item.icon && <item.icon size={16} />}
                                                 <span>{item.label}</span>
-                                            </a>
+                                                <ChevronRightIcon className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                                            </SidebarMenuButton>
+                                        </CollapsibleTrigger>
+                                        <CollapsibleContent>
+                                            <SidebarMenuSub>
+                                                {item.items?.map((subItem) => (
+                                                    <SidebarMenuSubItem key={subItem.label}>
+                                                        <SidebarMenuSubButton href={subItem.url}>{subItem.label}</SidebarMenuSubButton>
+                                                    </SidebarMenuSubItem>
+                                                ))}
+                                            </SidebarMenuSub>
+                                        </CollapsibleContent>
+                                    </SidebarMenuItem>
+                                </Collapsible>) : (
+                                    <SidebarMenuItem key={item.label}>
+                                        <SidebarMenuButton isActive={isActive(item.url)} onClick={() => navigate({ to: item.url })} tooltip={item.label}>
+                                            {item.icon && <item.icon />}
+                                            <span>{item.label}</span>
                                         </SidebarMenuButton>
                                     </SidebarMenuItem>
                                 )
-                            ))}
+                            )
+                            )}
                         </SidebarMenu>
                     </SidebarGroup>
                     {navs.map(([label, items]) => (
                         <SidebarGroup className="group-data-[collapsible=icon]:hidden">
-                            <SidebarGroupLabel>{label}</SidebarGroupLabel>
+                            <SidebarGroupLabel>{`${label}`.toLocaleUpperCase()}</SidebarGroupLabel>
                             <SidebarMenu>
                                 {items?.map((item) => (
                                     <SidebarMenuItem key={item.label}>
-                                        <SidebarMenuButton asChild>
-                                            <a href={item.url}>
-                                                {item.icon && <item.icon size={16} />}
-                                                <span>{item.label}</span>
-                                            </a>
+                                        <SidebarMenuButton isActive={isActive(item.url)} onClick={() => navigate({ to: item.url })} tooltip={item.label}>
+                                            {item.icon && <item.icon />}
+                                            <span>{item.label}</span>
                                         </SidebarMenuButton>
                                     </SidebarMenuItem>
                                 ))}
@@ -345,7 +341,7 @@ const MainSidebar: React.FC<SidebarProps> = ({
                     <SidebarMenu>
                         <SidebarMenuItem>
                             <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
+                                <DropdownMenuTrigger>
                                     <SidebarMenuButton
                                         size="lg"
                                         className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
