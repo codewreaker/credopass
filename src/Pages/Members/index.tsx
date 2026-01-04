@@ -1,6 +1,6 @@
 import { useLiveQuery } from '@tanstack/react-db'
-import { LoyaltyTierEnum, type AttendanceType, type LoyaltyType, type UserType } from '../../server/db/schema.js'
-import { userCollection } from '../../server/collections/user.js'
+import { LoyaltyTierEnum, type AttendanceType, type LoyaltyType, type UserType } from '../../server/db/schema'
+import { userCollection } from '../../server/collections/user'
 import type { ColDef, RowClickedEvent } from 'ag-grid-community'
 import { MoreVertical } from 'lucide-react'
 
@@ -136,7 +136,7 @@ const AttendanceBar: React.FC<{ rate: number }> = ({ rate }) => {
 
 
 export default function MembersPage() {
-  const { data } = useLiveQuery((q) => q.from({ userCollection }))
+  const { data } = useLiveQuery((q) => q.from({ user: userCollection }));
   const rowData: UserType[] = Array.isArray(data) ? data : []
   const { openLauncher } = useLauncher();
 
