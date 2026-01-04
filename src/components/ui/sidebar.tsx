@@ -6,8 +6,8 @@ import { useRender } from "@base-ui/react/use-render"
 import { cva, type VariantProps } from "class-variance-authority"
 
 import { cn } from '@/lib/utils'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button.js'
+import { Input } from '@/components/ui/input.js'
 import { Separator } from '@/components/ui/separator'
 import {
   Sheet,
