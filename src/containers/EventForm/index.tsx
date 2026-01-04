@@ -56,19 +56,23 @@ const statusOptions = [
 // Zod validation schema
 const eventFormSchema = z.object({
   name: z.string().min(3, 'Event name must be at least 3 characters.').max(100, 'Event name must be at most 100 characters.'),
-  description: z.string().max(500, 'Description must be at most 500 characters.').optional(),
+  description: z.string().max(500, 'Description must be at most 500 characters.').default(''),
   status: z.enum(['draft', 'scheduled', 'ongoing', 'completed', 'cancelled'] as const),
   startTime: z.string().min(1, 'Start time is required.'),
-  endTime: z.string().min(1, 'End time is required.').refine((value, ctx) => {
-    const startTime = ctx.parent.startTime;
-    if (startTime && value) {
-      return new Date(value) > new Date(startTime);
-    }
-    return true;
-  }, 'End time must be after start time.'),
+  endTime: z.string().min(1, 'End time is required.'),
   location: z.string().min(3, 'Location must be at least 3 characters.').max(200, 'Location must be at most 200 characters.'),
-  capacity: z.string().refine((val) => !val || (!isNaN(Number(val)) && Number(val) > 0), 'Capacity must be a positive number.').optional(),
+  capacity: z.string().refine((val) => !val || (!isNaN(Number(val)) && Number(val) > 0), 'Capacity must be a positive number.').default(''),
   hostId: z.string().min(1, 'Host ID is required.'),
+}).superRefine((data, ctx) => {
+  if (data.startTime && data.endTime) {
+    if (new Date(data.endTime) <= new Date(data.startTime)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'End time must be after start time.',
+        path: ['endTime'],
+      });
+    }
+  }
 });
 
 export const launchEventForm = (
@@ -96,7 +100,13 @@ const EventForm = ({ initialData = {}, isEditing = false, onClose }: EventFormPr
       hostId: initialData.hostId || '',
     },
     validators: {
-      onSubmit: eventFormSchema,
+      onChange: ({ value }) => {
+        const result = eventFormSchema.safeParse(value);
+        if (!result.success) {
+          return result.error.flatten().fieldErrors;
+        }
+        return undefined;
+      },
     },
     onSubmit: async ({ value }) => {
       setIsMutating(true);
@@ -290,7 +300,7 @@ const EventForm = ({ initialData = {}, isEditing = false, onClose }: EventFormPr
                       <Select 
                         name={field.name}
                         value={field.state.value} 
-                        onValueChange={field.handleChange}
+                        onValueChange={(value) => field.handleChange(value as EventStatus)}
                       >
                         <SelectTrigger id={field.name} aria-invalid={isInvalid}>
                           <SelectValue />

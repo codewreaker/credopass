@@ -90,6 +90,7 @@ const SignInForm: React.FC<SignInFormProps> = ({ onClose }) => {
 
   // Use the appropriate form based on mode
   const activeForm = isSignUp ? signUpForm : signInForm;
+  const FormField = activeForm.Field as any;
 
   const PasswordToggleButton = (
     <button
@@ -118,9 +119,8 @@ const SignInForm: React.FC<SignInFormProps> = ({ onClose }) => {
         >
           <FieldGroup>
             {isSignUp && (
-              <activeForm.Field
-                name="name"
-                children={(field) => {
+              <FormField name="name">
+                {(field: any) => {
                   const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
                   return (
                     <Field data-invalid={isInvalid} className="form-group">
@@ -142,12 +142,11 @@ const SignInForm: React.FC<SignInFormProps> = ({ onClose }) => {
                     </Field>
                   );
                 }}
-              />
+              </FormField>
             )}
 
-            <activeForm.Field
-              name="email"
-              children={(field) => {
+            <FormField name="email">
+              {(field: any) => {
                 const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
                 return (
                   <Field data-invalid={isInvalid} className="form-group">
@@ -169,11 +168,10 @@ const SignInForm: React.FC<SignInFormProps> = ({ onClose }) => {
                   </Field>
                 );
               }}
-            />
+            </FormField>
 
-            <activeForm.Field
-              name="password"
-              children={(field) => {
+            <FormField name="password">
+              {(field: any) => {
                 const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
                 return (
                   <Field data-invalid={isInvalid} className="form-group">
@@ -203,7 +201,7 @@ const SignInForm: React.FC<SignInFormProps> = ({ onClose }) => {
                   </Field>
                 );
               }}
-            />
+            </FormField>
           </FieldGroup>
 
           <Button type="submit" variant="default" className="signin-button">

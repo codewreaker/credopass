@@ -91,18 +91,19 @@ export const TopNavBar: React.FC = () => {
   return (
     <div className="top-navbar">
       <div className="navbar-left">
-        <Button
-          ref={searchButtonRef}
-          variant="outline"
-          className="search-container"
-          onClick={openCommandPalette}
-        >
+        <div ref={searchButtonRef as unknown as React.RefObject<HTMLDivElement>} style={{ display: 'contents' }}>
+          <Button
+            variant="outline"
+            className="search-container"
+            onClick={openCommandPalette}
+          >
           <Search className="search-icon" size={14} />
           <span className="search-input">Search or run a command...</span>
           <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
             <span className="text-xs">⌘</span>K
           </kbd>
         </Button>
+        </div>
       </div>
 
       <div className="navbar-right">

@@ -55,8 +55,8 @@ const userFormSchema = z.object({
   phone: z.string()
     .regex(/^[\d\s\-\+\(\)]+$/, 'Phone number can only contain numbers, spaces, hyphens, and parentheses.')
     .min(10, 'Phone number must be at least 10 characters.')
-    .optional()
-    .or(z.literal('')),
+    .or(z.literal(''))
+    .default(''),
 });
 
 export const launchUserForm = (
@@ -80,7 +80,13 @@ const UserForm = ({ initialData = {}, isEditing = false, onClose }: UserFormProp
       phone: initialData.phone || '',
     },
     validators: {
-      onSubmit: userFormSchema,
+      onChange: ({ value }) => {
+        const result = userFormSchema.safeParse(value);
+        if (!result.success) {
+          return result.error.flatten().fieldErrors;
+        }
+        return undefined;
+      },
     },
     onSubmit: async ({ value }) => {
       setIsMutating(true);
