@@ -4,18 +4,10 @@
     "types": [
       "vite/client",
       "bun"
-    ],
-    "baseUrl": ".",
-    "paths": {
-      "@/*": [
-        "./src/*"
-      ]
-    }
+    ]
   },
   "files": [],
   "include": [
-    "src",
-    "src/server/db",
-    "server.ts"
+    "src"
   ],
 }
