@@ -34,7 +34,8 @@ import { useNavigate } from '@tanstack/react-router';
 const CommandPalette: React.FC<{
     onClose: () => void;
     openLauncher: ({ content, onClose, onOpen }: Omit<LauncherState, "isOpen">) => void;
-}> = ({ onClose, openLauncher }) => {
+    width?: number;
+}> = ({ onClose, openLauncher, width }) => {
 
     const navigate = useNavigate();
     const handleNewEvent = useCallback(() => {
@@ -57,54 +58,13 @@ const CommandPalette: React.FC<{
         navigate({ to: path });
     }, [onClose, navigate]);
 
-    // Keyboard shortcuts
-    useEffect(() => {
-        const down = (e: KeyboardEvent) => {
-            // Direct shortcuts (only when no modals are open)
-            if ((e.metaKey || e.ctrlKey)) {
-                switch (e.key) {
-                    case 'e':
-                        e.preventDefault();
-                        launchEventForm({ isEditing: false }, openLauncher);
-                        break;
-                    case 'n':
-                        e.preventDefault();
-                        launchUserForm({ isEditing: false }, openLauncher);
-                        break;
-                    case 'h':
-                        e.preventDefault();
-                        navigate({ to: '/' });
-                        break;
-                    case 'm':
-                        e.preventDefault();
-                        navigate({ to: '/members' });
-                        break;
-                    case 'v':
-                        e.preventDefault();
-                        navigate({ to: '/events' });
-                        break;
-                    case 'a':
-                        e.preventDefault();
-                        navigate({ to: '/analytics' });
-                        break;
-                    case 't':
-                        e.preventDefault();
-                        navigate({ to: '/database' });
-                        break;
-                    case 'p':
-                        e.preventDefault();
-                        launchSignInForm({}, openLauncher);
-                        break;
-                }
-            }
-        };
 
-        document.addEventListener('keydown', down);
-        return () => document.removeEventListener('keydown', down);
-    }, [openLauncher, navigate]);
 
     return (
-        <Command className="rounded-lg border shadow-md w-full max-w-2xl">
+        <Command 
+            className="rounded-lg border shadow-md" 
+            style={{ width: width ? `${width}px` : '100%', maxWidth: width ? `${width}px` : '48rem' }}
+        >
             <CommandInput placeholder="Type a command or search..." />
             <CommandList>
                 <CommandEmpty>No results found.</CommandEmpty>

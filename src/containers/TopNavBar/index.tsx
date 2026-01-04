@@ -1,43 +1,87 @@
-import React, { useEffect, useCallback } from 'react';
-import { 
-  Search, 
-  Bell, 
+import React, { useEffect, useCallback, useRef } from 'react';
+import {
+  Search,
+  Bell,
   Calendar
 } from 'lucide-react';
 import { Button } from '@/components/ui/button.js';
+import { launchSignInForm } from '../SignInModal';
+import { launchUserForm } from '../UserForm';
 
 import './style.css';
 import { useLauncher } from '../../store.js';
 import { launchEventForm } from '../EventForm/index.js';
 import CommandPalette from './Command';
+import { useNavigate } from '@tanstack/react-router';
 
 
 export const TopNavBar: React.FC = () => {
   const { openLauncher, closeLauncher } = useLauncher();
+  const navigate = useNavigate();
+  const searchButtonRef = useRef<HTMLButtonElement>(null);
 
   // Open command palette via launcher
   const openCommandPalette = useCallback(() => {
+    const width = searchButtonRef.current?.offsetWidth || 0;
     openLauncher({
-      content: <CommandPalette onClose={closeLauncher} openLauncher={openLauncher} />,
+      content: <CommandPalette onClose={closeLauncher} openLauncher={openLauncher} width={width} />,
       onClose: closeLauncher,
     });
   }, [openLauncher, closeLauncher]);
 
+
   // Keyboard shortcuts
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
+
       // Cmd/Ctrl + K to open command palette
       if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
         openCommandPalette();
         return;
       }
-      
+      // Direct shortcuts (only when no modals are open)
+      if ((e.metaKey || e.ctrlKey)) {
+        switch (e.key) {
+          case 'e':
+            e.preventDefault();
+            launchEventForm({ isEditing: false }, openLauncher);
+            break;
+          case 'n':
+            e.preventDefault();
+            launchUserForm({ isEditing: false }, openLauncher);
+            break;
+          case 'h':
+            e.preventDefault();
+            navigate({ to: '/' });
+            break;
+          case 'm':
+            e.preventDefault();
+            navigate({ to: '/members' });
+            break;
+          case 'v':
+            e.preventDefault();
+            navigate({ to: '/events' });
+            break;
+          case 'a':
+            e.preventDefault();
+            navigate({ to: '/analytics' });
+            break;
+          case 't':
+            e.preventDefault();
+            navigate({ to: '/database' });
+            break;
+          case 'p':
+            e.preventDefault();
+            launchSignInForm({}, openLauncher);
+            break;
+        }
+      }
     };
 
     document.addEventListener('keydown', down);
     return () => document.removeEventListener('keydown', down);
-  }, [openCommandPalette]);
+  }, [openCommandPalette, openLauncher, navigate]);
 
   // Quick action handlers
   const handleNewEvent = useCallback(() => {
@@ -48,6 +92,7 @@ export const TopNavBar: React.FC = () => {
     <div className="top-navbar">
       <div className="navbar-left">
         <Button
+          ref={searchButtonRef}
           variant="outline"
           className="search-container"
           onClick={openCommandPalette}

@@ -45,7 +45,7 @@ export default function ModalPortal() {
         <Dialog.Backdrop className="modal-overlay" />
         <Dialog.Popup className="modal-container">
           <Dialog.Close className="modal-close" aria-label="Close modal" >
-            <X size={18} />
+            <X size={14} />
           </Dialog.Close>
           {launcher?.content || <DefaultModal />}
         </Dialog.Popup>
