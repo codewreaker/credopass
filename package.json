@@ -1,13 +1,12 @@
 {
   "name": "dwellpass",
   "private": true,
-  "version": "0.0.1",
+  "version": "0.0.0",
   "type": "module",
   "scripts": {
     "start": "NODE_ENV=development bun run.ts",
     "preview": "NODE_ENV=production bun run build && bun server.ts",
-    "build": "vite build",
-    "build:dev": "tsc -b && vite build --mode development",
+    "build": "tsc -b && vite build",
     "lint": "eslint .",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "bun src/db/migrate.ts",
