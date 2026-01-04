@@ -287,28 +287,39 @@ const MainSidebar: React.FC<SidebarProps> = ({
                         <SidebarGroupLabel>Main</SidebarGroupLabel>
                         <SidebarMenu>
                             {navMain.map((item) => (
-                                <Collapsible key={item.label} asChild defaultOpen={item.isActive} className="group/collapsible">
-                                    <SidebarMenuItem>
-                                        <CollapsibleTrigger asChild>
-                                            <SidebarMenuButton tooltip={item.label}>
+                                item.items ? (
+                                    <Collapsible key={item.label} asChild defaultOpen={item.isActive} className="group/collapsible">
+                                        <SidebarMenuItem>
+                                            <CollapsibleTrigger asChild>
+                                                <SidebarMenuButton tooltip={item.label}>
+                                                    {item.icon && <item.icon size={16} />}
+                                                    <span>{item.label}</span>
+                                                    <ChevronRightIcon className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                                                </SidebarMenuButton>
+                                            </CollapsibleTrigger>
+                                            <CollapsibleContent>
+                                                <SidebarMenuSub>
+                                                    {item.items?.map((subItem) => (
+                                                        <SidebarMenuSubItem key={subItem.label}>
+                                                            <SidebarMenuSubButton asChild>
+                                                                <a href={subItem.url}>{subItem.label}</a>
+                                                            </SidebarMenuSubButton>
+                                                        </SidebarMenuSubItem>
+                                                    ))}
+                                                </SidebarMenuSub>
+                                            </CollapsibleContent>
+                                        </SidebarMenuItem>
+                                    </Collapsible>
+                                ) : (
+                                    <SidebarMenuItem key={item.label}>
+                                        <SidebarMenuButton asChild tooltip={item.label}>
+                                            <a href={item.url}>
                                                 {item.icon && <item.icon size={16} />}
                                                 <span>{item.label}</span>
-                                                <ChevronRightIcon className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
-                                            </SidebarMenuButton>
-                                        </CollapsibleTrigger>
-                                        <CollapsibleContent>
-                                            <SidebarMenuSub>
-                                                {item.items?.map((subItem) => (
-                                                    <SidebarMenuSubItem key={subItem.label}>
-                                                        <SidebarMenuSubButton asChild>
-                                                            <a href={subItem.url}>{subItem.label}</a>
-                                                        </SidebarMenuSubButton>
-                                                    </SidebarMenuSubItem>
-                                                ))}
-                                            </SidebarMenuSub>
-                                        </CollapsibleContent>
+                                            </a>
+                                        </SidebarMenuButton>
                                     </SidebarMenuItem>
-                                </Collapsible>
+                                )
                             ))}
                         </SidebarMenu>
                     </SidebarGroup>

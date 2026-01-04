@@ -43,15 +43,32 @@ export function RootLayout() {
           ]}
           nav={{
             main: [
-              { url: "/", icon: LayoutDashboard, label: "Home" },
-              { url: "/members", icon: Users, label: "Members" },
+              { 
+                url: "/", 
+                icon: LayoutDashboard, 
+                label: "Home",
+                isActive: true
+              },
+              { 
+                url: "/members", 
+                icon: Users, 
+                label: "Members"
+              },
               {
                 url: "/analytics",
                 icon: ChartNoAxesCombined,
                 label: "Analytics",
               },
-              { url: "/events", icon: Calendar, label: "Events" },
-              { url: "/database", icon: Database, label: "Tables" },
+              { 
+                url: "/events", 
+                icon: Calendar, 
+                label: "Events"
+              },
+              { 
+                url: "/database", 
+                icon: Database, 
+                label: "Tables"
+              },
             ]
           }}
         >
