@@ -8,6 +8,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import {
     DropdownMenu,
     DropdownMenuContent,
+    DropdownMenuGroup,
     DropdownMenuItem,
     DropdownMenuLabel,
     DropdownMenuSeparator,
@@ -35,14 +36,13 @@ import {
     TerminalSquareIcon,
     BotIcon,
     BookOpen,
-    Settings2Icon,
     FrameIcon,
     PieChartIcon,
-    MapIcon,
     ChevronsUpDownIcon,
     ChevronRightIcon,
 } from "lucide-react"
 import { useLocation, useNavigate } from "@tanstack/react-router"
+import UserComponent from "@/components/User"
 
 interface SidebarMenuItemType {
     label: string
@@ -84,11 +84,7 @@ const defaultData: SidebarProps = {
         {
             label: "Acme Corp.",
             plan: "Startup",
-        },
-        {
-            label: "Evil Corp.",
-            plan: "Free",
-        },
+        }
     ],
     nav: {
         main: [{
@@ -98,10 +94,6 @@ const defaultData: SidebarProps = {
             items: [
                 {
                     label: "History",
-                    url: "#",
-                },
-                {
-                    label: "Starred",
                     url: "#",
                 },
                 {
@@ -141,38 +133,7 @@ const defaultData: SidebarProps = {
                 {
                     label: "Get Started",
                     url: "#",
-                },
-                {
-                    label: "Tutorials",
-                    url: "#",
-                },
-                {
-                    label: "Changelog",
-                    url: "#",
-                },
-            ],
-        },
-        {
-            label: "Settings",
-            url: "#",
-            icon: Settings2Icon,
-            items: [
-                {
-                    label: "General",
-                    url: "#",
-                },
-                {
-                    label: "Team",
-                    url: "#",
-                },
-                {
-                    label: "Billing",
-                    url: "#",
-                },
-                {
-                    label: "Limits",
-                    url: "#",
-                },
+                }
             ],
         }],
         projects: [
@@ -185,12 +146,7 @@ const defaultData: SidebarProps = {
                 label: "Sales & Marketing",
                 url: "#",
                 icon: PieChartIcon,
-            },
-            {
-                label: "Travel",
-                url: "#",
-                icon: MapIcon,
-            },
+            }
         ]
     },
 }
@@ -225,7 +181,7 @@ const MainSidebar: React.FC<SidebarProps> = ({
                     <SidebarMenu>
                         <SidebarMenuItem>
                             <DropdownMenu>
-                                <DropdownMenuTrigger>
+                                <DropdownMenuTrigger asChild>
                                     <SidebarMenuButton
                                         size="lg"
                                         className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
@@ -270,7 +226,9 @@ const MainSidebar: React.FC<SidebarProps> = ({
                                     side="bottom"
                                     sideOffset={4}
                                 >
-                                    <DropdownMenuLabel className="text-xs text-muted-foreground">Teams</DropdownMenuLabel>
+                                    <DropdownMenuGroup>
+                                        <DropdownMenuLabel className="text-xs text-muted-foreground">Teams</DropdownMenuLabel>
+                                    </DropdownMenuGroup>
                                     {teams?.map((team) => (
                                         <DropdownMenuItem key={team.label} onClick={() => setActiveTeam(team)} className="gap-2 p-2">
                                             <div className="flex size-6 items-center justify-center rounded-sm border">
@@ -340,7 +298,8 @@ const MainSidebar: React.FC<SidebarProps> = ({
                 <SidebarFooter>
                     <SidebarMenu>
                         <SidebarMenuItem>
-                            <DropdownMenu>
+                            <UserComponent user={user} />
+                            {/* <DropdownMenu>
                                 <DropdownMenuTrigger>
                                     <SidebarMenuButton
                                         size="lg"
@@ -363,18 +322,20 @@ const MainSidebar: React.FC<SidebarProps> = ({
                                     align="end"
                                     sideOffset={4}
                                 >
-                                    <DropdownMenuLabel className="p-0 font-normal">
-                                        <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-                                            <Avatar className="h-8 w-8 rounded-lg">
-                                                <AvatarImage src={user?.avatar || "/placeholder.svg"} alt={user?.name} />
-                                                <AvatarFallback className="rounded-lg">CN</AvatarFallback>
-                                            </Avatar>
-                                            <div className="grid flex-1 text-left text-sm leading-tight">
-                                                <span className="truncate font-semibold">{user?.name}</span>
-                                                <span className="truncate text-xs">{user?.email}</span>
+                                    <DropdownMenuGroup>
+                                        <DropdownMenuLabel className="p-0 font-normal">
+                                            <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
+                                                <Avatar className="h-8 w-8 rounded-lg">
+                                                    <AvatarImage src={user?.avatar || "/placeholder.svg"} alt={user?.name} />
+                                                    <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+                                                </Avatar>
+                                                <div className="grid flex-1 text-left text-sm leading-tight">
+                                                    <span className="truncate font-semibold">{user?.name}</span>
+                                                    <span className="truncate text-xs">{user?.email}</span>
+                                                </div>
                                             </div>
-                                        </div>
-                                    </DropdownMenuLabel>
+                                        </DropdownMenuLabel>
+                                    </DropdownMenuGroup>
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem>Account</DropdownMenuItem>
                                     <DropdownMenuItem>Billing</DropdownMenuItem>
@@ -382,7 +343,7 @@ const MainSidebar: React.FC<SidebarProps> = ({
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem>Log out</DropdownMenuItem>
                                 </DropdownMenuContent>
-                            </DropdownMenu>
+                            </DropdownMenu> */}
                         </SidebarMenuItem>
                     </SidebarMenu>
                 </SidebarFooter>

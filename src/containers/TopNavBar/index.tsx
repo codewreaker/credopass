@@ -17,14 +17,8 @@ export const TopNavBar: React.FC = () => {
 
   return (
     <div className="top-navbar">
-      <div className="navbar-left">
-        <div className="logo">
-          <div className="logo-icon">DP</div>
-          <span className="logo-text">DwellPass</span>
-        </div>
-      </div>
 
-      <div className="navbar-center">
+      <div className="navbar-left">
         <div className="search-container">
           <Search className="search-icon" size={14} />
           <input
@@ -46,31 +40,6 @@ export const TopNavBar: React.FC = () => {
           <Bell size={15} />
           <span className="notification-badge">3</span>
         </Button>
-
-        <DropdownMenu>
-          <DropdownMenuTrigger className="avatar-btn">
-            <div className="avatar">
-              <User size={15} />
-            </div>
-            <ChevronDown size={12} />
-          </DropdownMenuTrigger>
-
-          <DropdownMenuContent align="end" sideOffset={6}>
-            <DropdownMenuItem onClick={onProfileClick}>
-              <User size={14} />
-              <span>Profile</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <Settings size={14} />
-              <span>Settings</span>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <LogOut size={14} />
-              <span>Logout</span>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
       </div>
     </div>
   );
