@@ -1,17 +1,21 @@
 import React, { useMemo } from "react";
 import { Users, Calendar, TrendingUp, Award } from "lucide-react";
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis, PieChart, Pie } from "recharts";
+import type { ChartConfig } from "@/components/ui/chart";
 import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-} from "recharts";
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  ChartLegend,
+  ChartLegendContent,
+} from "@/components/ui/chart";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import GridLayout from "../../lib/grid-layout.js";
 import "./style.css";
 
@@ -27,11 +31,28 @@ const activityData = [
 ];
 
 const pieData = [
-  { name: "Present", value: 450 },
-  { name: "Absent", value: 50 },
+  { name: "Present", value: 450, fill: "var(--color-present)" },
+  { name: "Absent", value: 50, fill: "var(--color-absent)" },
 ];
 
-const COLORS = ["#d4ff00", "#333333"];
+// Chart configuration for shadcn charts
+const chartConfig = {
+  attendance: {
+    label: "Attendance",
+    color: "#d4ff00",
+  },
+} satisfies ChartConfig;
+
+const pieChartConfig = {
+  present: {
+    label: "Present",
+    color: "#d4ff00",
+  },
+  absent: {
+    label: "Absent",
+    color: "#333333",
+  },
+} satisfies ChartConfig;
 
 const minDims = { minW: 2, minH: 3 };
 
@@ -105,19 +126,21 @@ const Analytics: React.FC = () => {
     return stats.map((stat) => {
       const Icon = stat.icon;
       return (
-        <div key={stat.id} className="grid-item stat-card">
-          <div className="drag-handle">⋮⋮</div>
-          <div className="stat-header">
+        <Card key={stat.id} className="relative h-full flex flex-col p-0 overflow-hidden">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 p-2 pb-1">
             <div className="stat-icon">
-              <Icon size={16} />
+              <Icon size={10} />
             </div>
-            <span className={`stat-change ${stat.trend}`}>{stat.change}</span>
-          </div>
-          <div className="stat-content">
-            <h3 className="stat-value">{stat.value}</h3>
-            <p className="stat-label">{stat.label}</p>
-          </div>
-        </div>
+            <div className="flex items-center gap-2">
+              <span className={`stat-change ${stat.trend}`}>{stat.change}</span>
+              <div className="drag-handle">⋮⋮</div>
+            </div>
+          </CardHeader>
+          <CardContent className="flex flex-col items-center justify-center flex-1 text-center px-2 py-2">
+            <div className="text-2xl font-bold mb-0.5 wrap-break-word w-full">{stat.value}</div>
+            <div className="text-xs text-muted-foreground wrap-break-word w-full">{stat.label}</div>
+          </CardContent>
+        </Card>
       );
     });
   }, []);
@@ -130,91 +153,77 @@ const Analytics: React.FC = () => {
         onLayoutChange={(layout, allLayouts) => console.log(layout, allLayouts)}
       >
         {statCards}
-        <div key="chart-1" className="grid-item chart-card">
-          <div className="drag-handle">⋮⋮</div>
-          <div className="chart-header">
-            <h3>Monthly Attendance Trend</h3>
-            <select className="chart-filter">
-              <option>Last 8 Months</option>
-              <option>Last 6 Months</option>
-              <option>Last Year</option>
-            </select>
-          </div>
-          <div className="chart-container">
-            <ResponsiveContainer width="100%" height="95%">
-              <BarChart data={activityData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-                <XAxis dataKey="month" stroke="#a0a0a0" fontSize={9} />
-                <YAxis stroke="#a0a0a0" fontSize={9} />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "#252525",
-                    border: "1px solid #333",
-                    borderRadius: "8px",
-                  }}
+        <Card key="chart-1" className="relative h-full flex flex-col">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+            <div>
+              <CardTitle className="text-lg font-semibold">Monthly Attendance Trend</CardTitle>
+            </div>
+            <div className="flex items-center gap-2">
+              <select className="chart-filter">
+                <option>Last 8 Months</option>
+                <option>Last 6 Months</option>
+                <option>Last Year</option>
+              </select>
+              <div className="drag-handle">⋮⋮</div>
+            </div>
+          </CardHeader>
+          <CardContent className="flex-1 pb-4">
+            <ChartContainer config={chartConfig} className="h-full w-full">
+              <BarChart data={activityData} accessibilityLayer>
+                <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis
+                  dataKey="month"
+                  tickLine={false}
+                  tickMargin={10}
+                  axisLine={false}
+                  tickFormatter={(value) => value.slice(0, 3)}
                 />
+                <YAxis
+                  tickLine={false}
+                  axisLine={false}
+                  tickMargin={8}
+                />
+                <ChartTooltip content={<ChartTooltipContent />} />
                 <Bar
                   dataKey="attendance"
-                  fill="#d4ff00"
+                  fill="var(--color-attendance)"
                   radius={[8, 8, 0, 0]}
                 />
               </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
+            </ChartContainer>
+          </CardContent>
+        </Card>
 
-        <div key="chart-2" className="grid-item chart-card">
-          <div className="drag-handle">⋮⋮</div>
-          <div className="chart-header">
-            <h3>Attendance Distribution</h3>
-            <span className="chart-subtitle">This Month</span>
-          </div>
-          <div className="chart-container">
-            <ResponsiveContainer width="100%" height="95%">
+        <Card key="chart-2" className="relative h-full flex flex-col">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+            <div>
+              <CardTitle className="text-lg font-semibold">Attendance Distribution</CardTitle>
+              <CardDescription className="text-xs mt-1">This Month</CardDescription>
+            </div>
+            <div className="drag-handle">⋮⋮</div>
+          </CardHeader>
+          <CardContent className="flex-1 pb-4">
+            <ChartContainer config={pieChartConfig} className="h-full w-full">
               <PieChart>
+                <ChartTooltip content={<ChartTooltipContent hideLabel />} />
                 <Pie
                   data={pieData}
+                  dataKey="value"
+                  nameKey="name"
                   cx="50%"
                   cy="50%"
-                  innerRadius={37.5}
-                  outerRadius={60}
+                  innerRadius={60}
+                  outerRadius={80}
                   paddingAngle={2}
-                  dataKey="value"
-                >
-                  {pieData.map((entry, index) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill={COLORS[index % COLORS.length]}
-                    />
-                  ))}
-                </Pie>
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "#252525",
-                    border: "1px solid #333",
-                    borderRadius: "8px",
-                  }}
+                />
+                <ChartLegend
+                  content={<ChartLegendContent />}
+                  className="flex-wrap gap-2 *:basis-1/4 *:justify-center"
                 />
               </PieChart>
-            </ResponsiveContainer>
-            <div className="pie-legend">
-              <div className="legend-item">
-                <div
-                  className="legend-color"
-                  style={{ backgroundColor: COLORS[0] }}
-                />
-                <span>Present: {pieData?.[0]?.value}</span>
-              </div>
-              <div className="legend-item">
-                <div
-                  className="legend-color"
-                  style={{ backgroundColor: COLORS[1] }}
-                />
-                <span>Absent: {pieData?.[1]?.value}</span>
-              </div>
-            </div>
-          </div>
-        </div>
+            </ChartContainer>
+          </CardContent>
+        </Card>
       </GridLayout>
     </div>
   );
