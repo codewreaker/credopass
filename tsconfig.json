@@ -4,7 +4,13 @@
     "types": [
       "vite/client",
       "bun"
-    ]
+    ],
+    "baseUrl": ".",
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ]
+    }
   },
   "files": [],
   "include": [
