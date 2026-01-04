@@ -3,7 +3,6 @@
 import * as React from "react"
 
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import {
     DropdownMenu,
@@ -11,7 +10,6 @@ import {
     DropdownMenuGroup,
     DropdownMenuItem,
     DropdownMenuLabel,
-    DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import {
@@ -181,7 +179,7 @@ const MainSidebar: React.FC<SidebarProps> = ({
                     <SidebarMenu>
                         <SidebarMenuItem>
                             <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
+                                <DropdownMenuTrigger>
                                     <SidebarMenuButton
                                         size="lg"
                                         className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
@@ -269,8 +267,8 @@ const MainSidebar: React.FC<SidebarProps> = ({
                                     </SidebarMenuItem>
                                 </Collapsible>) : (
                                     <SidebarMenuItem key={item.label}>
-                                        <SidebarMenuButton isActive={isActive(item.url)} onClick={() => navigate({ to: item.url })} tooltip={item.label}>
-                                            {item.icon && <item.icon />}
+                                        <SidebarMenuButton  isActive={isActive(item.url)} onClick={() => navigate({ to: item.url })} tooltip={item.label}>
+                                            {item.icon && <item.icon/>}
                                             <span>{item.label}</span>
                                         </SidebarMenuButton>
                                     </SidebarMenuItem>
