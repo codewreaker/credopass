@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button } from '@/components/ui/button.js';
+import { Button } from '@/components/ui/button';
 import type { MenuItem } from '.';
 
 interface HeaderProps {

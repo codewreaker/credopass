@@ -4,7 +4,7 @@ import {
   Bell,
   Calendar
 } from 'lucide-react';
-import { Button } from '@/components/ui/button.js';
+import { Button } from '@/components/ui/button';
 import { launchSignInForm } from '../SignInModal';
 import { launchUserForm } from '../UserForm';
 
