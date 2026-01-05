@@ -136,7 +136,7 @@ const AttendanceBar: React.FC<{ rate: number }> = ({ rate }) => {
 
 
 export default function MembersPage() {
-  const { data } = useLiveQuery((q) => q.from({ user: userCollection }));
+  const { data } = useLiveQuery((q) => q.from({ userCollection }));
   const rowData: UserType[] = Array.isArray(data) ? data : []
   const { openLauncher } = useLauncher();
 

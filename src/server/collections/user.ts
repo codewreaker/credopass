@@ -10,7 +10,9 @@ const queryClient = new QueryClient();
 
 const API_BASE = `/api`;
 
-export const userCollection = createCollection(
+
+
+const userCollection = createCollection(
   queryCollectionOptions({
     queryKey: ["users"],
     queryFn: async (): Promise<UserType[]> => {
@@ -54,3 +56,5 @@ export const userCollection = createCollection(
     },
   })
 );
+
+export { userCollection };

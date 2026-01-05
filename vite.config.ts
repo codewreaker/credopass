@@ -16,8 +16,7 @@ export default defineConfig({
         ]
       }
     }),
-    tailwindcss(),
-    // tsconfigPaths()
+    tailwindcss()
   ],
   server: {
     host: true,
@@ -40,8 +39,7 @@ export default defineConfig({
         manualChunks: (id) => {
           // React core and router
           if (id.includes('node_modules/react') ||
-            id.includes('node_modules/react-dom') ||
-            id.includes('node_modules/@tanstack/react-router')) {
+            id.includes('node_modules/react-dom')) {
             return 'react-vendor'
           }
 
