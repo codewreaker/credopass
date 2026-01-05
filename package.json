@@ -9,11 +9,13 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "bun src/db/migrate.ts",
-    "db:seed": "bun src/db/seed.ts",
+    "db:migrate": "bun src/server/db/migrate.ts",
+    "db:seed": "bun src/server/db/seed.ts",
     "db:studio": "drizzle-kit studio",
     "db:setup": "mkdir -p data && bun db:migrate && bun db:seed",
-    "db:reset": "rm -rf data/* && bun db:setup"
+    "db:reset": "rm -rf data/* && bun db:setup",
+    "pg:start": "docker-compose -f docker/docker-compose.yml up -d",
+    "pg:stop": "docker-compose -f docker/docker-compose.yml down -v"
   },
   "dependencies": {
     "@base-ui/react": "^1.0.0",
@@ -40,6 +42,7 @@
     "drizzle-orm": "^0.45.1",
     "hono": "^4.10.7",
     "lucide-react": "^0.562.0",
+    "postgres": "^3.4.7",
     "react": "^19.2.1",
     "react-dom": "^19.2.1",
     "react-grid-layout": "^2.0.0",
