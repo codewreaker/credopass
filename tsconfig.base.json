@@ -7,14 +7,14 @@
       "DOM.Iterable"
     ],
     "target": "ESNext",
-    "module": "esnext",
+    "module": "nodenext",
     "allowJs": true,
     "types": [
       "vite/client",
       "bun-types"
     ],
     /* Node16/NodeNext mode for explicit extensions */
-    "moduleResolution": "bundler",
+    "moduleResolution": "nodenext",
     "allowImportingTsExtensions": false,
     "resolveJsonModule": true,
     "verbatimModuleSyntax": true,

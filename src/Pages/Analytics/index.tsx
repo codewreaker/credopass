@@ -1,21 +1,21 @@
 import React, { useMemo } from "react";
 import { Users, Calendar, TrendingUp, Award } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, PieChart, Pie } from "recharts";
-import type { ChartConfig } from "@/components/ui/chart";
+import type { ChartConfig } from "@/components/ui/chart.js";
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
   ChartLegend,
   ChartLegendContent,
-} from "@/components/ui/chart";
+} from "@/components/ui/chart.js";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
+} from "@/components/ui/card.js";
 import GridLayout from "../../lib/grid-layout.js";
 import "./style.css";
 

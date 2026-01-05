@@ -1,8 +1,8 @@
 import React from "react"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar.js"
 import {
     SidebarMenuButton
-} from "@/components/ui/sidebar"
+} from "@/components/ui/sidebar.js"
 
 import {
     DropdownMenu, DropdownMenuTrigger, DropdownMenuContent,
@@ -10,7 +10,7 @@ import {
     DropdownMenuShortcut, DropdownMenuSub, DropdownMenuSubTrigger,
     DropdownMenuPortal, DropdownMenuSubContent, DropdownMenuSeparator,
     DropdownMenuCheckboxItem, DropdownMenuRadioGroup, DropdownMenuRadioItem
-} from "@/components/ui/dropdown-menu"
+} from "@/components/ui/dropdown-menu.js"
 
 import {
     FileIcon, FolderIcon, FolderOpenIcon, FileCodeIcon,
@@ -21,7 +21,7 @@ import {
     HelpCircleIcon, FileTextIcon, LogOutIcon, ChevronsUpDownIcon
 } from "lucide-react"
 
-import type {SidebarProps} from "@/containers/LeftSidebar"
+import type {SidebarProps} from "@/containers/LeftSidebar/index.js"
 
 
 const UserComponent:React.FC<{user: SidebarProps['user']}> = ({user}) => {

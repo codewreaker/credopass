@@ -22,10 +22,10 @@ import {
     CommandShortcut,
 } from '@/components/ui/command.js';
 
-import { launchEventForm } from '../EventForm';
-import { launchSignInForm } from '../SignInModal';
-import { launchUserForm } from '../UserForm';
-import type { LauncherState } from '@/store';
+import { launchEventForm } from '../EventForm/index.js';
+import { launchSignInForm } from '../SignInModal/index.js';
+import { launchUserForm } from '../UserForm/index.js';
+import type { LauncherState } from '@/store.js';
 
 
 import { useNavigate } from '@tanstack/react-router';

@@ -10,8 +10,8 @@ import {
   Plus,
 } from 'lucide-react';
 import type { Event } from '../../../server/db/schema.js';
-import { Button } from '@/components/ui/button';
-import type { EventFormProps } from '../../../containers/EventForm';
+import { Button } from '@/components/ui/button.js';
+import type { EventFormProps } from '../../../containers/EventForm/index.js';
 import type { EventCollection } from '../../../server/collections/events.js';
 import './style.css';
 

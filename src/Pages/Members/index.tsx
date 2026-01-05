@@ -1,14 +1,14 @@
 import { useLiveQuery } from '@tanstack/react-db'
-import { LoyaltyTierEnum, type AttendanceType, type LoyaltyType, type UserType } from '../../server/db/schema'
-import { userCollection } from '../../server/collections/user'
+import { LoyaltyTierEnum, type AttendanceType, type LoyaltyType, type UserType } from '../../server/db/schema.js'
+import { userCollection } from '../../server/collections/user.js'
 import type { ColDef, RowClickedEvent } from 'ag-grid-community'
 import { MoreVertical } from 'lucide-react'
 
 import React from "react";
-import GridTable, { type MenuItem } from "../../components/grid-table";
+import GridTable, { type MenuItem } from "../../components/grid-table/index.js";
 import { PlusCircle, Filter } from "lucide-react";
 import { useLauncher } from '../../store.js';
-import { launchUserForm } from '../../containers/UserForm';
+import { launchUserForm } from '../../containers/UserForm/index.js';
 
 
 const hdl = (type: string, e?: React.SyntheticEvent | RowClickedEvent) => {

@@ -11,8 +11,8 @@ import {
 } from 'lucide-react';
 import { eventCollection as collection } from '../../server/collections/events.js';
 import type { EventStatus } from '../../server/db/schema.js';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button.js';
+import { Input } from '@/components/ui/input.js';
 import { 
   Field, 
   FieldDescription, 
@@ -20,7 +20,7 @@ import {
   FieldGroup, 
   FieldLabel 
 } from '@/components/ui/field.js';
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select.js';
 import { Textarea } from '@/components/ui/textarea.js';
 import './style.css';
 import type { LauncherState } from '../../store.js';

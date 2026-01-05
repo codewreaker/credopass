@@ -6,7 +6,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
 import { desc, eq, and, gte, lte } from 'drizzle-orm';
-import { getDatabase, events, EventSchema, CreateEventSchema } from '../server/db';
+import { getDatabase, events, EventSchema, CreateEventSchema } from '../server/db/index.js';
 
 const eventsRouter = new Hono();
 

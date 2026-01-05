@@ -11,8 +11,8 @@ import {
   Sparkles
 } from 'lucide-react';
 import { userCollection } from '../../server/collections/user.js';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button.js';
+import { Input } from '@/components/ui/input.js';
 import {
   Field,
   FieldDescription,

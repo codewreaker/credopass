@@ -4,14 +4,14 @@ import {
   Bell,
   Calendar
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { launchSignInForm } from '../SignInModal';
-import { launchUserForm } from '../UserForm';
+import { Button } from '@/components/ui/button.js';
+import { launchSignInForm } from '../SignInModal/index.js';
+import { launchUserForm } from '../UserForm/index.js';
 
 import './style.css';
 import { useLauncher } from '../../store.js';
 import { launchEventForm } from '../EventForm/index.js';
-import CommandPalette from './Command';
+import CommandPalette from './Command.js';
 import { useNavigate } from '@tanstack/react-router';
 
 
