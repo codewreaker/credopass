@@ -23,6 +23,7 @@ import {
 import type { LauncherState } from '../../store';
 import './style.css';
 
+
 // Modal form data type - exported for type safety
 export interface UserFormData {
   id?: string;
