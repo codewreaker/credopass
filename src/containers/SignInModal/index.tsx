@@ -2,16 +2,16 @@ import React, { useState } from 'react';
 import { useForm } from '@tanstack/react-form';
 import * as z from 'zod';
 import { Mail, Lock, User, Eye, EyeOff } from 'lucide-react';
-import { Button } from '@/components/ui/button.js';
-import { Input } from '@/components/ui/input.js';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   Field,
   FieldDescription,
   FieldError,
   FieldGroup,
   FieldLabel
-} from '@/components/ui/field.js';
-import type { LauncherState } from '../../store.js';
+} from '@/components/ui/field';
+import type { LauncherState } from '../../store';
 import './style.css';
 
 interface SignInFormProps {

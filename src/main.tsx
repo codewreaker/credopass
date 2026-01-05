@@ -6,7 +6,7 @@ import 'react-resizable/css/styles.css'
 import './index.css'
 
 // Import explicit route configuration
-import { routeTree } from './routes.js'
+import { routeTree } from './routes'
 
 // Create a new router instance from the explicit route tree
 const router = createRouter({ routeTree })

@@ -1,22 +1,22 @@
 import React, { useMemo } from "react";
 import { Users, Calendar, TrendingUp, Award } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, PieChart, Pie } from "recharts";
-import type { ChartConfig } from "@/components/ui/chart.js";
+import type { ChartConfig } from "@/components/ui/chart";
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
   ChartLegend,
   ChartLegendContent,
-} from "@/components/ui/chart.js";
+} from "@/components/ui/chart";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card.js";
-import GridLayout from "../../lib/grid-layout.js";
+} from "@/components/ui/card";
+import GridLayout from "../../lib/grid-layout";
 import "./style.css";
 
 const activityData = [

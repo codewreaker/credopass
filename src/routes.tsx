@@ -1,11 +1,11 @@
 import { createRootRoute, createRoute } from '@tanstack/react-router'
-import { RootLayout } from './Pages/Layout.js'
-import HomePage from './Pages/Home/index.js'
-import MembersPage from './Pages/Members/index.js'
-import EventsPage from './Pages/Events/index.js'
-import Analytics from './Pages/Analytics/index.js'
-import TablesPage from './Pages/Tables/index.js'
-import { ComponentExample } from './components/component-example.js'
+import { RootLayout } from './Pages/Layout'
+import HomePage from './Pages/Home/index'
+import MembersPage from './Pages/Members/index'
+import EventsPage from './Pages/Events/index'
+import Analytics from './Pages/Analytics/index'
+import TablesPage from './Pages/Tables/index'
+import { ComponentExample } from './components/component-example'
 
 // Root route - wraps all pages with layout (sidebar, topbar, etc.)
 const rootRoute = createRootRoute({

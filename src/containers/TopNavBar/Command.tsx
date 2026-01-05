@@ -20,12 +20,12 @@ import {
     CommandList,
     CommandSeparator,
     CommandShortcut,
-} from '@/components/ui/command.js';
+} from '@/components/ui/command';
 
-import { launchEventForm } from '../EventForm/index.js';
-import { launchSignInForm } from '../SignInModal/index.js';
-import { launchUserForm } from '../UserForm/index.js';
-import type { LauncherState } from '@/store.js';
+import { launchEventForm } from '../EventForm/index';
+import { launchSignInForm } from '../SignInModal/index';
+import { launchUserForm } from '../UserForm/index';
+import type { LauncherState } from '@/store';
 
 
 import { useNavigate } from '@tanstack/react-router';

@@ -13,9 +13,9 @@
       "vite/client",
       "bun-types"
     ],
-    /* Node16/NodeNext mode for explicit extensions */
+    /* Bundler mode for flexible imports */
     "moduleResolution": "bundler",
-    "allowImportingTsExtensions": false,
+    "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
     "verbatimModuleSyntax": true,
     "moduleDetection": "force",

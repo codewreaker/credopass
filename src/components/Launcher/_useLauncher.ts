@@ -1,4 +1,4 @@
-import type { EventFormData } from '../../containers/EventForm/index.js';
+import type { EventFormData } from '../../containers/EventForm/index';
 
 
 // ─────────────────────────────────────────────────────────────────────────────

@@ -5,10 +5,10 @@
 import { PGlite } from '@electric-sql/pglite';
 import { drizzle, type PgliteDatabase } from 'drizzle-orm/pglite';
 import path from "node:path";
-import * as schema from './schema.js';
+import * as schema from './schema';
 
 // Export schema
-export * from './schema.js';
+export * from './schema';
 
 // Singleton database instance
 let db: PgliteDatabase<typeof schema> | null = null;

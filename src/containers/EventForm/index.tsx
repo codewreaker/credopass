@@ -9,21 +9,21 @@ import {
   FileText,
   Trash2
 } from 'lucide-react';
-import { eventCollection as collection } from '../../server/collections/events.js';
-import type { EventStatus } from '../../server/db/schema.js';
-import { Button } from '@/components/ui/button.js';
-import { Input } from '@/components/ui/input.js';
+import { eventCollection as collection } from '../../server/collections/events';
+import type { EventStatus } from '../../server/db/schema';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { 
   Field, 
   FieldDescription, 
   FieldError, 
   FieldGroup, 
   FieldLabel 
-} from '@/components/ui/field.js';
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select.js';
-import { Textarea } from '@/components/ui/textarea.js';
+} from '@/components/ui/field';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 import './style.css';
-import type { LauncherState } from '../../store.js';
+import type { LauncherState } from '../../store';
 
 // Modal form data type - exported for type safety
 export interface EventFormData {

@@ -3,7 +3,7 @@
 import * as React from "react"
 
 
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible.js"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -11,7 +11,7 @@ import {
     DropdownMenuItem,
     DropdownMenuLabel,
     DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu.js"
+} from "@/components/ui/dropdown-menu"
 import {
     Sidebar,
     SidebarContent,
@@ -29,7 +29,7 @@ import {
     SidebarProvider,
     SidebarRail,
     SidebarTrigger,
-} from "@/components/ui/sidebar.js"
+} from "@/components/ui/sidebar"
 import {
     TerminalSquareIcon,
     BotIcon,
@@ -40,8 +40,8 @@ import {
     ChevronRightIcon,
 } from "lucide-react"
 import { useLocation, useNavigate } from "@tanstack/react-router"
-import UserComponent from "@/components/user/index.js"
-import { cn } from "@/lib/utils.js"
+import UserComponent from "@/components/user/index"
+import { cn } from "@/lib/utils"
 
 interface SidebarMenuItemType {
     label: string

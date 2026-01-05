@@ -1,5 +1,5 @@
 import { Dialog } from '@base-ui/react/dialog';
-import { useLauncher } from '../../store.js';
+import { useLauncher } from '../../store';
 // import { SignInForm } from '../../containers/SignInModal';
 // import { MODALS, type ModalId } from './_useLauncher';
 import { X } from 'lucide-react';

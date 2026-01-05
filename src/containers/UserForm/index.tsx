@@ -10,17 +10,17 @@ import {
   Trash2,
   Sparkles
 } from 'lucide-react';
-import { userCollection } from '@/server/collections/user.js';
-import { Button } from '@/components/ui/button.js';
-import { Input } from '@/components/ui/input.js';
+import { userCollection } from '@/server/collections/user';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   Field,
   FieldDescription,
   FieldError,
   FieldGroup,
   FieldLabel
-} from '@/components/ui/field.js';
-import type { LauncherState } from '../../store.js';
+} from '@/components/ui/field';
+import type { LauncherState } from '../../store';
 import './style.css';
 
 // Modal form data type - exported for type safety
