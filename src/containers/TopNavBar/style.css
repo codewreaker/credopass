@@ -1,30 +1,17 @@
 .top-navbar {
-  position: sticky;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 52.5px;
-  /* background-color: var(--background-darker); */
-  border-bottom: 1px solid var(--border);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 0.5rem;
-  z-index: 100;
+  width: 100%;
 }
+
 
 .navbar-left {
   display: flex;
   align-items: center;
-  gap: 2.25rem;
-}
-
-.navbar-center {
-  display: flex;
-  align-items: center;
   justify-content: center;
   gap: 0.75rem;
-  width: 40%;
+  width: 90%;
 }
 
 .navbar-right {
@@ -33,58 +20,41 @@
   gap: 0.75rem;
 }
 
-.logo {
-  display: flex;
-  align-items: center;
-  gap: 0.5625rem;
-}
 
-.logo-icon {
-  width: 27px;
-  height: 27px;
-  background: linear-gradient(135deg, var(--primary), var(--secondary));
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--background-darker);
-  font-weight: 700;
-  font-size: 0.9375rem;
-}
-
-.logo-text {
-  font-weight: 700;
-  font-size: 0.9375rem;
-  color: var(--foreground);
-}
 
 .search-container {
   position: relative;
   display: flex;
   align-items: center;
+  justify-content: space-between;
   width: 80%;
-  height: 30px;
+  height: 36px;
+  padding: 0 0.75rem;
+  gap: 0.5rem;
+  cursor: pointer;
+  text-align: left;
 }
 
 .search-icon {
-  position: absolute;
-  left: 0.75rem;
   color: var(--muted-foreground);
+  flex-shrink: 0;
 }
 
 .search-input {
-  width: 100%;
-  height: 100%;
-  background-color: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 0 0.75rem 0 2.25rem;
-  color: var(--foreground);
-  font-size: 1rem;
+  flex: 1;
+  color: var(--muted-foreground);
+  font-size: 0.875rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  border: none;
+  background: transparent;
+  padding: 0;
 }
 
-.search-input::placeholder {
-  color: var(--muted-foreground);
+.search-container kbd {
+  margin-left: auto;
+  flex-shrink: 0;
 }
 
 /* Notification button with badge */
@@ -115,29 +85,7 @@
   justify-content: center;
 }
 
-/* Avatar dropdown trigger */
-.avatar-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.375rem;
-  background-color: transparent;
-  border: none;
-  color: var(--muted-foreground);
-  padding: 0;
-  cursor: pointer;
-}
 
-.avatar {
-  width: 30px;
-  height: 30px;
-  background-color: var(--card);
-  border: 1.5px solid var(--primary);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--primary);
-}
 
 @media (max-width: 1024px) {
   .nav-links {

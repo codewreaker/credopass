@@ -6,7 +6,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
 import { eq, and, desc } from 'drizzle-orm';
-import { getDatabase, attendance, AttendanceSchema, CheckInSchema } from '../db/index.js';
+import { getDatabase, attendance, AttendanceSchema, CheckInSchema } from '../server/db/index';
 
 const attendanceRouter = new Hono();
 

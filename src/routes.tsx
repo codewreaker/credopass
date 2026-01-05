@@ -1,11 +1,11 @@
 import { createRootRoute, createRoute } from '@tanstack/react-router'
-import { RootLayout } from './Pages/Layout.js'
-import HomePage from './Pages/Home/index.js'
-import MembersPage from './Pages/Members/index.js'
-import EventsPage from './Pages/Events/index.js'
-import Analytics from './Pages/Analytics/index.js'
-import TablesPage from './Pages/Tables/index.js'
-import { ComponentExample } from "@/components/component-example.js";
+import { RootLayout } from './Pages/Layout'
+import HomePage from './Pages/Home/index'
+import MembersPage from './Pages/Members/index'
+import EventsPage from './Pages/Events/index'
+import Analytics from './Pages/Analytics/index'
+import TablesPage from './Pages/Tables/index'
+import { ComponentExample } from './components/component-example'
 
 // Root route - wraps all pages with layout (sidebar, topbar, etc.)
 const rootRoute = createRootRoute({
@@ -46,12 +46,14 @@ const databaseRoute = createRoute({
   component: TablesPage,
 })
 
-// Tailwinfd Sample
-const tailwindExample = createRoute({
+// Component Example route - UI component showcase
+const componentExampleRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/tailwind',
+  path: '/component-example',
   component: ComponentExample,
 })
+
+
 
 // Route tree - explicitly defines the structure
 export const routeTree = rootRoute.addChildren([
@@ -60,7 +62,7 @@ export const routeTree = rootRoute.addChildren([
   eventsRoute,
   analyticsRoute,
   databaseRoute,
-  tailwindExample
+  componentExampleRoute
 ])
 
 // Export individual routes for type safety and easy access
@@ -69,5 +71,6 @@ export const routes = {
   home: indexRoute,
   members: membersRoute,
   events: eventsRoute,
+  componentExample: componentExampleRoute,
   analytics: analyticsRoute
 } as const

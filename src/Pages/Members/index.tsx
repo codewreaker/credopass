@@ -1,14 +1,14 @@
 import { useLiveQuery } from '@tanstack/react-db'
-import { LoyaltyTierEnum, type AttendanceType, type LoyaltyType, type UserType } from '../../db/schema.js'
-import { userCollection } from '../../collections/user.js'
+import { LoyaltyTierEnum, type AttendanceType, type LoyaltyType, type UserType } from '../../server/db/schema'
+import { userCollection } from '../../server/collections/user'
 import type { ColDef, RowClickedEvent } from 'ag-grid-community'
 import { MoreVertical } from 'lucide-react'
 
 import React from "react";
-import GridTable, { type MenuItem } from "../../components/GridTable/index.js";
+import GridTable, { type MenuItem } from "../../components/grid-table/index";
 import { PlusCircle, Filter } from "lucide-react";
-import { useLauncher } from '../../store.js';
-import { launchUserForm } from '../../containers/UserForm/index.js';
+import { useLauncher } from '../../store';
+import { launchUserForm } from '../../containers/UserForm/index';
 
 
 const hdl = (type: string, e?: React.SyntheticEvent | RowClickedEvent) => {
@@ -136,7 +136,7 @@ const AttendanceBar: React.FC<{ rate: number }> = ({ rate }) => {
 
 
 export default function MembersPage() {
-  const { data } = useLiveQuery((q) => q.from({ userCollection }))
+  const { data } = useLiveQuery((q) => q.from({ userCollection }));
   const rowData: UserType[] = Array.isArray(data) ? data : []
   const { openLauncher } = useLauncher();
 

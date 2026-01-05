@@ -2,6 +2,7 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import path from 'path'
+//import tsconfigPaths from 'vite-tsconfig-paths'
 // import fs from 'fs'
 
 // https://vite.dev/config/
@@ -38,8 +39,7 @@ export default defineConfig({
         manualChunks: (id) => {
           // React core and router
           if (id.includes('node_modules/react') ||
-            id.includes('node_modules/react-dom') ||
-            id.includes('node_modules/@tanstack/react-router')) {
+            id.includes('node_modules/react-dom')) {
             return 'react-vendor'
           }
 

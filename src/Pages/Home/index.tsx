@@ -1,5 +1,5 @@
-import Analytics from '../Analytics/index.js'
-import Members from '../Members/index.js'
+import Analytics from '../Analytics/index'
+import Members from '../Members/index'
 
 
 export default function HomePage() {

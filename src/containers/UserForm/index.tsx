@@ -1,5 +1,7 @@
-/* eslint-disable react-refresh/only-export-components */
+/* eslint-disable no-useless-escape */
 import { useState } from 'react';
+import { useForm } from '@tanstack/react-form';
+import * as z from 'zod';
 import {
   UserPlus,
   Mail,
@@ -8,13 +10,19 @@ import {
   Trash2,
   Sparkles
 } from 'lucide-react';
-import { userCollection } from '../../collections/user.js';
-import type { UserType } from '../../db/schema.js';
-import { Button } from '../../components/ui/button.js';
-import { Input } from '../../components/ui/input.js';
-import { Label } from '../../components/ui/label.js';
-import type { LauncherState } from '../../store.js';
+import { userCollection } from '@/server/collections/user';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  Field,
+  FieldDescription,
+  FieldError,
+  FieldGroup,
+  FieldLabel
+} from '@/components/ui/field';
+import type { LauncherState } from '../../store';
 import './style.css';
+
 
 // Modal form data type - exported for type safety
 export interface UserFormData {
@@ -31,12 +39,26 @@ export interface UserFormProps {
   onClose?: () => void;
 }
 
-const initialFormData: UserFormData = {
-  firstName: '',
-  lastName: '',
-  email: '',
-  phone: '',
-};
+// Zod validation schema
+const userFormSchema = z.object({
+  firstName: z.string()
+    .min(2, 'First name must be at least 2 characters.')
+    .max(50, 'First name must be at most 50 characters.')
+    .regex(/^[a-zA-Z\s'-]+$/, 'First name can only contain letters, spaces, hyphens, and apostrophes.'),
+  lastName: z.string()
+    .min(2, 'Last name must be at least 2 characters.')
+    .max(50, 'Last name must be at most 50 characters.')
+    .regex(/^[a-zA-Z\s'-]+$/, 'Last name can only contain letters, spaces, hyphens, and apostrophes.'),
+  email: z.string()
+    .email('Please enter a valid email address.')
+    .min(5, 'Email must be at least 5 characters.')
+    .max(100, 'Email must be at most 100 characters.'),
+  phone: z.string()
+    .regex(/^[\d\s\-\+\(\)]+$/, 'Phone number can only contain numbers, spaces, hyphens, and parentheses.')
+    .min(10, 'Phone number must be at least 10 characters.')
+    .or(z.literal(''))
+    .default(''),
+});
 
 export const launchUserForm = (
   args: UserFormProps = {},
@@ -49,57 +71,65 @@ export const launchUserForm = (
 
 // User Form Component
 const UserForm = ({ initialData = {}, isEditing = false, onClose }: UserFormProps) => {
-
-  const [formData, setFormData] = useState<UserFormData>({ ...initialFormData, ...initialData });
   const [isMutating, setIsMutating] = useState(false);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
+  const form = useForm({
+    defaultValues: {
+      firstName: initialData.firstName || '',
+      lastName: initialData.lastName || '',
+      email: initialData.email || '',
+      phone: initialData.phone || '',
+    },
+    validators: {
+      onChange: ({ value }) => {
+        const result = userFormSchema.safeParse(value);
+        if (!result.success) {
+          return result.error.flatten().fieldErrors;
+        }
+        return undefined;
+      },
+    },
+    onSubmit: async ({ value }) => {
+      setIsMutating(true);
+      const now = new Date();
+      const userData = {
+        firstName: value.firstName,
+        lastName: value.lastName,
+        email: value.email,
+        phone: value.phone || null,
+      };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    setIsMutating(true);
-    const now = new Date();
-    const userData = {
-      firstName: formData.firstName,
-      lastName: formData.lastName,
-      email: formData.email,
-      phone: formData.phone || null,
-    };
-
-    try {
-      if (isEditing && formData.id) {
-        userCollection?.update(formData.id, (draft) => {
-          draft.firstName = userData.firstName;
-          draft.lastName = userData.lastName;
-          draft.email = userData.email;
-          draft.phone = userData.phone;
-          draft.updatedAt = now;
-        });
-      } else {
-        userCollection?.insert({
-          ...userData,
-          id: crypto.randomUUID(),
-          createdAt: now,
-          updatedAt: now,
-        });
+      try {
+        if (isEditing && initialData.id) {
+          userCollection?.update(initialData.id, (draft) => {
+            draft.firstName = userData.firstName;
+            draft.lastName = userData.lastName;
+            draft.email = userData.email;
+            draft.phone = userData.phone;
+            draft.updatedAt = now;
+          });
+        } else {
+          userCollection?.insert({
+            ...userData,
+            id: crypto.randomUUID(),
+            createdAt: now,
+            updatedAt: now,
+          });
+        }
+        onClose?.();
+      } catch (error) {
+        console.error('Failed to save user:', error);
+      } finally {
+        setIsMutating(false);
       }
-      onClose?.();
-    } catch (error) {
-      console.error('Failed to save user:', error);
-    } finally {
-      setIsMutating(false);
-    }
-  };
+    },
+  });
 
   const handleDelete = async () => {
-    if (formData.id && confirm('Are you sure you want to delete this user?')) {
+    if (initialData.id && confirm('Are you sure you want to delete this user?')) {
       setIsMutating(true);
       try {
-        userCollection?.delete(formData.id);
+        userCollection?.delete(initialData.id);
         onClose?.();
       } catch (error) {
         console.error('Failed to delete user:', error);
@@ -122,7 +152,13 @@ const UserForm = ({ initialData = {}, isEditing = false, onClose }: UserFormProp
       </div>
 
       <div className="modal-body">
-        <form className="user-form" onSubmit={handleSubmit}>
+        <form 
+          className="user-form" 
+          onSubmit={(e) => {
+            e.preventDefault();
+            form.handleSubmit();
+          }}
+        >
           {/* Welcome Message for New Users */}
           {!isEditing && (
             <div className="welcome-banner">
@@ -131,70 +167,121 @@ const UserForm = ({ initialData = {}, isEditing = false, onClose }: UserFormProp
             </div>
           )}
 
-          {/* First Name & Last Name */}
-          <div className="form-row">
-            <div className="form-group">
-              <Label className="form-label">
-                <UserIcon size={14} />
-                First Name
-              </Label>
-              <Input
-                type="text"
+          <FieldGroup>
+            {/* First Name & Last Name */}
+            <div className="form-row">
+              <form.Field
                 name="firstName"
-                placeholder="John"
-                value={formData.firstName}
-                onChange={handleInputChange}
-                required
+                children={(field) => {
+                  const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
+                  return (
+                    <Field data-invalid={isInvalid} className="form-group">
+                      <FieldLabel htmlFor={field.name} className="form-label">
+                        <UserIcon size={14} />
+                        First Name
+                      </FieldLabel>
+                      <Input
+                        id={field.name}
+                        name={field.name}
+                        type="text"
+                        placeholder="John"
+                        value={field.state.value}
+                        onBlur={field.handleBlur}
+                        onChange={(e) => field.handleChange(e.target.value)}
+                        aria-invalid={isInvalid}
+                      />
+                      {isInvalid && <FieldError errors={field.state.meta.errors} />}
+                    </Field>
+                  );
+                }}
               />
-            </div>
-            <div className="form-group">
-              <Label className="form-label">
-                <UserIcon size={14} />
-                Last Name
-              </Label>
-              <Input
-                type="text"
+              <form.Field
                 name="lastName"
-                placeholder="Doe"
-                value={formData.lastName}
-                onChange={handleInputChange}
-                required
+                children={(field) => {
+                  const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
+                  return (
+                    <Field data-invalid={isInvalid} className="form-group">
+                      <FieldLabel htmlFor={field.name} className="form-label">
+                        <UserIcon size={14} />
+                        Last Name
+                      </FieldLabel>
+                      <Input
+                        id={field.name}
+                        name={field.name}
+                        type="text"
+                        placeholder="Doe"
+                        value={field.state.value}
+                        onBlur={field.handleBlur}
+                        onChange={(e) => field.handleChange(e.target.value)}
+                        aria-invalid={isInvalid}
+                      />
+                      {isInvalid && <FieldError errors={field.state.meta.errors} />}
+                    </Field>
+                  );
+                }}
               />
             </div>
-          </div>
 
-          {/* Email */}
-          <div className="form-field-wrapper">
-            <Label className="form-label">
-              <Mail size={14} />
-              Email Address
-            </Label>
-            <Input
-              type="email"
+            {/* Email */}
+            <form.Field
               name="email"
-              placeholder="john.doe@example.com"
-              value={formData.email}
-              onChange={handleInputChange}
-              required
+              children={(field) => {
+                const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
+                return (
+                  <Field data-invalid={isInvalid} className="form-field-wrapper">
+                    <FieldLabel htmlFor={field.name} className="form-label">
+                      <Mail size={14} />
+                      Email Address
+                    </FieldLabel>
+                    <Input
+                      id={field.name}
+                      name={field.name}
+                      type="email"
+                      placeholder="john.doe@example.com"
+                      value={field.state.value}
+                      onBlur={field.handleBlur}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      aria-invalid={isInvalid}
+                    />
+                    <FieldDescription className="field-hint">
+                      We'll use this to send you event updates
+                    </FieldDescription>
+                    {isInvalid && <FieldError errors={field.state.meta.errors} />}
+                  </Field>
+                );
+              }}
             />
-            <p className="field-hint">We'll use this to send you event updates</p>
-          </div>
 
-          {/* Phone Number */}
-          <div className="form-field-wrapper">
-            <Label className="form-label">
-              <Phone size={14} />
-              Phone Number
-            </Label>
-            <Input
-              type="tel"
+            {/* Phone Number */}
+            <form.Field
               name="phone"
-              placeholder="+1 (555) 000-0000"
-              value={formData.phone}
-              onChange={handleInputChange}
+              children={(field) => {
+                const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
+                return (
+                  <Field data-invalid={isInvalid} className="form-field-wrapper">
+                    <FieldLabel htmlFor={field.name} className="form-label">
+                      <Phone size={14} />
+                      Phone Number
+                    </FieldLabel>
+                    <Input
+                      id={field.name}
+                      name={field.name}
+                      type="tel"
+                      placeholder="+1 (555) 000-0000"
+                      value={field.state.value}
+                      onBlur={field.handleBlur}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      aria-invalid={isInvalid}
+                    />
+                    <FieldDescription className="field-hint">
+                      Optional - For important event notifications
+                    </FieldDescription>
+                    {isInvalid && <FieldError errors={field.state.meta.errors} />}
+                  </Field>
+                );
+              }}
             />
-            <p className="field-hint">Optional - For important event notifications</p>
-          </div>
+          </FieldGroup>
 
           {/* Info Box */}
           {!isEditing && (

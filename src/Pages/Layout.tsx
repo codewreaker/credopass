@@ -1,9 +1,10 @@
 import { Outlet } from "@tanstack/react-router";
-import { TopNavBar } from "../containers/TopNavBar/index.js";
-import { LeftSidebar } from "../containers/LeftSidebar/index.js";
-import { RightSidebar } from "../containers/RightSidebar/index.js";
+import { TopNavBar } from "../containers/TopNavBar/index";
+import LeftSidebar, { SidebarInset, SidebarTrigger } from "../containers/LeftSidebar/index";
+
+import { RightSidebar } from "@/containers/RightSidebar/index";
 //import { SignInModal } from "../containers/SignInModal";
-import ModalPortal from "../components/Launcher/index.js";
+import ModalPortal from "@/components/launcher/index";
 import {
   LayoutDashboard,
   Users,
@@ -18,28 +19,74 @@ export function RootLayout() {
 
   return (
     <div className="app-container">
-      <TopNavBar/>
 
       <div className="app-layout">
         <LeftSidebar
-          menuConfig={[
-            { path: "/", icon: LayoutDashboard, label: "Home" },
-            { path: "/members", icon: Users, label: "Members" },
+          user={{
+            name: 'Israel',
+            email: 'israel.agyeman.prempeh@gmail.com',
+            avatar: "/avatars/shadcn.jpg",
+          }}
+          teams={[
             {
-              path: "/analytics",
-              icon: ChartNoAxesCombined,
-              label: "Analytics",
+              label: "Kharis Church",
+              plan: "Enterprise",
             },
-            { path: "/events", icon: Calendar, label: "Events" },
-            { path: "/database", icon: Database, label: "Tables" },
+            {
+              label: "Kharis Church",
+              plan: "Free",
+            },
+            {
+              label: "Kharis Phase 2",
+              plan: "Free",
+            },
           ]}
-        />
+          nav={{
+            main: [
+              { 
+                url: "/", 
+                icon: LayoutDashboard, 
+                label: "Home",
+                isActive: true
+              },
+              { 
+                url: "/members", 
+                icon: Users, 
+                label: "Members"
+              },
+              {
+                url: "/analytics",
+                icon: ChartNoAxesCombined,
+                label: "Analytics",
+              },
+              { 
+                url: "/events", 
+                icon: Calendar, 
+                label: "Events"
+              },
+              { 
+                url: "/database", 
+                icon: Database, 
+                label: "Tables"
+              },
+            ],
+            examples: [{
+              url: "/component-example", 
+              icon: LayoutDashboard, 
+              label: "Components"
+            }]
+          }}
+        >
+          <SidebarInset className="main-content">
+            <header className="flex justify-between h-16 shrink-0 items-center gap-2 border-b px-4">
+              <SidebarTrigger className="-ml-1" />
+              <TopNavBar />
+            </header>
+            <Outlet />
+          </SidebarInset>
+        </LeftSidebar>
 
-        <main className="main-content">
-          <Outlet />
-        </main>
-
-        <RightSidebar/>
+        <RightSidebar />
       </div>
 
       {/* <SignInModal /> */}

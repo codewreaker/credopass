@@ -5,7 +5,6 @@
   height: calc(100vh - 52.5px);
   overflow-y: auto;
   position: sticky;
-  top: 52.5px;
   display: flex;
   flex-direction: column;
   gap: 0.9375rem;
@@ -85,7 +84,6 @@
 .level-badge {
   display: inline-block;
   padding: 0.375rem 1.125rem;
-  background: linear-gradient(135deg, var(--primary), var(--secondary));
   color: var(--primary);
   border-radius: 15px;
   font-weight: 700;
