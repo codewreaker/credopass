@@ -41,7 +41,7 @@ import {
 } from "lucide-react"
 import { useLocation, useNavigate } from "@tanstack/react-router"
 import UserComponent from "../../components/user/index"
-import { cn } from "@dwellpass/ui"
+import { cn } from "@dwellpass/ui/lib/utils"
 
 interface SidebarMenuItemType {
     label: string

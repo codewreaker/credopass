@@ -6,7 +6,8 @@
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "exports": {
-    "./globals.css": "./src/styles/globals.css",
+    ".": "./src/components/index.ts",
+    "./styles/globals.css": "./src/styles/globals.css",
     "./postcss.config": "./postcss.config.mjs",
     "./lib/*": "./src/lib/*.ts",
     "./components/*": "./src/components/*.tsx",
@@ -14,6 +15,7 @@
   },
   "dependencies": {
     "@base-ui/react": "^1.0.0",
+    "recharts": "^2.5.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
