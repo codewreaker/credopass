@@ -12,10 +12,10 @@
   },
   "iconLibrary": "lucide",
   "aliases": {
-    "components": "@dwellpass/ui/components/ui",
+    "components": "@dwellpass/ui/components",
     "utils": "@dwellpass/ui/lib/utils",
     "hooks": "@dwellpass/ui/hooks",
     "lib": "@dwellpass/ui/lib",
-    "ui": "@dwellpass/ui/components/ui"
+    "ui": "@dwellpass/ui/components"
   }
 }

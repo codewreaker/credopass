@@ -16,6 +16,6 @@
     "hooks": "@/hooks",
     "lib": "@/lib",
     "utils": "@dwellpass/ui/lib/utils",
-    "ui": "@dwellpass/ui/components/ui"
+    "ui": "@dwellpass/ui/components"
   }
 }
