@@ -31,8 +31,6 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
       "@dwellpass/ui": path.resolve(__dirname, "../../packages/ui/src"),
       "@dwellpass/validation": path.resolve(__dirname, "../../packages/validation/src"),
-      "@dwellpass/api-client": path.resolve(__dirname, "../../packages/api-client/src"),
-      "@dwellpass/tanstack-db": path.resolve(__dirname, "../../packages/tanstack-db/src"),
     },
   },
   build: {

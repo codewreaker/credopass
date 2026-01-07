@@ -18,7 +18,7 @@
       "path": "../../packages/validation"
     },
     {
-      "path": "../../packages/database"
+      "path": "../../packages/server"
     }
   ]
 }

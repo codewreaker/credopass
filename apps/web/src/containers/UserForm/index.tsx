@@ -10,7 +10,7 @@ import {
   Trash2,
   Sparkles
 } from 'lucide-react';
-import { userCollection } from '@dwellpass/tanstack-db';
+import { userCollection } from '@/lib/tanstack-db';
 import { Button, Input, Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@dwellpass/ui';
 import type { LauncherState } from '../../stores/store';
 import './style.css';

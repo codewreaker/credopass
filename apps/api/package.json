@@ -10,7 +10,7 @@
     "start": "bun dist/index.js"
   },
   "dependencies": {
-    "@dwellpass/database": "workspace:*",
+    "@dwellpass/server": "workspace:*",
     "@dwellpass/validation": "workspace:*",
     "@electric-sql/pglite": "^0.3.14",
     "@hono/zod-validator": "^0.7.5",

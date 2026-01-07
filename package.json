@@ -16,9 +16,9 @@
     "lint": "bun nx run-many --target=lint --all",
     "typecheck": "bun nx run-many --target=typecheck --all",
     "test": "bun nx run-many --target=test --all",
-    "db:migrate": "bun nx migrate database",
-    "db:seed": "bun nx seed database",
-    "db:studio": "bun nx studio database",
+    "db:migrate": "bun nx migrate server",
+    "db:seed": "bun nx seed server",
+    "db:studio": "bun nx studio server",
     "docker:api": "bun nx docker:build api",
     "deploy:api": "bun nx deploy api"
   },

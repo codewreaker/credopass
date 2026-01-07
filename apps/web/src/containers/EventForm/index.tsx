@@ -9,7 +9,7 @@ import {
   FileText,
   Trash2
 } from 'lucide-react';
-import { eventCollection as collection } from '@dwellpass/tanstack-db';
+import { eventCollection as collection } from '@/lib/tanstack-db';
 import type { EventStatus } from '@dwellpass/validation';
 import { 
   Button, 

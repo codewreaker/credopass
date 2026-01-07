@@ -1,0 +1,33 @@
+{
+  "name": "server",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/server/src",
+  "projectType": "library",
+  "tags": ["type:lib", "scope:server"],
+  "targets": {
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    },
+    "migrate": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun src/db/migrate.ts",
+        "cwd": "packages/server"
+      }
+    },
+    "seed": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun src/db/seed.ts",
+        "cwd": "packages/server"
+      }
+    },
+    "studio": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "drizzle-kit studio",
+        "cwd": "packages/server"
+      }
+    }
+  }
+}

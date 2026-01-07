@@ -9,7 +9,7 @@ import { logger } from 'hono/logger';
 import { serveStatic } from 'hono/bun';
 import { createMiddleware } from 'hono/factory';
 import { isDevelopment } from 'std-env';
-import { getDatabase } from '@dwellpass/database';
+import { getDatabase } from '@dwellpass/server';
 import { usersRouter, eventsRouter, attendanceRouter, loyaltyRouter } from './routes';
 
 const THROTTLE_DELAY = Number(process.env.THROTTLE_DELAY) || 0;
@@ -66,10 +66,13 @@ app.onError((err, c) => {
 // Start server
 const port = Number(process.env.PORT) || 3000;
 
+console.log(`\n🔧 [apps/api] Attempting to start API server on port ${port}`);
+console.log(`   PORT env: ${process.env.PORT || 'not set (using default 3000)'}`);
+console.log(`📦 Mode: ${isDevelopment ? 'development' : 'production'}`);
+
 export default {
   port,
   fetch: app.fetch,
 };
 
-console.log(`🚀 API Server running on http://localhost:${port}`);
-console.log(`📦 Mode: ${isDevelopment ? 'development' : 'production'}`);
+console.log(`🚀 [apps/api] API Server successfully started on http://localhost:${port}`);

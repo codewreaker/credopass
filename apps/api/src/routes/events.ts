@@ -6,7 +6,7 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { desc, eq } from 'drizzle-orm';
-import { getDatabase, events } from '@dwellpass/database';
+import { getDatabase, events } from '@dwellpass/server';
 import { EventSchema, CreateEventSchema } from '@dwellpass/validation';
 
 const eventsRouter = new Hono();

@@ -1,109 +1,171 @@
-# DwellpassNx
+# DwellPass
 
-<a alt="Nx logo" href="https://nx.dev" target="_blank" rel="noreferrer"><img src="https://raw.githubusercontent.com/nrwl/nx/master/images/nx-logo.png" width="45"></a>
+A modern church management system built with React, Hono, and Drizzle ORM in an Nx monorepo.
 
-✨ Your new, shiny [Nx workspace](https://nx.dev) is ready ✨.
+## 🏗️ Project Structure
 
-[Learn more about this workspace setup and its capabilities](https://nx.dev/nx-api/js?utm_source=nx_project&amp;utm_medium=readme&amp;utm_campaign=nx_projects) or run `npx nx graph` to visually explore what was created. Now, let's get you up to speed!
+This monorepo contains two main applications and shared packages:
 
-## Generate a library
+### Applications
 
-```sh
-npx nx g @nx/js:lib packages/pkg1 --publishable --importPath=@my-org/pkg1
-```
+- **`apps/api`** - Hono backend API server
+  - RESTful API endpoints for users, events, attendance, and loyalty
+  - PostgreSQL database with Drizzle ORM
+  - Default port: 3000 (configurable via `PORT` env var)
 
-## Run tasks
+- **`apps/web`** - React frontend application
+  - Built with Vite, React 19, and TanStack Router
+  - Includes TanStack DB collections for local state management
+  - Default port: 5173 (Vite dev server)
 
-To build the library use:
+### Packages
 
-```sh
-npx nx build pkg1
-```
+- **`@dwellpass/server`** - Backend utilities and database access
+  - Database client, schema, and migrations
+  - API client for frontend consumption
+  - Combines database and API client logic
 
-To run any task with Nx use:
+- **`@dwellpass/ui`** - Shared React UI components
+  - Built with shadcn/ui and Tailwind CSS
+  - Reusable components across the application
 
-```sh
-npx nx <target> <project-name>
-```
+- **`@dwellpass/validation`** - Shared validation schemas
+  - Zod schemas for type-safe validation
+  - Used by both frontend and backend
 
-These targets are either [inferred automatically](https://nx.dev/concepts/inferred-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) or defined in the `project.json` or `package.json` files.
+## 🚀 Getting Started
 
-[More about running tasks in the docs &raquo;](https://nx.dev/features/run-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+### Prerequisites
 
-## Versioning and releasing
+- [Bun](https://bun.sh/) >= 1.0
+- PostgreSQL (or use PGlite for development)
 
-To version and release the library use
-
-```
-npx nx release
-```
-
-Pass `--dry-run` to see what would happen without actually releasing the library.
-
-[Learn more about Nx release &raquo;](https://nx.dev/features/manage-releases?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-## Keep TypeScript project references up to date
-
-Nx automatically updates TypeScript [project references](https://www.typescriptlang.org/docs/handbook/project-references.html) in `tsconfig.json` files to ensure they remain accurate based on your project dependencies (`import` or `require` statements). This sync is automatically done when running tasks such as `build` or `typecheck`, which require updated references to function correctly.
-
-To manually trigger the process to sync the project graph dependencies information to the TypeScript project references, run the following command:
+### Installation
 
 ```sh
-npx nx sync
+# Install dependencies
+bun install
+
+# Run database migrations
+bun db:migrate
+
+# Seed the database (optional)
+bun db:seed
 ```
 
-You can enforce that the TypeScript project references are always in the correct state when running in CI by adding a step to your CI job configuration that runs the following command:
+### Development
 
 ```sh
-npx nx sync:check
+# Start both API and web in parallel
+bun dev
+
+# Or start them separately
+bun dev:api   # API server only
+bun dev:web   # Web app only
 ```
 
-[Learn more about nx sync](https://nx.dev/reference/nx-commands#sync)
-
-## Set up CI!
-
-### Step 1
-
-To connect to Nx Cloud, run the following command:
+### Build & Production
 
 ```sh
-npx nx connect
+# Build all projects
+bun build
+
+# Or build individually
+bun build:api
+bun build:web
+
+# Start production servers
+bun start
 ```
 
-Connecting to Nx Cloud ensures a [fast and scalable CI](https://nx.dev/ci/intro/why-nx-cloud?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) pipeline. It includes features such as:
+## 📦 Scripts
 
-- [Remote caching](https://nx.dev/ci/features/remote-cache?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Task distribution across multiple machines](https://nx.dev/ci/features/distribute-task-execution?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Automated e2e test splitting](https://nx.dev/ci/features/split-e2e-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Task flakiness detection and rerunning](https://nx.dev/ci/features/flaky-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+- **`bun dev`** - Start development servers for API and web
+- **`bun build`** - Build all projects for production
+- **`bun start`** - Start production servers
+- **`bun lint`** - Lint all projects
+- **`bun typecheck`** - Type check all projects
+- **`bun test`** - Run tests across all projects
+- **`bun db:migrate`** - Run database migrations
+- **`bun db:seed`** - Seed database with sample data
+- **`bun db:studio`** - Open Drizzle Studio
 
-### Step 2
+## 🗄️ Database
 
-Use the following command to configure a CI workflow for your workspace:
+The project uses Drizzle ORM with PostgreSQL. Database configuration is in `packages/server/drizzle.config.ts`.
+
+### Migrations
+
+Migrations are stored in `packages/server/src/db/migrations/`.
 
 ```sh
-npx nx g ci-workflow
+# Generate new migration
+cd packages/server && bun db:generate
+
+# Run migrations
+bun db:migrate
 ```
 
-[Learn more about Nx on CI](https://nx.dev/ci/intro/ci-with-nx#ready-get-started-with-your-provider?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+## 🌐 Environment Variables
 
-## Install Nx Console
+Copy `.env.example` to `.env` and configure:
 
-Nx Console is an editor extension that enriches your developer experience. It lets you run tasks, generate code, and improves code autocompletion in your IDE. It is available for VSCode and IntelliJ.
+```env
+NODE_ENV=development
+PORT=3000                    # API server port
+FRONTEND_URL=http://localhost:5173
+API_PORT=3000               # For Vite proxy
+DATABASE_URL=postgresql://localhost:5432/dwellpass
+```
 
-[Install Nx Console &raquo;](https://nx.dev/getting-started/editor-setup?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+## 🏛️ Architecture
 
-## Useful links
+### Frontend Architecture
+- **TanStack Router** for file-based routing
+- **TanStack Query** for server state management
+- **TanStack DB** for local collections (in `apps/web/src/lib/tanstack-db`)
+- **shadcn/ui** for UI components
+- **Zustand** for global state management
 
-Learn more:
+### Backend Architecture
+- **Hono** - Fast web framework
+- **Drizzle ORM** - Type-safe database access
+- **PGlite/PostgreSQL** - Database layer
+- Clean REST API structure
 
-- [Learn more about this workspace setup](https://nx.dev/nx-api/js?utm_source=nx_project&amp;utm_medium=readme&amp;utm_campaign=nx_projects)
-- [Learn about Nx on CI](https://nx.dev/ci/intro/ci-with-nx?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Releasing Packages with Nx release](https://nx.dev/features/manage-releases?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [What are Nx plugins?](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+## 📱 Key Features
 
-And join the Nx community:
-- [Discord](https://go.nx.dev/community)
-- [Follow us on X](https://twitter.com/nxdevtools) or [LinkedIn](https://www.linkedin.com/company/nrwl)
-- [Our Youtube channel](https://www.youtube.com/@nxdevtools)
-- [Our blog](https://nx.dev/blog?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+- 👥 **Member Management** - Track church members and their information
+- 📅 **Event Management** - Create and manage church events
+- ✅ **Attendance Tracking** - Record event attendance
+- 🎁 **Loyalty Program** - Reward system for member engagement
+- 📊 **Analytics Dashboard** - Insights and reporting
+
+## 🛠️ Tech Stack
+
+- **Frontend**: React 19, TanStack Router, TanStack Query, Vite
+- **Backend**: Hono, Bun runtime
+- **Database**: PostgreSQL, Drizzle ORM
+- **UI**: Tailwind CSS, shadcn/ui, Lucide icons
+- **Monorepo**: Nx
+- **Language**: TypeScript
+
+## 📝 Learn More
+
+- [Nx Documentation](https://nx.dev)
+- [Hono Documentation](https://hono.dev)
+- [Drizzle ORM](https://orm.drizzle.team)
+- [TanStack](https://tanstack.com)
+- [Bun](https://bun.sh)
+
+## 🤝 Contributing
+
+This is a private project. For development guidelines, see [MIGRATION_STATUS.md](MIGRATION_STATUS.md).
+
+## 📄 License
+
+MIT
+
+---
+
+Built with ❤️ using Nx, Bun, and modern web technologies.

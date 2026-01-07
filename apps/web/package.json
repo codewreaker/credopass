@@ -9,8 +9,6 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@dwellpass/api-client": "workspace:*",
-    "@dwellpass/tanstack-db": "workspace:*",
     "@dwellpass/ui": "workspace:*",
     "@dwellpass/validation": "workspace:*",
     "@fontsource-variable/inter": "^5.2.8",
@@ -20,6 +18,7 @@
     "@fullcalendar/list": "^6.1.19",
     "@fullcalendar/react": "^6.1.19",
     "@fullcalendar/timegrid": "^6.1.19",
+    "@tanstack/query-db-collection": "^1.0.6",
     "@tanstack/react-db": "^0.1.60",
     "@tanstack/react-form": "^1.27.7",
     "@tanstack/react-query": "^5.90.12",

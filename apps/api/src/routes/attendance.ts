@@ -6,7 +6,7 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { eq, and, desc } from 'drizzle-orm';
-import { getDatabase, attendance } from '@dwellpass/database';
+import { getDatabase, attendance } from '@dwellpass/server';
 import { AttendanceSchema, CheckInSchema } from '@dwellpass/validation';
 
 const attendanceRouter = new Hono();

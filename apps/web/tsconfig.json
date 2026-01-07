@@ -31,12 +31,6 @@
     },
     {
       "path": "../../packages/ui"
-    },
-    {
-      "path": "../../packages/tanstack-db"
-    },
-    {
-      "path": "../../packages/api-client"
     }
   ]
 }
