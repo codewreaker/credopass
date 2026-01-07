@@ -1,0 +1,33 @@
+{
+  "name": "@dwellpass/database",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "import": "./src/index.ts",
+      "types": "./src/index.ts"
+    }
+  },
+  "scripts": {
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "bun src/migrate.ts",
+    "db:seed": "bun src/seed.ts",
+    "db:studio": "drizzle-kit studio"
+  },
+  "dependencies": {
+    "@electric-sql/pglite": "^0.3.14",
+    "drizzle-orm": "^0.45.1",
+    "postgres": "^3.4.7",
+    "std-env": "^3.10.0"
+  },
+  "devDependencies": {
+    "drizzle-kit": "^0.31.8",
+    "@types/node": "^24.10.1"
+  },
+  "peerDependencies": {
+    "@dwellpass/validation": "workspace:*"
+  }
+}
