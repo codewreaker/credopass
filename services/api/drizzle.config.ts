@@ -11,14 +11,14 @@ const isHosted = isEdgeLight || isWorkerd || isNetlify;
 console.log(`Drizzle Config - Using`, process.env.DATABASE_URL)
 
 export default defineConfig({
-  schema: './src/server/db/schema.ts',
+  schema: './src/db/schema/index.ts',
   out: './drizzle',
   dialect: 'postgresql',
    ...(!(isHosted && process.env.DATABASE_URL) && { driver: 'pglite' }),
   dbCredentials: {
     url: isHosted && process.env.DATABASE_URL 
       ? process.env.DATABASE_URL 
-      : './data/dwellpass',
+      : '../../data/dwellpass',
   },
   verbose: true,
   strict: true,

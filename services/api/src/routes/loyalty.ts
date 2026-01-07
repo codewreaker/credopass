@@ -6,7 +6,8 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { eq, and, desc, gte } from 'drizzle-orm';
-import { getDatabase, loyalty } from '@dwellpass/server';
+import { getDatabase } from '../db/client';
+import { loyalty } from '../db/schema';
 import { LoyaltySchema, AwardPointsSchema, AwardRewardSchema, calculateTier } from '@dwellpass/validation';
 
 const loyaltyRouter = new Hono();

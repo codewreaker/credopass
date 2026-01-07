@@ -5,9 +5,8 @@ WORKDIR /app
 # Dependencies stage
 FROM base AS deps
 COPY package.json bun.lock ./
-COPY packages/database/package.json ./packages/database/
 COPY packages/validation/package.json ./packages/validation/
-COPY apps/api/package.json ./apps/api/
+COPY services/api/package.json ./services/api/
 RUN bun install --frozen-lockfile --production
 
 # Build stage
@@ -22,7 +21,7 @@ ENV NODE_ENV=production
 
 # Copy node_modules and built files
 COPY --from=deps /app/node_modules ./node_modules
-COPY --from=build /app/dist/apps/api ./dist
+COPY --from=build /app/dist/services/api ./dist
 COPY --from=build /app/packages ./packages
 
 # Set up non-root user for security

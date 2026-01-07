@@ -16,9 +16,6 @@
   "references": [
     {
       "path": "../../packages/validation"
-    },
-    {
-      "path": "../../packages/server"
     }
   ]
 }

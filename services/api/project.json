@@ -1,0 +1,72 @@
+{
+  "name": "api",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "services/api/src",
+  "projectType": "application",
+  "tags": ["type:service", "scope:api"],
+  "targets": {
+    "serve": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun --watch src/index.ts",
+        "cwd": "services/api"
+      }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "outputs": ["{workspaceRoot}/dist/services/api"],
+      "options": {
+        "command": "bun build src/index.ts --outdir ../../dist/services/api --target bun",
+        "cwd": "services/api"
+      },
+      "dependsOn": ["^build"]
+    },
+    "start": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun ../../dist/services/api/index.js",
+        "cwd": "services/api"
+      },
+      "dependsOn": ["build"]
+    },
+    "migrate": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun src/db/migrate.ts",
+        "cwd": "services/api"
+      }
+    },
+    "seed": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun src/db/seed.ts",
+        "cwd": "services/api"
+      }
+    },
+    "studio": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "drizzle-kit studio",
+        "cwd": "services/api"
+      }
+    },
+    "docker:build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "docker build -t dwellpass-api -f services/api/Dockerfile .",
+        "cwd": "."
+      }
+    },
+    "deploy": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "gcloud run deploy dwellpass-api --source . --region us-central1",
+        "cwd": "services/api"
+      },
+      "dependsOn": ["build"]
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

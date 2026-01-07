@@ -4,22 +4,13 @@
   "files": [],
   "references": [
     {
-      "path": "./packages/tanstack-db"
-    },
-    {
-      "path": "./packages/api-client"
-    },
-    {
       "path": "./packages/validation"
-    },
-    {
-      "path": "./packages/database"
     },
     {
       "path": "./packages/ui"
     },
     {
-      "path": "./apps/api"
+      "path": "./services/api"
     },
     {
       "path": "./apps/web"
