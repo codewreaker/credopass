@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@dwellpass/ui';
 import type { MenuItem } from './index';
 
 interface HeaderProps {
