@@ -45,9 +45,13 @@ export type UpdateEvent = z.infer<typeof UpdateEventSchema>;
 export type InsertEvent = z.infer<typeof InsertEventSchema>;
 
 // Aliases for backwards compatibility
+export type EventType = Event;
 export type NewEvent = CreateEvent;
 export type CreateEventInput = CreateEvent;
 export type EventInsert = z.infer<typeof EventSchema>;
+
+// Export EventStatus type from enum
+export type EventStatus = z.infer<typeof EventStatusEnum>;
 
 // Select schema (for query results)
 export const SelectEventSchema = EventSchema;

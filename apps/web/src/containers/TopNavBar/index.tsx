@@ -4,12 +4,12 @@ import {
   Bell,
   Calendar
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@dwellpass/ui';
 import { launchSignInForm } from '../SignInModal/index';
 import { launchUserForm } from '../UserForm/index';
 
 import './style.css';
-import { useLauncher } from '../../store';
+import { useLauncher } from '../../stores/store';
 import { launchEventForm } from '../EventForm/index';
 import CommandPalette from './Command';
 import { useNavigate } from '@tanstack/react-router';

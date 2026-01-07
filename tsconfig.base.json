@@ -5,9 +5,9 @@
     "emitDeclarationOnly": true,
     "importHelpers": true,
     "isolatedModules": true,
-    "lib": ["es2022"],
-    "module": "nodenext",
-    "moduleResolution": "nodenext",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
     "noEmitOnError": true,
     "noFallthroughCasesInSwitch": true,
     "noImplicitOverride": true,
@@ -15,7 +15,22 @@
     "noUnusedLocals": true,
     "skipLibCheck": true,
     "strict": true,
-    "target": "es2022",
-    "customConditions": ["@dwellpass-nx/source"]
+    "target": "ES2022",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
+    "baseUrl": ".",
+    "paths": {
+      "@dwellpass/database": ["packages/database/src/index.ts"],
+      "@dwellpass/database/*": ["packages/database/src/*"],
+      "@dwellpass/validation": ["packages/validation/src/index.ts"],
+      "@dwellpass/validation/*": ["packages/validation/src/*"],
+      "@dwellpass/ui": ["packages/ui/src/index.ts"],
+      "@dwellpass/ui/*": ["packages/ui/src/*"],
+      "@dwellpass/api-client": ["packages/api-client/src/index.ts"],
+      "@dwellpass/api-client/*": ["packages/api-client/src/*"],
+      "@dwellpass/tanstack-db": ["packages/tanstack-db/src/index.ts"],
+      "@dwellpass/tanstack-db/*": ["packages/tanstack-db/src/*"]
+    }
   }
 }

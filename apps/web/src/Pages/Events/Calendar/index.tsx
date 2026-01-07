@@ -9,10 +9,10 @@ import type { EventResizeDoneArg } from '@fullcalendar/interaction';
 import {
   Plus,
 } from 'lucide-react';
-import type { Event } from '../../../server/db/schema';
-import { Button } from '@/components/ui/button';
+import type { EventType } from '@dwellpass/validation';
+import { Button } from '@dwellpass/ui';
 import type { EventFormProps } from '../../../containers/EventForm/index';
-import type { EventCollection } from '../../../server/collections/events';
+import type { EventCollection } from '@dwellpass/tanstack-db';
 import './style.css';
 
 
@@ -36,7 +36,7 @@ export default function CalendarPage({
   collection
 }: {
   launch: (args?: Omit<EventFormProps, 'collection'>) => void,
-  events: Event[],
+  events: EventType[],
   collection: EventCollection
 }) {
   const calendarRef = useRef<FullCalendar>(null);

@@ -9,21 +9,26 @@ import {
   FileText,
   Trash2
 } from 'lucide-react';
-import { eventCollection as collection } from '../../server/collections/events';
-import type { EventStatus } from '../../server/db/schema';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { eventCollection as collection } from '@dwellpass/tanstack-db';
+import type { EventStatus } from '@dwellpass/validation';
 import { 
+  Button, 
+  Input, 
   Field, 
   FieldDescription, 
   FieldError, 
   FieldGroup, 
-  FieldLabel 
-} from '@/components/ui/field';
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
+  FieldLabel,
+  Select, 
+  SelectContent, 
+  SelectGroup, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue,
+  Textarea
+} from '@dwellpass/ui';
 import './style.css';
-import type { LauncherState } from '../../store';
+import type { LauncherState } from '../../stores/store';
 
 // Modal form data type - exported for type safety
 export interface EventFormData {

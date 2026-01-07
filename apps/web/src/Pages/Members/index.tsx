@@ -1,13 +1,13 @@
 import { useLiveQuery } from '@tanstack/react-db'
-import { LoyaltyTierEnum, type AttendanceType, type LoyaltyType, type UserType } from '../../server/db/schema'
-import { userCollection } from '../../server/collections/user'
+import { LoyaltyTierEnum, type UserType, type AttendanceType, type LoyaltyType } from '@dwellpass/validation'
+import { userCollection } from '@dwellpass/tanstack-db'
 import type { ColDef, RowClickedEvent } from 'ag-grid-community'
 import { MoreVertical } from 'lucide-react'
 
 import React from "react";
 import GridTable, { type MenuItem } from "../../components/grid-table/index";
 import { PlusCircle, Filter } from "lucide-react";
-import { useLauncher } from '../../store';
+import { useLauncher } from '../../stores/store';
 import { launchUserForm } from '../../containers/UserForm/index';
 
 

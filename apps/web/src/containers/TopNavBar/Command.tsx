@@ -20,12 +20,12 @@ import {
     CommandList,
     CommandSeparator,
     CommandShortcut,
-} from '@/components/ui/command';
+} from '@dwellpass/ui';
 
 import { launchEventForm } from '../EventForm/index';
 import { launchSignInForm } from '../SignInModal/index';
 import { launchUserForm } from '../UserForm/index';
-import type { LauncherState } from '@/store';
+import type { LauncherState } from '../../stores/store';
 
 
 import { useNavigate } from '@tanstack/react-router';
