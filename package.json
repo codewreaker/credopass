@@ -3,6 +3,10 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
+    "start": "bun run start:api & bun run start:web",
+    "start:api": "bun nx start api",
+    "start:web": "bun nx preview web",
+    "preview": "bun run build && bun run start",
     "dev": "bun nx run-many --target=serve --projects=api,web --parallel",
     "dev:api": "bun nx serve api",
     "dev:web": "bun nx serve web",

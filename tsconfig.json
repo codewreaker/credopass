@@ -2,5 +2,27 @@
   "extends": "./tsconfig.base.json",
   "compileOnSave": false,
   "files": [],
-  "references": []
+  "references": [
+    {
+      "path": "./packages/tanstack-db"
+    },
+    {
+      "path": "./packages/api-client"
+    },
+    {
+      "path": "./packages/validation"
+    },
+    {
+      "path": "./packages/database"
+    },
+    {
+      "path": "./packages/ui"
+    },
+    {
+      "path": "./apps/api"
+    },
+    {
+      "path": "./apps/web"
+    }
+  ]
 }
