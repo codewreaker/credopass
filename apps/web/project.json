@@ -1,0 +1,55 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "web",
+  "projectType": "application",
+  "sourceRoot": "apps/web/src",
+  "targets": {
+    "serve": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun vite",
+        "cwd": "apps/web"
+      },
+      "configurations": {
+        "production": {
+          "command": "bun vite --mode production"
+        }
+      }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "outputs": ["{projectRoot}/dist"],
+      "options": {
+        "command": "bun vite build",
+        "cwd": "apps/web"
+      },
+      "configurations": {
+        "production": {
+          "command": "bun vite build --mode production"
+        }
+      }
+    },
+    "preview": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun vite preview",
+        "cwd": "apps/web"
+      }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun eslint src",
+        "cwd": "apps/web"
+      }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun tsc --noEmit",
+        "cwd": "apps/web"
+      }
+    }
+  },
+  "tags": ["type:app", "scope:frontend"]
+}

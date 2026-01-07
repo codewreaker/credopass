@@ -1,0 +1,141 @@
+/* SignIn Modal Styles */
+
+.signin-modal-content {
+  min-width: 360px;
+  max-width: 360px;
+}
+
+.modal-header {
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.modal-header h2 {
+  color: var(--foreground);
+  margin-bottom: 0.375rem;
+}
+
+.modal-header p {
+  color: var(--muted-foreground);
+  font-size: 0.7125rem;
+}
+
+.signin-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9375rem;
+}
+
+.signin-form .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.signin-form .form-label {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+/* Input wrapper for password toggle */
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-wrapper.has-right-element {
+  position: relative;
+}
+
+.input-wrapper.has-right-element>button {
+  position: absolute;
+  right: 0.375rem;
+}
+
+/* Password toggle button styles */
+.password-toggle {
+  background-color: transparent;
+  border: none;
+  color: var(--muted-foreground);
+  padding: 0.375rem;
+  border-radius: 4.5px;
+  cursor: pointer;
+  transition: color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.password-toggle:hover {
+  color: var(--foreground);
+}
+
+/* Submit button */
+.signin-button {
+  width: 100%;
+  margin-top: 0.375rem;
+}
+
+/* Footer with toggle */
+.signin-footer {
+  margin-top: 1.5rem;
+  text-align: center;
+}
+
+.signin-footer p {
+  color: var(--muted-foreground);
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+}
+
+.toggle-mode {
+  background-color: transparent;
+  border: none;
+  color: var(--primary);
+  font-weight: 600;
+  padding: 0;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.toggle-mode:hover {
+  opacity: 0.8;
+}
+
+.google-btn {
+  width: 100%;
+  padding: 0.7125rem;
+  background-color: var(--background-darker);
+  border: 1px solid var(--border);
+  color: var(--foreground);
+  border-radius: 7.5px;
+  font-weight: 600;
+  font-size: 0.7125rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5625rem;
+  transition: background-color 0.2s;
+  cursor: pointer;
+}
+
+.google-btn:hover {
+  background-color: var(--border);
+}
+
+@media (max-width: 768px) {
+  .signin-modal-content {
+    min-width: auto;
+    max-width: 100%;
+    padding: 1.5rem 1.125rem;
+  }
+
+  .modal-header {
+    margin-bottom: 1.125rem;
+  }
+}
