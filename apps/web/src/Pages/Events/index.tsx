@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { useLiveQuery } from '@tanstack/react-db';
-import { getCollections } from '@/lib/tanstack-db';
+import { getCollections } from '../../lib/tanstack-db';
 import type { EventType } from '@dwellpass/validation';
 import { useLauncher } from '../../stores/store';
 import { launchEventForm, type EventFormProps } from '../../containers/EventForm/index';

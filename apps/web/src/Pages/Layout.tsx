@@ -2,9 +2,9 @@ import { Outlet } from "@tanstack/react-router";
 import { TopNavBar } from "../containers/TopNavBar/index";
 import LeftSidebar, { SidebarInset, SidebarTrigger } from "../containers/LeftSidebar/index";
 
-import { RightSidebar } from "@/containers/RightSidebar/index";
+import { RightSidebar } from "../containers/RightSidebar";
 //import { SignInModal } from "../containers/SignInModal";
-import ModalPortal from "@/components/launcher/index";
+import ModalPortal from "../components/launcher";
 import {
   LayoutDashboard,
   Users,

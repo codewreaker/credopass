@@ -12,7 +12,7 @@ import {
 import type { EventType } from '@dwellpass/validation';
 import { Button } from '@dwellpass/ui';
 import type { EventFormProps } from '../../../containers/EventForm/index';
-import { getCollections } from '@/lib/tanstack-db';
+import { getCollections } from '../../../lib/tanstack-db';
 import './style.css';
 
 

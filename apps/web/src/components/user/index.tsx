@@ -10,7 +10,7 @@ import {
     DropdownMenuShortcut, DropdownMenuSub, DropdownMenuSubTrigger,
     DropdownMenuPortal, DropdownMenuSubContent, DropdownMenuSeparator,
     DropdownMenuCheckboxItem, DropdownMenuRadioGroup, DropdownMenuRadioItem
-} from "@dwellpass/ui"
+} from "@dwellpass/ui/components/dropdown-menu"
 
 import {
     FileIcon, FolderIcon, FolderOpenIcon, FileCodeIcon,
@@ -21,7 +21,7 @@ import {
     HelpCircleIcon, FileTextIcon, LogOutIcon, ChevronsUpDownIcon
 } from "lucide-react"
 
-import type {SidebarProps} from "@/containers/LeftSidebar/index"
+import type {SidebarProps} from "../../containers/LeftSidebar"
 
 
 const UserComponent:React.FC<{user: SidebarProps['user']}> = ({user}) => {
