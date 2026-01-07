@@ -15,7 +15,7 @@ import loyaltyRoutes from "./routes/loyalty";
 import { createMiddleware } from "hono/factory";
 import { isDevelopment } from 'std-env';
 
-const THROTTLE_DELAY = 0;
+const THROTTLE_DELAY = process.env.THROTTLE_DELAY ? Number(process.env.THROTTLE_DELAY) : 0;
 
 // Initialize database connection
 await getDatabase();

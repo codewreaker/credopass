@@ -9,7 +9,7 @@ import {
   FileText,
   Trash2
 } from 'lucide-react';
-import { eventCollection as collection } from '@/lib/tanstack-db';
+import { getCollections } from '../../lib/tanstack-db';
 import type { EventStatus } from '@dwellpass/validation';
 import { 
   Button, 
@@ -92,6 +92,7 @@ export const launchEventForm = (
 // Event Form Component
 const EventForm = ({ initialData = {}, isEditing = false, onClose }: EventFormProps) => {
   const [isMutating, setIsMutating] = useState(false);
+  const { events: collection } = getCollections();
 
   const form = useForm({
     defaultValues: {

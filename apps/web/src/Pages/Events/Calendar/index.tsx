@@ -12,7 +12,7 @@ import {
 import type { EventType } from '@dwellpass/validation';
 import { Button } from '@dwellpass/ui';
 import type { EventFormProps } from '../../../containers/EventForm/index';
-import type { EventCollection } from '@/lib/tanstack-db';
+import { getCollections } from '@/lib/tanstack-db';
 import './style.css';
 
 
@@ -32,15 +32,13 @@ const getEndOfDay = (date: Date): Date => {
 
 export default function CalendarPage({
   launch,
-  events = [],
-  collection
+  events = []
 }: {
   launch: (args?: Omit<EventFormProps, 'collection'>) => void,
-  events: EventType[],
-  collection: EventCollection
+  events: EventType[]
 }) {
   const calendarRef = useRef<FullCalendar>(null);
-
+  const { events: collection } = getCollections();
   const [isMutating, setIsMutating] = useState(false);
 
 
