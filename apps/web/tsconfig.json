@@ -21,16 +21,11 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]
-    }
+    },
+    "types": [
+      "vite/client"
+    ],
   },
   "include": ["src/**/*.ts", "src/**/*.tsx", "vite.config.ts"],
-  "exclude": ["node_modules", "dist"],
-  "references": [
-    {
-      "path": "../../packages/validation"
-    },
-    {
-      "path": "../../packages/ui"
-    }
-  ]
+  "exclude": ["node_modules", "dist"]
 }

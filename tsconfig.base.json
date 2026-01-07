@@ -27,8 +27,6 @@
       "@dwellpass/validation/*": ["packages/validation/src/*"],
       "@dwellpass/ui": ["packages/ui/src/index.ts"],
       "@dwellpass/ui/*": ["packages/ui/src/*"],
-      "@dwellpass/api-client": ["packages/api-client/src/index.ts"],
-      "@dwellpass/api-client/*": ["packages/api-client/src/*"],
       "@dwellpass/tanstack-db": ["packages/tanstack-db/src/index.ts"],
       "@dwellpass/tanstack-db/*": ["packages/tanstack-db/src/*"]
     }

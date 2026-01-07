@@ -17,20 +17,11 @@ export default defineConfig({
   ],
   server: {
     host: true,
-    port: 5173,
-    proxy: {
-      '/api': {
-        target: `http://localhost:${process.env.PORT || 3000}`,
-        changeOrigin: true,
-        secure: false,
-      }
-    }
+    port: 5173
   },
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./src"),
-      "@dwellpass/ui": path.resolve(__dirname, "../../packages/ui/src"),
-      "@dwellpass/validation": path.resolve(__dirname, "../../packages/validation/src"),
+      "@": path.resolve(__dirname, "./src")
     },
   },
   build: {

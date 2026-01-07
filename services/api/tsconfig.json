@@ -12,10 +12,5 @@
     "types": ["bun-types", "node"]
   },
   "include": ["src/**/*.ts"],
-  "exclude": ["node_modules", "dist"],
-  "references": [
-    {
-      "path": "../../packages/validation"
-    }
-  ]
+  "exclude": ["node_modules", "dist"]
 }
