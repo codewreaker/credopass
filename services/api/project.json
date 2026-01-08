@@ -5,57 +5,6 @@
   "projectType": "application",
   "tags": ["type:service", "scope:api"],
   "targets": {
-    "serve": {
-      "executor": "nx:run-script",
-      "options": {
-        "script": "serve"
-      }
-    },
-    "build": {
-    "executor": "nx:run-script",
-     "outputs": ["{workspaceRoot}/dist/services/api"],
-      "options": {
-        "script": "build"
-      }
-    },
-    "start": {
-      "executor": "nx:run-script",
-      "options": {
-        "script": "start"
-      },
-      "dependsOn": ["build"]
-    },
-    "migrate": {
-      "executor": "nx:run-script",
-      "options": {
-        "script": "migrate"
-      }
-    },
-    "seed": {
-      "executor": "nx:run-script",
-      "options": {
-        "script": "seed"
-      }
-    },
-    "studio": {
-      "executor": "nx:run-script",
-      "options": {
-        "script": "studio"
-      }
-    },
-    "docker:build": {
-      "executor": "nx:run-script",
-      "options": {
-        "script": "docker:build"
-      }
-    },
-    "deploy": {
-      "executor": "nx:run-script",
-      "options": {
-        "script": "deploy"
-      },
-      "dependsOn": ["build"]
-    },
     "lint": {
       "executor": "@nx/eslint:lint"
     }
