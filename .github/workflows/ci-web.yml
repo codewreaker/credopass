@@ -1,4 +1,4 @@
-name: Deploy Web App
+name: CI/CD - Web App
 
 on:
   # Automatic deployment on push to main/develop
@@ -8,7 +8,7 @@ on:
       - 'apps/web/**'
       - 'packages/ui/**'
       - 'packages/validation/**'
-      - '.github/workflows/deploy-web.yml'
+      - '.github/workflows/ci-web.yml'
   
   # Manual deployment trigger
   workflow_dispatch:
