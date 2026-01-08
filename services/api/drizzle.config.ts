@@ -18,7 +18,7 @@ export default defineConfig({
   dbCredentials: {
     url: isHosted && process.env.DATABASE_URL 
       ? process.env.DATABASE_URL 
-      : '../../data/dwellpass',
+      : '../../data/credopass',
   },
   verbose: true,
   strict: true,

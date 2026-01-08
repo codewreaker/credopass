@@ -127,14 +127,14 @@ jobs:
         run: |
           docker build \
             -f services/api/Dockerfile \
-            -t ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/dwellpass/api:${{ github.sha }} \
-            -t ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/dwellpass/api:latest \
+            -t ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/credopass/api:${{ github.sha }} \
+            -t ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/credopass/api:latest \
             .
 
       - name: Push Docker image to Artifact Registry
         run: |
-          docker push ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/dwellpass/api:${{ github.sha }}
-          docker push ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/dwellpass/api:latest
+          docker push ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/credopass/api:${{ github.sha }}
+          docker push ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/credopass/api:latest
 
       - name: Deploy to Cloud Run
         id: deploy
@@ -149,11 +149,11 @@ jobs:
           fi
           
           if [ "$ENV" == "production" ]; then
-            SERVICE_NAME="dwellpass-api"
+            SERVICE_NAME="credopass-api"
             MIN_INSTANCES=1
             MAX_INSTANCES=10
           else
-            SERVICE_NAME="dwellpass-api-staging"
+            SERVICE_NAME="credopass-api-staging"
             MIN_INSTANCES=0
             MAX_INSTANCES=5
           fi
@@ -161,7 +161,7 @@ jobs:
           echo "🚀 Deploying to $ENV environment (service: $SERVICE_NAME)"
           
           gcloud run deploy $SERVICE_NAME \
-            --image ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/dwellpass/api:${{ github.sha }} \
+            --image ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/credopass/api:${{ github.sha }} \
             --platform managed \
             --region ${{ secrets.GCP_REGION }} \
             --allow-unauthenticated \
@@ -187,4 +187,4 @@ jobs:
           echo "🔗 **URL**: ${{ steps.deploy.outputs.url }}" >> $GITHUB_STEP_SUMMARY
           echo "🌿 **Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
           echo "📝 **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
-          echo "🐳 **Image**: ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/dwellpass/api:${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "🐳 **Image**: ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/credopass/api:${{ github.sha }}" >> $GITHUB_STEP_SUMMARY

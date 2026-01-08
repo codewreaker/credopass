@@ -11,10 +11,10 @@
   },
   "iconLibrary": "lucide",
   "aliases": {
-    "components": "@dwellpass/ui/components",
-    "utils": "@dwellpass/ui/lib/utils",
-    "hooks": "@dwellpass/ui/hooks",
-    "lib": "@dwellpass/ui/lib",
-    "ui": "@dwellpass/ui/components"
+    "components": "@credopass/ui/components",
+    "utils": "@credopass/ui/lib/utils",
+    "hooks": "@credopass/ui/hooks",
+    "lib": "@credopass/ui/lib",
+    "ui": "@credopass/ui/components"
   }
 }

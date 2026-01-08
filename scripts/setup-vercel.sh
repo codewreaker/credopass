@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# DwellPass Vercel Setup Script
+# CredoPass Vercel Setup Script
 # This script helps automate the Vercel setup process
 
 set -e
@@ -12,7 +12,7 @@ YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 echo -e "${GREEN}╔══════════════════════════════════════════════════════════════╗${NC}"
-echo -e "${GREEN}║        DwellPass Vercel Deployment Setup Script             ║${NC}"
+echo -e "${GREEN}║        CredoPass Vercel Deployment Setup Script             ║${NC}"
 echo -e "${GREEN}╔══════════════════════════════════════════════════════════════╗${NC}"
 echo ""
 

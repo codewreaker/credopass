@@ -4,7 +4,7 @@
 // ============================================================================
 
 import type { ApiClient } from '../client';
-import type { User, CreateUser, UpdateUser } from '@dwellpass/validation';
+import type { User, CreateUser, UpdateUser } from '@credopass/validation';
 
 export function createUsersApi(client: ApiClient) {
   return {

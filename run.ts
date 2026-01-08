@@ -1,5 +1,5 @@
 #!/usr/bin/env bun
-// run.ts - Development environment runner for DwellPass
+// run.ts - Development environment runner for CredoPass
 import { spawn, type Subprocess } from 'bun'
 
 interface ProcessInfo {
@@ -112,7 +112,7 @@ class DevRunner {
   }
 
   async run() {
-    console.log('\n🚀 Starting DwellPass Development Environment')
+    console.log('\n🚀 Starting CredoPass Development Environment')
     console.log('═'.repeat(60))
     console.log(`📅 Date: ${new Date().toLocaleString()}`)
     console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`)

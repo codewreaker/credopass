@@ -35,7 +35,7 @@ async function runMigrations() {
       await client.end();
     } else {
       // Use PGlite for local development
-      const dbPath = process.env.PGLITE_PATH || path.join(process.cwd(), 'data', 'dwellpass');
+      const dbPath = process.env.PGLITE_PATH || path.join(process.cwd(), 'data', 'credopass');
       console.log(`📦 Using PGlite: ${dbPath}`);
       
       // Ensure the data directory exists

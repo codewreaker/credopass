@@ -4,7 +4,7 @@
 // ============================================================================
 
 import type { ApiClient } from '../client';
-import type { Event, CreateEvent, UpdateEvent, EventStatus } from '@dwellpass/validation';
+import type { Event, CreateEvent, UpdateEvent, EventStatus } from '@credopass/validation';
 
 export function createEventsApi(client: ApiClient) {
   return {

@@ -1,8 +1,8 @@
 import React from "react"
-import { Avatar, AvatarFallback, AvatarImage } from "@dwellpass/ui"
+import { Avatar, AvatarFallback, AvatarImage } from "@credopass/ui"
 import {
     SidebarMenuButton
-} from "@dwellpass/ui"
+} from "@credopass/ui"
 
 import {
     DropdownMenu, DropdownMenuTrigger, DropdownMenuContent,
@@ -10,7 +10,7 @@ import {
     DropdownMenuShortcut, DropdownMenuSub, DropdownMenuSubTrigger,
     DropdownMenuPortal, DropdownMenuSubContent, DropdownMenuSeparator,
     DropdownMenuCheckboxItem, DropdownMenuRadioGroup, DropdownMenuRadioItem
-} from "@dwellpass/ui/components/dropdown-menu"
+} from "@credopass/ui/components/dropdown-menu"
 
 import {
     FileIcon, FolderIcon, FolderOpenIcon, FileCodeIcon,

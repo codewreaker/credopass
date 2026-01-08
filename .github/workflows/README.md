@@ -1,6 +1,6 @@
 # GitHub Actions Deployment Configuration
 
-This directory contains CI/CD workflows for the DwellPass monorepo.
+This directory contains CI/CD workflows for the CredoPass monorepo.
 
 [Deployment Setup](./DEPLOYMENT_SETUP.md)
 
@@ -140,10 +140,10 @@ gcloud iam service-accounts keys create key.json \
 
 #### Create Artifact Registry
 ```bash
-gcloud artifacts repositories create dwellpass \
+gcloud artifacts repositories create credopass \
   --repository-format=docker \
   --location=us-central1 \
-  --description="DwellPass Docker images"
+  --description="CredoPass Docker images"
 ```
 
 #### Set Secrets
@@ -180,7 +180,7 @@ bun nx build web
 bun nx build api
 
 # Test Docker build
-docker build -f services/api/Dockerfile -t dwellpass-api:test .
+docker build -f services/api/Dockerfile -t credopass-api:test .
 
 # Check affected projects
 bun nx show projects --affected
@@ -279,7 +279,7 @@ gh workflow run manual-deploy.yml -f target=both -f environment=production
 ### Cloud Run Deployment Issues
 - Check service account permissions
 - Verify Artifact Registry access
-- Check Cloud Run service logs: `gcloud run services logs read dwellpass-api`
+- Check Cloud Run service logs: `gcloud run services logs read credopass-api`
 
 ### Secrets Issues
 - Verify all required secrets are set
@@ -295,10 +295,10 @@ gh workflow run manual-deploy.yml -f target=both -f environment=production
 ### Cloud Run
 ```bash
 # View logs
-gcloud run services logs read dwellpass-api --region us-central1
+gcloud run services logs read credopass-api --region us-central1
 
 # Check service status
-gcloud run services describe dwellpass-api --region us-central1
+gcloud run services describe credopass-api --region us-central1
 ```
 
 ## Cost Optimization

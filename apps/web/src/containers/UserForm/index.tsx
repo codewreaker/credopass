@@ -11,7 +11,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import { getCollections } from '../../lib/tanstack-db';
-import { Button, Input, Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@dwellpass/ui';
+import { Button, Input, Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@credopass/ui';
 import type { LauncherState } from '../../stores/store';
 
 import './style.css';

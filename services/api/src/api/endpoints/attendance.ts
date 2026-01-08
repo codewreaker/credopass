@@ -4,7 +4,7 @@
 // ============================================================================
 
 import type { ApiClient } from '../client';
-import type { Attendance, CreateAttendance, UpdateAttendance, CheckInInput } from '@dwellpass/validation';
+import type { Attendance, CreateAttendance, UpdateAttendance, CheckInInput } from '@credopass/validation';
 
 export interface AttendanceStats {
   total: number;

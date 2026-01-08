@@ -8,7 +8,7 @@ import { z } from 'zod';
 import { eq, and, desc, gte } from 'drizzle-orm';
 import { getDatabase } from '../db/client';
 import { loyalty } from '../db/schema';
-import { LoyaltySchema, AwardPointsSchema, AwardRewardSchema, calculateTier } from '@dwellpass/validation';
+import { LoyaltySchema, AwardPointsSchema, AwardRewardSchema, calculateTier } from '@credopass/validation';
 
 const loyaltyRouter = new Hono();
 

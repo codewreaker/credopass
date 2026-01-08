@@ -10,7 +10,7 @@ import {
   FieldError,
   FieldGroup,
   FieldLabel
-} from '@dwellpass/ui';
+} from '@credopass/ui';
 import type { LauncherState } from '../../stores/store';
 import './style.css';
 

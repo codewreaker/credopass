@@ -10,7 +10,7 @@ import {
   Trash2
 } from 'lucide-react';
 import { getCollections } from '../../lib/tanstack-db';
-import type { EventStatus } from '@dwellpass/validation';
+import type { EventStatus } from '@credopass/validation';
 import { 
   Button, 
   Input, 
@@ -26,7 +26,7 @@ import {
   SelectTrigger, 
   SelectValue,
   Textarea
-} from '@dwellpass/ui';
+} from '@credopass/ui';
 import './style.css';
 import type { LauncherState } from '../../stores/store';
 

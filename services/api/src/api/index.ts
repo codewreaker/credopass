@@ -1,6 +1,6 @@
 // ============================================================================
 // FILE: packages/api-client/src/index.ts
-// Main entry point for @dwellpass/api-client package
+// Main entry point for @credopass/api-client package
 // ============================================================================
 
 import { createApiClient, type ApiClientConfig } from './client';
@@ -13,9 +13,9 @@ export { ApiError, type ApiClient, type ApiClientConfig } from './client';
 export * from './endpoints';
 
 /**
- * Create a fully-typed DwellPass API client
+ * Create a fully-typed CredoPass API client
  */
-export function createDwellPassClient(config: ApiClientConfig) {
+export function createCredoPassClient(config: ApiClientConfig) {
   const client = createApiClient(config);
 
   return {
@@ -29,22 +29,22 @@ export function createDwellPassClient(config: ApiClientConfig) {
   };
 }
 
-export type DwellPassClient = ReturnType<typeof createDwellPassClient>;
+export type CredoPassClient = ReturnType<typeof createCredoPassClient>;
 
 // Default client for browser environments
-let defaultClient: DwellPassClient | null = null;
+let defaultClient: CredoPassClient | null = null;
 
 /**
  * Get or create the default API client
  * Uses VITE_API_URL environment variable or defaults to /api
  */
-export function getApiClient(): DwellPassClient {
+export function getApiClient(): CredoPassClient {
   if (!defaultClient) {
     const baseUrl = typeof import.meta !== 'undefined' && 'env' in import.meta
       ? (import.meta as any).env?.VITE_API_URL || ''
       : '';
     
-    defaultClient = createDwellPassClient({ baseUrl });
+    defaultClient = createCredoPassClient({ baseUrl });
   }
   return defaultClient;
 }

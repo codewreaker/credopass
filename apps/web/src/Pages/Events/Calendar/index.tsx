@@ -9,8 +9,8 @@ import type { EventResizeDoneArg } from '@fullcalendar/interaction';
 import {
   Plus,
 } from 'lucide-react';
-import type { EventType } from '@dwellpass/validation';
-import { Button } from '@dwellpass/ui';
+import type { EventType } from '@credopass/validation';
+import { Button } from '@credopass/ui';
 import type { EventFormProps } from '../../../containers/EventForm/index';
 import { getCollections } from '../../../lib/tanstack-db';
 import './style.css';
