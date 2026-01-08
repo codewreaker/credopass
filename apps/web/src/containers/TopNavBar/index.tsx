@@ -23,6 +23,7 @@ export const TopNavBar: React.FC = () => {
   // Open command palette via launcher
   const openCommandPalette = useCallback(() => {
     const width = searchButtonRef.current?.offsetWidth || 0;
+    console.log('Opening command palette with width:', searchButtonRef.current?.offsetWidth, searchButtonRef.current?.clientWidth);
     openLauncher({
       content: <CommandPalette onClose={closeLauncher} openLauncher={openLauncher} width={width} />,
       onClose: closeLauncher,
@@ -90,20 +91,18 @@ export const TopNavBar: React.FC = () => {
 
   return (
     <div className="top-navbar">
-      <div className="navbar-left">
-        <div ref={searchButtonRef as unknown as React.RefObject<HTMLDivElement>} style={{ display: 'contents' }}>
-          <Button
-            variant="outline"
-            className="search-container"
-            onClick={openCommandPalette}
-          >
+      <div className="navbar-left" ref={searchButtonRef as unknown as React.RefObject<HTMLDivElement>}>
+        <Button
+          variant="outline"
+          className="search-container"
+          onClick={openCommandPalette}
+        >
           <Search className="search-icon" size={14} />
           <span className="search-input">Search or run a command...</span>
           <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
             <span className="text-xs">⌘</span>K
           </kbd>
         </Button>
-        </div>
       </div>
 
       <div className="navbar-right">
