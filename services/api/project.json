@@ -12,12 +12,11 @@
       }
     },
     "build": {
-      "executor": "nx:run-script",
-      "outputs": ["{workspaceRoot}/dist/services/api"],
+    "executor": "nx:run-script",
+     "outputs": ["{workspaceRoot}/dist/services/api"],
       "options": {
         "script": "build"
-      },
-      "dependsOn": ["^build"]
+      }
     },
     "start": {
       "executor": "nx:run-script",
