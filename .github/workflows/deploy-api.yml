@@ -1,15 +1,7 @@
 name: Deploy API Service
 
 on:
-  # Automatic deployment on push to main/develop
-  push:
-    branches: [main, develop]
-    paths:
-      - 'services/api/**'
-      - 'packages/validation/**'
-      - '.github/workflows/deploy-api.yml'
-  
-  # Manual deployment trigger
+  # Manual deployment trigger only
   workflow_dispatch:
     inputs:
       environment:

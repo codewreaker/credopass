@@ -50,9 +50,6 @@ export type NewEvent = CreateEvent;
 export type CreateEventInput = CreateEvent;
 export type EventInsert = z.infer<typeof EventSchema>;
 
-// Export EventStatus type from enum
-export type EventStatus = z.infer<typeof EventStatusEnum>;
-
 // Select schema (for query results)
 export const SelectEventSchema = EventSchema;
 export type SelectEvent = Event;
