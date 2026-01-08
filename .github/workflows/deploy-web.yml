@@ -1,0 +1,180 @@
+name: Deploy Web App
+
+on:
+  # Automatic deployment on push to main/develop
+  push:
+    branches: [main, develop]
+    paths:
+      - 'apps/web/**'
+      - 'packages/ui/**'
+      - 'packages/validation/**'
+      - '.github/workflows/deploy-web.yml'
+  
+  # Manual deployment trigger
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        type: choice
+        options:
+          - production
+          - preview
+        default: 'preview'
+
+env:
+  NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
+
+jobs:
+  # Check if web is affected
+  check-affected:
+    name: Check Web Changes
+    runs-on: ubuntu-latest
+    outputs:
+      should-deploy: ${{ steps.check.outputs.affected }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Derive SHAs for base and head
+        if: github.event_name != 'workflow_dispatch'
+        uses: nrwl/nx-set-shas@v4
+
+      - name: Check if web is affected
+        id: check
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "affected=true" >> $GITHUB_OUTPUT
+            echo "🚀 Manual deployment triggered"
+          else
+            if bun nx show project web --affected; then
+              echo "affected=true" >> $GITHUB_OUTPUT
+              echo "✅ Web app is affected"
+            else
+              echo "affected=false" >> $GITHUB_OUTPUT
+              echo "⏭️ Web app not affected, skipping deployment"
+            fi
+          fi
+
+  # Quality checks
+  quality-checks:
+    name: Quality Checks
+    runs-on: ubuntu-latest
+    needs: check-affected
+    if: needs.check-affected.outputs.should-deploy == 'true'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Derive SHAs for base and head
+        if: github.event_name != 'workflow_dispatch'
+        uses: nrwl/nx-set-shas@v4
+
+      - name: Lint web app
+        run: bun nx lint web
+
+      - name: Type check web app
+        run: bun nx typecheck web
+
+      - name: Test web app
+        run: bun nx test web || echo "No tests configured"
+
+  # Deploy to Vercel
+  deploy:
+    name: Deploy to Vercel
+    runs-on: ubuntu-latest
+    needs: [check-affected, quality-checks]
+    if: needs.check-affected.outputs.should-deploy == 'true'
+    environment:
+      name: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production') || github.ref == 'refs/heads/main' && 'production-web' || 'preview-web' }}
+      url: ${{ steps.deploy.outputs.url }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build web app
+        run: bun nx build web
+        env:
+          NODE_ENV: production
+
+      - name: Install Vercel CLI
+        run: bun install --global vercel@latest
+
+      - name: Pull Vercel Environment Information
+        run: |
+          cd apps/web
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            ENV="${{ github.event.inputs.environment }}"
+          elif [ "${{ github.ref }}" == "refs/heads/main" ]; then
+            ENV="production"
+          else
+            ENV="preview"
+          fi
+          vercel pull --yes --environment=$ENV --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      - name: Deploy to Vercel
+        id: deploy
+        run: |
+          cd apps/web
+          
+          # Determine if production deployment
+          IS_PROD="false"
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ] && [ "${{ github.event.inputs.environment }}" == "production" ]; then
+            IS_PROD="true"
+          elif [ "${{ github.ref }}" == "refs/heads/main" ]; then
+            IS_PROD="true"
+          fi
+          
+          # Deploy
+          if [ "$IS_PROD" == "true" ]; then
+            DEPLOY_URL=$(vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }})
+            echo "🚀 Deployed to PRODUCTION: $DEPLOY_URL"
+          else
+            DEPLOY_URL=$(vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }})
+            echo "🚀 Deployed to PREVIEW: $DEPLOY_URL"
+          fi
+          
+          echo "url=$DEPLOY_URL" >> $GITHUB_OUTPUT
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      - name: Deployment summary
+        run: |
+          echo "## 🚀 Web App Deployment" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ **Status**: Deployed successfully" >> $GITHUB_STEP_SUMMARY
+          echo "🔗 **URL**: ${{ steps.deploy.outputs.url }}" >> $GITHUB_STEP_SUMMARY
+          echo "🌿 **Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "📝 **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY

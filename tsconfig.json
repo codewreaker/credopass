@@ -1,42 +1,19 @@
 {
-  "compilerOptions": {
-    // Environment setup & latest features
-    "lib": [
-      "ESNext",
-      "DOM",
-      "DOM.Iterable"
-    ],
-    "target": "ESNext",
-    "module": "esnext",
-    "allowJs": true,
-    "types": [
-      "vite/client",
-      "bun-types",
-      "bun"
-    ],
-    /* Bundler mode for flexible imports */
-    "moduleResolution": "bundler",
-    "allowImportingTsExtensions": true,
-    "resolveJsonModule": true,
-    "verbatimModuleSyntax": true,
-    "moduleDetection": "force",
-    "noEmit": true,
-    "jsx": "react-jsx",
-    // Best practices
-    "strict": true,
-    "skipLibCheck": true,
-    "noFallthroughCasesInSwitch": true,
-    "noUncheckedIndexedAccess": true,
-    "noImplicitOverride": true,
-    // Some stricter flags (disabled by default)
-    "noUnusedLocals": false,
-    "noUnusedParameters": false,
-    "noPropertyAccessFromIndexSignature": false,
-    "baseUrl": ".",
-    "paths": {
-      "@/*": [
-        "./src/*"
-      ]
+  "extends": "./tsconfig.base.json",
+  "compileOnSave": false,
+  "files": [],
+  "references": [
+    {
+      "path": "./packages/validation"
+    },
+    {
+      "path": "./packages/ui"
+    },
+    {
+      "path": "./services/api"
+    },
+    {
+      "path": "./apps/web"
     }
-  }
+  ]
 }

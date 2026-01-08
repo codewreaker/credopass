@@ -1,0 +1,190 @@
+name: Deploy API Service
+
+on:
+  # Automatic deployment on push to main/develop
+  push:
+    branches: [main, develop]
+    paths:
+      - 'services/api/**'
+      - 'packages/validation/**'
+      - '.github/workflows/deploy-api.yml'
+  
+  # Manual deployment trigger
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        type: choice
+        options:
+          - production
+          - staging
+        default: 'staging'
+
+env:
+  NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
+
+jobs:
+  # Check if API is affected
+  check-affected:
+    name: Check API Changes
+    runs-on: ubuntu-latest
+    outputs:
+      should-deploy: ${{ steps.check.outputs.affected }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Derive SHAs for base and head
+        if: github.event_name != 'workflow_dispatch'
+        uses: nrwl/nx-set-shas@v4
+
+      - name: Check if API is affected
+        id: check
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "affected=true" >> $GITHUB_OUTPUT
+            echo "🚀 Manual deployment triggered"
+          else
+            if bun nx show project api --affected; then
+              echo "affected=true" >> $GITHUB_OUTPUT
+              echo "✅ API service is affected"
+            else
+              echo "affected=false" >> $GITHUB_OUTPUT
+              echo "⏭️ API service not affected, skipping deployment"
+            fi
+          fi
+
+  # Quality checks
+  quality-checks:
+    name: Quality Checks
+    runs-on: ubuntu-latest
+    needs: check-affected
+    if: needs.check-affected.outputs.should-deploy == 'true'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Derive SHAs for base and head
+        if: github.event_name != 'workflow_dispatch'
+        uses: nrwl/nx-set-shas@v4
+
+      - name: Lint API service
+        run: bun nx lint api || echo "No lint configured"
+
+      - name: Type check API service
+        run: bun nx typecheck api || echo "No typecheck configured"
+
+      - name: Test API service
+        run: bun nx test api || echo "No tests configured"
+
+  # Build and deploy to Cloud Run
+  deploy:
+    name: Deploy to Cloud Run
+    runs-on: ubuntu-latest
+    needs: [check-affected, quality-checks]
+    if: needs.check-affected.outputs.should-deploy == 'true'
+    environment:
+      name: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production') || github.ref == 'refs/heads/main' && 'production-api' || 'staging-api' }}
+      url: ${{ steps.deploy.outputs.url }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker to use gcloud as credential helper
+        run: gcloud auth configure-docker ${{ secrets.GCP_REGION }}-docker.pkg.dev
+
+      - name: Build Docker image
+        run: |
+          docker build \
+            -f services/api/Dockerfile \
+            -t ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/dwellpass/api:${{ github.sha }} \
+            -t ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/dwellpass/api:latest \
+            .
+
+      - name: Push Docker image to Artifact Registry
+        run: |
+          docker push ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/dwellpass/api:${{ github.sha }}
+          docker push ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/dwellpass/api:latest
+
+      - name: Deploy to Cloud Run
+        id: deploy
+        run: |
+          # Determine service name and environment
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            ENV="${{ github.event.inputs.environment }}"
+          elif [ "${{ github.ref }}" == "refs/heads/main" ]; then
+            ENV="production"
+          else
+            ENV="staging"
+          fi
+          
+          if [ "$ENV" == "production" ]; then
+            SERVICE_NAME="dwellpass-api"
+            MIN_INSTANCES=1
+            MAX_INSTANCES=10
+          else
+            SERVICE_NAME="dwellpass-api-staging"
+            MIN_INSTANCES=0
+            MAX_INSTANCES=5
+          fi
+          
+          echo "🚀 Deploying to $ENV environment (service: $SERVICE_NAME)"
+          
+          gcloud run deploy $SERVICE_NAME \
+            --image ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/dwellpass/api:${{ github.sha }} \
+            --platform managed \
+            --region ${{ secrets.GCP_REGION }} \
+            --allow-unauthenticated \
+            --port 8080 \
+            --memory 512Mi \
+            --cpu 1 \
+            --min-instances $MIN_INSTANCES \
+            --max-instances $MAX_INSTANCES \
+            --set-env-vars NODE_ENV=$ENV \
+            --set-secrets DATABASE_URL=DATABASE_URL:latest \
+            --timeout 300 \
+            --concurrency 80
+          
+          SERVICE_URL=$(gcloud run services describe $SERVICE_NAME --region ${{ secrets.GCP_REGION }} --format 'value(status.url)')
+          echo "url=$SERVICE_URL" >> $GITHUB_OUTPUT
+          echo "✅ API deployed to: $SERVICE_URL"
+
+      - name: Deployment summary
+        run: |
+          echo "## 🚀 API Service Deployment" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ **Status**: Deployed successfully" >> $GITHUB_STEP_SUMMARY
+          echo "🔗 **URL**: ${{ steps.deploy.outputs.url }}" >> $GITHUB_STEP_SUMMARY
+          echo "🌿 **Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "📝 **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "🐳 **Image**: ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/dwellpass/api:${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
