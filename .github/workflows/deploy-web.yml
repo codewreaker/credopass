@@ -91,10 +91,10 @@ jobs:
         uses: nrwl/nx-set-shas@v4
 
       - name: Lint web app
-        run: bun nx lint web
+        run: bun nx run web:lint 
 
       - name: Type check web app
-        run: bun nx typecheck web
+        run: bun nx run web:typecheck
 
       - name: Test web app
         run: bun nx test web || echo "No tests configured"

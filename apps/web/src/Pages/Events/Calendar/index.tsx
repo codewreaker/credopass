@@ -130,7 +130,7 @@ export default function CalendarPage({
     } finally {
       setIsMutating(false);
     }
-  }, []);
+  }, [collection]);
 
   const handleEventResize = useCallback(async (resizeInfo: EventResizeDoneArg) => {
     const event = resizeInfo.event;
@@ -148,7 +148,7 @@ export default function CalendarPage({
     } finally {
       setIsMutating(false);
     }
-  }, []);
+  }, [collection]);
 
   const handleAddEventClick = () => {
     const now = new Date();
