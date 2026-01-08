@@ -20,7 +20,7 @@ import {
     CommandList,
     CommandSeparator,
     CommandShortcut,
-} from '@dwellpass/ui';
+} from '@credopass/ui';
 
 import { launchEventForm } from '../EventForm/index';
 import { launchSignInForm } from '../SignInModal/index';

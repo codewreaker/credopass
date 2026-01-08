@@ -15,9 +15,9 @@ import {
   AlertDialogMedia,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@dwellpass/ui"
-import { Badge } from "@dwellpass/ui"
-import { Button } from "@dwellpass/ui"
+} from "@credopass/ui"
+import { Badge } from "@credopass/ui"
+import { Button } from "@credopass/ui"
 import {
   Card,
   CardAction,
@@ -26,7 +26,7 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@dwellpass/ui"
+} from "@credopass/ui"
 import {
   Combobox,
   ComboboxContent,
@@ -34,7 +34,7 @@ import {
   ComboboxInput,
   ComboboxItem,
   ComboboxList,
-} from "@dwellpass/ui"
+} from "@credopass/ui"
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -51,9 +51,9 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
-} from "@dwellpass/ui"
-import { Field, FieldGroup, FieldLabel } from "@dwellpass/ui"
-import { Input } from "@dwellpass/ui"
+} from "@credopass/ui"
+import { Field, FieldGroup, FieldLabel } from "@credopass/ui"
+import { Input } from "@credopass/ui"
 import {
   Select,
   SelectContent,
@@ -61,8 +61,8 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@dwellpass/ui"
-import { Textarea } from "@dwellpass/ui"
+} from "@credopass/ui"
+import { Textarea } from "@credopass/ui"
 import { PlusIcon, BluetoothIcon, MoreVerticalIcon, FileIcon, FolderIcon, FolderOpenIcon, FileCodeIcon, MoreHorizontalIcon, FolderSearchIcon, SaveIcon, DownloadIcon, EyeIcon, LayoutIcon, PaletteIcon, SunIcon, MoonIcon, MonitorIcon, UserIcon, CreditCardIcon, SettingsIcon, KeyboardIcon, LanguagesIcon, BellIcon, MailIcon, ShieldIcon, HelpCircleIcon, FileTextIcon, LogOutIcon } from "lucide-react"
 
 export function ComponentExample() {

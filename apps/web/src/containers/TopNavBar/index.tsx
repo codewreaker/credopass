@@ -4,7 +4,7 @@ import {
   Bell,
   Calendar
 } from 'lucide-react';
-import { Button } from '@dwellpass/ui';
+import { Button } from '@credopass/ui';
 import { launchSignInForm } from '../SignInModal/index';
 import { launchUserForm } from '../UserForm/index';
 

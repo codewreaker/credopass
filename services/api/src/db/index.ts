@@ -1,6 +1,6 @@
 // ============================================================================
 // FILE: packages/database/src/index.ts
-// Main entry point for @dwellpass/database package
+// Main entry point for @credopass/database package
 // ============================================================================
 
 // Export all schema definitions

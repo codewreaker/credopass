@@ -21,14 +21,10 @@
     "resolveJsonModule": true,
     "baseUrl": ".",
     "paths": {
-      "@dwellpass/database": ["packages/database/src/index.ts"],
-      "@dwellpass/database/*": ["packages/database/src/*"],
-      "@dwellpass/validation": ["packages/validation/src/index.ts"],
-      "@dwellpass/validation/*": ["packages/validation/src/*"],
-      "@dwellpass/ui": ["packages/ui/src/index.ts"],
-      "@dwellpass/ui/*": ["packages/ui/src/*"],
-      "@dwellpass/tanstack-db": ["packages/tanstack-db/src/index.ts"],
-      "@dwellpass/tanstack-db/*": ["packages/tanstack-db/src/*"]
+      "@credopass/validation": ["packages/validation/src/index.ts"],
+      "@credopass/validation/*": ["packages/validation/src/*"],
+      "@credopass/ui": ["packages/ui/src/index.ts"],
+      "@credopass/ui/*": ["packages/ui/src/*"]
     }
   }
 }

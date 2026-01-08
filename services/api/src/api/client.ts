@@ -1,6 +1,6 @@
 // ============================================================================
 // FILE: packages/api-client/src/client.ts
-// Type-safe API client for DwellPass
+// Type-safe API client for CredoPass
 // ============================================================================
 
 export interface ApiClientConfig {

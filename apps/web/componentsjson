@@ -15,7 +15,7 @@
     "components": "@/components",
     "hooks": "@/hooks",
     "lib": "@/lib",
-    "utils": "@dwellpass/ui/lib/utils",
-    "ui": "@dwellpass/ui/components"
+    "utils": "@credopass/ui/lib/utils",
+    "ui": "@credopass/ui/components"
   }
 }

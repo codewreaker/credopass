@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# DwellPass Deployment Setup Script
+# CredoPass Deployment Setup Script
 # This script helps automate the GCP setup process
 
 set -e
@@ -12,7 +12,7 @@ YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 echo -e "${GREEN}╔══════════════════════════════════════════════════════════════╗${NC}"
-echo -e "${GREEN}║        DwellPass GCP Deployment Setup Script                ║${NC}"
+echo -e "${GREEN}║        CredoPass GCP Deployment Setup Script                ║${NC}"
 echo -e "${GREEN}╔══════════════════════════════════════════════════════════════╗${NC}"
 echo ""
 
@@ -97,13 +97,13 @@ echo ""
 
 # Create Artifact Registry repository
 echo -e "${YELLOW}📦 Creating Artifact Registry repository...${NC}"
-if gcloud artifacts repositories describe dwellpass --location="$REGION" --project="$PROJECT_ID" &> /dev/null; then
+if gcloud artifacts repositories describe credopass --location="$REGION" --project="$PROJECT_ID" &> /dev/null; then
     echo -e "${YELLOW}⚠️  Repository already exists${NC}"
 else
-    gcloud artifacts repositories create dwellpass \
+    gcloud artifacts repositories create credopass \
         --repository-format=docker \
         --location="$REGION" \
-        --description="DwellPass Docker images" \
+        --description="CredoPass Docker images" \
         --project="$PROJECT_ID"
     echo -e "${GREEN}✅ Artifact Registry repository created${NC}"
 fi

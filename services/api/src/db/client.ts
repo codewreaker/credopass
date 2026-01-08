@@ -68,7 +68,7 @@ export async function getDatabase(): Promise<Database> {
   }
   // Fallback to PGlite for local development
   else {
-    const dbPath = process.env.PGLITE_PATH || path.join(process.cwd(), 'data', 'dwellpass');
+    const dbPath = process.env.PGLITE_PATH || path.join(process.cwd(), 'data', 'credopass');
     const pgliteClient = new PGlite(dbPath);
     await pgliteClient.waitReady;
     db = drizzlePglite(pgliteClient, { schema });

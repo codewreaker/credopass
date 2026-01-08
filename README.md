@@ -1,4 +1,4 @@
-# DwellPass
+# CredoPass
 
 A modern church management system built with React, Hono, and Drizzle ORM in an Nx monorepo.
 
@@ -20,16 +20,16 @@ This monorepo contains two main applications and shared packages:
 
 ### Packages
 
-- **`@dwellpass/server`** - Backend utilities and database access
+- **`@credopass/server`** - Backend utilities and database access
   - Database client, schema, and migrations
   - API client for frontend consumption
   - Combines database and API client logic
 
-- **`@dwellpass/ui`** - Shared React UI components
+- **`@credopass/ui`** - Shared React UI components
   - Built with shadcn/ui and Tailwind CSS
   - Reusable components across the application
 
-- **`@dwellpass/validation`** - Shared validation schemas
+- **`@credopass/validation`** - Shared validation schemas
   - Zod schemas for type-safe validation
   - Used by both frontend and backend
 
@@ -115,7 +115,7 @@ NODE_ENV=development
 PORT=3000                    # API server port
 FRONTEND_URL=http://localhost:5173
 API_PORT=3000               # For Vite proxy
-DATABASE_URL=postgresql://localhost:5432/dwellpass
+DATABASE_URL=postgresql://localhost:5432/credopass
 ```
 
 ## 🏛️ Architecture

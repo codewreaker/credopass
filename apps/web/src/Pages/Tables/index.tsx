@@ -5,7 +5,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import GridTable, { type MenuItem } from '../../components/grid-table/index';
-import { Button } from '@dwellpass/ui';
+import { Button } from '@credopass/ui';
 import { RefreshCw } from 'lucide-react';
 import type { ColDef } from 'ag-grid-community';
 import './style.css';

@@ -3,7 +3,7 @@
 import * as React from "react"
 
 
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@dwellpass/ui"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@credopass/ui"
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -11,7 +11,7 @@ import {
     DropdownMenuItem,
     DropdownMenuLabel,
     DropdownMenuTrigger,
-} from "@dwellpass/ui"
+} from "@credopass/ui"
 import {
     Sidebar,
     SidebarContent,
@@ -29,7 +29,7 @@ import {
     SidebarProvider,
     SidebarRail,
     SidebarTrigger,
-} from "@dwellpass/ui"
+} from "@credopass/ui"
 import {
     TerminalSquareIcon,
     BotIcon,
@@ -41,7 +41,7 @@ import {
 } from "lucide-react"
 import { useLocation, useNavigate } from "@tanstack/react-router"
 import UserComponent from "../../components/user/index"
-import { cn } from "@dwellpass/ui/lib/utils"
+import { cn } from "@credopass/ui/lib/utils"
 
 interface SidebarMenuItemType {
     label: string

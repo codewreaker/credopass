@@ -53,14 +53,14 @@
     "docker:build": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "docker build -t dwellpass-api -f services/api/Dockerfile .",
+        "command": "docker build -t credopass-api -f services/api/Dockerfile .",
         "cwd": "."
       }
     },
     "deploy": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "gcloud run deploy dwellpass-api --source . --region us-central1",
+        "command": "gcloud run deploy credopass-api --source . --region us-central1",
         "cwd": "services/api"
       },
       "dependsOn": ["build"]

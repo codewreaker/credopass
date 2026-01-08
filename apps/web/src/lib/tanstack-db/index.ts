@@ -10,10 +10,10 @@ import { createAttendanceCollection } from './collections/attendance';
 import { createLoyaltyCollection } from './collections/loyalty';
 
 /**
- * Create DwellPass collections with a specific QueryClient
+ * Create CredoPass collections with a specific QueryClient
  * Note: TanStack DB doesn't have a createDB function, so we return collections directly
  */
-export function createDwellPassCollections(client: QueryClient): DwellPassCollections {
+export function createCredoPassCollections(client: QueryClient): CredoPassCollections {
     return {
         users: createUserCollection(client),
         events: createEventCollection(client),
@@ -23,7 +23,7 @@ export function createDwellPassCollections(client: QueryClient): DwellPassCollec
     };
 }
 
-export type DwellPassCollections = {
+export type CredoPassCollections = {
     users: ReturnType<typeof createUserCollection>;
     events: ReturnType<typeof createEventCollection>;
     attendance: ReturnType<typeof createAttendanceCollection>;
@@ -42,22 +42,22 @@ export {
 
 
 // Singleton instance
-let dwellPassInstance: DwellPassCollections | null = null;
+let credoPassInstance: CredoPassCollections | null = null;
 
 /**
- * Get or create a singleton instance of DwellPass collections
+ * Get or create a singleton instance of CredoPass collections
  */
-export function getCollections(): DwellPassCollections {
-    if (!dwellPassInstance) {
+export function getCollections(): CredoPassCollections {
+    if (!credoPassInstance) {
         const client = new QueryClient();
-        dwellPassInstance = createDwellPassCollections(client);
+        credoPassInstance = createCredoPassCollections(client);
     }
-    return dwellPassInstance;
+    return credoPassInstance;
 }
 
 /**
  * Reset the singleton instance (useful for testing)
  */
-export function resetDwellPassCollections(): void {
-    dwellPassInstance = null;
+export function resetCredoPassCollections(): void {
+    credoPassInstance = null;
 }

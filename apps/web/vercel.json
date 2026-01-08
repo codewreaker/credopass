@@ -7,7 +7,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://api.dwellpass.com/api/:path*"
+      "destination": "https://api.credopass.com/api/:path*"
     }
   ],
   "headers": [

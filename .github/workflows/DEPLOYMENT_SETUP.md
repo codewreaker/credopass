@@ -107,10 +107,10 @@ cat github-actions-key.json
 
 ### Create Artifact Registry Repository
 ```bash
-gcloud artifacts repositories create dwellpass \
+gcloud artifacts repositories create credopass \
   --repository-format=docker \
   --location=$REGION \
-  --description="DwellPass Docker images" \
+  --description="CredoPass Docker images" \
   --project=$PROJECT_ID
 ```
 
@@ -245,7 +245,7 @@ After setup, verify:
 gcloud auth configure-docker us-central1-docker.pkg.dev
 
 # Try manual push
-docker push us-central1-docker.pkg.dev/PROJECT_ID/dwellpass/api:test
+docker push us-central1-docker.pkg.dev/PROJECT_ID/credopass/api:test
 ```
 
 ### Cloud Run deployment fails
@@ -256,7 +256,7 @@ gcloud projects get-iam-policy $PROJECT_ID \
   --filter="bindings.members:serviceAccount:$SERVICE_ACCOUNT@$PROJECT_ID.iam.gserviceaccount.com"
 
 # Check Cloud Run logs
-gcloud run services logs read dwellpass-api --region=$REGION --limit=50
+gcloud run services logs read credopass-api --region=$REGION --limit=50
 ```
 
 ### Nx affected not working

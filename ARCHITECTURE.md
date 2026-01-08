@@ -1,10 +1,10 @@
-# DwellPass Monorepo Structure
+# CredoPass Monorepo Structure
 
 ## Architecture Overview
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                        DwellPass Monorepo                        │
+│                        CredoPass Monorepo                        │
 └─────────────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────────┐
@@ -35,7 +35,7 @@
 ├──────────────────────────────────────────────────────────────────┤
 │                                                                   │
 │  ┌──────────────────────────────────────────────────────────┐   │
-│  │  packages/server (@dwellpass/server)                     │   │
+│  │  packages/server (@credopass/server)                     │   │
 │  │  ┌────────────────────┐  ┌────────────────────────────┐ │   │
 │  │  │  db/               │  │  api/                      │ │   │
 │  │  │  • client.ts       │  │  • client.ts               │ │   │
@@ -76,26 +76,26 @@
 1. User interacts with apps/web (React UI)
 2. Web app makes API calls through local TanStack DB collections
 3. API requests go to apps/api (Hono server)
-4. API uses @dwellpass/server for database access
-5. Data validated using @dwellpass/validation schemas
-6. UI components rendered using @dwellpass/ui components
+4. API uses @credopass/server for database access
+5. Data validated using @credopass/validation schemas
+6. UI components rendered using @credopass/ui components
 
 ## Package Dependencies
 
 ```
 apps/api
-  └── @dwellpass/server
-      └── @dwellpass/validation
+  └── @credopass/server
+      └── @credopass/validation
 
 apps/web
-  ├── @dwellpass/ui
-  └── @dwellpass/validation
+  ├── @credopass/ui
+  └── @credopass/validation
 
 packages/server
-  └── @dwellpass/validation
+  └── @credopass/validation
 
 packages/ui
-  └── @dwellpass/validation
+  └── @credopass/validation
 ```
 
 ## Key Benefits
