@@ -3,7 +3,6 @@
 // Database client factory with auto-detection: PGlite (local) or PostgreSQL (hosted)
 // ============================================================================
 
-import { PGlite } from '@electric-sql/pglite';
 import { drizzle as drizzlePglite, type PgliteDatabase } from 'drizzle-orm/pglite';
 import { drizzle as drizzlePostgres } from 'drizzle-orm/postgres-js';
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
@@ -17,6 +16,7 @@ export * from './schema';
 
 // Detect if running on hosted service
 const isHosted = isEdgeLight || isWorkerd || isNetlify;
+const platform = isEdgeLight ? 'Vercel Edge' : isWorkerd ? 'Cloudflare Workers' : isNetlify ? 'Netlify' : 'Hosted';
 
 // Database types
 export type PgliteDB = PgliteDatabase<typeof schema>;
@@ -25,24 +25,16 @@ export type Database = PgliteDB | PostgresDB;
 
 // Singleton database instance
 let db: Database | null = null;
-let client: PGlite | postgres.Sql | null = null;
+let client: postgres.Sql | null = null;
 
 /**
  * Create a database client for Postgres (hosted environments)
  */
-export function createDatabaseClient(connectionString: string): PostgresDB {
-  const postgresClient = postgres(connectionString);
-  return drizzlePostgres(postgresClient, { schema });
+export function createPostgresClient(connectionString: string): PostgresDB {
+  const client = postgres(connectionString);
+  return drizzlePostgres(client, { schema });
 }
 
-/**
- * Create a PGlite client for local development
- */
-export async function createPgliteClient(dbPath: string): Promise<PgliteDB> {
-  const pgliteClient = new PGlite(dbPath);
-  await pgliteClient.waitReady;
-  return drizzlePglite(pgliteClient, { schema });
-}
 
 /**
  * Get database instance with auto-detection
@@ -51,29 +43,33 @@ export async function createPgliteClient(dbPath: string): Promise<PgliteDB> {
 export async function getDatabase(): Promise<Database> {
   if (db) return db;
 
-  // Use PostgreSQL on hosted services (Vercel, Netlify, Cloudflare)
-  if (isHosted && process.env.DATABASE_URL) {
-    const postgresClient = postgres(process.env.DATABASE_URL);
-    db = drizzlePostgres(postgresClient, { schema });
-    client = postgresClient;
-    const platform = isEdgeLight ? 'Vercel Edge' : isWorkerd ? 'Cloudflare Workers' : isNetlify ? 'Netlify' : 'Hosted';
-    console.log(`✓ PostgreSQL connected (${platform})`);
-  }
-  // Use PostgreSQL if DATABASE_URL is explicitly set
-  else if (process.env.DATABASE_URL) {
-    const postgresClient = postgres(process.env.DATABASE_URL);
-    db = drizzlePostgres(postgresClient, { schema });
-    client = postgresClient;
-    console.log('✓ PostgreSQL connected (DATABASE_URL)');
+  if (process.env.DATABASE_URL) {
+    // Use PostgreSQL on hosted services (Vercel, Netlify, Cloudflare)
+    const client = postgres(process.env.DATABASE_URL);
+    db = drizzlePostgres(client, { schema, logger: true });
+    if (isHosted) {
+      console.log(`✓ Connecting to Postgres instance (hosted: ${platform})`);
+      //@TODO: connect to external postgres and verify connection
+      console.log(`✓ PostgreSQL connected (${platform})`);
+    }
+    else {
+      const dbPath = process.env.PGLITE_PATH || path.join(process.cwd(), 'data', 'credopass');
+      const pgliteClient = new PGlite(dbPath);
+      await pgliteClient.waitReady;
+      db = drizzlePglite(pgliteClient, { schema });
+      console.log(`✓ PostgreSQL connected (local): ${dbPath}`);
+    }
   }
   // Fallback to PGlite for local development
   else {
-    const dbPath = process.env.PGLITE_PATH || path.join(process.cwd(), 'data', 'credopass');
-    const pgliteClient = new PGlite(dbPath);
-    await pgliteClient.waitReady;
-    db = drizzlePglite(pgliteClient, { schema });
-    client = pgliteClient;
-    console.log(`✓ PGlite connected (local): ${dbPath}`);
+    const errorMessage = [
+      'env variable DATABASE_URL is not set. Please set it to connect to PostgreSQL',
+      isHosted ? `Set it in your environment variable on hosted platform:${platform}`: 
+      'You set it in your .env file? or run the command `DATABASE_URL="your_database_url" npx ` in your terminal.`',
+    ].join(',')
+
+    console.log(`✓ ${errorMessage}`);
+    throw new Error()
   }
 
   return db;

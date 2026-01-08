@@ -6,62 +6,54 @@
   "tags": ["type:service", "scope:api"],
   "targets": {
     "serve": {
-      "executor": "nx:run-commands",
+      "executor": "nx:run-script",
       "options": {
-        "command": "bun --watch --no-clear-screen src/index.ts",
-        "cwd": "services/api"
+        "script": "serve"
       }
     },
     "build": {
-      "executor": "nx:run-commands",
+      "executor": "nx:run-script",
       "outputs": ["{workspaceRoot}/dist/services/api"],
       "options": {
-        "command": "bun build src/index.ts --outdir ../../dist/services/api --target bun",
-        "cwd": "services/api"
+        "script": "build"
       },
       "dependsOn": ["^build"]
     },
     "start": {
-      "executor": "nx:run-commands",
+      "executor": "nx:run-script",
       "options": {
-        "command": "bun ../../dist/services/api/index.js",
-        "cwd": "services/api"
+        "script": "start"
       },
       "dependsOn": ["build"]
     },
     "migrate": {
-      "executor": "nx:run-commands",
+      "executor": "nx:run-script",
       "options": {
-        "command": "bun src/db/migrate.ts",
-        "cwd": "services/api"
+        "script": "migrate"
       }
     },
     "seed": {
-      "executor": "nx:run-commands",
+      "executor": "nx:run-script",
       "options": {
-        "command": "bun src/db/seed.ts",
-        "cwd": "services/api"
+        "script": "seed"
       }
     },
     "studio": {
-      "executor": "nx:run-commands",
+      "executor": "nx:run-script",
       "options": {
-        "command": "drizzle-kit studio",
-        "cwd": "services/api"
+        "script": "studio"
       }
     },
     "docker:build": {
-      "executor": "nx:run-commands",
+      "executor": "nx:run-script",
       "options": {
-        "command": "docker build -t credopass-api -f services/api/Dockerfile .",
-        "cwd": "."
+        "script": "docker:build"
       }
     },
     "deploy": {
-      "executor": "nx:run-commands",
+      "executor": "nx:run-script",
       "options": {
-        "command": "gcloud run deploy credopass-api --source . --region us-central1",
-        "cwd": "services/api"
+        "script": "deploy"
       },
       "dependsOn": ["build"]
     },
