@@ -2,6 +2,8 @@
 
 This directory contains CI/CD workflows for the DwellPass monorepo.
 
+[Deployment Setup](./DEPLOYMENT_SETUP.md)
+
 ## Workflows
 
 ### 1. `ci-web.yml` - Web App CI/CD

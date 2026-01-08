@@ -1,7 +1,15 @@
 name: CI/CD - API Service
 
 on:
-  # Manual deployment trigger only
+  # Automatic deployment on push to main/develop
+  push:
+    branches: [main, develop]
+    paths:
+      - 'services/api/**'
+      - 'packages/validation/**'
+      - '.github/workflows/ci-api.yml'
+  
+  # Manual deployment trigger
   workflow_dispatch:
     inputs:
       environment:
