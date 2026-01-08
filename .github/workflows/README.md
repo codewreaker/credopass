@@ -4,39 +4,25 @@ This directory contains CI/CD workflows for the DwellPass monorepo.
 
 ## Workflows
 
-### 1. `ci.yml` - Quality Checks Only
-**Triggers:** Push to `main`/`develop`, Pull Requests
-
-**Jobs:**
-- **detect-changes**: Uses Nx affected to detect which projects changed
-- **quality-checks**: Runs linting, type checking, and tests on affected projects
-- **summary**: Provides CI status summary
-
-**Key Features:**
-- ✅ Smart change detection using Nx
-- ✅ Parallel execution of quality checks
-- ✅ No deployments (handled by separate workflows)
-
-### 2. `deploy-web.yml` - Web App Deployment
+### 1. `ci-web.yml` - Web App CI/CD
 **Triggers:** 
 - Push to `main`/`develop` (with path filters)
 - Manual workflow dispatch
 
 **Jobs:**
 - **check-affected**: Determines if web app should be deployed
-- **quality-checks**: Runs web-specific quality checks
+- **quality-checks**: Runs linting, type checking, and tests
 - **deploy**: Builds and deploys to Vercel
 
 **Key Features:**
 - ✅ Path-based triggers (only runs when web code changes)
-- ✅ Independent from API deployments
+- ✅ Complete CI/CD in one workflow
 - ✅ Manual deployment option with environment selection
 - ✅ Production vs preview environments
 
-### 3. `deploy-api.yml` - API Service Deployment
+### 2. `ci-api.yml` - API Service CI/CD
 **Triggers:**
-- Push to `main`/`develop` (with path filters)
-- Manual workflow dispatch
+- Manual workflow dispatch only
 
 **Jobs:**
 - **check-affected**: Determines if API should be deployed
@@ -44,20 +30,19 @@ This directory contains CI/CD workflows for the DwellPass monorepo.
 - **deploy**: Builds Docker image and deploys to Cloud Run
 
 **Key Features:**
-- ✅ Path-based triggers (only runs when API code changes)
-- ✅ Independent from web deployments
-- ✅ Manual deployment option with environment selection
-- ✅ Production vs staging environments
+- ✅ Manual-only deployment for safety
+- ✅ Complete CI/CD in one workflow
+- ✅ Environment selection (production/staging)
 - ✅ Environment-specific scaling configuration
 
-### 4. `preview.yml` - Preview Deployments
+### 3. `preview.yml` - Preview Deployments
 **Triggers:** Pull Requests with `[preview]` in title or `preview` label
 
 **Jobs:**
 - Deploys web app to Vercel preview environment
 - Adds comment to PR with preview URL
 
-### 5. `manual-deploy.yml` - Manual Deployments
+### 4. `manual-deploy.yml` - Manual Deployments
 **Triggers:** Manual workflow dispatch
 
 **Options:**
@@ -66,27 +51,23 @@ This directory contains CI/CD workflows for the DwellPass monorepo.
 
 ## Deployment Independence
 
-The workflows are designed to run independently:
+The workflows are completely independent:
 
-- **Web changes** → Only `deploy-web.yml` runs
-- **API changes** → Only `deploy-api.yml` runs
-- **Shared package changes** → Both workflows run
-- **Manual trigger** → Choose which to deploy
+- **Web changes** → Only `ci-web.yml` runs
+- **API changes** → Only `ci-api.yml` runs (manual trigger)
+- **Manual trigger** → Choose which to deploy via `manual-deploy.yml`
 
 ### Path Filters
 
-**`deploy-web.yml` triggers on:**
+**`ci-web.yml` triggers on:**
 ```yaml
 - 'apps/web/**'
 - 'packages/ui/**'
 - 'packages/validation/**'
 ```
 
-**`deploy-api.yml` triggers on:**
-```yaml
-- 'services/api/**'
-- 'packages/validation/**'
-```
+**`ci-api.yml`:**
+- Manual trigger only (no automatic path-based triggers)
 
 ## Required Secrets
 
@@ -210,42 +191,36 @@ bun nx show projects --affected
 **Scenario 1: Only Web Changes**
 1. Modify code in `apps/web/` or `packages/ui/`
 2. Push to `main` or `develop`
-3. `ci.yml` runs quality checks
-4. `deploy-web.yml` runs automatically
-5. Web app deploys to Vercel
-6. API deployment is skipped
+3. `ci-web.yml` runs: quality checks → build → deploy to Vercel
 
-**Scenario 2: Only API Changes**
+**Scenario 2: API Changes**
 1. Modify code in `services/api/`
-2. Push to `main` or `develop`
-3. `ci.yml` runs quality checks
-4. `deploy-api.yml` runs automatically
-5. API service deploys to Cloud Run
-6. Web deployment is skipped
+2. Go to Actions → CI/CD - API Service
+3. Manually trigger deployment
+4. `ci-api.yml` runs: quality checks → build → deploy to Cloud Run
 
-**Scenario 3: Shared Package Changes**
-1. Modify code in `packages/validation/`
-2. Push to `main` or `develop`
-3. `ci.yml` runs quality checks
-4. Both `deploy-web.yml` and `deploy-api.yml` run
-5. Both services deploy
-
-**Scenario 4: Unrelated Changes**
-1. Modify documentation or config files
+**Scenario 3: Documentation/Config Changes**
+1. Modify README, workflows, etc.
 2. Push to any branch
-3. Only `ci.yml` runs
-4. No deployments triggered
+3. No workflows run (no relevant path changes)
 
 ### Manual Deployments
 
-**Option 1: Deploy Individually**
+**Option 1: Deploy Web**
 1. Go to Actions tab
-2. Select "Deploy Web App" or "Deploy API Service"
+2. Select "CI/CD - Web App"
 3. Click "Run workflow"
 4. Choose environment
 5. Run
 
-**Option 2: Deploy Both**
+**Option 2: Deploy API**
+1. Go to Actions tab
+2. Select "CI/CD - API Service"
+3. Click "Run workflow"
+4. Choose environment
+5. Run
+
+**Option 3: Deploy Both**
 1. Go to Actions tab
 2. Select "Manual Deployment"
 3. Choose target: "both"
@@ -263,19 +238,19 @@ bun nx show projects --affected
 ### Deploy Web Only
 ```bash
 # Via GitHub CLI
-gh workflow run deploy-web.yml -f environment=production
+gh workflow run ci-web.yml -f environment=production
 
 # Or via GitHub UI:
-# Actions → Deploy Web App → Run workflow → Select environment
+# Actions → CI/CD - Web App → Run workflow → Select environment
 ```
 
 ### Deploy API Only
 ```bash
 # Via GitHub CLI
-gh workflow run deploy-api.yml -f environment=production
+gh workflow run ci-api.yml -f environment=production
 
 # Or via GitHub UI:
-# Actions → Deploy API Service → Run workflow → Select environment
+# Actions → CI/CD - API Service → Run workflow → Select environment
 ```
 
 ### Deploy Both

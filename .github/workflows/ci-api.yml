@@ -1,4 +1,4 @@
-name: Deploy API Service
+name: CI/CD - API Service
 
 on:
   # Manual deployment trigger only
