@@ -4,6 +4,7 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
+    "start": "nx run-many -t serve -p web api",
     "postgres:up": "docker compose -f docker/docker-compose.yml up -d",
     "postgres:down": "docker compose -f docker/docker-compose.yml down -v"
   },

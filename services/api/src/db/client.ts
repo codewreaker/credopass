@@ -14,7 +14,7 @@ const platform = isEdgeLight ? 'Vercel Edge' : isWorkerd ? 'Cloudflare Workers' 
 export type Database = ReturnType<typeof createPostgresClient>;
 
 // Singleton database instance
-let client: Pool | null = null;
+let client: Pool | null = null;     
 let db: Database | null = null;
 
 /**

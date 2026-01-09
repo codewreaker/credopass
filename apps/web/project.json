@@ -7,7 +7,7 @@
     "serve": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "bun vite",
+        "command": "bun vite --mode development",
         "cwd": "apps/web"
       },
       "configurations": {
