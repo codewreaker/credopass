@@ -32,7 +32,20 @@ const throttleMiddleware = (delayMs = 500) => createMiddleware(async (c, next) =
 
 // Middleware
 app.use("*", logger());
-app.use("*", cors());
+
+// CORS configuration
+if (isDevelopment) {
+    console.log("⚙️  CORS: Development mode - allowing all origins");
+    // Development: Allow all origins
+    app.use("*", cors());
+} else {
+    console.log("⚙️  CORS: Production mode - restricting origins");
+    // Production: Restrict origins
+    app.use("*", cors({
+        origin: ["https://yourdomain.com"], // Add your production domain
+        credentials: true,
+    }));
+}
 
 // Apply throttle to API routes if THROTTLE_DELAY env var is set
 if (THROTTLE_DELAY > 0) {
