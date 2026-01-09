@@ -16,7 +16,7 @@ export default defineConfig({
   ],
   server: {
     host: true,
-    port: process.env.PORT ? parseInt(process.env.PORT) : 5173
+    port: process.env.VITE_API_URL ? parseInt(process.env.VITE_API_URL) : 5173
   },
   build: {
     outDir: 'dist',
