@@ -3,11 +3,6 @@
   "version": "0.0.1",
   "private": true,
   "type": "module",
-  "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
-    "preview": "vite preview"
-  },
   "dependencies": {
     "@base-ui/react": "^1.0.0",
     "@credopass/ui": "workspace:*",

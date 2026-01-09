@@ -7,8 +7,7 @@ import { createCollection } from '@tanstack/db';
 import { QueryClient } from '@tanstack/query-core';
 import { queryCollectionOptions } from '@tanstack/query-db-collection';
 import type { User } from '@credopass/validation';
-
-const API_BASE = '/api';
+import { API_BASE_URL } from '../../../config';
 
 /**
  * Create user collection with a specific QueryClient
@@ -18,7 +17,7 @@ export function createUserCollection(queryClient: QueryClient) {
     queryCollectionOptions({
       queryKey: ['users'],
       queryFn: async (): Promise<User[]> => {
-        const response = await fetch(`${API_BASE}/users`);
+        const response = await fetch(`${API_BASE_URL}/users`);
         if (!response.ok) throw new Error('Failed to fetch users');
         return response.json();
       },
@@ -30,7 +29,7 @@ export function createUserCollection(queryClient: QueryClient) {
         const mutation = transaction.mutations[0];
         if (!mutation) return;
         const { modified: newUser } = mutation;
-        const response = await fetch(`${API_BASE}/users`, {
+        const response = await fetch(`${API_BASE_URL}/users`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(newUser),
@@ -43,7 +42,7 @@ export function createUserCollection(queryClient: QueryClient) {
         const mutation = transaction.mutations[0];
         if (!mutation) return;
         const { original, modified } = mutation;
-        const response = await fetch(`${API_BASE}/users/${original.id}`, {
+        const response = await fetch(`${API_BASE_URL}/users/${original.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(modified),
@@ -56,7 +55,7 @@ export function createUserCollection(queryClient: QueryClient) {
         const mutation = transaction.mutations[0];
         if (!mutation) return;
         const { original } = mutation;
-        const response = await fetch(`${API_BASE}/users/${original.id}`, {
+        const response = await fetch(`${API_BASE_URL}/users/${original.id}`, {
           method: 'DELETE',
         });
         if (!response.ok) throw new Error('Failed to delete user');

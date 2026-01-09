@@ -1,47 +1,27 @@
-// ============================================================================
-// FILE: packages/database/src/client.ts
-// Database client factory with auto-detection: PGlite (local) or PostgreSQL (hosted)
-// ============================================================================
-
-import { PGlite } from '@electric-sql/pglite';
-import { drizzle as drizzlePglite, type PgliteDatabase } from 'drizzle-orm/pglite';
-import { drizzle as drizzlePostgres } from 'drizzle-orm/postgres-js';
-import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
-import postgres from 'postgres';
-import path from 'node:path';
-import { isEdgeLight, isWorkerd, isNetlify } from 'std-env';
+import { drizzle as drizzlePostgres } from 'drizzle-orm/node-postgres';
+import type { Pool } from 'pg';
+import { isEdgeLight, isWorkerd, isNetlify, isDevelopment } from 'std-env';
 import * as schema from './schema';
 
 // Export schema
 export * from './schema';
 
 // Detect if running on hosted service
-const isHosted = isEdgeLight || isWorkerd || isNetlify;
+const isHosted = !isDevelopment;
+const platform = isEdgeLight ? 'Vercel Edge' : isWorkerd ? 'Cloudflare Workers' : isNetlify ? 'Netlify' : 'Hosted';
 
 // Database types
-export type PgliteDB = PgliteDatabase<typeof schema>;
-export type PostgresDB = PostgresJsDatabase<typeof schema>;
-export type Database = PgliteDB | PostgresDB;
+export type Database = ReturnType<typeof createPostgresClient>;
 
 // Singleton database instance
+let client: Pool | null = null;     
 let db: Database | null = null;
-let client: PGlite | postgres.Sql | null = null;
 
 /**
  * Create a database client for Postgres (hosted environments)
  */
-export function createDatabaseClient(connectionString: string): PostgresDB {
-  const postgresClient = postgres(connectionString);
-  return drizzlePostgres(postgresClient, { schema });
-}
-
-/**
- * Create a PGlite client for local development
- */
-export async function createPgliteClient(dbPath: string): Promise<PgliteDB> {
-  const pgliteClient = new PGlite(dbPath);
-  await pgliteClient.waitReady;
-  return drizzlePglite(pgliteClient, { schema });
+export function createPostgresClient(connectionString: string) {
+  return drizzlePostgres(connectionString, { schema, logger: true });
 }
 
 /**
@@ -50,32 +30,32 @@ export async function createPgliteClient(dbPath: string): Promise<PgliteDB> {
  */
 export async function getDatabase(): Promise<Database> {
   if (db) return db;
+  
+  if (process.env.DATABASE_URL) {
+    // Use PostgreSQL on hosted services (Vercel, Netlify, Cloudflare)
+    db = createPostgresClient(process.env.DATABASE_URL);
+    client = db.$client;
 
-  // Use PostgreSQL on hosted services (Vercel, Netlify, Cloudflare)
-  if (isHosted && process.env.DATABASE_URL) {
-    const postgresClient = postgres(process.env.DATABASE_URL);
-    db = drizzlePostgres(postgresClient, { schema });
-    client = postgresClient;
-    const platform = isEdgeLight ? 'Vercel Edge' : isWorkerd ? 'Cloudflare Workers' : isNetlify ? 'Netlify' : 'Hosted';
-    console.log(`✓ PostgreSQL connected (${platform})`);
-  }
-  // Use PostgreSQL if DATABASE_URL is explicitly set
-  else if (process.env.DATABASE_URL) {
-    const postgresClient = postgres(process.env.DATABASE_URL);
-    db = drizzlePostgres(postgresClient, { schema });
-    client = postgresClient;
-    console.log('✓ PostgreSQL connected (DATABASE_URL)');
+    if (isHosted) {
+      console.log(`✓ Connecting to Postgres instance (hosted: ${platform})`);
+      //@TODO: connect to external postgres and verify connection
+      console.log(`✓ PostgreSQL connected (${platform})`);
+    }
+    else {
+      console.log(`✓ PostgreSQL connected (local): ${process.env.DATABASE_URL}`);
+    }
   }
   // Fallback to PGlite for local development
   else {
-    const dbPath = process.env.PGLITE_PATH || path.join(process.cwd(), 'data', 'credopass');
-    const pgliteClient = new PGlite(dbPath);
-    await pgliteClient.waitReady;
-    db = drizzlePglite(pgliteClient, { schema });
-    client = pgliteClient;
-    console.log(`✓ PGlite connected (local): ${dbPath}`);
-  }
+    const errorMessage = [
+      'env variable DATABASE_URL is not set. Please set it to connect to PostgreSQL',
+      isHosted ? `Set it in your environment variable on hosted platform:${platform}` :
+        'You set it in your .env file? or run the command `DATABASE_URL="your_database_url" npx ` in your terminal.`',
+    ].join(',')
 
+    console.log(`✓ ${errorMessage}`);
+    throw new Error()
+  }
   return db;
 }
 
@@ -84,11 +64,7 @@ export async function getDatabase(): Promise<Database> {
  */
 export async function closeDatabase(): Promise<void> {
   if (client) {
-    if ('close' in client) {
-      await client.close();
-    } else if ('end' in client) {
-      await client.end();
-    }
+    await client.end();
     client = null;
     db = null;
     console.log('✓ Database closed');
@@ -98,16 +74,13 @@ export async function closeDatabase(): Promise<void> {
 /**
  * Check if database is connected
  */
-export function isDatabaseConnected(): boolean {
-  return db !== null;
+export async function isDBConnected(): Promise<boolean> {
+  if (db == null) return false;
+  try {
+    await db.execute('SELECT 1');
+    return true;
+  } catch {
+    return false;
+  }
 }
 
-/**
- * Get connection info for logging
- */
-export function getConnectionInfo(): { type: 'pglite' | 'postgres'; isHosted: boolean } {
-  return {
-    type: process.env.DATABASE_URL ? 'postgres' : 'pglite',
-    isHosted,
-  };
-}

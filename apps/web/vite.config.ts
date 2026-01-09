@@ -14,10 +14,10 @@ export default defineConfig({
     }),
     tailwindcss()
   ],
-  server: {
-    host: true,
-    port: 5173
-  },
+  // server: {
+  //   host: true,
+  //   port: process.env.VITE_API_URL ? parseInt(process.env.VITE_API_URL) : 5173
+  // },
   build: {
     outDir: 'dist',
     rollupOptions: {

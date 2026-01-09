@@ -8,6 +8,7 @@ import GridTable, { type MenuItem } from '../../components/grid-table/index';
 import { Button } from '@credopass/ui';
 import { RefreshCw } from 'lucide-react';
 import type { ColDef } from 'ag-grid-community';
+import { API_BASE_URL } from '../../config';
 import './style.css';
 
 type TableName = 'users' | 'events' | 'attendance' | 'loyalty';
@@ -29,7 +30,7 @@ export default function DatabasePage() {
     setError(null);
 
     try {
-      const response = await fetch(`/api/${table}`);
+      const response = await fetch(`${API_BASE_URL}/${table}`);
       if (!response.ok) {
         throw new Error(`Failed to fetch ${table}`);
       }

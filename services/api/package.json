@@ -5,20 +5,16 @@
   "type": "module",
   "main": "./src/index.ts",
   "scripts": {
-    "dev": "bun --watch src/index.ts",
-    "build": "bun build src/index.ts --outdir dist --target bun",
-    "start": "bun dist/index.js",
-    "db:migrate": "bun src/db/migrate.ts",
-    "db:seed": "bun src/db/seed.ts",
-    "db:studio": "drizzle-kit studio"
+    "studio": "drizzle-kit studio",
+    "setup": "drizzle-kit generate && drizzle-kit migrate && bun src/db/seed.ts && bun studio"
   },
   "dependencies": {
     "@credopass/validation": "workspace:*",
-    "@electric-sql/pglite": "^0.3.14",
     "@hono/zod-validator": "^0.7.5",
+    "@types/pg": "^8.16.0",
     "drizzle-orm": "^0.45.1",
     "hono": "^4.10.7",
-    "postgres": "^3.4.8",
+    "pg": "^8.16.3",
     "std-env": "^3.10.0",
     "zod": "^4.3.5"
   },

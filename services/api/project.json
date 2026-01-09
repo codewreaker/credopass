@@ -5,6 +5,9 @@
   "projectType": "application",
   "tags": ["type:service", "scope:api"],
   "targets": {
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    },
     "serve": {
       "executor": "nx:run-commands",
       "options": {
@@ -14,59 +17,31 @@
     },
     "build": {
       "executor": "nx:run-commands",
-      "outputs": ["{workspaceRoot}/dist/services/api"],
       "options": {
         "command": "bun build src/index.ts --outdir ../../dist/services/api --target bun",
         "cwd": "services/api"
-      },
-      "dependsOn": ["^build"]
+      }
     },
     "start": {
       "executor": "nx:run-commands",
       "options": {
         "command": "bun ../../dist/services/api/index.js",
         "cwd": "services/api"
-      },
-      "dependsOn": ["build"]
-    },
-    "migrate": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "bun src/db/migrate.ts",
-        "cwd": "services/api"
-      }
-    },
-    "seed": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "bun src/db/seed.ts",
-        "cwd": "services/api"
-      }
-    },
-    "studio": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "drizzle-kit studio",
-        "cwd": "services/api"
       }
     },
     "docker:build": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "docker build -t credopass-api -f services/api/Dockerfile .",
-        "cwd": "."
+        "command": "docker build -t credopass-api -f Dockerfile ../..",
+        "cwd": "services/api"
       }
     },
     "deploy": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "gcloud run deploy credopass-api --source . --region us-central1",
+        "command": "gcloud run deploy credopass-api --source ../.. --region us-central1",
         "cwd": "services/api"
-      },
-      "dependsOn": ["build"]
-    },
-    "lint": {
-      "executor": "@nx/eslint:lint"
+      }
     }
   }
 }

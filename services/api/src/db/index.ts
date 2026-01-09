@@ -8,13 +8,9 @@ export * from './schema';
 
 // Export database client utilities
 export {
-  createDatabaseClient,
-  createPgliteClient,
+  createPostgresClient,
   getDatabase,
   closeDatabase,
-  isDatabaseConnected,
-  getConnectionInfo,
-  type Database,
-  type PgliteDB,
-  type PostgresDB,
+  isDBConnected,
+  type Database
 } from './client';
