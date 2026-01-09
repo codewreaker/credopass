@@ -7,6 +7,41 @@
   "targets": {
     "lint": {
       "executor": "@nx/eslint:lint"
+    },
+    "serve": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun --watch --no-clear-screen src/index.ts",
+        "cwd": "services/api"
+      }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun build src/index.ts --outdir ../../dist/services/api --target bun",
+        "cwd": "services/api"
+      }
+    },
+    "start": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun ../../dist/services/api/index.js",
+        "cwd": "services/api"
+      }
+    },
+    "docker:build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "docker build -t credopass-api -f Dockerfile ../..",
+        "cwd": "services/api"
+      }
+    },
+    "deploy": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "gcloud run deploy credopass-api --source ../.. --region us-central1",
+        "cwd": "services/api"
+      }
     }
   }
 }

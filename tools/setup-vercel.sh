@@ -143,7 +143,7 @@ echo "   GitHub Repo → Settings → Secrets and variables → Actions → New 
 echo ""
 echo -e "${GREEN}✅ Next Steps:${NC}"
 echo "   1. Add the three secrets to GitHub"
-echo "   2. Set up GCP integration (run scripts/setup-gcp.sh)"
+echo "   2. Set up GCP integration (run tools/setup-gcp.sh)"
 echo "   3. Test a deployment"
 echo "   4. Refer to .github/DEPLOYMENT_SETUP.md for details"
 echo ""

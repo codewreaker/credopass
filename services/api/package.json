@@ -5,14 +5,8 @@
   "type": "module",
   "main": "./src/index.ts",
   "scripts": {
-    "serve": "bun --watch --no-clear-screen src/index.ts",
-    "build": "bun build src/index.ts --outdir ../../dist/services/api --target bun",
-    "start": "bun ../../dist/services/api/index.js",
-    "migrate": "bun src/db/migrate.ts",
-    "seed": "bun src/db/seed.ts",
     "studio": "drizzle-kit studio",
-    "docker:build": "docker build -t credopass-api -f Dockerfile ../..",
-    "deploy": "gcloud run deploy credopass-api --source ../.. --region us-central1"
+    "setup": "drizzle-kit generate && drizzle-kit migrate && bun src/db/seed.ts && bun studio"
   },
   "dependencies": {
     "@credopass/validation": "workspace:*",
