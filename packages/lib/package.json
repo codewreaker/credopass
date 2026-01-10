@@ -1,5 +1,5 @@
 {
-  "name": "@credopass/validation",
+  "name": "@credopass/lib",
   "version": "0.0.1",
   "private": true,
   "type": "module",
@@ -9,6 +9,9 @@
     ".": {
       "import": "./src/index.ts",
       "types": "./src/index.ts"
+    },
+    "./schemas": {
+      "import": "./src/schemas/*.ts"
     }
   },
   "dependencies": {

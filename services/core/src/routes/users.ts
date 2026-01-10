@@ -8,7 +8,7 @@ import { z } from 'zod';
 import { desc, eq } from 'drizzle-orm';
 import { getDatabase } from '../db/client';
 import { users } from '../db/schema';
-import { UserSchema } from '@credopass/validation';
+import { UserSchema } from 'packages/lib/src';
 
 const usersRouter = new Hono();
 

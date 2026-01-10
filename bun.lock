@@ -29,8 +29,8 @@
       "version": "0.0.1",
       "dependencies": {
         "@base-ui/react": "^1.0.0",
+        "@credopass/lib": "workspace:*",
         "@credopass/ui": "workspace:*",
-        "@credopass/validation": "workspace:*",
         "@fontsource-variable/inter": "^5.2.8",
         "@fullcalendar/core": "^6.1.19",
         "@fullcalendar/daygrid": "^6.1.19",
@@ -72,6 +72,13 @@
         "vite-tsconfig-paths": "^6.0.3",
       },
     },
+    "packages/lib": {
+      "name": "@credopass/lib",
+      "version": "0.0.1",
+      "dependencies": {
+        "zod": "^4.1.13",
+      },
+    },
     "packages/ui": {
       "name": "@credopass/ui",
       "version": "0.0.1",
@@ -96,18 +103,11 @@
         "react-dom": "^19.0.0",
       },
     },
-    "packages/validation": {
-      "name": "@credopass/validation",
-      "version": "0.0.1",
-      "dependencies": {
-        "zod": "^4.1.13",
-      },
-    },
     "services/core": {
       "name": "@credopass/services",
       "version": "0.0.1",
       "dependencies": {
-        "@credopass/validation": "workspace:*",
+        "@credopass/lib": "workspace:*",
         "@hono/zod-validator": "^0.7.5",
         "@types/pg": "^8.16.0",
         "drizzle-orm": "^0.45.1",
@@ -328,11 +328,11 @@
 
     "@base-ui/utils": ["@base-ui/utils@0.2.3", "", { "dependencies": { "@babel/runtime": "^7.28.4", "@floating-ui/utils": "^0.2.10", "reselect": "^5.1.1", "use-sync-external-store": "^1.6.0" }, "peerDependencies": { "@types/react": "^17 || ^18 || ^19", "react": "^17 || ^18 || ^19", "react-dom": "^17 || ^18 || ^19" }, "optionalPeers": ["@types/react"] }, "sha512-/CguQ2PDaOzeVOkllQR8nocJ0FFIDqsWIcURsVmm53QGo8NhFNpePjNlyPIB41luxfOqnG7PU0xicMEw3ls7XQ=="],
 
+    "@credopass/lib": ["@credopass/lib@workspace:packages/lib"],
+
     "@credopass/services": ["@credopass/services@workspace:services/core"],
 
     "@credopass/ui": ["@credopass/ui@workspace:packages/ui"],
-
-    "@credopass/validation": ["@credopass/validation@workspace:packages/validation"],
 
     "@credopass/web": ["@credopass/web@workspace:apps/web"],
 

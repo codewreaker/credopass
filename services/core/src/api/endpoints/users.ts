@@ -4,7 +4,7 @@
 // ============================================================================
 
 import type { ApiClient } from '../client';
-import type { User, CreateUser, UpdateUser } from '@credopass/validation';
+import type { User, CreateUser, UpdateUser } from 'packages/lib/src';
 
 export function createUsersApi(client: ApiClient) {
   return {

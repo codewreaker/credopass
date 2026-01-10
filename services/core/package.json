@@ -9,7 +9,7 @@
     "setup": "drizzle-kit generate && drizzle-kit migrate && bun src/db/seed.ts && bun studio"
   },
   "dependencies": {
-    "@credopass/validation": "workspace:*",
+    "@credopass/lib": "workspace:*",
     "@hono/zod-validator": "^0.7.5",
     "@types/pg": "^8.16.0",
     "drizzle-orm": "^0.45.1",

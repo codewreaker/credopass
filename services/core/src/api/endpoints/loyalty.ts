@@ -4,7 +4,7 @@
 // ============================================================================
 
 import type { ApiClient } from '../client';
-import type { Loyalty, CreateLoyalty, UpdateLoyalty, LoyaltyTier, AwardPoints, AwardReward } from '@credopass/validation';
+import type { Loyalty, CreateLoyalty, UpdateLoyalty, LoyaltyTier, AwardPoints, AwardReward } from 'packages/lib/src';
 
 export interface PatronPoints {
   patronId: string;

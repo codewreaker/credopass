@@ -8,7 +8,7 @@ import { z } from 'zod';
 import { eq, and, desc } from 'drizzle-orm';
 import { getDatabase } from '../db/client';
 import { attendance } from '../db/schema';
-import { AttendanceSchema, CheckInSchema } from '@credopass/validation';
+import { AttendanceSchema, CheckInSchema } from 'packages/lib/src';
 
 const attendanceRouter = new Hono();
 

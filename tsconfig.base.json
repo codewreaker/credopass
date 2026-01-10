@@ -5,7 +5,11 @@
     "emitDeclarationOnly": true,
     "importHelpers": true,
     "isolatedModules": true,
-    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "lib": [
+      "ES2022",
+      "DOM",
+      "DOM.Iterable"
+    ],
     "module": "ESNext",
     "moduleResolution": "bundler",
     "noEmitOnError": true,
@@ -21,10 +25,32 @@
     "resolveJsonModule": true,
     "baseUrl": ".",
     "paths": {
-      "@credopass/validation": ["packages/validation/src/index.ts"],
-      "@credopass/validation/*": ["packages/validation/src/*"],
-      "@credopass/ui": ["packages/ui/src/index.ts"],
-      "@credopass/ui/*": ["packages/ui/src/*"]
+      "@credopass/lib": [
+        "packages/validation/src/index.ts"
+      ],
+      "@credopass/lib/*": [
+        "packages/validation/src/*"
+      ],
+      "@credopass/ui": [
+        "packages/ui/src/index.ts"
+      ],
+      "@credopass/ui/*": [
+        "packages/ui/src/*"
+      ]
     }
-  }
+  },
+  "references": [
+    {
+      "path": "./packages/validation"
+    },
+    {
+      "path": "./packages/ui"
+    },
+    {
+      "path": "./services/api"
+    },
+    {
+      "path": "./apps/web"
+    }
+  ]
 }

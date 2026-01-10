@@ -1,8 +1,3 @@
-// ============================================================================
-// FILE: server/index.ts
-// Main Hono server entry point with Drizzle ORM (PGlite)
-// ============================================================================
-
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";

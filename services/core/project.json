@@ -14,25 +14,29 @@
     "serve": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "bun --watch --no-clear-screen src/index.ts"
+        "command": "bun --watch --no-clear-screen src/index.ts",
+        "cwd": "{projectRoot}"
       }
     },
     "build": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "bun build src/index.ts --outdir ../../dist/${projectRoot} --target bun"
+        "command": "bun build ./src/index.ts --outdir ../../dist/{projectRoot} --target bun",
+        "cwd": "{projectRoot}"
       }
     },
     "docker:build": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "docker build -t credopass-api -f Dockerfile ../.."
+        "command": "docker build -t credopass-api -f Dockerfile ../..",
+        "cwd": "{projectRoot}"
       }
     },
     "deploy": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "gcloud run deploy credopass-api --source ../.. --region us-central1"
+        "command": "gcloud run deploy credopass-api --source ../.. --region us-central1",
+        "cwd": "{projectRoot}"
       }
     }
   }

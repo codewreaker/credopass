@@ -4,7 +4,7 @@
 // ============================================================================
 
 import type { ApiClient } from '../client';
-import type { Attendance, CreateAttendance, UpdateAttendance, CheckInInput } from '@credopass/validation';
+import type { Attendance, CreateAttendance, UpdateAttendance, CheckInInput } from 'packages/lib/src';
 
 export interface AttendanceStats {
   total: number;
