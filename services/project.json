@@ -1,0 +1,39 @@
+{
+  "name": "services",
+  "$schema": "../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "services/src",
+  "projectType": "application",
+  "tags": [
+    "type:service",
+    "scope:api"
+  ],
+  "targets": {
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    },
+    "serve": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun --watch --no-clear-screen src/index.ts"
+      }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun build src/index.ts --outdir ../../dist/${projectRoot} --target bun"
+      }
+    },
+    "docker:build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "docker build -t credopass-api -f Dockerfile ../.."
+      }
+    },
+    "deploy": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "gcloud run deploy credopass-api --source ../.. --region us-central1"
+      }
+    }
+  }
+}

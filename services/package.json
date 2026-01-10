@@ -1,5 +1,5 @@
 {
-  "name": "@credopass/api",
+  "name": "@credopass/services",
   "version": "0.0.1",
   "private": true,
   "type": "module",

@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "start": "NODE_ENV=development nx run-many -t serve -p web api",
+    "reinstall": "./tools/nm-reset.sh && bun install",
     "postgres:up": "docker compose -f docker/docker-compose.yml up -d",
     "postgres:down": "docker compose -f docker/docker-compose.yml down -v"
   },
