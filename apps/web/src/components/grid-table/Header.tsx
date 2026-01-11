@@ -2,11 +2,21 @@ import React from 'react';
 import { Button } from '@credopass/ui';
 import type { MenuItem } from './index';
 
+export interface BulkActionItem {
+  key: string;
+  label: string;
+  icon?: React.ReactElement;
+  action: (selectedItems: any[]) => void;
+  variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
+}
+
 interface HeaderProps {
   title?: string;
   subtitle?: string;
   menu?: MenuItem[];
   loading?: boolean;
+  selectedItems?: any[];
+  bulkActions?: BulkActionItem[];
 }
 
 const Header: React.FC<HeaderProps> = ({
@@ -14,22 +24,45 @@ const Header: React.FC<HeaderProps> = ({
   subtitle,
   menu = [],
   loading = false,
+  selectedItems = [],
+  bulkActions = [],
 }) => {
-  const showHeader = title || menu.length > 0;
+  const showHeader = title || menu.length > 0 || selectedItems.length > 0;
 
   if (!showHeader) return null;
 
   return (
     <div className="table-header">
-      {title && (
-        <div className="title-section">
-          <h2>{title}</h2>
-          {subtitle && <p className="subtitle">{subtitle}</p>}
+      {selectedItems.length > 0 ? (
+        <div className="title-section selection-mode">
+           <h2 className="text-primary">{selectedItems.length} Selected</h2>
         </div>
+      ) : (
+        title && (
+          <div className="title-section">
+            <h2>{title}</h2>
+            {subtitle && <p className="subtitle">{subtitle}</p>}
+          </div>
+        )
       )}
-      {menu.length > 0 && (
-        <div className="actions">
-          {menu.map((item) => {
+      
+      <div className="actions">
+        {selectedItems.length > 0 && bulkActions.length > 0 ? (
+           <>
+              {bulkActions.map((action) => (
+                <Button
+                  key={action.key}
+                  variant={action.variant || "secondary"}
+                  size='sm'
+                  onClick={() => action.action(selectedItems)}
+                >
+                  {action.icon}
+                  {action.label}
+                </Button>
+              ))}
+           </>
+        ) : (
+          menu.length > 0 && menu.map((item) => {
             const isRefreshing = loading && item.id === 'refresh';
             
             return (
@@ -46,9 +79,9 @@ const Header: React.FC<HeaderProps> = ({
                 {item.label}
               </Button>
             );
-          })}
-        </div>
-      )}
+          })
+        )}
+      </div>
     </div>
   );
 };

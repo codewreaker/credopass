@@ -11,14 +11,6 @@ import { useLauncher } from '../../stores/store';
 import { launchUserForm } from '../../containers/UserForm/index';
 
 
-const hdl = (type: string, e?: React.SyntheticEvent | RowClickedEvent) => {
-  switch (type) {
-    default:
-      console.log(e)
-      return
-  }
-}
-
 const columnDefs: ColDef<UserType & LoyaltyType & AttendanceType>[] = [
   {
     field: 'id',
@@ -96,7 +88,7 @@ const columnDefs: ColDef<UserType & LoyaltyType & AttendanceType>[] = [
         <MoreVertical size={14} />
       </button>
     ),
-    pinned: 'right',
+    pinned: 'left',
   },
 ];
 
@@ -135,6 +127,14 @@ const AttendanceBar: React.FC<{ rate: number }> = ({ rate }) => {
 };
 
 
+const hdl = (type: string, e?: React.SyntheticEvent | RowClickedEvent) => {
+  switch (type) {
+    default:
+      console.log(e)
+      return
+  }
+}
+
 export default function MembersPage() {
   const { users: userCollection } = getCollections();
   const { data } = useLiveQuery((q) => q.from({ userCollection }));
@@ -159,8 +159,8 @@ export default function MembersPage() {
   return (
     <>
       <div className="page-header">
-          <h1>Users</h1>
-          <p className="page-subtitle">View all users</p>
+        <h1>Users</h1>
+        <p className="page-subtitle">View all users</p>
       </div>
 
       <GridTable
@@ -169,6 +169,9 @@ export default function MembersPage() {
         menu={menuItems}
         columnDefs={columnDefs}
         rowData={rowData}
+        rowSelection={{
+          mode: 'multiRow',
+        }}
         onRowClicked={(e) => hdl(e.type, e)}
       />
     </>

@@ -11,8 +11,10 @@ import { isDevelopment } from 'std-env';
 const THROTTLE_DELAY = process.env.THROTTLE_DELAY ? Number(process.env.THROTTLE_DELAY) : 0;
 
 // Create Hono app
-const app = new Hono();
+export const app = new Hono();
 
+// Export API Base URL for testing and client usage consistency
+export const API_BASE_PATH = "/api";
 
 // Middleware
 app.use("*", logger());
@@ -45,13 +47,13 @@ if (isDevelopment) {
 
 
 // Health check
-app.get("/api/health", (c) => c.json({ status: "ok", timestamp: Date.now() }));
+app.get(`${API_BASE_PATH}/health`, (c) => c.json({ status: "ok", timestamp: Date.now() }));
 
 // API routes
-app.route("/api/users", usersRoutes);
-app.route("/api/events", eventsRoutes);
-app.route("/api/attendance", attendanceRoutes);
-app.route("/api/loyalty", loyaltyRoutes);
+app.route(`${API_BASE_PATH}/users`, usersRoutes);
+app.route(`${API_BASE_PATH}/events`, eventsRoutes);
+app.route(`${API_BASE_PATH}/attendance`, attendanceRoutes);
+app.route(`${API_BASE_PATH}/loyalty`, loyaltyRoutes);
 
 
 // 404 handler

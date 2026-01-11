@@ -1,7 +1,9 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 import { AgGridReact, type AgGridReactProps } from 'ag-grid-react';
-import { ModuleRegistry, AllCommunityModule, themeMaterial } from 'ag-grid-community';
-import Header from './Header';
+import { ModuleRegistry, AllCommunityModule, themeMaterial, type SelectionChangedEvent } from 'ag-grid-community';
+import { Eye } from 'lucide-react';
+import Header, { type BulkActionItem } from './Header';
+import { useAppStore } from '../../stores/store';
 import './style.css';
 
 ModuleRegistry.registerModules([AllCommunityModule]);
@@ -19,6 +21,7 @@ interface GridTableProps extends AgGridReactProps {
   subtitle?: string;
   menu?: MenuItem[];
   loading?: boolean;
+  bulkActions?: BulkActionItem[];
 }
 
 
@@ -53,12 +56,22 @@ const GridTable: React.FC<GridTableProps> = ({
   subtitle,
   menu = [],
   loading = false,
+  bulkActions = [],
   columnDefs,
   rowData,
   defaultColDef,
   gridOptions,
+  rowSelection = {
+    mode: 'singleRow',
+    checkboxes: false,
+    enableClickSelection: true,
+  },
   ...gridProps
 }) => {
+  const [selectedItems, setSelectedItems] = useState<any[]>([]);
+  const setViewedItem = useAppStore(state => state.setViewedItem);
+  const toggleSidebar = useAppStore(state => state.toggleSidebar);
+
   const defaultColumnDef = useMemo(
     () => ({
       ...defaultColDef,
@@ -72,10 +85,53 @@ const GridTable: React.FC<GridTableProps> = ({
   const gridOptionsMemoized = useMemo(
     () => ({
       ...gridOptions,
-      suppressCellFocus: true
+      suppressCellFocus: true,
     }),
     [gridOptions]
   );
+
+  const onSelectionChanged = useCallback((event: SelectionChangedEvent) => {
+    setSelectedItems(event.api.getSelectedRows());
+    if (gridProps.onSelectionChanged) {
+      gridProps.onSelectionChanged(event);Ê
+    }
+  }, [gridProps.onSelectionChanged]);
+
+  const viewActionRenderer = useCallback((params: any) => {
+    return (
+      <div
+        className="view-action-btn"
+        onClick={(e) => {
+          e.stopPropagation();
+          setViewedItem(params.data);
+          toggleSidebar('right', true);
+        }}
+      >
+        <Eye size={18} />
+      </div>
+    )
+  }, [setViewedItem, toggleSidebar]);
+
+  const enhancedColumnDefs = useMemo(() => {
+    if (!columnDefs) return [];
+
+    return [
+      ...columnDefs,
+      {
+        headerName: "",
+        pinned: "right" as const,
+        width: 48,
+        maxWidth: 48,
+        minWidth: 48,
+        resizable: false,
+        sortable: false,
+        filter: false,
+        cellRenderer: viewActionRenderer,
+        cellClass: "view-action-cell",
+        cellStyle: { display: 'flex', justifyContent: 'center', alignItems: 'center', padding: 0 }
+      }
+    ];
+  }, [columnDefs, viewActionRenderer]);
 
   return (
     <div className="grid-table-container">
@@ -84,22 +140,19 @@ const GridTable: React.FC<GridTableProps> = ({
         subtitle={subtitle}
         menu={menu}
         loading={loading}
+        selectedItems={selectedItems}
+        bulkActions={bulkActions}
       />
-      {/* <div className="table-body"> */}
-        <AgGridReact
-          columnDefs={columnDefs}
-          rowData={rowData}
-          defaultColDef={defaultColumnDef}
-          theme={theme}
-          rowSelection={{
-            mode: 'singleRow',
-            checkboxes: false,
-            enableClickSelection: true,
-          }}
-          gridOptions={gridOptionsMemoized}
-          {...gridProps}
-        />
-      {/* </div> */}
+      <AgGridReact
+        columnDefs={enhancedColumnDefs}
+        rowData={rowData}
+        defaultColDef={defaultColumnDef}
+        theme={theme}
+        rowSelection={rowSelection}
+        gridOptions={gridOptionsMemoized}
+        onSelectionChanged={onSelectionChanged}
+        {...gridProps}
+      />
     </div>
   );
 };

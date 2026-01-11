@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
-import { eq, desc, and, Table } from 'drizzle-orm';
+import { eq, desc, and } from 'drizzle-orm';
 import { getDatabase } from '../db/client';
 import type { PgTable } from 'drizzle-orm/pg-core';
 
@@ -104,6 +104,7 @@ export function createCrudRoute<T extends PgTable>(options: CrudOptions<T>) {
         }
       }
 
+      // Automatically generate ID and timestamps to ensure consistency
       const now = new Date();
       const values = {
         ...validated,
