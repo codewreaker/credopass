@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import { useLiveQuery } from '@tanstack/react-db';
 import { getCollections } from '../../lib/tanstack-db';
-import type { EventType } from '@credopass/lib';
+import type { EventType } from '@credopass/lib/schemas';
 import { useLauncher } from '../../stores/store';
 import { launchEventForm, type EventFormProps } from '../../containers/EventForm/index';
 import CalendarPage from './Calendar/index';

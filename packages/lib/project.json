@@ -1,7 +1,7 @@
 {
   "name": "lib",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "packages/lib/src",
+  "sourceRoot": "@credopass/lib",
   "projectType": "library",
   "tags": ["type:lib", "scope:shared"],
   "targets": {

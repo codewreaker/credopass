@@ -8,7 +8,7 @@ import { z } from 'zod';
 import { desc, eq } from 'drizzle-orm';
 import { getDatabase } from '../db/client';
 import { events } from '../db/schema';
-import { EventSchema, CreateEventSchema } from 'packages/lib/src';
+import { EventSchema, CreateEventSchema } from '@credopass/lib/schemas';
 
 const eventsRouter = new Hono();
 

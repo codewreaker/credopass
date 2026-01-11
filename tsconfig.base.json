@@ -1,18 +1,9 @@
 {
   "compilerOptions": {
-    "composite": true,
-    "declarationMap": true,
-    "emitDeclarationOnly": true,
-    "importHelpers": true,
     "isolatedModules": true,
-    "lib": [
-      "ES2022",
-      "DOM",
-      "DOM.Iterable"
-    ],
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "moduleResolution": "bundler",
-    "noEmitOnError": true,
     "noFallthroughCasesInSwitch": true,
     "noImplicitOverride": true,
     "noImplicitReturns": true,
@@ -25,32 +16,10 @@
     "resolveJsonModule": true,
     "baseUrl": ".",
     "paths": {
-      "@credopass/lib": [
-        "packages/lib/src/index.ts"
-      ],
-      "@credopass/lib/*": [
-        "packages/lib/src/*"
-      ],
-      "@credopass/ui": [
-        "packages/ui/src/index.ts"
-      ],
-      "@credopass/ui/*": [
-        "packages/ui/src/*"
-      ]
+      "@credopass/lib": ["@credopass/lib/index.ts"],
+      "@credopass/lib/*": ["@credopass/lib/*"],
+      "@credopass/ui": ["packages/ui/src/index.ts"],
+      "@credopass/ui/*": ["packages/ui/src/*"]
     }
-  },
-  "references": [
-    {
-      "path": "./packages/lib"
-    },
-    {
-      "path": "./packages/ui"
-    },
-    {
-      "path": "./services/core"
-    },
-    {
-      "path": "./apps/web"
-    }
-  ]
+  }
 }

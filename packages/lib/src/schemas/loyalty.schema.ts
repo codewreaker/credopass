@@ -60,11 +60,3 @@ export type LoyaltyInsert = z.infer<typeof LoyaltySchema>;
 // Select schema (for query results)
 export const SelectLoyaltySchema = LoyaltySchema;
 export type SelectLoyalty = Loyalty;
-
-// Helper function to calculate tier from points
-export function calculateTier(totalPoints: number): 'bronze' | 'silver' | 'gold' | 'platinum' {
-  if (totalPoints >= 10000) return 'platinum';
-  if (totalPoints >= 5000) return 'gold';
-  if (totalPoints >= 2000) return 'silver';
-  return 'bronze';
-}

@@ -1,5 +1,5 @@
 import { useLiveQuery } from '@tanstack/react-db'
-import { LoyaltyTierEnum, type UserType, type AttendanceType, type LoyaltyType } from '@credopass/lib'
+import { LoyaltyTierEnum, type UserType, type AttendanceType, type LoyaltyType } from '@credopass/lib/schemas'
 import { getCollections } from '../../lib/tanstack-db'
 import type { ColDef, RowClickedEvent } from 'ag-grid-community'
 import { MoreVertical } from 'lucide-react'
