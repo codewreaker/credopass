@@ -317,7 +317,6 @@ Frontend (vercel.app) → Vercel Rewrite → https://api.credopass.com/api/*
 | `services/core/src/index.ts` | Hono server with CORS, logger, throttle middleware |
 | `services/core/src/routes/` | API route handlers (users, events, attendance, loyalty) |
 | `services/core/src/db/client.ts` | Database client factory (PostgreSQL auto-detect) |
-| `services/core/src/api/client.ts` | Type-safe fetch wrapper for API calls |
 | `services/core/Dockerfile` | Multi-stage Docker build for Cloud Run |
 | `services/core/drizzle.config.ts` | Drizzle migration configuration (points to lib schemas) |
 | **Shared Packages** | |

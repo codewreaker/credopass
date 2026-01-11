@@ -438,97 +438,10 @@ Browser → https://credopass.vercel.app/api/users
 
 ### API Client Pattern
 
-**File**: `services/core/src/api/client.ts`
+*(Removed: We now use TanStack Query and standard fetch directly)*
 
-```typescript
-import { env } from '@/config';
 
-interface FetchOptions extends RequestInit {
-  params?: Record<string, string>;
-}
 
-class ApiClient {
-  private baseUrl: string;
-
-  constructor(baseUrl: string) {
-    this.baseUrl = baseUrl;
-  }
-
-  private async request<T>(
-    endpoint: string,
-    options: FetchOptions = {}
-  ): Promise<T> {
-    const { params, ...fetchOptions } = options;
-    
-    let url = `${this.baseUrl}${endpoint}`;
-    
-    if (params) {
-      const queryString = new URLSearchParams(params).toString();
-      url += `?${queryString}`;
-    }
-
-    const response = await fetch(url, {
-      ...fetchOptions,
-      headers: {
-        'Content-Type': 'application/json',
-        ...fetchOptions.headers,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`API Error: ${response.status} ${response.statusText}`);
-    }
-
-    return response.json();
-  }
-
-  async get<T>(endpoint: string, params?: Record<string, string>): Promise<T> {
-    return this.request<T>(endpoint, { method: 'GET', params });
-  }
-
-  async post<T>(endpoint: string, data: unknown): Promise<T> {
-    return this.request<T>(endpoint, {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
-  }
-
-  async put<T>(endpoint: string, data: unknown): Promise<T> {
-    return this.request<T>(endpoint, {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    });
-  }
-
-  async delete<T>(endpoint: string): Promise<T> {
-    return this.request<T>(endpoint, { method: 'DELETE' });
-  }
-}
-
-export const apiClient = new ApiClient(env.API_BASE_URL);
-```
-
-**Usage**:
-
-```typescript
-import { apiClient } from '@/api/client';
-
-// GET request
-const users = await apiClient.get('/api/users');
-
-// POST request
-const newUser = await apiClient.post('/api/users', {
-  email: 'john@example.com',
-  firstName: 'John',
-  lastName: 'Doe',
-});
-
-// PUT request
-const updated = await apiClient.put(`/api/users/${userId}`, updateData);
-
-// DELETE request
-await apiClient.delete(`/api/users/${userId}`);
-```
 
 ---
 
