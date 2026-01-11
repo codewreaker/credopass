@@ -26,10 +26,10 @@
     "baseUrl": ".",
     "paths": {
       "@credopass/lib": [
-        "packages/validation/src/index.ts"
+        "packages/lib/src/index.ts"
       ],
       "@credopass/lib/*": [
-        "packages/validation/src/*"
+        "packages/lib/src/*"
       ],
       "@credopass/ui": [
         "packages/ui/src/index.ts"
@@ -41,13 +41,13 @@
   },
   "references": [
     {
-      "path": "./packages/validation"
+      "path": "./packages/lib"
     },
     {
       "path": "./packages/ui"
     },
     {
-      "path": "./services/api"
+      "path": "./services/core"
     },
     {
       "path": "./apps/web"

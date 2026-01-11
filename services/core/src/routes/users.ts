@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { desc, eq } from 'drizzle-orm';
 import { getDatabase } from '../db/client';
 import { users } from '../db/schema';
-import { UserSchema } from '@credopass/lib/schemas';
+import { UserSchema } from '@credopass/lib';
 
 const usersRouter = new Hono();
 
