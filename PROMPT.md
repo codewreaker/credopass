@@ -42,7 +42,7 @@ The current DwellPass application is a monolithic structure with:
 Create an Nx monorepo with the following structure:
 
 ```
-dwellpass-monorepo/
+credopass-monorepo/
 ├── apps/
 │   ├── web/                          # Main web application (Vercel)
 │   │   ├── src/
