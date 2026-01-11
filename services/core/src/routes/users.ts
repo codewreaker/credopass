@@ -1,14 +1,9 @@
-// ============================================================================
-// FILE: apps/api/src/routes/users.ts
-// Users API routes using Hono with Drizzle
-// ============================================================================
-
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { desc, eq } from 'drizzle-orm';
 import { getDatabase } from '../db/client';
 import { users } from '../db/schema';
-import { UserSchema } from 'packages/lib/src';
+import { UserSchema } from '@credopass/lib/schemas';
 
 const usersRouter = new Hono();
 

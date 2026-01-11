@@ -1,8 +1,3 @@
-// ============================================================================
-// FILE: packages/validation/src/schemas/user.schema.ts
-// User validation schemas using Zod
-// ============================================================================
-
 import { z } from 'zod';
 
 // Base user schema with all fields

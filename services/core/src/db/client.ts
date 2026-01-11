@@ -14,7 +14,7 @@ const platform = isEdgeLight ? 'Vercel Edge' : isWorkerd ? 'Cloudflare Workers' 
 export type Database = ReturnType<typeof createPostgresClient>;
 
 // Singleton database instance
-let client: Pool | null = null;     
+let client: Pool | null = null;
 let db: Database | null = null;
 
 /**
@@ -30,7 +30,7 @@ export function createPostgresClient(connectionString: string) {
  */
 export async function getDatabase(): Promise<Database> {
   if (db) return db;
-  
+
   if (process.env.DATABASE_URL) {
     // Use PostgreSQL on hosted services (Vercel, Netlify, Cloudflare)
     db = createPostgresClient(process.env.DATABASE_URL);
@@ -44,6 +44,7 @@ export async function getDatabase(): Promise<Database> {
     else {
       console.log(`✓ PostgreSQL connected (local): ${process.env.DATABASE_URL}`);
     }
+    console.log("✓ Database initialized");
   }
   // Fallback to PGlite for local development
   else {
