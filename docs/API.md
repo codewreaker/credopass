@@ -2,6 +2,8 @@
 
 Complete API endpoint documentation for the CredoPass backend.
 
+**CredoPass** provides detailed event attendance tracking—capturing who attended, when they checked in/out, and attendance analytics. Unlike ticketing platforms (EventBrite, Meetup), CredoPass focuses on attendance data, not ticket sales. Perfect for free events, paid events managed elsewhere, or any organization needing detailed attendance records.
+
 ---
 
 ## Table of Contents
@@ -304,8 +306,8 @@ curl http://localhost:3000/api/events
 [
   {
     "id": "323e4567-e89b-12d3-a456-426614174002",
-    "name": "Sunday Service",
-    "description": "Weekly Sunday worship service",
+    "name": "Friday Jazz Night",
+    "description": "Weekly jazz performance and networking",
     "status": "scheduled",
     "startTime": "2026-01-12T10:00:00.000Z",
     "endTime": "2026-01-12T12:00:00.000Z",
@@ -340,12 +342,12 @@ curl http://localhost:3000/api/events/323e4567-e89b-12d3-a456-426614174002
 ```json
 {
   "id": "323e4567-e89b-12d3-a456-426614174002",
-  "name": "Sunday Service",
-  "description": "Weekly Sunday worship service",
+  "name": "Friday Jazz Night",
+  "description": "Weekly jazz performance and networking",
   "status": "scheduled",
-  "startTime": "2026-01-12T10:00:00.000Z",
-  "endTime": "2026-01-12T12:00:00.000Z",
-  "location": "Main Sanctuary",
+  "startTime": "2026-01-17T19:00:00.000Z",
+  "endTime": "2026-01-17T23:00:00.000Z",
+  "location": "Blue Note Jazz Club",
   "capacity": 500,
   "hostId": "123e4567-e89b-12d3-a456-426614174000",
   "createdAt": "2026-01-10T10:00:00.000Z",
@@ -366,12 +368,12 @@ POST /api/events
 **Request Body**:
 ```json
 {
-  "name": "Sunday Service",
-  "description": "Weekly Sunday worship service",
+  "name": "Friday Jazz Night",
+  "description": "Weekly jazz performance and networking",
   "status": "scheduled",
-  "startTime": "2026-01-12T10:00:00.000Z",
-  "endTime": "2026-01-12T12:00:00.000Z",
-  "location": "Main Sanctuary",
+  "startTime": "2026-01-17T19:00:00.000Z",
+  "endTime": "2026-01-17T23:00:00.000Z",
+  "location": "Blue Note Jazz Club",
   "capacity": 500,
   "hostId": "123e4567-e89b-12d3-a456-426614174000"
 }
@@ -392,12 +394,12 @@ POST /api/events
 curl -X POST http://localhost:3000/api/events \
   -H "Content-Type: application/json" \
   -d '{
-    "name": "Sunday Service",
-    "description": "Weekly Sunday worship service",
+    "name": "Friday Jazz Night",
+    "description": "Weekly jazz performance and networking",
     "status": "scheduled",
-    "startTime": "2026-01-12T10:00:00.000Z",
-    "endTime": "2026-01-12T12:00:00.000Z",
-    "location": "Main Sanctuary",
+    "startTime": "2026-01-17T19:00:00.000Z",
+    "endTime": "2026-01-17T23:00:00.000Z",
+    "location": "Blue Note Jazz Club",
     "capacity": 500,
     "hostId": "123e4567-e89b-12d3-a456-426614174000"
   }'
@@ -407,12 +409,12 @@ curl -X POST http://localhost:3000/api/events \
 ```json
 {
   "id": "323e4567-e89b-12d3-a456-426614174002",
-  "name": "Sunday Service",
-  "description": "Weekly Sunday worship service",
+  "name": "Friday Jazz Night",
+  "description": "Weekly jazz performance and networking",
   "status": "scheduled",
-  "startTime": "2026-01-12T10:00:00.000Z",
-  "endTime": "2026-01-12T12:00:00.000Z",
-  "location": "Main Sanctuary",
+  "startTime": "2026-01-17T19:00:00.000Z",
+  "endTime": "2026-01-17T23:00:00.000Z",
+  "location": "Blue Note Jazz Club",
   "capacity": 500,
   "hostId": "123e4567-e89b-12d3-a456-426614174000",
   "createdAt": "2026-01-11T10:00:00.000Z",
@@ -454,11 +456,11 @@ curl -X PUT http://localhost:3000/api/events/323e4567-e89b-12d3-a456-42661417400
 ```json
 {
   "id": "323e4567-e89b-12d3-a456-426614174002",
-  "name": "Sunday Service",
+  "name": "Friday Jazz Night",
   "status": "ongoing",
-  "startTime": "2026-01-12T10:00:00.000Z",
-  "endTime": "2026-01-12T12:00:00.000Z",
-  "location": "Main Sanctuary",
+  "startTime": "2026-01-17T19:00:00.000Z",
+  "endTime": "2026-01-17T23:00:00.000Z",
+  "location": "Blue Note Jazz Club",
   "capacity": 500,
   "hostId": "123e4567-e89b-12d3-a456-426614174000",
   "createdAt": "2026-01-10T10:00:00.000Z",
@@ -799,7 +801,7 @@ curl http://localhost:3000/api/loyalty/user/123e4567-e89b-12d3-a456-426614174000
   {
     "id": "623e4567-e89b-12d3-a456-426614174005",
     "patronId": "123e4567-e89b-12d3-a456-426614174000",
-    "description": "Attendance at Sunday Service",
+    "description": "Attended Friday Jazz Night",
     "tier": "gold",
     "points": 10,
     "reward": null,
@@ -823,7 +825,7 @@ POST /api/loyalty
 ```json
 {
   "patronId": "123e4567-e89b-12d3-a456-426614174000",
-  "description": "Attendance at Sunday Service",
+  "description": "Attended Friday Jazz Night",
   "tier": "gold",
   "points": 10,
   "reward": null,
@@ -845,7 +847,7 @@ curl -X POST http://localhost:3000/api/loyalty \
   -H "Content-Type: application/json" \
   -d '{
     "patronId": "123e4567-e89b-12d3-a456-426614174000",
-    "description": "Attendance at Sunday Service",
+    "description": "Attended Friday Jazz Night",
     "tier": "gold",
     "points": 10
   }'
@@ -856,7 +858,7 @@ curl -X POST http://localhost:3000/api/loyalty \
 {
   "id": "623e4567-e89b-12d3-a456-426614174005",
   "patronId": "123e4567-e89b-12d3-a456-426614174000",
-  "description": "Attendance at Sunday Service",
+  "description": "Attended Friday Jazz Night",
   "tier": "gold",
   "points": 10,
   "reward": null,
@@ -900,7 +902,7 @@ curl -X PUT http://localhost:3000/api/loyalty/623e4567-e89b-12d3-a456-4266141740
 {
   "id": "623e4567-e89b-12d3-a456-426614174005",
   "patronId": "123e4567-e89b-12d3-a456-426614174000",
-  "description": "Attendance at Sunday Service",
+  "description": "Attended Friday Jazz Night",
   "tier": "platinum",
   "points": 10,
   "reward": null,

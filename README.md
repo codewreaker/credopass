@@ -1,8 +1,15 @@
 # CredoPass
 
-**Modern Church Management System**
+**Event Attendance Management System**
 
-CredoPass is a comprehensive digital platform designed to help churches manage their operations efficiently. Built as a modern monorepo using cutting-edge web technologies, it provides member management, event coordination, attendance tracking, loyalty programs, and analytics.
+CredoPass is a comprehensive attendance tracking platform designed for organizations that meet regularly and need to track who actually shows up. Unlike ticketing systems like EventBrite that manage payments and ticket scanning, CredoPass focuses on detailed attendance tracking—capturing check-in times, check-out times, and actual attendance data that ticketing platforms don't provide.
+
+Perfect for churches, book clubs, jazz clubs, recurring meetups, and any organization that needs to:
+- Track attendance without requiring tickets
+- Work alongside existing event systems (EventBrite, Meetup, etc.)
+- Integrate with existing member databases
+- Capture detailed check-in/check-out times
+- Generate attendance analytics and insights
 
 ---
 
@@ -21,13 +28,15 @@ CredoPass is a comprehensive digital platform designed to help churches manage t
 
 ## 🚀 Features
 
-- **Member Management** - Comprehensive member profiles and data tracking
-- **Event Management** - Create, schedule, and manage church events
-- **Attendance Tracking** - Record and analyze event attendance
-- **Loyalty Program** - Reward system for member engagement
-- **Analytics Dashboard** - Real-time insights and reporting
-- **Offline-First** - Local data synchronization with TanStack DB
-- **Responsive Design** - Mobile-friendly interface with AG Grid and FullCalendar
+- **Attendance Tracking** - Detailed check-in/check-out times and attendance records
+- **Member Management** - Import and manage your existing member database
+- **Event Management** - Create and schedule recurring or one-time events
+- **Integration Ready** - Works alongside EventBrite, Meetup, and other event platforms
+- **No Tickets Required** - Perfect for free events or paid events managed elsewhere
+- **Loyalty Program** - Reward frequent attendees with points and tiers
+- **Analytics Dashboard** - Attendance trends, no-show rates, and engagement metrics
+- **Offline-First** - Local data sync for check-ins even without internet
+- **Responsive Design** - Mobile-friendly for on-site check-in tablets or phones
 
 ---
 
@@ -337,6 +346,16 @@ Comprehensive documentation is available in the `/docs` directory:
 
 **Current Phase**: Post-Refactoring Development
 
+### What Problem Does CredoPass Solve?
+
+**The Gap**: EventBrite and similar platforms handle ticket sales and scanning, but don't provide:
+- Detailed attendance data (who actually showed up vs. who bought tickets)
+- Check-in and check-out timestamps
+- Attendance tracking for free/non-ticketed events
+- Integration with your existing member database
+
+**The Solution**: CredoPass fills this gap by focusing exclusively on attendance tracking. Use EventBrite for ticketing, use CredoPass for knowing who attended and when.
+
 ### Recent Changes (Refactoring Consolidation)
 
 The project recently underwent a significant consolidation to simplify the monorepo structure:
@@ -449,4 +468,4 @@ This is a private project. For questions or issues, contact the development team
 
 ---
 
-**Built with ❤️ for modern church management**
+**Built with ❤️ for organizations that value attendance insights**

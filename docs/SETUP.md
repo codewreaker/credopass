@@ -2,6 +2,8 @@
 
 Complete setup instructions for getting CredoPass running locally and in production.
 
+**CredoPass** is an event attendance tracking system (not a ticketing system) designed for organizations that need detailed check-in/check-out data. Perfect for churches, clubs, recurring meetups, and events where attendance tracking matters more than ticket sales.
+
 ---
 
 ## Table of Contents

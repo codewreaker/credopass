@@ -2,6 +2,8 @@
 
 This document provides detailed architectural patterns, code examples, and design decisions for the CredoPass monorepo.
 
+**CredoPass** is an event attendance management system designed to track who attends events, when they check in/out, and generate attendance analytics—capabilities that ticketing platforms like EventBrite don't provide. It works for any organization with recurring meetups: churches, book clubs, jazz clubs, networking groups, etc.
+
 ---
 
 ## Table of Contents

@@ -2,6 +2,8 @@
 
 Complete deployment instructions for CredoPass frontend (Vercel) and backend (Google Cloud Run).
 
+**CredoPass** is an event attendance tracking platform that works alongside ticketing systems like EventBrite. While EventBrite manages ticket sales, CredoPass captures detailed attendance data—check-in times, check-out times, and actual attendance records.
+
 ---
 
 ## Table of Contents

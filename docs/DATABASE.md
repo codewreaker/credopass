@@ -2,6 +2,8 @@
 
 Complete database schema documentation, relationships, migrations, and management for CredoPass.
 
+**CredoPass** tracks event attendance for organizations that meet regularly. The database captures members, events, detailed attendance records (check-in/check-out times), and loyalty points—data that ticketing platforms don't provide.
+
 ---
 
 ## Table of Contents
@@ -56,6 +58,8 @@ See [`services/core/src/db/client.ts`](../services/core/src/db/client.ts) for im
 
 ### Users Table
 
+**Purpose**: Stores members/attendees for your organization. Can be imported from your existing member database or event platform (EventBrite, Meetup, etc.).
+
 **File**: [`services/core/src/db/schema/users.ts`](../services/core/src/db/schema/users.ts)
 
 ```typescript
@@ -89,6 +93,8 @@ export const users = pgTable('users', {
 ---
 
 ### Events Table
+
+**Purpose**: Represents events that require attendance tracking—church services, club meetings, jazz nights, book club sessions, etc. Can be created manually or synced from external event platforms.
 
 **File**: [`services/core/src/db/schema/events.ts`](../services/core/src/db/schema/events.ts)
 
@@ -144,6 +150,8 @@ export const events = pgTable('events', {
 ---
 
 ### Attendance Table
+
+**Purpose**: The core of CredoPass—detailed attendance records with check-in/check-out timestamps. This is the data that ticketing platforms like EventBrite don't capture. Enables analytics on who actually showed up, when they arrived, and how long they stayed.
 
 **File**: [`services/core/src/db/schema/attendance.ts`](../services/core/src/db/schema/attendance.ts)
 
@@ -447,10 +455,10 @@ async function seed() {
     },
   ]).returning();
   
-  // Seed events
+  // Seed events (example: jazz club)
   const [event1] = await db.insert(events).values({
-    name: 'Sunday Service',
-    description: 'Weekly Sunday worship service',
+    name: 'Friday Jazz Night',
+    description: 'Weekly jazz performance and social gathering',
     status: 'scheduled',
     startTime: new Date('2026-01-12T10:00:00Z'),
     endTime: new Date('2026-01-12T12:00:00Z'),
@@ -465,20 +473,20 @@ async function seed() {
       eventId: event1.id,
       patronId: user1.id,
       attended: true,
-      checkInTime: new Date('2026-01-12T09:55:00Z'),
+      checkInTime: new Date('2026-01-17T18:55:00Z'),
     },
     {
       eventId: event1.id,
       patronId: user2.id,
       attended: true,
-      checkInTime: new Date('2026-01-12T10:05:00Z'),
+      checkInTime: new Date('2026-01-17T19:10:00Z'),
     },
   ]);
   
   // Seed loyalty
   await db.insert(loyalty).values({
     patronId: user1.id,
-    description: 'Attendance at Sunday Service',
+    description: 'Attended Friday Jazz Night',
     tier: 'gold',
     points: 10,
   });
