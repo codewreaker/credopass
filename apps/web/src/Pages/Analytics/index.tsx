@@ -7,7 +7,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
   ChartLegend,
-  ChartLegendContent,
+  ChartLegendContent
 } from "@credopass/ui";
 import {
   Card,
@@ -16,7 +16,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@credopass/ui";
-import GridLayout from "../../lib/grid-layout";
+import GridLayout from "@credopass/lib/layout";
 import "./style.css";
 
 const activityData = [

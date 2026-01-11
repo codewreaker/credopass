@@ -16,6 +16,7 @@ export type ResponsiveLayouts<K extends string = string> = Partial<Record<K, Lay
 import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
 
+
 /**
  * Grid configuration interface
  */

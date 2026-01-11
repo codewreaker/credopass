@@ -5,4 +5,4 @@ export const rewardTiers = {
     SILVER: 'silver',
     GOLD: 'gold',
     PLATINUM: 'platinum',
-} as const;
+} as const; 

@@ -96,7 +96,6 @@ credopass-monorepo/
 │       │   ├── routes/               # Route definitions
 │       │   ├── stores/               # Zustand stores (useAppStore, useLauncherStore)
 │       │   ├── lib/
-│       │   │   ├── grid-layout.tsx   # React Grid Layout wrapper
 │       │   │   ├── utils.ts          # Utility functions
 │       │   │   └── tanstack-db/      # TanStack DB collections (users, events, etc.)
 │       │   └── hooks/                # Custom React hooks
@@ -148,6 +147,7 @@ credopass-monorepo/
 │   │   │   ├── hooks/                # Shared React hooks
 │   │   │   │   └── use-cookies.ts
 │   │   │   ├── util/                 # Utility functions
+│   │   │   ├── grid-layout.tsx       # React Grid Layout wrapper (shared component)
 │   │   │   ├── constants.ts          # App constants
 │   │   │   └── index.ts              # Package exports
 │   │   ├── tsconfig.json

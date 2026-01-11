@@ -16,8 +16,8 @@
     "resolveJsonModule": true,
     "baseUrl": ".",
     "paths": {
-      "@credopass/lib": ["@credopass/lib/index.ts"],
-      "@credopass/lib/*": ["@credopass/lib/*"],
+      "@credopass/lib": ["packages/lib/src/index.ts"],
+      "@credopass/lib/*": ["packages/lib/src/*"],
       "@credopass/ui": ["packages/ui/src/index.ts"],
       "@credopass/ui/*": ["packages/ui/src/*"]
     }
