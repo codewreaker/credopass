@@ -7,15 +7,10 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 import { eq, and, desc, gte } from 'drizzle-orm';
 import { getDatabase } from '../db/client';
-import { loyalty } from '../db/schema';
-import { LoyaltySchema, AwardPointsSchema, AwardRewardSchema } from '@credopass/lib/schemas';
+import { loyalty, CreateLoyaltySchema, UpdateLoyaltySchema, AwardPointsSchema, AwardRewardSchema } from '@credopass/lib/schemas';
 import { calculateTier } from '@credopass/lib/util';
 
 const loyaltyRouter = new Hono();
-
-// Validation schemas
-const CreateLoyaltySchema = LoyaltySchema.omit({});
-const UpdateLoyaltySchema = LoyaltySchema.partial().omit({ id: true });
 
 // GET /api/loyalty - Get all loyalty records
 loyaltyRouter.get('/', async (c) => {

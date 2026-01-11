@@ -7,13 +7,9 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 import { desc, eq } from 'drizzle-orm';
 import { getDatabase } from '../db/client';
-import { events } from '../db/schema';
-import { EventSchema, CreateEventSchema } from '@credopass/lib/schemas';
+import { CreateEventSchema, UpdateEventSchema, EventSchema, events } from '@credopass/lib/schemas';
 
 const eventsRouter = new Hono();
-
-// Validation schemas
-const UpdateEventSchema = EventSchema.partial().omit({ id: true, createdAt: true, updatedAt: true });
 
 // GET /api/events - Get all events
 eventsRouter.get('/', async (c) => {

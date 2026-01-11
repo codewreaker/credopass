@@ -2,14 +2,9 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 import { desc, eq } from 'drizzle-orm';
 import { getDatabase } from '../db/client';
-import { users } from '../db/schema';
-import { UserSchema } from '@credopass/lib/schemas';
+import { users, CreateUserSchema, UpdateUserSchema } from '@credopass/lib/schemas';
 
 const usersRouter = new Hono();
-
-// Validation schemas
-const CreateUserSchema = UserSchema.omit({ createdAt: true, updatedAt: true });
-const UpdateUserSchema = CreateUserSchema.partial().omit({ id: true });
 
 // GET /api/users - Get all users
 usersRouter.get('/', async (c) => {

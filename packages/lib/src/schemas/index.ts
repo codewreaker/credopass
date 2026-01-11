@@ -1,7 +1,10 @@
 // ============================================================================
-// FILE: packages/validation/src/schemas/index.ts
-// Barrel export for all validation schemas
+// FILE: packages/lib/src/schemas/index.ts
+// Barrel export for all validation schemas and database tables
 // ============================================================================
+
+// Drizzle tables and relations
+export * from './tables';
 
 // Enums
 export * from './enums';

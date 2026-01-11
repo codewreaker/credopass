@@ -7,14 +7,9 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 import { eq, and, desc } from 'drizzle-orm';
 import { getDatabase } from '../db/client';
-import { attendance } from '../db/schema';
-import { AttendanceSchema, CheckInSchema } from '@credopass/lib/schemas';
+import { attendance, CreateAttendanceSchema, UpdateAttendanceSchema, CheckInSchema } from '@credopass/lib/schemas';
 
 const attendanceRouter = new Hono();
-
-// Validation schemas
-const CreateAttendanceSchema = AttendanceSchema.omit({});
-const UpdateAttendanceSchema = AttendanceSchema.partial().omit({ id: true });
 
 // GET /api/attendance - Get all attendance records
 attendanceRouter.get('/', async (c) => {

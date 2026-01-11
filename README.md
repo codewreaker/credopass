@@ -120,27 +120,31 @@ credopass-monorepo/
 │       │   │   ├── client.ts         # Base API client
 │       │   │   └── endpoints/        # Endpoint definitions
 │       │   └── db/                   # Database layer
-│       │       ├── client.ts         # DB client (PostgreSQL/PGlite auto-detect)
-│       │       └── schema/           # Drizzle ORM schemas
-│       │           ├── user.schema.ts
-│       │           ├── event.schema.ts
-│       │           ├── attendance.schema.ts
-│       │           └── loyalty.schema.ts
+│       │       ├── client.ts         # DB client (PostgreSQL auto-detect)
+│       │       ├── index.ts          # DB exports
+│       │       └── seed.ts           # Database seeding script
 │       ├── drizzle/                  # Database migrations
 │       ├── Dockerfile                # Multi-stage Docker build
-│       ├── drizzle.config.ts         # Drizzle Kit configuration
+│       ├── drizzle.config.ts         # Drizzle Kit configuration (points to @credopass/lib schemas)
 │       ├── tsconfig.json             # TypeScript config
 │       └── project.json              # Nx project configuration
 │
 ├── packages/
 │   ├── lib/                          # Shared utilities & validation (@credopass/lib)
 │   │   ├── src/
-│   │   │   ├── schemas/              # Zod validation schemas
-│   │   │   │   ├── user.schema.ts    # User validation (Create, Update, Insert)
-│   │   │   │   ├── event.schema.ts   # Event validation
-│   │   │   │   ├── attendance.schema.ts
-│   │   │   │   ├── loyalty.schema.ts
-│   │   │   │   └── enums.ts          # Shared enums
+│   │   │   ├── schemas/              # Single source of truth for schemas
+│   │   │   │   ├── tables/           # Drizzle table definitions
+│   │   │   │   │   ├── users.ts      # Users table schema
+│   │   │   │   │   ├── events.ts     # Events table schema
+│   │   │   │   │   ├── attendance.ts # Attendance table schema
+│   │   │   │   │   ├── loyalty.ts    # Loyalty table schema
+│   │   │   │   │   └── index.ts      # Table exports with relations
+│   │   │   │   ├── user.schema.ts    # Zod schemas generated from Drizzle (Create, Update, Insert)
+│   │   │   │   ├── event.schema.ts   # Event validation schemas (drizzle-zod)
+│   │   │   │   ├── attendance.schema.ts  # Attendance validation schemas
+│   │   │   │   ├── loyalty.schema.ts # Loyalty validation schemas
+│   │   │   │   ├── enums.ts          # Shared Zod enums
+│   │   │   │   └── index.ts          # Barrel exports (tables + schemas)
 │   │   │   ├── hooks/                # Shared React hooks
 │   │   │   │   └── use-cookies.ts
 │   │   │   ├── util/                 # Utility functions
@@ -274,9 +278,9 @@ nx format:write               # Format code
 
 1. **Frontend Changes**: Edit files in `apps/web/src/` → Hot reload on save
 2. **Backend Changes**: Edit files in `services/core/src/` → Auto-restart with `--watch`
-3. **Schema Changes**: Edit `services/core/src/db/schema/` → Run `nx run coreservice:generate` → Run `nx run coreservice:migrate`
+3. **Schema Changes**: Edit `packages/lib/src/schemas/tables/` → Run `nx run coreservice:generate` → Run `nx run coreservice:migrate`
 4. **UI Components**: Edit `packages/ui/src/components/` → Changes reflect in web app
-5. **Validation Schemas**: Edit `packages/lib/src/schemas/` → Available in both frontend & backend
+5. **Validation Schemas**: Edit `packages/lib/src/schemas/*.schema.ts` → Available in both frontend & backend (auto-generated from Drizzle tables)
 
 ### Frontend-Backend Communication
 
@@ -312,13 +316,13 @@ Frontend (vercel.app) → Vercel Rewrite → https://api.credopass.com/api/*
 | **Backend** | |
 | `services/core/src/index.ts` | Hono server with CORS, logger, throttle middleware |
 | `services/core/src/routes/` | API route handlers (users, events, attendance, loyalty) |
-| `services/core/src/db/schema/` | Drizzle ORM table schemas |
-| `services/core/src/db/client.ts` | Database client factory (PostgreSQL/PGlite auto-detect) |
+| `services/core/src/db/client.ts` | Database client factory (PostgreSQL auto-detect) |
 | `services/core/src/api/client.ts` | Type-safe fetch wrapper for API calls |
 | `services/core/Dockerfile` | Multi-stage Docker build for Cloud Run |
-| `services/core/drizzle.config.ts` | Drizzle migration configuration |
+| `services/core/drizzle.config.ts` | Drizzle migration configuration (points to lib schemas) |
 | **Shared Packages** | |
-| `packages/lib/src/schemas/` | Zod validation schemas (shared between frontend/backend) |
+| `packages/lib/src/schemas/tables/` | Drizzle table definitions (single source of truth) |
+| `packages/lib/src/schemas/*.schema.ts` | Zod validation schemas (auto-generated via drizzle-zod) |
 | `packages/lib/src/constants.ts` | Application constants |
 | `packages/ui/src/components/` | shadcn/ui component library |
 | `packages/ui/components.json` | shadcn/ui configuration |
@@ -356,17 +360,23 @@ Comprehensive documentation is available in the `/docs` directory:
 
 **The Solution**: CredoPass fills this gap by focusing exclusively on attendance tracking. Use EventBrite for ticketing, use CredoPass for knowing who attended and when.
 
-### Recent Changes (Refactoring Consolidation)
+### Recent Changes (Schema Consolidation)
 
-The project recently underwent a significant consolidation to simplify the monorepo structure:
+The project recently underwent schema consolidation to eliminate duplication and establish a single source of truth:
 
 ✅ **Completed**:
-- Reduced from 6+ packages to 2 packages (67% reduction)
-- Consolidated database code into `services/core`
-- Moved TanStack DB collections to `apps/web/src/lib/tanstack-db/`
-- Merged API client into `services/core/src/api/`
-- Renamed `@credopass/validation` to `@credopass/lib`
-- Updated all import paths and dependencies
+- Moved Drizzle table definitions from `services/core/src/db/schema/` to `packages/lib/src/schemas/tables/`
+- Integrated `drizzle-zod` to auto-generate Zod validation schemas from Drizzle tables
+- Eliminated manual schema duplication (was maintaining 2 separate definitions per entity)
+- Updated Zod version from v4.1.13 to v4.3.5 across all packages
+- All routes now import schemas directly from `@credopass/lib/schemas`
+- Drizzle config updated to use shared schema location
+
+**Benefits**:
+- **No More Drift**: Schema changes in one place automatically propagate to validation
+- **Less Code**: Removed ~400 lines of duplicate schema definitions
+- **Type Safety**: Drizzle tables generate both Zod schemas and TypeScript types
+- **Better DX**: Add a field once, get DB schema + validation + types automatically
 
 ### Architecture Benefits
 
@@ -412,11 +422,40 @@ TanStack Query/DB → API Client → Hono Server
                                  PostgreSQL
 ```
 
-### Validation Layer Separation
+### Validation Layer (Single Source of Truth)
 
-- **Zod Schemas** (`packages/lib/src/schemas/`): For API request/response validation
-- **Drizzle Schemas** (`services/core/src/db/schema/`): For database table definitions
-- Both must stay in sync manually (no automatic codegen)
+**Architecture**:
+- **Drizzle Tables** (`packages/lib/src/schemas/tables/`): Database schema definitions (PostgreSQL)
+- **Zod Schemas** (`packages/lib/src/schemas/*.schema.ts`): Auto-generated via `drizzle-zod` with custom refinements
+- Both exported from `@credopass/lib/schemas` for use across frontend and backend
+
+**Workflow**:
+1. Edit Drizzle table definition in `packages/lib/src/schemas/tables/users.ts`
+2. Zod schemas in `packages/lib/src/schemas/user.schema.ts` auto-update via `drizzle-zod`
+3. Generate migration: `nx run coreservice:generate`
+4. Apply migration: `nx run coreservice:migrate`
+5. TypeScript types and validation automatically available everywhere
+
+**Example**:
+```typescript
+// packages/lib/src/schemas/tables/users.ts (Source of Truth)
+export const users = pgTable('users', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  email: text('email').notNull().unique(),
+  firstName: text('firstName').notNull(),
+  // ...
+});
+
+// packages/lib/src/schemas/user.schema.ts (Auto-generated + Refinements)
+import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
+import { users } from './tables/users';
+
+export const UserSchema = createSelectSchema(users);
+export const CreateUserSchema = createInsertSchema(users, {
+  email: z.string().email(), // Custom refinement
+  firstName: z.string().min(1, 'Required'),
+}).omit({ id: true, createdAt: true, updatedAt: true });
+```
 
 ### Database Client Auto-Detection
 

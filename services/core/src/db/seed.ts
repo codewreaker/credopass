@@ -1,11 +1,11 @@
 // ============================================================================
-// FILE: packages/database/src/seed.ts
-// Database seeding script with Drizzle ORM (PGlite/PostgreSQL)
+// FILE: services/core/src/db/seed.ts
+// Database seeding script with Drizzle ORM (PostgreSQL)
 // ============================================================================
 
 import { desc } from 'drizzle-orm';
 import { getDatabase, closeDatabase } from './client';
-import { users, events, attendance, loyalty } from './schema';
+import { users, events, attendance, loyalty } from '@credopass/lib/schemas/tables';
 
 console.log('🌱 Starting database seed...\n');
 

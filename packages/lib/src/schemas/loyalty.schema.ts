@@ -1,25 +1,23 @@
 // ============================================================================
-// FILE: packages/validation/src/schemas/loyalty.schema.ts
-// Loyalty validation schemas using Zod
+// FILE: packages/lib/src/schemas/loyalty.schema.ts
+// Loyalty validation schemas generated from Drizzle table definitions
 // ============================================================================
 
+import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
+import { loyalty } from './tables/loyalty';
 import { z } from 'zod';
 import { LoyaltyTierEnum } from './enums';
 
-// Base loyalty schema with all fields
-export const LoyaltySchema = z.object({
-  id: z.string().uuid(),
-  patronId: z.string().uuid(),
-  description: z.string(),
+// Base loyalty schema (SELECT from database)
+export const LoyaltySchema = createSelectSchema(loyalty, {
   tier: LoyaltyTierEnum.nullable(),
-  points: z.number().int().nonnegative().nullable(),
-  reward: z.string().nullable(),
-  issuedAt: z.coerce.date(),
-  expiresAt: z.coerce.date().nullable(),
 });
 
 // Schema for creating a new loyalty record
-export const CreateLoyaltySchema = LoyaltySchema.omit({ id: true });
+export const CreateLoyaltySchema = createInsertSchema(loyalty, {
+  tier: LoyaltyTierEnum.nullable(),
+  points: z.number().int().nonnegative().nullable(),
+}).omit({ id: true });
 
 // Schema for updating a loyalty record
 export const UpdateLoyaltySchema = CreateLoyaltySchema.partial();
@@ -40,8 +38,9 @@ export const AwardRewardSchema = z.object({
 });
 
 // Schema for inserting loyalty (with optional id for upserts)
-export const InsertLoyaltySchema = LoyaltySchema.extend({
-  id: z.string().uuid().optional(),
+export const InsertLoyaltySchema = createInsertSchema(loyalty, {
+  tier: LoyaltyTierEnum.nullable(),
+  points: z.number().int().nonnegative().nullable(),
 });
 
 // TypeScript types inferred from Zod schemas
@@ -55,7 +54,7 @@ export type InsertLoyalty = z.infer<typeof InsertLoyaltySchema>;
 // Aliases for backwards compatibility
 export type LoyaltyType = Loyalty;
 export type NewLoyalty = CreateLoyalty;
-export type LoyaltyInsert = z.infer<typeof LoyaltySchema>;
+export type LoyaltyInsert = InsertLoyalty;
 
 // Select schema (for query results)
 export const SelectLoyaltySchema = LoyaltySchema;
