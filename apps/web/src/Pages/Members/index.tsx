@@ -1,23 +1,17 @@
 import { useLiveQuery } from '@tanstack/react-db'
-import { LoyaltyTierEnum, type UserType, type AttendanceType, type LoyaltyType } from '@credopass/validation'
+import { LoyaltyTierEnum, type UserType, type AttendanceType, type LoyaltyType, User } from '@credopass/lib/schemas'
 import { getCollections } from '../../lib/tanstack-db'
-import type { ColDef, RowClickedEvent } from 'ag-grid-community'
-import { MoreVertical } from 'lucide-react'
+import type { ColDef, IOverlayParams, RowClickedEvent } from 'ag-grid-community'
 
-import React from "react";
+import React, { useCallback } from "react";
 import GridTable, { type MenuItem } from "../../components/grid-table/index";
+
 import { PlusCircle, Filter } from "lucide-react";
 import { useLauncher } from '../../stores/store';
 import { launchUserForm } from '../../containers/UserForm/index';
+import EmptyState from '../../components/empty-state';
+import Loader from '../../components/loader';
 
-
-const hdl = (type: string, e?: React.SyntheticEvent | RowClickedEvent) => {
-  switch (type) {
-    default:
-      console.log(e)
-      return
-  }
-}
 
 const columnDefs: ColDef<UserType & LoyaltyType & AttendanceType>[] = [
   {
@@ -87,17 +81,7 @@ const columnDefs: ColDef<UserType & LoyaltyType & AttendanceType>[] = [
     width: 90,
     cellRenderer: (params: any) => <StatusBadge status={params.value} />,
     filter: true,
-  },
-  {
-    headerName: 'Actions',
-    width: 75,
-    cellRenderer: () => (
-      <button className="action-btn">
-        <MoreVertical size={14} />
-      </button>
-    ),
-    pinned: 'right',
-  },
+  }
 ];
 
 const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
@@ -113,6 +97,8 @@ const MembershipBadge: React.FC<{ level: string }> = ({ level }) => {
     <span className={`membership-badge ${level?.toLowerCase()}`}>{level}</span>
   );
 };
+
+
 
 const AttendanceBar: React.FC<{ rate: number }> = ({ rate }) => {
   const getColor = (rate: number) => {
@@ -135,11 +121,30 @@ const AttendanceBar: React.FC<{ rate: number }> = ({ rate }) => {
 };
 
 
+
+const hdl = (type: string, e?: React.SyntheticEvent | RowClickedEvent) => {
+  switch (type) {
+    default:
+      console.log(e)
+      return
+  }
+}
+
 export default function MembersPage() {
   const { users: userCollection } = getCollections();
-  const { data } = useLiveQuery((q) => q.from({ userCollection }));
+  const { data, isLoading } = useLiveQuery((q) => q.from({ userCollection }));
+
+  // Use collection's error tracking utilities
+  const isError = userCollection.utils.isError;
+
   const rowData: UserType[] = Array.isArray(data) ? data : []
   const { openLauncher } = useLauncher();
+
+  const deleteUser = (userIds: User[]) => {
+    userIds.forEach((user) => {
+      userCollection.delete(user.id);
+    });
+  }
 
   const menuItems: MenuItem[] = [
     {
@@ -156,21 +161,67 @@ export default function MembersPage() {
     },
   ];
 
+
+  const overlayComponentSelector = useCallback(({ overlayType }: IOverlayParams) => {
+    if (overlayType === "noRows") {
+      return {
+        component: EmptyState,
+        params: {
+          title: "No Users Found",
+          description: "You haven't added any users yet. Get started by creating your first user.",
+          action: { label: "Create User", onClick: () => launchUserForm({ isEditing: false }, openLauncher) }
+        }
+      }
+    }
+    // return undefined to use the provided overlay for other overlay types
+    return undefined;
+  }, [openLauncher]);
+
+  if (isLoading) return <Loader />
+  
+
   return (
     <>
       <div className="page-header">
-          <h1>Users</h1>
-          <p className="page-subtitle">View all users</p>
+        <h1>Users</h1>
+        <p className="page-subtitle">View all users</p>
       </div>
 
-      <GridTable
-        title="Member Attendance Records"
-        subtitle={`${rowData.length} total members`}
-        menu={menuItems}
-        columnDefs={columnDefs}
-        rowData={rowData}
-        onRowClicked={(e) => hdl(e.type, e)}
-      />
+      {!isError ?
+        <GridTable
+          title="Member Attendance Records"
+          subtitle={`${rowData.length} total members`}
+          menu={menuItems}
+          columnDefs={columnDefs}
+          rowData={rowData}
+          bulkActions={[
+            {
+              key: 'delete',
+              label: 'Delete',
+              action: deleteUser,
+              variant: 'destructive'
+            }
+          ]}
+          rowSelection={{
+            mode: 'multiRow',
+          }}
+          overlayComponentSelector={overlayComponentSelector}
+          onRowClicked={(e) => hdl(e.type, e)}
+        /> : (
+          <GridTable
+            title="Member Attendance Records (offline)"
+            menu={menuItems}
+            columnDefs={columnDefs}
+            overlayComponent={() => (
+              <EmptyState
+                error
+                title="Error Loading Users"
+                description={`An error occurred while fetching users: ${userCollection.utils.lastError}`}
+                action={{ label: "Retry", onClick: userCollection.utils.refetch }}
+              />
+            )}
+          />
+        )}
     </>
 
   )

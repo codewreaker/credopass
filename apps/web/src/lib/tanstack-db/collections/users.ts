@@ -6,7 +6,7 @@
 import { createCollection } from '@tanstack/db';
 import { QueryClient } from '@tanstack/query-core';
 import { queryCollectionOptions } from '@tanstack/query-db-collection';
-import type { User } from '@credopass/validation';
+import type { User } from '@credopass/lib/schemas';
 import { API_BASE_URL } from '../../../config';
 
 /**

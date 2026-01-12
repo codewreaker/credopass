@@ -1,7 +1,9 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useCallback, useEffect } from 'react';
 import { AgGridReact, type AgGridReactProps } from 'ag-grid-react';
-import { ModuleRegistry, AllCommunityModule, themeMaterial } from 'ag-grid-community';
-import Header from './Header';
+import { ModuleRegistry, AllCommunityModule, themeMaterial, type SelectionChangedEvent, GridApi, type ICellRendererParams, GridReadyEvent } from 'ag-grid-community';
+import { Eye } from 'lucide-react';
+import Header, { type BulkActionItem } from './Header';
+import { useAppStore } from '../../stores/store';
 import './style.css';
 
 ModuleRegistry.registerModules([AllCommunityModule]);
@@ -19,6 +21,7 @@ interface GridTableProps extends AgGridReactProps {
   subtitle?: string;
   menu?: MenuItem[];
   loading?: boolean;
+  bulkActions?: BulkActionItem[];
 }
 
 
@@ -53,12 +56,40 @@ const GridTable: React.FC<GridTableProps> = ({
   subtitle,
   menu = [],
   loading = false,
+  bulkActions = [],
   columnDefs,
   rowData,
   defaultColDef,
   gridOptions,
+  rowSelection = {
+    mode: 'singleRow',
+    checkboxes: false,
+    enableClickSelection: true,
+  },
+  onGridReady,
   ...gridProps
 }) => {
+  const [selectedItems, setSelectedItems] = useState<any[]>([]);
+  const [gridApi, setGridApi] = useState<GridApi | null>(null);
+
+  const viewItemSet = useAppStore(state => state.viewedItem !== null);
+  const setViewedItem = useAppStore(state => state.setViewedItem);
+  const toggleSidebar = useAppStore(state => state.toggleSidebar);
+
+
+  useEffect(() => {
+    if (!gridApi) return;
+
+    const onSelectionChanged = (event: SelectionChangedEvent) => {
+      setSelectedItems(event.api.getSelectedRows());
+    };
+
+    gridApi.addEventListener('selectionChanged', onSelectionChanged);
+    return () => {
+      gridApi.removeEventListener('selectionChanged', onSelectionChanged);
+    };
+  }, [gridApi]);
+
   const defaultColumnDef = useMemo(
     () => ({
       ...defaultColDef,
@@ -72,10 +103,54 @@ const GridTable: React.FC<GridTableProps> = ({
   const gridOptionsMemoized = useMemo(
     () => ({
       ...gridOptions,
-      suppressCellFocus: true
+      suppressCellFocus: true,
     }),
     [gridOptions]
   );
+
+
+  const viewActionRenderer = useCallback(({ data }: ICellRendererParams) => {
+    return (
+      <div
+        className="view-action-btn"
+        onClick={(e) => {
+          e.stopPropagation();
+          if (viewItemSet) {
+            setViewedItem(null);
+          } else {
+            setViewedItem(data);
+          }
+          toggleSidebar('right', false);
+        }}
+      >
+        <Eye size={18} />
+      </div>
+    )
+  }, [setViewedItem, toggleSidebar, viewItemSet]);
+
+  const memoizedColumnDefs = useMemo(() => {
+    if (!columnDefs) return [];
+
+    return [
+      {
+        headerName: "",
+        width: 18,
+        maxWidth: 18,
+        minWidth: 18,
+        resizable: false,
+        sortable: false,
+        filter: false,
+        cellRenderer: viewActionRenderer,
+        cellClass: "view-action-cell",
+      },
+      ...columnDefs
+    ];
+  }, [columnDefs, viewActionRenderer]);
+
+  const memoizedOnGridReady = useCallback((params: GridReadyEvent) => {
+    setGridApi(params.api);
+    onGridReady?.(params);
+  }, [onGridReady]);
 
   return (
     <div className="grid-table-container">
@@ -84,22 +159,19 @@ const GridTable: React.FC<GridTableProps> = ({
         subtitle={subtitle}
         menu={menu}
         loading={loading}
+        selectedItems={selectedItems}
+        bulkActions={bulkActions}
       />
-      {/* <div className="table-body"> */}
-        <AgGridReact
-          columnDefs={columnDefs}
-          rowData={rowData}
-          defaultColDef={defaultColumnDef}
-          theme={theme}
-          rowSelection={{
-            mode: 'singleRow',
-            checkboxes: false,
-            enableClickSelection: true,
-          }}
-          gridOptions={gridOptionsMemoized}
-          {...gridProps}
-        />
-      {/* </div> */}
+      <AgGridReact
+        onGridReady={memoizedOnGridReady}
+        columnDefs={memoizedColumnDefs}
+        rowData={rowData}
+        defaultColDef={defaultColumnDef}
+        theme={theme}
+        rowSelection={rowSelection}
+        gridOptions={gridOptionsMemoized}
+        {...gridProps}
+      />
     </div>
   );
 };

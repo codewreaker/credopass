@@ -12,13 +12,15 @@ export const useAppStore = create(
         combine({
             sidebarOpen: { left: true, right: false },
             events: [] as ActionEvents[],
+            viewedItem: null as any,
         }, (set) => ({
-            toggleSidebar: (pos: 'left' | 'right') => set((state) => ({
+            toggleSidebar: (pos: 'left' | 'right', isOpen?: boolean) => set((state) => ({
                 sidebarOpen: {
                     ...state.sidebarOpen,
-                    [pos]: !state.sidebarOpen[pos]
+                    [pos]: isOpen ?? !state.sidebarOpen[pos]
                 }
             })),
+            setViewedItem: <T>(item: T) => set(() => ({ viewedItem: item })),
             addEvent: (eventName: ActionEvents) => set((state) => ({
                 events: Array.from(new Set(state.events).add(eventName))
             })),

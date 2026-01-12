@@ -3,7 +3,7 @@
 import * as React from "react"
 
 
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@credopass/ui"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger, SIDEBAR_COOKIE_NAME } from "@credopass/ui"
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -40,8 +40,9 @@ import {
     ChevronRightIcon,
 } from "lucide-react"
 import { useLocation, useNavigate } from "@tanstack/react-router"
-import UserComponent from "../../components/user/index"
+import UserComponent from "../../components/user"
 import { cn } from "@credopass/ui/lib/utils"
+import { useCookies } from "@credopass/lib/hooks";
 
 interface SidebarMenuItemType {
     label: string
@@ -159,13 +160,16 @@ const MainSidebar: React.FC<SidebarProps> = ({
 
     const navigate = useNavigate();
     const location = useLocation();
+
+    const [sidebarCookie] = useCookies(SIDEBAR_COOKIE_NAME);
+    const isOpen = Boolean(sidebarCookie === 'true');
+
     const isActive = (url: string) => location.pathname === url
 
     const [activeTeam, setActiveTeam] = React.useState(teams?.[0] || {
         label: "Acme Inc",
         plan: "Enterprise",
     })
-
 
     const navMain = React.useMemo(() => nav?.main || [], [nav]);
     const navs = React.useMemo(() => {
@@ -174,7 +178,7 @@ const MainSidebar: React.FC<SidebarProps> = ({
 
 
     return (
-        <SidebarProvider>
+        <SidebarProvider defaultOpen={isOpen}>
             <Sidebar collapsible="icon" variant="inset">
                 <SidebarHeader>
                     <SidebarMenu>
@@ -268,13 +272,13 @@ const MainSidebar: React.FC<SidebarProps> = ({
                                     </SidebarMenuItem>
                                 </Collapsible>) : (
                                     <SidebarMenuItem key={item.label}>
-                                        <SidebarMenuButton 
-                                            className={cn(isActive(item.url) && "border border-solid border-primary", "cursor-pointer")} 
-                                            isActive={isActive(item.url)} 
-                                            onClick={() => navigate({ to: item.url })} 
+                                        <SidebarMenuButton
+                                            className={cn(isActive(item.url) && "border border-solid border-primary", "cursor-pointer")}
+                                            isActive={isActive(item.url)}
+                                            onClick={() => navigate({ to: item.url })}
                                             tooltip={item.label}
                                         >
-                                            {item.icon && <item.icon/>}
+                                            {item.icon && <item.icon />}
                                             <span>{item.label}</span>
                                         </SidebarMenuButton>
                                     </SidebarMenuItem>

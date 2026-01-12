@@ -6,10 +6,12 @@
 import { useState, useEffect, useMemo } from 'react';
 import GridTable, { type MenuItem } from '../../components/grid-table/index';
 import { Button } from '@credopass/ui';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, DatabaseBackup } from 'lucide-react';
 import type { ColDef } from 'ag-grid-community';
 import { API_BASE_URL } from '../../config';
+import Loader from '../../components/loader';
 import './style.css';
+import EmptyState from '../../components/empty-state';
 
 type TableName = 'users' | 'events' | 'attendance' | 'loyalty';
 
@@ -84,6 +86,8 @@ export default function DatabasePage() {
     [selectedTable]
   );
 
+  if (loading) return <Loader />;
+
   return (
     <>
       <div className="database-page-header">
@@ -107,13 +111,8 @@ export default function DatabasePage() {
           ))}
         </div>
       </div>
-      {error && (
-        <div className="error-message">
-          <p>Error: {error}</p>
-        </div>
-      )}
 
-      {!error && (
+      {!error ? (
         <GridTable
           title={`${selectedTable.charAt(0).toUpperCase() + selectedTable.slice(1)} Table`}
           subtitle={currentData.length > 0 ? `${currentData.length} records` : 'No records found'}
@@ -122,7 +121,13 @@ export default function DatabasePage() {
           columnDefs={columnDefs}
           rowData={currentData}
         />
-      )}
+      ) : <EmptyState
+        error
+        title={`Error Loading ${selectedTable}`}
+        icon={<DatabaseBackup />}
+        description={`An error occurred while fetching ${selectedTable}: ${error}`}
+        action={{ label: "Retry", onClick: () => fetchTableData(selectedTable) }}
+      />}
     </>
   );
 }

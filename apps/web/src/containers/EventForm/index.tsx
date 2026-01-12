@@ -10,7 +10,7 @@ import {
   Trash2
 } from 'lucide-react';
 import { getCollections } from '../../lib/tanstack-db';
-import type { EventStatus } from '@credopass/validation';
+import type { EventStatus } from '@credopass/lib/schemas';
 import { 
   Button, 
   Input, 

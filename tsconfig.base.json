@@ -1,14 +1,9 @@
 {
   "compilerOptions": {
-    "composite": true,
-    "declarationMap": true,
-    "emitDeclarationOnly": true,
-    "importHelpers": true,
     "isolatedModules": true,
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "moduleResolution": "bundler",
-    "noEmitOnError": true,
     "noFallthroughCasesInSwitch": true,
     "noImplicitOverride": true,
     "noImplicitReturns": true,
@@ -21,8 +16,8 @@
     "resolveJsonModule": true,
     "baseUrl": ".",
     "paths": {
-      "@credopass/validation": ["packages/validation/src/index.ts"],
-      "@credopass/validation/*": ["packages/validation/src/*"],
+      "@credopass/lib": ["packages/lib/src/index.ts"],
+      "@credopass/lib/*": ["packages/lib/src/*"],
       "@credopass/ui": ["packages/ui/src/index.ts"],
       "@credopass/ui/*": ["packages/ui/src/*"]
     }
