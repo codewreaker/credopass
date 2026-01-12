@@ -5,10 +5,12 @@ import type { ColDef, IOverlayParams, RowClickedEvent } from 'ag-grid-community'
 
 import React, { useCallback } from "react";
 import GridTable, { type MenuItem } from "../../components/grid-table/index";
+
 import { PlusCircle, Filter } from "lucide-react";
 import { useLauncher } from '../../stores/store';
 import { launchUserForm } from '../../containers/UserForm/index';
 import EmptyState from '../../components/empty-state';
+import Loader from '../../components/loader';
 
 const columnDefs: ColDef<UserType & LoyaltyType & AttendanceType>[] = [
   {
@@ -118,6 +120,7 @@ const AttendanceBar: React.FC<{ rate: number }> = ({ rate }) => {
 };
 
 
+
 const hdl = (type: string, e?: React.SyntheticEvent | RowClickedEvent) => {
   switch (type) {
     default:
@@ -128,7 +131,10 @@ const hdl = (type: string, e?: React.SyntheticEvent | RowClickedEvent) => {
 
 export default function MembersPage() {
   const { users: userCollection } = getCollections();
-  const { data } = useLiveQuery((q) => q.from({ userCollection }));
+  const { data, isLoading, isError, isReady, state, status, collection } = useLiveQuery((q) => q.from({ userCollection }));
+
+  console.log({isError, isReady, state, status, collection })
+
   const rowData: UserType[] = Array.isArray(data) ? data : []
   const { openLauncher } = useLauncher();
 
@@ -138,7 +144,7 @@ export default function MembersPage() {
     });
   }
 
-  const overlayComponentSelector = useCallback(({overlayType}: IOverlayParams) => {
+  const overlayComponentSelector = useCallback(({ overlayType }: IOverlayParams) => {
     if (overlayType === "noRows") {
       return {
         component: EmptyState,
@@ -168,6 +174,8 @@ export default function MembersPage() {
       action: () => launchUserForm({ isEditing: false }, openLauncher),
     },
   ];
+
+  if (isLoading) return (<Loader/>);
 
   return (
     <>

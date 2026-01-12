@@ -9,6 +9,7 @@ import { Button } from '@credopass/ui';
 import { RefreshCw } from 'lucide-react';
 import type { ColDef } from 'ag-grid-community';
 import { API_BASE_URL } from '../../config';
+import Loader from '../../components/loader';
 import './style.css';
 
 type TableName = 'users' | 'events' | 'attendance' | 'loyalty';
@@ -83,6 +84,8 @@ export default function DatabasePage() {
     ],
     [selectedTable]
   );
+
+  if(loading) return <Loader />;
 
   return (
     <>

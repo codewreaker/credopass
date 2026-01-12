@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Star, Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 import './style.css';
 import { useAppStore } from '../../stores/store';
+import { DetailView } from './DetailView';
 
 
 export const RightSidebar: React.FC = () => {
@@ -10,6 +11,7 @@ export const RightSidebar: React.FC = () => {
   const isCollapsed = useAppStore(({ sidebarOpen }) => (sidebarOpen['right']))
   const toggleSidebar = useAppStore(({ toggleSidebar }) => toggleSidebar)
   const viewedItem = useAppStore(({ viewedItem }) => viewedItem)
+  const setViewedItem = useAppStore(state => state.setViewedItem);
 
   const onToggleCollapse = () => toggleSidebar('right')
 
@@ -49,16 +51,7 @@ export const RightSidebar: React.FC = () => {
       {!isCollapsed && (
         <>
           {viewedItem ? (
-            <div className="loyalty-card">
-              <div className="card-header">
-                <h3>Details</h3>
-              </div>
-              <div className="card-content">
-                <pre style={{ whiteSpace: 'pre-wrap', fontSize: '0.8rem', overflow: 'auto', maxHeight: '80vh' }}>
-                  {JSON.stringify(viewedItem, null, 2)}
-                </pre>
-              </div>
-            </div>
+            <DetailView data={viewedItem} onClose={() => setViewedItem(null)} />
           ) : (
             <>
               <div className="loyalty-card">
