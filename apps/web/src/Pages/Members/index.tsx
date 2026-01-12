@@ -11,7 +11,6 @@ import { useLauncher } from '../../stores/store';
 import { launchUserForm } from '../../containers/UserForm/index';
 import EmptyState from '../../components/empty-state';
 import Loader from '../../components/loader';
-import { AgGridReact } from 'ag-grid-react';
 
 
 const columnDefs: ColDef<UserType & LoyaltyType & AttendanceType>[] = [

@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import { eq, and, desc, gte } from 'drizzle-orm';
+import { eq, and, gte } from 'drizzle-orm';
 import { getDatabase } from '../db/client';
 import { loyalty, CreateLoyaltySchema, UpdateLoyaltySchema } from '@credopass/lib/schemas';
 import { createCrudRoute } from '../util/crud-factory';
