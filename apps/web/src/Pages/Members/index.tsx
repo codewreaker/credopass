@@ -12,6 +12,7 @@ import { launchUserForm } from '../../containers/UserForm/index';
 import EmptyState from '../../components/empty-state';
 import Loader from '../../components/loader';
 
+
 const columnDefs: ColDef<UserType & LoyaltyType & AttendanceType>[] = [
   {
     field: 'id',
@@ -131,9 +132,10 @@ const hdl = (type: string, e?: React.SyntheticEvent | RowClickedEvent) => {
 
 export default function MembersPage() {
   const { users: userCollection } = getCollections();
-  const { data, isLoading, isError, isReady, state, status, collection } = useLiveQuery((q) => q.from({ userCollection }));
+  const { data, isLoading } = useLiveQuery((q) => q.from({ userCollection }));
 
-  console.log({isError, isReady, state, status, collection })
+  // Use collection's error tracking utilities
+  const isError = userCollection.utils.isError;
 
   const rowData: UserType[] = Array.isArray(data) ? data : []
   const { openLauncher } = useLauncher();
@@ -143,22 +145,6 @@ export default function MembersPage() {
       userCollection.delete(user.id);
     });
   }
-
-  const overlayComponentSelector = useCallback(({ overlayType }: IOverlayParams) => {
-    if (overlayType === "noRows") {
-      return {
-        component: EmptyState,
-        params: {
-          title: "No Users Found",
-          description: "You haven't added any users yet. Get started by creating your first user.",
-          action: { label: "Create User", onClick: () => launchUserForm({ isEditing: false }, openLauncher) }
-        },
-      };
-    }
-    // return undefined to use the provided overlay for other overlay types
-    return undefined;
-  }, [openLauncher]);
-
 
   const menuItems: MenuItem[] = [
     {
@@ -175,7 +161,23 @@ export default function MembersPage() {
     },
   ];
 
-  if (isLoading) return (<Loader/>);
+
+  const overlayComponentSelector = useCallback(({ overlayType }: IOverlayParams) => {
+    if (overlayType === "noRows") {
+      return {
+        component: EmptyState,
+        params: {
+          title: "No Users Found",
+          description: "You haven't added any users yet. Get started by creating your first user.",
+          action: { label: "Create User", onClick: () => launchUserForm({ isEditing: false }, openLauncher) }
+        }
+      }
+    }
+    // return undefined to use the provided overlay for other overlay types
+    return undefined;
+  }, [openLauncher]);
+
+  if (isLoading) return <Loader />
 
   return (
     <>
@@ -184,26 +186,31 @@ export default function MembersPage() {
         <p className="page-subtitle">View all users</p>
       </div>
 
-      <GridTable
-        title="Member Attendance Records"
-        subtitle={`${rowData.length} total members`}
-        menu={menuItems}
-        columnDefs={columnDefs}
-        rowData={rowData}
-        bulkActions={[
-          {
-            key: 'delete',
-            label: 'Delete',
-            action: deleteUser,
-            variant: 'destructive'
-          }
-        ]}
-        rowSelection={{
-          mode: 'multiRow',
-        }}
-        overlayComponentSelector={overlayComponentSelector}
-        onRowClicked={(e) => hdl(e.type, e)}
-      />
+      {!isError ?
+        <GridTable
+          title="Member Attendance Records"
+          subtitle={`${rowData.length} total members`}
+          menu={menuItems}
+          columnDefs={columnDefs}
+          rowData={rowData}
+          bulkActions={[
+            {
+              key: 'delete',
+              label: 'Delete',
+              action: deleteUser,
+              variant: 'destructive'
+            }
+          ]}
+          rowSelection={{
+            mode: 'multiRow',
+          }}
+          overlayComponentSelector={overlayComponentSelector}
+          onRowClicked={(e) => hdl(e.type, e)}
+        /> : <EmptyState
+          title="Error Loading Users"
+          description={`An error occurred while fetching users: ${userCollection.utils.lastError}`}
+          action={{ label: "Retry", onClick: userCollection.utils.refetch }}
+        />}
     </>
 
   )

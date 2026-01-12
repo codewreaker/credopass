@@ -21,6 +21,7 @@ const EmptyState: React.FC<{
         label: string;
         onClick: () => void;
     };
+    error?: boolean;
     link?: { label: string; url: string };
 }> = ({
     title = "No Projects Found",
@@ -28,6 +29,7 @@ const EmptyState: React.FC<{
     action = { label: "Create Project", onClick: () => { } },
     secondaryAction,
     link,
+    error = false,
 }) => {
         return (
             <Empty className="position-absolute z-50">

@@ -11,6 +11,7 @@ import type { ColDef } from 'ag-grid-community';
 import { API_BASE_URL } from '../../config';
 import Loader from '../../components/loader';
 import './style.css';
+import EmptyState from '../../components/empty-state';
 
 type TableName = 'users' | 'events' | 'attendance' | 'loyalty';
 
@@ -85,7 +86,7 @@ export default function DatabasePage() {
     [selectedTable]
   );
 
-  if(loading) return <Loader />;
+  if (loading) return <Loader />;
 
   return (
     <>
@@ -110,13 +111,8 @@ export default function DatabasePage() {
           ))}
         </div>
       </div>
-      {error && (
-        <div className="error-message">
-          <p>Error: {error}</p>
-        </div>
-      )}
 
-      {!error && (
+      {!error ? (
         <GridTable
           title={`${selectedTable.charAt(0).toUpperCase() + selectedTable.slice(1)} Table`}
           subtitle={currentData.length > 0 ? `${currentData.length} records` : 'No records found'}
@@ -125,7 +121,12 @@ export default function DatabasePage() {
           columnDefs={columnDefs}
           rowData={currentData}
         />
-      )}
+      ) : <EmptyState
+        error
+        title={`Error Loading ${selectedTable}`}
+        description={`An error occurred while fetching ${selectedTable}: ${error}`}
+        action={{ label: "Retry", onClick: () => fetchTableData(selectedTable) }}
+      />}
     </>
   );
 }
