@@ -11,6 +11,7 @@ import { useLauncher } from '../../stores/store';
 import { launchUserForm } from '../../containers/UserForm/index';
 import EmptyState from '../../components/empty-state';
 import Loader from '../../components/loader';
+import { AgGridReact } from 'ag-grid-react';
 
 
 const columnDefs: ColDef<UserType & LoyaltyType & AttendanceType>[] = [
@@ -178,6 +179,7 @@ export default function MembersPage() {
   }, [openLauncher]);
 
   if (isLoading) return <Loader />
+  
 
   return (
     <>
@@ -206,11 +208,21 @@ export default function MembersPage() {
           }}
           overlayComponentSelector={overlayComponentSelector}
           onRowClicked={(e) => hdl(e.type, e)}
-        /> : <EmptyState
-          title="Error Loading Users"
-          description={`An error occurred while fetching users: ${userCollection.utils.lastError}`}
-          action={{ label: "Retry", onClick: userCollection.utils.refetch }}
-        />}
+        /> : (
+          <GridTable
+            title="Member Attendance Records (offline)"
+            menu={menuItems}
+            columnDefs={columnDefs}
+            overlayComponent={() => (
+              <EmptyState
+                error
+                title="Error Loading Users"
+                description={`An error occurred while fetching users: ${userCollection.utils.lastError}`}
+                action={{ label: "Retry", onClick: userCollection.utils.refetch }}
+              />
+            )}
+          />
+        )}
     </>
 
   )

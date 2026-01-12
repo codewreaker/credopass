@@ -1,4 +1,4 @@
-import { ArrowUpRightIcon, UserPlus as IconFolderCode } from "lucide-react"
+import { ArrowUpRightIcon, UserPlus } from "lucide-react"
 
 import { Button } from "@credopass/ui/components/button"
 import {
@@ -23,22 +23,24 @@ const EmptyState: React.FC<{
     };
     error?: boolean;
     link?: { label: string; url: string };
+    icon?: React.ReactElement;
 }> = ({
     title = "No Projects Found",
     description = "You haven&apos;t created any projects yet. Get started by creating your first project.",
     action = { label: "Create Project", onClick: () => { } },
     secondaryAction,
     link,
+    icon = <UserPlus />,
     error = false,
 }) => {
         return (
             <Empty className="position-absolute z-50">
                 <EmptyHeader>
                     <EmptyMedia variant="icon">
-                        <IconFolderCode />
+                        {icon}
                     </EmptyMedia>
-                    <EmptyTitle>{title}</EmptyTitle>
-                    <EmptyDescription>
+                    <EmptyTitle className={error ? "text-destructive" : ""}>{title}</EmptyTitle>
+                    <EmptyDescription className={error ? "text-destructive/80" : ""}>
                         {description}
                     </EmptyDescription>
                 </EmptyHeader>

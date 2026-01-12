@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useCallback, useEffect } from 'react';
 import { AgGridReact, type AgGridReactProps } from 'ag-grid-react';
-import { ModuleRegistry, AllCommunityModule, themeMaterial, type SelectionChangedEvent, GridApi, type ICellRendererParams } from 'ag-grid-community';
+import { ModuleRegistry, AllCommunityModule, themeMaterial, type SelectionChangedEvent, GridApi, type ICellRendererParams, GridReadyEvent } from 'ag-grid-community';
 import { Eye } from 'lucide-react';
 import Header, { type BulkActionItem } from './Header';
 import { useAppStore } from '../../stores/store';
@@ -66,6 +66,7 @@ const GridTable: React.FC<GridTableProps> = ({
     checkboxes: false,
     enableClickSelection: true,
   },
+  onGridReady,
   ...gridProps
 }) => {
   const [selectedItems, setSelectedItems] = useState<any[]>([]);
@@ -114,7 +115,7 @@ const GridTable: React.FC<GridTableProps> = ({
         className="view-action-btn"
         onClick={(e) => {
           e.stopPropagation();
-          if(viewItemSet) {
+          if (viewItemSet) {
             setViewedItem(null);
           } else {
             setViewedItem(data);
@@ -146,6 +147,11 @@ const GridTable: React.FC<GridTableProps> = ({
     ];
   }, [columnDefs, viewActionRenderer]);
 
+  const memoizedOnGridReady = useCallback((params: GridReadyEvent) => {
+    setGridApi(params.api);
+    onGridReady?.(params);
+  }, [onGridReady]);
+
   return (
     <div className="grid-table-container">
       <Header
@@ -157,9 +163,7 @@ const GridTable: React.FC<GridTableProps> = ({
         bulkActions={bulkActions}
       />
       <AgGridReact
-        onGridReady={({ api }) => {
-          setGridApi(api);
-        }}
+        onGridReady={memoizedOnGridReady}
         columnDefs={memoizedColumnDefs}
         rowData={rowData}
         defaultColDef={defaultColumnDef}

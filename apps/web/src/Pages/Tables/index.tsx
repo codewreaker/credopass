@@ -6,7 +6,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import GridTable, { type MenuItem } from '../../components/grid-table/index';
 import { Button } from '@credopass/ui';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, DatabaseBackup } from 'lucide-react';
 import type { ColDef } from 'ag-grid-community';
 import { API_BASE_URL } from '../../config';
 import Loader from '../../components/loader';
@@ -124,6 +124,7 @@ export default function DatabasePage() {
       ) : <EmptyState
         error
         title={`Error Loading ${selectedTable}`}
+        icon={<DatabaseBackup />}
         description={`An error occurred while fetching ${selectedTable}: ${error}`}
         action={{ label: "Retry", onClick: () => fetchTableData(selectedTable) }}
       />}
