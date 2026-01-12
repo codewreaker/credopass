@@ -88,6 +88,8 @@ export const DetailView: React.FC<DetailViewProps & { onClose: () => void }> = (
         );
     }
 
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const entries = Object.entries(data).filter(([_, value]) => {
         // Filter out complex objects and arrays for now
         return typeof value !== 'object' || value === null;
