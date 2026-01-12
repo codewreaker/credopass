@@ -1,6 +1,6 @@
-import React, { useMemo, useState, useCallback } from 'react';
+import React, { useMemo, useState, useCallback, useEffect } from 'react';
 import { AgGridReact, type AgGridReactProps } from 'ag-grid-react';
-import { ModuleRegistry, AllCommunityModule, themeMaterial, type SelectionChangedEvent } from 'ag-grid-community';
+import { ModuleRegistry, AllCommunityModule, themeMaterial, type SelectionChangedEvent, GridApi, type ICellRendererParams } from 'ag-grid-community';
 import { Eye } from 'lucide-react';
 import Header, { type BulkActionItem } from './Header';
 import { useAppStore } from '../../stores/store';
@@ -69,8 +69,25 @@ const GridTable: React.FC<GridTableProps> = ({
   ...gridProps
 }) => {
   const [selectedItems, setSelectedItems] = useState<any[]>([]);
+  const [gridApi, setGridApi] = useState<GridApi | null>(null);
+
+  const viewItemSet = useAppStore(state => state.viewedItem !== null);
   const setViewedItem = useAppStore(state => state.setViewedItem);
   const toggleSidebar = useAppStore(state => state.toggleSidebar);
+
+
+  useEffect(() => {
+    if (!gridApi) return;
+
+    const onSelectionChanged = (event: SelectionChangedEvent) => {
+      setSelectedItems(event.api.getSelectedRows());
+    };
+
+    gridApi.addEventListener('selectionChanged', onSelectionChanged);
+    return () => {
+      gridApi.removeEventListener('selectionChanged', onSelectionChanged);
+    };
+  }, [gridApi]);
 
   const defaultColumnDef = useMemo(
     () => ({
@@ -90,46 +107,42 @@ const GridTable: React.FC<GridTableProps> = ({
     [gridOptions]
   );
 
-  const onSelectionChanged = useCallback((event: SelectionChangedEvent) => {
-    setSelectedItems(event.api.getSelectedRows());
-    if (gridProps.onSelectionChanged) {
-      gridProps.onSelectionChanged(event);Ê
-    }
-  }, [gridProps.onSelectionChanged]);
 
-  const viewActionRenderer = useCallback((params: any) => {
+  const viewActionRenderer = useCallback(({ data }: ICellRendererParams) => {
     return (
       <div
         className="view-action-btn"
         onClick={(e) => {
           e.stopPropagation();
-          setViewedItem(params.data);
-          toggleSidebar('right', true);
+          if(viewItemSet) {
+            setViewedItem(null);
+          } else {
+            setViewedItem(data);
+          }
+          toggleSidebar('right', false);
         }}
       >
         <Eye size={18} />
       </div>
     )
-  }, [setViewedItem, toggleSidebar]);
+  }, [setViewedItem, toggleSidebar, viewItemSet]);
 
-  const enhancedColumnDefs = useMemo(() => {
+  const memoizedColumnDefs = useMemo(() => {
     if (!columnDefs) return [];
 
     return [
-      ...columnDefs,
       {
         headerName: "",
-        pinned: "right" as const,
-        width: 48,
-        maxWidth: 48,
-        minWidth: 48,
+        width: 18,
+        maxWidth: 18,
+        minWidth: 18,
         resizable: false,
         sortable: false,
         filter: false,
         cellRenderer: viewActionRenderer,
         cellClass: "view-action-cell",
-        cellStyle: { display: 'flex', justifyContent: 'center', alignItems: 'center', padding: 0 }
-      }
+      },
+      ...columnDefs
     ];
   }, [columnDefs, viewActionRenderer]);
 
@@ -144,13 +157,15 @@ const GridTable: React.FC<GridTableProps> = ({
         bulkActions={bulkActions}
       />
       <AgGridReact
-        columnDefs={enhancedColumnDefs}
+        onGridReady={({ api }) => {
+          setGridApi(api);
+        }}
+        columnDefs={memoizedColumnDefs}
         rowData={rowData}
         defaultColDef={defaultColumnDef}
         theme={theme}
         rowSelection={rowSelection}
         gridOptions={gridOptionsMemoized}
-        onSelectionChanged={onSelectionChanged}
         {...gridProps}
       />
     </div>

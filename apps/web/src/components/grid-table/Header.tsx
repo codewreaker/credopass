@@ -33,54 +33,50 @@ const Header: React.FC<HeaderProps> = ({
 
   return (
     <div className="table-header">
-      {selectedItems.length > 0 ? (
-        <div className="title-section selection-mode">
-           <h2 className="text-primary">{selectedItems.length} Selected</h2>
-        </div>
-      ) : (
+      {
         title && (
           <div className="title-section">
             <h2>{title}</h2>
             {subtitle && <p className="subtitle">{subtitle}</p>}
           </div>
         )
-      )}
-      
+      }
+
       <div className="actions">
-        {selectedItems.length > 0 && bulkActions.length > 0 ? (
-           <>
-              {bulkActions.map((action) => (
-                <Button
-                  key={action.key}
-                  variant={action.variant || "secondary"}
-                  size='sm'
-                  onClick={() => action.action(selectedItems)}
-                >
-                  {action.icon}
-                  {action.label}
-                </Button>
-              ))}
-           </>
-        ) : (
-          menu.length > 0 && menu.map((item) => {
-            const isRefreshing = loading && item.id === 'refresh';
-            
-            return (
+        {(selectedItems.length > 0 && bulkActions.length > 0) && (
+          <>
+            {bulkActions.map((action) => (
               <Button
-                key={item.id}
-                variant="secondary"
+                key={action.key}
+                variant={action.variant || "secondary"}
                 size='sm'
-                onClick={item.action}
-                disabled={item.disabled || loading}
+                onClick={() => action.action(selectedItems)}
               >
-                <span className={isRefreshing ? 'spinning' : ''}>
-                  {item.icon}
-                </span>
-                {item.label}
+                {action.icon}
+                {`${action.label} (${selectedItems.length})`}
               </Button>
-            );
-          })
-        )}
+            ))}
+          </>)
+        }
+        {menu.length > 0 && menu.map((item) => {
+          const isRefreshing = loading && item.id === 'refresh';
+
+          return (
+            <Button
+              key={item.id}
+              variant="secondary"
+              size='sm'
+              onClick={item.action}
+              disabled={item.disabled || loading}
+            >
+              <span className={isRefreshing ? 'spinning' : ''}>
+                {item.icon}
+              </span>
+              {item.label}
+            </Button>
+          );
+        })
+        }
       </div>
     </div>
   );

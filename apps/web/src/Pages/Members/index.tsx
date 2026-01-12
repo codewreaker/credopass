@@ -1,15 +1,14 @@
 import { useLiveQuery } from '@tanstack/react-db'
-import { LoyaltyTierEnum, type UserType, type AttendanceType, type LoyaltyType } from '@credopass/lib/schemas'
+import { LoyaltyTierEnum, type UserType, type AttendanceType, type LoyaltyType, User } from '@credopass/lib/schemas'
 import { getCollections } from '../../lib/tanstack-db'
-import type { ColDef, RowClickedEvent } from 'ag-grid-community'
-import { MoreVertical } from 'lucide-react'
+import type { ColDef, IOverlayParams, RowClickedEvent } from 'ag-grid-community'
 
-import React from "react";
+import React, { useCallback } from "react";
 import GridTable, { type MenuItem } from "../../components/grid-table/index";
 import { PlusCircle, Filter } from "lucide-react";
 import { useLauncher } from '../../stores/store';
 import { launchUserForm } from '../../containers/UserForm/index';
-
+import EmptyState from '../../components/empty-state';
 
 const columnDefs: ColDef<UserType & LoyaltyType & AttendanceType>[] = [
   {
@@ -79,17 +78,7 @@ const columnDefs: ColDef<UserType & LoyaltyType & AttendanceType>[] = [
     width: 90,
     cellRenderer: (params: any) => <StatusBadge status={params.value} />,
     filter: true,
-  },
-  {
-    headerName: 'Actions',
-    width: 75,
-    cellRenderer: () => (
-      <button className="action-btn">
-        <MoreVertical size={14} />
-      </button>
-    ),
-    pinned: 'left',
-  },
+  }
 ];
 
 const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
@@ -105,6 +94,8 @@ const MembershipBadge: React.FC<{ level: string }> = ({ level }) => {
     <span className={`membership-badge ${level?.toLowerCase()}`}>{level}</span>
   );
 };
+
+
 
 const AttendanceBar: React.FC<{ rate: number }> = ({ rate }) => {
   const getColor = (rate: number) => {
@@ -141,6 +132,28 @@ export default function MembersPage() {
   const rowData: UserType[] = Array.isArray(data) ? data : []
   const { openLauncher } = useLauncher();
 
+  const deleteUser = (userIds: User[]) => {
+    userIds.forEach((user) => {
+      userCollection.delete(user.id);
+    });
+  }
+
+  const overlayComponentSelector = useCallback(({overlayType}: IOverlayParams) => {
+    if (overlayType === "noRows") {
+      return {
+        component: EmptyState,
+        params: {
+          title: "No Users Found",
+          description: "You haven't added any users yet. Get started by creating your first user.",
+          action: { label: "Create User", onClick: () => launchUserForm({ isEditing: false }, openLauncher) }
+        },
+      };
+    }
+    // return undefined to use the provided overlay for other overlay types
+    return undefined;
+  }, [openLauncher]);
+
+
   const menuItems: MenuItem[] = [
     {
       id: 'filter',
@@ -169,9 +182,18 @@ export default function MembersPage() {
         menu={menuItems}
         columnDefs={columnDefs}
         rowData={rowData}
+        bulkActions={[
+          {
+            key: 'delete',
+            label: 'Delete',
+            action: deleteUser,
+            variant: 'destructive'
+          }
+        ]}
         rowSelection={{
           mode: 'multiRow',
         }}
+        overlayComponentSelector={overlayComponentSelector}
         onRowClicked={(e) => hdl(e.type, e)}
       />
     </>
