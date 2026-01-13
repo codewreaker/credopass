@@ -33,6 +33,7 @@ import {
     SidebarTrigger,
     SIDEBAR_COOKIE_NAME
 } from "@credopass/ui/components/sidebar"
+import { type BottomNavItem } from "@credopass/ui/components/bottom-nav"
 
 import {
     TerminalSquareIcon,
@@ -180,6 +181,17 @@ const MainSidebar: React.FC<SidebarProps> = ({
         return Object.entries(nav || {}).filter(([key]) => key !== 'main') || []
     }, [nav]);
 
+    // Convert nav items to BottomNavItem format for mobile
+    const bottomNavItems = React.useMemo(() => {
+        return navMain
+            .filter(item => item.icon && item.url) // Only items with icon and url
+            .map(item => ({
+                label: item.label,
+                url: item.url,
+                icon: item.icon as React.ElementType
+            })) as BottomNavItem[]
+    }, [navMain]);
+
 
     return (
         <SidebarProvider defaultOpen={isOpen}
@@ -188,7 +200,7 @@ const MainSidebar: React.FC<SidebarProps> = ({
                 "--sidebar-width": "14rem"
             }}
         >
-            <Sidebar collapsible="icon" variant="inset">
+            <Sidebar collapsible="icon" variant="inset" navItems={bottomNavItems}>
                 <SidebarHeader>
                     <SidebarMenu>
                         <SidebarMenuItem>

@@ -24,7 +24,7 @@ import {
 } from './tooltip'
 import { useIsMobile } from '../hooks/use-mobile'
 import { PanelLeftIcon } from "lucide-react"
-import { BottomNav } from "./bottom-nav"
+import { BottomNav, type BottomNavItem } from "./bottom-nav"
 
 export const SIDEBAR_COOKIE_NAME = "sidebar_state"
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7
@@ -156,11 +156,13 @@ function Sidebar({
   collapsible = "offcanvas",
   className,
   children,
+  navItems,
   ...props
 }: React.ComponentProps<"div"> & {
   side?: "left" | "right"
   variant?: "sidebar" | "floating" | "inset"
   collapsible?: "offcanvas" | "icon" | "none"
+  navItems?: BottomNavItem[]
 }) {
   const { isMobile, state, openMobile, setOpenMobile } = useSidebar()
 
@@ -204,7 +206,7 @@ function Sidebar({
         </Sheet>
       )
     }
-    return (<BottomNav />)
+    return navItems ? <BottomNav items={navItems} /> : null
   }
 
 
