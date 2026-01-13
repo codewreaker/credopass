@@ -10,12 +10,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@credopass/ui/components/dialog"
-import { Input } from "@credopass/ui/components/input"
-import { Label } from "@credopass/ui/components/label"
 
 import { useLauncher } from '../../stores/store';
 // import { SignInForm } from '../../containers/SignInModal';
-import { X } from 'lucide-react';
 
 import './launcher.css';
 
@@ -56,7 +53,7 @@ export default function ModalPortal() {
 
   return (
     <Dialog open={launcher.isOpen} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>
+      <DialogTrigger>
         <Button variant="outline">Open Dialog</Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
@@ -71,7 +68,7 @@ export default function ModalPortal() {
           {launcher?.content || <DefaultModal />}
         </div>
         <DialogFooter>
-          <DialogClose asChild>
+          <DialogClose>
             <Button variant="outline">Cancel</Button>
           </DialogClose>
           <Button type="submit">Save changes</Button>

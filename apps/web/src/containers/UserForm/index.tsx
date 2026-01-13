@@ -66,9 +66,6 @@ export const launchUserForm = (
 const UserForm = ({ initialData = {}, isEditing = false, onClose }: UserFormProps) => {
   const [isMutating, setIsMutating] = useState(false);
   const { users: userCollection } = getCollections();
-  const isError = userCollection.utils.isError;
-  const lastError = userCollection.utils.lastError;
-  const errorCount = userCollection.utils.errorCount;
 
   const form = useForm({
     defaultValues: {
