@@ -8,7 +8,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@credopass/ui/components/dialog"
 
 import { useLauncher } from '../../stores/store';
@@ -53,7 +52,7 @@ export default function ModalPortal() {
 
   return (
     <Dialog open={launcher.isOpen} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-106.25">
         <DialogHeader>
           <DialogTitle>Edit profile</DialogTitle>
           <DialogDescription>
