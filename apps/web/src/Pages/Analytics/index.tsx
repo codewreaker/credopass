@@ -54,33 +54,45 @@ const pieChartConfig = {
   },
 } satisfies ChartConfig;
 
-const minDims = { minW: 2, minH: 3 };
+
+const STAT_DIM ={
+  sm: { w: 1, h: 4 },
+  xxs: { w: 1, h: 4 }
+};
 
 const layouts = {
   lg: [
-    { i: "stat-1", x: 0, y: 0, w: 2, h: 4, ...minDims },
-    { i: "stat-2", x: 2, y: 0, w: 2, h: 4, ...minDims },
-    { i: "stat-3", x: 0, y: 4, w: 2, h: 6, ...minDims },
-    { i: "stat-4", x: 4, y: 0, w: 2, h: 4, ...minDims },
+    { i: "stat-1", x: 0, y: 0, w: 2, h: 4 },
+    { i: "stat-2", x: 2, y: 0, w: 2, h: 4 },
+    { i: "stat-3", x: 4, y: 0, w: 2, h: 4 },
+    { i: "stat-4", x: 0, y: 0, w: 2, h: 6 },
     // Charts
-    { i: "chart-1", x: 6, y: 0, w: 6, h: 10, minW: 4, minH: 6 },
-    { i: "chart-2", x: 2, y: 4, w: 4, h: 6, minW: 4, minH: 6 },
+    { i: "chart-1", x: 6, y: 0, w: 6, h: 10 },
+    { i: "chart-2", x: 2, y: 4, w: 4, h: 6 },
   ],
   md: [
-    { i: "stat-1", x: 0, y: 0, w: 2, h: 4, minW: 2, minH: 3 },
-    { i: "stat-2", x: 2, y: 0, w: 2, h: 4, minW: 2, minH: 3 },
-    { i: "stat-3", x: 7, y: 0, w: 3, h: 4, minW: 2, minH: 3 },
-    { i: "stat-4", x: 4, y: 0, w: 3, h: 4, minW: 2, minH: 3 },
-    { i: "chart-1", x: 0, y: 4, w: 4, h: 6, minW: 4, minH: 6 },
-    { i: "chart-2", x: 4, y: 4, w: 6, h: 6, minW: 4, minH: 6 }
+    { i: "stat-1", x: 0, y: 0, w: 2, h: 4},
+    { i: "stat-2", x: 2, y: 0, w: 2, h: 4 },
+    { i: "stat-3", x: 4, y: 0, w: 3, h: 4},
+    { i: "stat-4", x: 7, y: 0, w: 3, h: 4 },
+    { i: "chart-1", x: 0, y: 4, w: 5, h:8 },
+    { i: "chart-2", x: 6, y: 4, w: 5, h: 8 }
   ],
   sm: [
-    { i: "stat-1", x: 0, y: 0, w: 2, h: 4, minW: 2, minH: 3 },
-    { i: "stat-2", x: 2, y: 0, w: 2, h: 4, minW: 2, minH: 3 },
-    { i: "stat-3", x: 4, y: 0, w: 2, h: 4, minW: 2, minH: 3 },
-    { i: "stat-4", x: 0, y: 4, w: 2, h: 6, minW: 2, minH: 3 },
-    { i: "chart-1", x: 0, y: 10, w: 6, h: 6, minW: 4, minH: 6 },
-    { i: "chart-2", x: 2, y: 4, w: 4, h: 6, minW: 4, minH: 6 }
+    { i: "stat-1", x: 0, y: 0, ...STAT_DIM.sm },
+    { i: "stat-2", x: 1, y: 0, ...STAT_DIM.sm },
+    { i: "stat-3", x: 0, y: 2, ...STAT_DIM.sm },
+    { i: "stat-4", x: 1, y: 2, ...STAT_DIM.sm },
+    { i: "chart-1", x: 2, y: 10, w: 4, h: 8 },
+    { i: "chart-2", x: 2, y: 4, w: 2, h: 8 }
+  ],
+  xxs: [
+    { i: "stat-1", x: 0, y: 0, ...STAT_DIM.xxs },
+    { i: "stat-2", x: 1, y: 0, ...STAT_DIM.xxs},
+    { i: "stat-3", x: 0, y: 2, ...STAT_DIM.xxs},
+    { i: "stat-4", x: 1, y: 2, ...STAT_DIM.xxs },
+    { i: "chart-1", x: 2, y: 10, w: 4, h: 8 },
+    { i: "chart-2", x: 2, y: 4, w: 2, h: 8 }
   ]
   // xs and xxs can be omitted - they'll fall back to items if provided
 };
@@ -161,7 +173,8 @@ const Analytics: React.FC = () => {
         <Card key="chart-1" className="relative h-full flex flex-col">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
             <div>
-              <CardTitle className="text-lg font-semibold">Monthly Attendance Trend</CardTitle>
+              <CardTitle className="text-xs font-semibold">Attd Monthly</CardTitle>
+              <CardDescription className="text-xs mt-1">Trend</CardDescription>
             </div>
             <div className="flex items-center gap-2">
               <select className="chart-filter">
@@ -202,7 +215,7 @@ const Analytics: React.FC = () => {
         <Card key="chart-2" className="relative h-full flex flex-col">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
             <div>
-              <CardTitle className="text-lg font-semibold">Attendance Distribution</CardTitle>
+              <CardTitle className="text-xs font-semibold">Attd Distribution</CardTitle>
               <CardDescription className="text-xs mt-1">This Month</CardDescription>
             </div>
             <div className="drag-handle">⋮⋮</div>

@@ -13,11 +13,14 @@ import { useLauncher } from '../../stores/store';
 import { launchEventForm } from '../EventForm/index';
 import CommandPalette from './Command';
 import { useNavigate } from '@tanstack/react-router';
+import { cn } from '@credopass/ui/lib/utils';
+import { useIsMobile } from '@credopass/ui/hooks/use-mobile';
 
 
 export const TopNavBar: React.FC = () => {
   const { openLauncher, closeLauncher } = useLauncher();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const searchButtonRef = useRef<HTMLButtonElement>(null);
 
   // Open command palette via launcher
@@ -90,8 +93,11 @@ export const TopNavBar: React.FC = () => {
   }, [openLauncher]);
 
   return (
-    <div className="top-navbar">
-      <div className="navbar-left" ref={searchButtonRef as unknown as React.RefObject<HTMLDivElement>}>
+    <div className={cn(
+      "top-navbar flex items-center justify-between px-4",
+      isMobile ? "w-2xs" : "w-full"
+    )}>
+      <div className={cn("navbar-left", isMobile ? "p-0" : "p-5")} ref={searchButtonRef as unknown as React.RefObject<HTMLDivElement>}>
         <Button
           variant="outline"
           className="search-container"
@@ -105,7 +111,7 @@ export const TopNavBar: React.FC = () => {
         </Button>
       </div>
 
-      <div className="navbar-right">
+      {!isMobile && <div className="navbar-right">
         <Button variant="default" onClick={handleNewEvent}>
           <Calendar />
           New Event
@@ -115,7 +121,7 @@ export const TopNavBar: React.FC = () => {
           <Bell size={15} />
           <span className="notification-badge">3</span>
         </Button>
-      </div>
+      </div>}
     </div>
   );
 };

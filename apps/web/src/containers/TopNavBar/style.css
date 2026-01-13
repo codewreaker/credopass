@@ -2,14 +2,12 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  width: 100%;
   padding: 0 1rem;
 
   .navbar-left {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 2rem;
     width: 90%;
 
 
@@ -87,30 +85,4 @@
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-
-
-@media (max-width: 1024px) {
-  .nav-links {
-    display: none;
-  }
-
-  .search-input {
-    width: 150px;
-  }
-}
-
-@media (max-width: 768px) {
-  .top-navbar {
-    padding: 0 0.75rem;
-  }
-
-  .logo-text {
-    display: none;
-  }
-
-  .search-container {
-    display: none;
-  }
 }
