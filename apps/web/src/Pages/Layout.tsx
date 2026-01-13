@@ -1,6 +1,6 @@
 import { Outlet } from "@tanstack/react-router";
 import { TopNavBar } from "../containers/TopNavBar/index";
-import LeftSidebar, { SidebarInset, SidebarTrigger } from "../containers/LeftSidebar/index";
+import LeftSidebar, { SidebarInset, SidebarTrigger } from "../containers/LeftSidebar";
 
 import { RightSidebar, RightSidebarTrigger } from "../containers/RightSidebar";
 //import { SignInModal } from "../containers/SignInModal";
@@ -14,9 +14,11 @@ import {
   Database,
 } from "lucide-react";
 import "./layout.css";
+import { useIsMobile } from "../hooks/use-mobile";
 
 
 export function RootLayout() {
+  const isMobile = useIsMobile();
 
   return (
     <div className="app-container">
@@ -80,7 +82,7 @@ export function RootLayout() {
         >
           <SidebarInset className="main-content">
             <header className="flex justify-between h-16 shrink-0 items-center gap-2 border-b px-4">
-              <SidebarTrigger className="-ml-1" />
+              {!isMobile && <SidebarTrigger className="-ml-1" />}
               <TopNavBar />
               <RightSidebarTrigger />
             </header>

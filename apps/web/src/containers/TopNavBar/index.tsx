@@ -25,13 +25,13 @@ export const TopNavBar: React.FC = () => {
 
   // Open command palette via launcher
   const openCommandPalette = useCallback(() => {
-    const width = searchButtonRef.current?.offsetWidth || 0;
-    console.log('Opening command palette with width:', searchButtonRef.current?.offsetWidth, searchButtonRef.current?.clientWidth);
+    const offsetWidth = searchButtonRef.current?.offsetWidth || 0;
+    const width = isMobile ? offsetWidth * 1.6 : offsetWidth;
     openLauncher({
       content: <CommandPalette onClose={closeLauncher} openLauncher={openLauncher} width={width} />,
       onClose: closeLauncher,
     });
-  }, [openLauncher, closeLauncher]);
+  }, [openLauncher, closeLauncher, isMobile]);
 
 
   // Keyboard shortcuts
@@ -95,7 +95,7 @@ export const TopNavBar: React.FC = () => {
   return (
     <div className={cn(
       "top-navbar flex items-center justify-between px-4",
-      isMobile ? "w-2xs" : "w-full"
+      isMobile ? "w-11/12" : "w-full"
     )}>
       <div className={cn("navbar-left", isMobile ? "p-0" : "p-5")} ref={searchButtonRef as unknown as React.RefObject<HTMLDivElement>}>
         <Button

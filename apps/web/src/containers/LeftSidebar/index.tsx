@@ -11,7 +11,7 @@ import {
     DropdownMenuItem,
     DropdownMenuLabel,
     DropdownMenuTrigger,
-} from "@credopass/ui"
+} from "@credopass/ui/components/dropdown-menu"
 import {
     Sidebar,
     SidebarContent,
@@ -28,8 +28,8 @@ import {
     SidebarMenuSubItem,
     SidebarProvider,
     SidebarRail,
-    SidebarTrigger,
-} from "@credopass/ui"
+    SidebarTrigger
+} from "@credopass/ui/components/sidebar"
 import {
     TerminalSquareIcon,
     BotIcon,

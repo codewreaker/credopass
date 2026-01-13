@@ -167,7 +167,7 @@ const Analytics: React.FC = () => {
       <GridLayout
         layouts={layouts}
         gridConfig={{ containerPadding: [0, 0] }}
-        onLayoutChange={(layout, allLayouts) => console.log(layout, allLayouts)}
+        //onLayoutChange={(layout, allLayouts) => console.log(layout, allLayouts)}
       >
         {statCards}
         <Card key="chart-1" className="relative h-full flex flex-col">
