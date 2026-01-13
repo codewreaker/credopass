@@ -1,4 +1,3 @@
-//@ts-ignore it will be part of the ui lib
 import { toast } from "sonner";
 import { createCollection } from '@tanstack/db';
 import { QueryClient } from '@tanstack/query-core';

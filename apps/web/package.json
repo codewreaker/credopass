@@ -32,6 +32,9 @@
     "zod": "^4.3.5",
     "zustand": "^5.0.9"
   },
+  "peerDependencies": {
+    "sonner": "^2.6.3"
+  },
   "devDependencies": {
     "@tailwindcss/vite": "^4.1.18",
     "@types/react": "^19.2.7",
