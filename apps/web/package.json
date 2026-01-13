@@ -4,7 +4,6 @@
   "private": true,
   "type": "module",
   "dependencies": {
-    "@base-ui/react": "^1.0.0",
     "@credopass/ui": "workspace:*",
     "@credopass/lib": "workspace:*",
     "@fontsource-variable/inter": "^5.2.8",

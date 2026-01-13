@@ -71,7 +71,6 @@ export const RightSidebar: React.FC = () => {
     currentMonth.getMonth() === new Date().getMonth() &&
     currentMonth.getFullYear() === new Date().getFullYear();
 
-  console.log(viewedItem);
   return (
     <Sheet open={isCollapsed} onOpenChange={onToggleCollapse}>
       <SheetContent>

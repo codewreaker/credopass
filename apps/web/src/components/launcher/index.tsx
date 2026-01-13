@@ -1,4 +1,18 @@
-import { Dialog } from '@base-ui/react/dialog';
+
+import { Button } from "@credopass/ui/components/button"
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@credopass/ui/components/dialog"
+import { Input } from "@credopass/ui/components/input"
+import { Label } from "@credopass/ui/components/label"
+
 import { useLauncher } from '../../stores/store';
 // import { SignInForm } from '../../containers/SignInModal';
 import { X } from 'lucide-react';
@@ -38,17 +52,31 @@ export default function ModalPortal() {
   };
 
 
+
+
   return (
-    <Dialog.Root open={launcher.isOpen} onOpenChange={handleOpenChange}>
-      <Dialog.Portal>
-        <Dialog.Backdrop className="modal-overlay" />
-        <Dialog.Popup className="modal-container">
-          <Dialog.Close className="modal-close" aria-label="Close modal" >
-            <X size={14} />
-          </Dialog.Close>
+    <Dialog open={launcher.isOpen} onOpenChange={handleOpenChange}>
+      <DialogTrigger asChild>
+        <Button variant="outline">Open Dialog</Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>Edit profile</DialogTitle>
+          <DialogDescription>
+            Make changes to your profile here. Click save when you&apos;re
+            done.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-4 modal-container">
           {launcher?.content || <DefaultModal />}
-        </Dialog.Popup>
-      </Dialog.Portal>
-    </Dialog.Root>
-  );
+        </div>
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button variant="outline">Cancel</Button>
+          </DialogClose>
+          <Button type="submit">Save changes</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
 }

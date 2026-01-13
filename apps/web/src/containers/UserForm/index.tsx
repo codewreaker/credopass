@@ -66,6 +66,9 @@ export const launchUserForm = (
 const UserForm = ({ initialData = {}, isEditing = false, onClose }: UserFormProps) => {
   const [isMutating, setIsMutating] = useState(false);
   const { users: userCollection } = getCollections();
+  const isError = userCollection.utils.isError;
+  const lastError = userCollection.utils.lastError;
+  const errorCount = userCollection.utils.errorCount;
 
   const form = useForm({
     defaultValues: {
@@ -94,6 +97,7 @@ const UserForm = ({ initialData = {}, isEditing = false, onClose }: UserFormProp
       };
 
       try {
+
         if (isEditing && initialData.id) {
           userCollection?.update(initialData.id, (draft) => {
             draft.firstName = userData.firstName;
@@ -112,7 +116,8 @@ const UserForm = ({ initialData = {}, isEditing = false, onClose }: UserFormProp
         }
         onClose?.();
       } catch (error) {
-        console.error('Failed to save user:', error);
+        alert('An error occurred while saving the user. Please try again.');
+        console.error(`Failed to save user: ${(error as Error).message}`);
       } finally {
         setIsMutating(false);
       }
@@ -126,12 +131,13 @@ const UserForm = ({ initialData = {}, isEditing = false, onClose }: UserFormProp
         userCollection?.delete(initialData.id);
         onClose?.();
       } catch (error) {
-        console.error('Failed to delete user:', error);
+        console.error(`Failed to delete user: ${(error as Error).message}`);
       } finally {
         setIsMutating(false);
       }
     }
   };
+
 
   return (
     <div className="user-modal">

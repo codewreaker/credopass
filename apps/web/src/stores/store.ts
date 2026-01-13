@@ -1,5 +1,5 @@
 // Zustand Based Store to handle App State
-import type { DialogRootActions } from '@base-ui/react/dialog';
+import type { DialogRootActions } from '@credopass/ui/components/dialog'
 import { create } from 'zustand'
 import { combine, devtools } from 'zustand/middleware'
 

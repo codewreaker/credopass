@@ -2,7 +2,7 @@
 // FILE: packages/tanstack-db/src/collections/users.ts
 // TanStack DB collection for Users
 // ============================================================================
-
+import { toast } from "sonner";
 import { createCollection } from '@tanstack/db';
 import { QueryClient } from '@tanstack/query-core';
 import { queryCollectionOptions } from '@tanstack/query-db-collection';
@@ -34,7 +34,11 @@ export function createUserCollection(queryClient: QueryClient) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(newUser),
         });
-        if (!response.ok) throw new Error('Failed to create user');
+        if (!response.ok) {
+          const {error} = await response.json();
+          toast.error(error);
+          throw new Error(error);
+        }
       },
 
       // Handle UPDATE
