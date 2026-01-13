@@ -39,7 +39,6 @@ export const RightSidebar: React.FC = () => {
   const isCollapsed = useAppStore(({ sidebarOpen }) => (sidebarOpen['right']))
   const toggleSidebar = useAppStore(({ toggleSidebar }) => toggleSidebar)
   const viewedItem = useAppStore(({ viewedItem }) => viewedItem)
-  const setViewedItem = useAppStore(state => state.setViewedItem);
 
   const isProfileView = viewedItem !== null;
   const onToggleCollapse = () => toggleSidebar('right')
@@ -87,7 +86,7 @@ export const RightSidebar: React.FC = () => {
         <div className="grid flex-1 auto-rows-min gap-6 px-4 h-[calc(100vh-52.5px)] overflow-y-auto sticky">
           <>
             {viewedItem ? (
-              <ProfileView data={viewedItem} onClose={() => setViewedItem(null)} />
+              <ProfileView data={viewedItem}/>
             ) : (
               <>
                 <div className="calendar-widget">
