@@ -53,9 +53,6 @@ export default function ModalPortal() {
 
   return (
     <Dialog open={launcher.isOpen} onOpenChange={handleOpenChange}>
-      <DialogTrigger>
-        <Button variant="outline">Open Dialog</Button>
-      </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Edit profile</DialogTitle>
