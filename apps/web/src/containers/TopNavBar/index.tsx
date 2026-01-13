@@ -107,7 +107,7 @@ export const TopNavBar: React.FC = () => {
 
       <div className="navbar-right">
         <Button variant="default" onClick={handleNewEvent}>
-          <Calendar size={14} />
+          <Calendar />
           New Event
         </Button>
 

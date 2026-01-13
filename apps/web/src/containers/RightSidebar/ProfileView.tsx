@@ -1,9 +1,9 @@
 import React from 'react';
-import { InputGroup, InputGroupAddon, InputGroupInput } from '@credopass/ui/components/input-group';
 import { Label } from '@credopass/ui/components/label';
-import { LucideXCircle } from 'lucide-react';
+import { Input } from '@credopass/ui/components/input';
+import { Star } from 'lucide-react';
 
-interface DetailViewProps {
+interface ProfileViewProps {
     data: Record<string, any>;
 }
 
@@ -79,7 +79,7 @@ const getTypeLabel = (type: string): string => {
     return typeMap[type] || 'text';
 };
 
-export const DetailView: React.FC<DetailViewProps & { onClose: () => void }> = ({ data, onClose }) => {
+const ProfileView: React.FC<ProfileViewProps> = ({ data }) => {
     if (!data || typeof data !== 'object') {
         return (
             <div className="p-8 text-center text-muted-foreground">
@@ -97,37 +97,51 @@ export const DetailView: React.FC<DetailViewProps & { onClose: () => void }> = (
 
     return (
         <>
-            <div className="flex flex-row justify-between px-4 py-3 border-b border-border bg-(--background-darker)">
-                <h3 className="text-foreground text-base font-semibold m-0">Details</h3>
-                <button onClick={onClose} className="cursor-pointer text-muted-foreground hover:text-foreground">
-                    <LucideXCircle size={18} />
-                </button>
+            <div className="loyalty-card">
+                <div className="card-header">
+                    <Star className="star-icon" size={18} fill="var(--primary)" />
+                    <h3>Loyalty Status</h3>
+                </div>
+                <div className="card-content">
+                    <div className="loyalty-level">
+                        <div className="level-badge">GOLD</div>
+                        <p className="level-text">Member Level</p>
+                    </div>
+                    <div className="loyalty-stats">
+                        <div className="stat-item">
+                            <span className="stat-value">2,450</span>
+                            <span className="stat-label">Points</span>
+                        </div>
+                        <div className="stat-divider" />
+                        <div className="stat-item">
+                            <span className="stat-value">89%</span>
+                            <span className="stat-label">Attendance</span>
+                        </div>
+                    </div>
+                    <div className="progress-bar">
+                        <div className="progress-fill" style={{ width: '75%' }} />
+                    </div>
+                    <p className="progress-text">750 points to Platinum</p>
+                </div>
             </div>
-            <div className="p-3 flex flex-col gap-3 max-h-[calc(100vh-200px)] overflow-y-auto">
+            <div className="flex flex-col gap-4 max-h-[calc(100vh-200px)] overflow-y-auto">
                 {entries.map(([key, value]) => {
                     const fieldType = getFieldType(key, value);
                     const formattedValue = formatValue(value, fieldType);
                     const typeLabel = getTypeLabel(fieldType);
-
                     return (
-                        <InputGroup key={key}>
-                            <InputGroupInput
-                                id={key}
-                                value={formattedValue}
-                                type={fieldType === 'timestamp' || fieldType === 'uuid' ? 'text' : fieldType}
+                        <div className="grid gap-3">
+                            <Label htmlFor={key}>{key}<span className="ml-auto text-xs text-muted-foreground font-mono">{typeLabel}</span></Label>
+                            <Input
                                 readOnly
-                                className="cursor-default"
-                            />
-                            <InputGroupAddon align="block-start">
-                                <Label htmlFor={key} className="text-foreground text-sm font-medium">
-                                    {key}
-                                </Label>
-                                <span className="ml-auto text-xs text-muted-foreground font-mono">{typeLabel}</span>
-                            </InputGroupAddon>
-                        </InputGroup>
-                    );
+                                type={fieldType === 'timestamp' || fieldType === 'uuid' ? 'text' : fieldType}
+                                id={key} defaultValue={formattedValue} />
+                        </div>
+                    )
                 })}
             </div>
         </>
     );
 };
+
+export default ProfileView;

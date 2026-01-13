@@ -2,7 +2,7 @@ import { Outlet } from "@tanstack/react-router";
 import { TopNavBar } from "../containers/TopNavBar/index";
 import LeftSidebar, { SidebarInset, SidebarTrigger } from "../containers/LeftSidebar/index";
 
-import { RightSidebar } from "../containers/RightSidebar";
+import { RightSidebar, RightSidebarTrigger } from "../containers/RightSidebar";
 //import { SignInModal } from "../containers/SignInModal";
 
 import ModalPortal from "../components/launcher";
@@ -44,15 +44,15 @@ export function RootLayout() {
           ]}
           nav={{
             main: [
-              { 
-                url: "/", 
-                icon: LayoutDashboard, 
+              {
+                url: "/",
+                icon: LayoutDashboard,
                 label: "Home",
                 isActive: true
               },
-              { 
-                url: "/members", 
-                icon: Users, 
+              {
+                url: "/members",
+                icon: Users,
                 label: "Members"
               },
               {
@@ -60,20 +60,20 @@ export function RootLayout() {
                 icon: ChartNoAxesCombined,
                 label: "Analytics",
               },
-              { 
-                url: "/events", 
-                icon: Calendar, 
+              {
+                url: "/events",
+                icon: Calendar,
                 label: "Events"
               },
-              { 
-                url: "/database", 
-                icon: Database, 
+              {
+                url: "/database",
+                icon: Database,
                 label: "Tables"
               },
             ],
             examples: [{
-              url: "/component-example", 
-              icon: LayoutDashboard, 
+              url: "/component-example",
+              icon: LayoutDashboard,
               label: "Components"
             }]
           }}
@@ -82,6 +82,7 @@ export function RootLayout() {
             <header className="flex justify-between h-16 shrink-0 items-center gap-2 border-b px-4">
               <SidebarTrigger className="-ml-1" />
               <TopNavBar />
+              <RightSidebarTrigger />
             </header>
             <Outlet />
           </SidebarInset>

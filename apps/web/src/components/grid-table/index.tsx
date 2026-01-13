@@ -37,7 +37,7 @@ const theme = themeMaterial
     borderColor: 'var(--border)',
     foregroundColor: 'var(--foreground)',
     browserColorScheme: "dark",
-    checkboxUncheckedBackgroundColor: 'var(--primary)',
+    checkboxUncheckedBackgroundColor: 'var(--foreground)',
     checkboxCheckedBackgroundColor: 'var(--primary)',
     checkboxIndeterminateBackgroundColor: 'var(--primary)',
     chromeBackgroundColor: {
@@ -72,7 +72,7 @@ const GridTable: React.FC<GridTableProps> = ({
   const [selectedItems, setSelectedItems] = useState<any[]>([]);
   const [gridApi, setGridApi] = useState<GridApi | null>(null);
 
-  const viewItemSet = useAppStore(state => state.viewedItem !== null);
+  // const viewItemSet = useAppStore(state => state.viewedItem !== null);
   const setViewedItem = useAppStore(state => state.setViewedItem);
   const toggleSidebar = useAppStore(state => state.toggleSidebar);
 
@@ -115,18 +115,14 @@ const GridTable: React.FC<GridTableProps> = ({
         className="view-action-btn"
         onClick={(e) => {
           e.stopPropagation();
-          if (viewItemSet) {
-            setViewedItem(null);
-          } else {
-            setViewedItem(data);
-          }
-          toggleSidebar('right', false);
+          setViewedItem(data);
+          toggleSidebar('right');
         }}
       >
         <Eye size={18} />
       </div>
     )
-  }, [setViewedItem, toggleSidebar, viewItemSet]);
+  }, [setViewedItem, toggleSidebar]);
 
   const memoizedColumnDefs = useMemo(() => {
     if (!columnDefs) return [];

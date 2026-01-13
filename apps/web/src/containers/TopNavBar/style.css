@@ -3,12 +3,13 @@
   align-items: center;
   justify-content: space-between;
   width: 100%;
+  padding: 0 1rem;
 
   .navbar-left {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 5rem;
+    padding: 2rem;
     width: 90%;
 
 
