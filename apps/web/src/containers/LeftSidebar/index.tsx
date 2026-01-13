@@ -178,7 +178,12 @@ const MainSidebar: React.FC<SidebarProps> = ({
 
 
     return (
-        <SidebarProvider defaultOpen={isOpen}>
+        <SidebarProvider defaultOpen={isOpen}
+            style={{
+                // @ts-expect-error: Allow custom CSS variables
+                "--sidebar-width": "14rem"
+            }}
+        >
             <Sidebar collapsible="icon" variant="inset">
                 <SidebarHeader>
                     <SidebarMenu>

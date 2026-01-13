@@ -49,7 +49,7 @@
     "setup": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "drizzle-kit generate && drizzle-kit migrate && bun src/db/seed.ts && bun studio",
+        "command": "drizzle-kit generate && drizzle-kit migrate && bun src/db/seed.ts",
         "cwd": "{projectRoot}"
       }
     }
