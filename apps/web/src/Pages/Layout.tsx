@@ -50,15 +50,15 @@ export function RootLayout() {
             nav={{
               main: [
                 {
-                  url: "/",
-                  icon: LayoutDashboard,
-                  label: "Home",
-                  isActive: true
-                },
-                {
                   url: "/checkin",
                   icon: QrCode,
                   label: "Check-In"
+                },
+                {
+                  url: "/",
+                  icon: LayoutDashboard,
+                  label: "Dashboard",
+                  isActive: true
                 },
                 {
                   url: "/members",

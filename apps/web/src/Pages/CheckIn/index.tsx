@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useCallback } from 'react';
 import { useLiveQuery } from '@tanstack/react-db';
-import { QrCode, Plus, Clock, Calendar, MapPin, Users, ArrowLeft, RefreshCw } from 'lucide-react';
+import { QrCodeIcon, Plus, Clock, Calendar, MapPin, Users, ArrowLeft, RefreshCw } from 'lucide-react';
 import { QRCodeSVG as QRCode } from 'qrcode.react';
 import { useEventSessionStore, useLauncher } from '../../stores/store';
 import { API_BASE_URL } from '../../config';
@@ -70,14 +70,23 @@ const generateSignInParams = (session: any): SignInParams | null => {
 };
 
 export const generateSignInUrl = (params: SignInParams): string => {
-  const queryString = new URLSearchParams(
-    Object.entries(params).reduce((acc, [key, value]) => {
-      acc[key] = typeof value === 'object' ? JSON.stringify(value) : String(value);
-      return acc;
-    }, {} as Record<string, string>)
-  ).toString();
-
-  return `${params.apiEndpoint}/signin?${queryString}`;
+  // Create compact payload with only essential data
+  const payload = {
+    e: params.eventId,           // event ID       // staff ID
+    q: params.qrSessionId, 
+  };
+  
+  // Encode to JSON then base64 URL-safe
+  const jsonStr = JSON.stringify(payload);
+  const base64 = btoa(jsonStr)
+    .replace(/\+/g, '-')  // Replace + with -
+    .replace(/\//g, '_')  // Replace / with _
+    .replace(/=+$/, '');  // Remove trailing =
+  
+  const finalUrl = `${params.apiEndpoint}/signin?d=${base64}`;
+  console.log('Generated Sign-In URL:', finalUrl);
+  console.log('Payload length:', base64.length, 'chars');
+  return finalUrl;
 };
 
 const statusColors: Record<string, string> = {
@@ -233,7 +242,7 @@ const CheckInPage: React.FC = () => {
               <div className="relative">
                 <div className="absolute inset-0 bg-primary/10 rounded-full blur-xl animate-pulse" />
                 <div className="relative bg-linear-to-br from-primary/20 to-primary/5 p-6 rounded-full">
-                  <QrCode className="size-16 text-primary" />
+                  <QrCodeIcon className="size-16 text-primary" />
                 </div>
               </div>
             </EmptyMedia>
@@ -410,7 +419,7 @@ const CheckInPage: React.FC = () => {
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="flex items-center gap-2">
-                <QrCode className="w-5 h-5 text-primary" />
+                <QrCodeIcon className="w-5 h-5 text-primary" />
                 QR Code Check-In
               </CardTitle>
               <Button
@@ -437,12 +446,11 @@ const CheckInPage: React.FC = () => {
                   value={qrCodeData}
                   size={220}
                   level="H"
-                  includeMargin
                 />
               </div>
             ) : (
               <div className="w-64 h-64 bg-muted rounded-2xl flex flex-col items-center justify-center gap-4">
-                <QrCode className="w-16 h-16 text-muted-foreground" />
+                <QrCodeIcon className="w-16 h-16 text-muted-foreground" />
                 <p className="text-sm text-muted-foreground text-center px-4">
                   QR code expired or not generated
                 </p>
