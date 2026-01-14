@@ -1,10 +1,10 @@
 import React, { useEffect, useCallback, useRef } from 'react';
 import {
   Search,
-  Bell,
   Calendar,
   QrCodeIcon,
-  UserPlus
+  UserPlus,
+  User
 } from 'lucide-react';
 import { Button, Badge, Tooltip, TooltipContent, TooltipTrigger } from '@credopass/ui';
 import { launchSignInForm } from '../SignInModal/index';
@@ -140,7 +140,7 @@ export const TopNavBar: React.FC = () => {
         </Tooltip>
 
         <Button size="icon" variant="outline" className="top-navbar-btn">
-          <Bell size={15} />
+          <User size={15} />
           <Badge>3</Badge>
         </Button>
 

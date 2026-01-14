@@ -1,5 +1,5 @@
 import React from 'react';
-import { LucidePanelRightOpen } from 'lucide-react';
+import { LucidePanelRightOpen, ShieldCheck } from 'lucide-react';
 import { useAppStore } from '../../stores/store';
 import ProfileView from './ProfileView';
 import OverviewView from './OverviewView';
@@ -81,7 +81,7 @@ export const RightSidebar: React.FC = () => {
       case 'profile':
         return `${viewedItem.content?.firstName} ${viewedItem.content?.lastName}`;
       case 'qr-signin':
-        return "Scan QR code or manually sign in";
+        return "Please Scan QR code or manually sign in.";
       default:
         return "Overview of loyalty status and upcoming events.";
     }
@@ -112,7 +112,7 @@ export const RightSidebar: React.FC = () => {
             <Button
               onClick={handleQRScan}
             >
-              Scan QR Code
+              <ShieldCheck/> QR Code Scan
             </Button>
             <SheetClose>
               <Button

@@ -173,15 +173,15 @@ const QRSignInView: React.FC = () => {
     }, [session.qrExpiresAt]);
 
     return (
-        <div className="qr-signin-widget flex flex-col items-center justify-center p-6 gap-4">
-            <div className="qr-signin-content flex flex-col items-center gap-4 w-full">
-                <div className="qr-icon-container">
+        <div className="flex flex-col items-center justify-center p-6 gap-4">
+            <div className="flex flex-col items-center gap-4 w-full">
+                <>
                     {hasValidSession ? (
                         <div className="qr-code-container bg-white p-4 rounded-lg shadow-md">
                             {qrCodeData ? (
                                 <QRCode
                                     value={qrCodeData}
-                                    size={256}
+                                    size={220}
                                     level="H"
 
                                 />
@@ -196,7 +196,7 @@ const QRSignInView: React.FC = () => {
                             <QrCodeIcon size={64} className="text-gray-400" />
                         </div>
                     )}
-                </div>
+                </>
 
                 <div className="qr-info text-center">
                     <h3 className="text-lg font-semibold mb-2">Event Check-in QR</h3>
