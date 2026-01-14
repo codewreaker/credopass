@@ -39,56 +39,48 @@ interface EventDetailsCardProps {
 
 const EventDetailsCard: React.FC<EventDetailsCardProps> = ({ event, statusColors }) => {
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base flex items-center gap-2">
-          <Calendar className="w-4 h-4 text-primary" />
-          Event Details
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        <Item variant="outline" size="sm">
-          <ItemMedia variant="icon">
-            <Calendar className="w-4 h-4" />
-          </ItemMedia>
-          <ItemContent>
-            <ItemTitle className="text-xs text-muted-foreground">Event Name</ItemTitle>
-            <ItemDescription className="font-medium">{event.name}</ItemDescription>
-          </ItemContent>
-        </Item>
-        <Item variant="outline" size="sm">
-          <ItemMedia variant="icon">
-            <MapPin className="w-4 h-4" />
-          </ItemMedia>
-          <ItemContent>
-            <ItemTitle className="text-xs text-muted-foreground">Location</ItemTitle>
-            <ItemDescription className="font-medium">{event.location || 'Not specified'}</ItemDescription>
-          </ItemContent>
-        </Item>
-        <Item variant="outline" size="sm">
-          <ItemMedia variant="icon">
-            <Users className="w-4 h-4" />
-          </ItemMedia>
-          <ItemContent>
-            <ItemTitle className="text-xs text-muted-foreground">Capacity</ItemTitle>
-            <ItemDescription className="font-medium">{event.capacity || 'Unlimited'}</ItemDescription>
-          </ItemContent>
-        </Item>
-        <Item variant="outline" size="sm">
-          <ItemMedia variant="icon">
-            <Clock className="w-4 h-4" />
-          </ItemMedia>
-          <ItemContent>
-            <ItemTitle className="text-xs text-muted-foreground">Status</ItemTitle>
-            <ItemDescription>
-              <Badge variant="outline" className={`${statusColors[event.status] || ''}`}>
-                {event.status}
-              </Badge>
-            </ItemDescription>
-          </ItemContent>
-        </Item>
-      </CardContent>
-    </Card>
+    <>
+      <Item variant="outline" size="sm">
+        <ItemMedia variant="icon">
+          <Calendar className="icon-small" />
+        </ItemMedia>
+        <ItemContent>
+          <ItemTitle className="item-title">Event Name</ItemTitle>
+          <ItemDescription className="item-description">{event.name}</ItemDescription>
+        </ItemContent>
+      </Item>
+      <Item variant="outline" size="sm">
+        <ItemMedia variant="icon">
+          <MapPin className="icon-small" />
+        </ItemMedia>
+        <ItemContent>
+          <ItemTitle className="item-title">Location</ItemTitle>
+          <ItemDescription className="item-description">{event.location || 'Not specified'}</ItemDescription>
+        </ItemContent>
+      </Item>
+      <Item variant="outline" size="sm">
+        <ItemMedia variant="icon">
+          <Users className="icon-small" />
+        </ItemMedia>
+        <ItemContent>
+          <ItemTitle className="item-title">Capacity</ItemTitle>
+          <ItemDescription className="item-description">{event.capacity || 'Unlimited'}</ItemDescription>
+        </ItemContent>
+      </Item>
+      <Item variant="outline" size="sm">
+        <ItemMedia variant="icon">
+          <Clock className="icon-small" />
+        </ItemMedia>
+        <ItemContent>
+          <ItemTitle className="item-title">Status</ItemTitle>
+          <ItemDescription>
+            <Badge variant="outline" className={`${statusColors[event.status] || ''}`}>
+              {event.status}
+            </Badge>
+          </ItemDescription>
+        </ItemContent>
+      </Item>
+    </>
   );
 };
 
@@ -100,10 +92,10 @@ interface ManualCheckInCardProps {
 
 const ManualCheckInCard: React.FC<ManualCheckInCardProps> = ({ onSubmit }) => {
   return (
-    <Card className="flex-1">
+    <Card className="manual-checkin-card">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Users className="w-5 h-5 text-primary" />
+        <CardTitle className="card-title">
+          <Users className="icon-medium" />
           Manual Check-In
         </CardTitle>
         <CardDescription>
@@ -119,10 +111,10 @@ const ManualCheckInCard: React.FC<ManualCheckInCardProps> = ({ onSubmit }) => {
 
 const LoadingState: React.FC = () => {
   return (
-    <div className="checkin-page h-full flex flex-col items-center justify-center p-6">
-      <div className="flex flex-col items-center gap-4">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
-        <p className="text-muted-foreground">Loading events...</p>
+    <div className="checkin-page loading-state">
+      <div className="loading-content">
+        <div className="spinner" />
+        <p className="loading-text">Loading events...</p>
       </div>
     </div>
   );
@@ -146,6 +138,7 @@ const CheckInPage: React.FC = () => {
   const [showSuccessScreen, setShowSuccessScreen] = useState(false);
   const [successUser, setSuccessUser] = useState<Partial<User> | null>(null);
   const [checkInCount, setCheckInCount] = useState(0);
+  const [showManualCheckIn, setShowManualCheckIn] = useState(false);
 
   const mockStaffUser: Partial<User> = React.useMemo(
     () => ({
@@ -277,7 +270,7 @@ const CheckInPage: React.FC = () => {
 
   // Active check-in session
   return (
-    <div className="checkin-page h-full flex flex-col p-6 gap-6 overflow-auto">
+    <div className="checkin-page active-checkin-layout">
       <CheckInHeader
         eventName={session.activeEventName || 'Unknown Event'}
         eventLocation={session.activeEventLocation || null}
@@ -288,20 +281,25 @@ const CheckInPage: React.FC = () => {
         }}
       />
 
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <QRCodeDisplay
+      <div className="main-grid">
+        {!showManualCheckIn && <QRCodeDisplay
           qrCodeData={qrCodeData}
           hasValidSession={hasValidSession}
           timeRemaining={timeRemaining}
           onRefreshQR={handleRefreshQR}
-        />
-
-        <div className="flex flex-col gap-6">
-          <ManualCheckInCard onSubmit={handleManualSignIn} />
+          onManualCheckInClick={() => setShowManualCheckIn(true)}
+        >
           {selectedEvent && (
             <EventDetailsCard event={selectedEvent} statusColors={statusColors} />
           )}
+        </QRCodeDisplay>}
+
+
+        <div className="right-column">
+          {showManualCheckIn && <ManualCheckInCard onSubmit={handleManualSignIn} />}
+
         </div>
+
       </div>
     </div>
   );
