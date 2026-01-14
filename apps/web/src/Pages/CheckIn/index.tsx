@@ -1,5 +1,6 @@
-import React, { useMemo, useEffect, useState, useCallback } from 'react';
-import { QrCodeIcon, Plus, Clock } from 'lucide-react';
+import React, { useMemo, useState, useCallback } from 'react';
+import { useLiveQuery } from '@tanstack/react-db';
+import { QrCode, Plus, Clock, Calendar, MapPin, Users, ArrowLeft, RefreshCw } from 'lucide-react';
 import { QRCodeSVG as QRCode } from 'qrcode.react';
 import { useEventSessionStore, useLauncher } from '../../stores/store';
 import { API_BASE_URL } from '../../config';
@@ -16,9 +17,16 @@ import {
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  Badge,
 } from '@credopass/ui';
-import { Item, ItemContent, ItemDescription, ItemMedia } from '@credopass/ui/components/item';
-import type { User } from '@credopass/lib/schemas';
+import { Item, ItemContent, ItemDescription, ItemMedia, ItemTitle } from '@credopass/ui/components/item';
+import type { User, EventType } from '@credopass/lib/schemas';
 import { getCollections } from '../../lib/tanstack-db';
 import { launchEventForm } from '../../containers/EventForm';
 import ManualSignInForm from './ManualSignInForm';
@@ -72,23 +80,21 @@ export const generateSignInUrl = (params: SignInParams): string => {
   return `${params.apiEndpoint}/signin?${queryString}`;
 };
 
-interface EventType {
-  id: string;
-  name: string;
-  description: string | null;
-  status: 'draft' | 'scheduled' | 'ongoing' | 'completed' | 'cancelled';
-  startTime: Date;
-  endTime: Date;
-  location: string;
-  capacity: number | null;
-  hostId: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
+const statusColors: Record<string, string> = {
+  draft: 'bg-gray-100 text-gray-700',
+  scheduled: 'bg-blue-100 text-blue-700',
+  ongoing: 'bg-green-100 text-green-700',
+  completed: 'bg-purple-100 text-purple-700',
+  cancelled: 'bg-red-100 text-red-700',
+};
 
 const CheckInPage: React.FC = () => {
   const { events: eventCollection } = getCollections();
   const { openLauncher } = useLauncher();
+
+  // Fetch events using TanStack DB live query
+  const { data: eventsData, isLoading } = useLiveQuery((q) => q.from({ eventCollection }));
+  const events = useMemo<EventType[]>(() => Array.isArray(eventsData) ? eventsData : [], [eventsData]);
 
   const session = useEventSessionStore((state) => state.session);
   const isQRValid = useEventSessionStore((state) => state.isQRValid());
@@ -96,25 +102,10 @@ const CheckInPage: React.FC = () => {
   const setCurrentUser = useEventSessionStore((state) => state.setCurrentUser);
   const initializeSession = useEventSessionStore((state) => state.initializeSession);
 
-  const [events, setEvents] = useState<EventType[]>([]);
   const [selectedEventId, setSelectedEventId] = useState<string>('');
   const [showSuccessScreen, setShowSuccessScreen] = useState(false);
   const [successUser, setSuccessUser] = useState<Partial<User> | null>(null);
   const [checkInCount, setCheckInCount] = useState(0);
-
-  useEffect(() => {
-    // Load initial events from the collection asynchronously to avoid cascading renders
-    const timer = setTimeout(() => {
-      if (eventCollection && typeof eventCollection === 'object') {
-        const eventData = (eventCollection as any).queryClient ? [] : (eventCollection as any).data || [];
-        if (Array.isArray(eventData) && eventData.length > 0) {
-          setEvents(eventData);
-        }
-      }
-    }, 0);
-
-    return () => clearTimeout(timer);
-  }, [eventCollection]);
 
   const mockStaffUser: Partial<User> = React.useMemo(
     () => ({
@@ -144,8 +135,10 @@ const CheckInPage: React.FC = () => {
     [events, setActiveEvent, setCurrentUser, initializeSession, mockStaffUser]
   );
 
-  const handleEventSelect = (eventId: string) => {
-    initializeEventSession(eventId);
+  const handleEventSelect = (eventId: string | null) => {
+    if (eventId) {
+      initializeEventSession(eventId);
+    }
   };
 
   const handleManualSignIn = (userData: Partial<User>) => {
@@ -167,6 +160,12 @@ const CheckInPage: React.FC = () => {
       },
       openLauncher
     );
+  };
+
+  const handleRefreshQR = () => {
+    if (selectedEventId) {
+      initializeEventSession(selectedEventId);
+    }
   };
 
   const qrCodeData = useMemo(() => {
@@ -197,6 +196,23 @@ const CheckInPage: React.FC = () => {
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   }, [session.qrExpiresAt]);
 
+  const selectedEvent = useMemo(() => {
+    return events.find((e) => e.id === selectedEventId);
+  }, [events, selectedEventId]);
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="checkin-page h-full flex flex-col items-center justify-center p-6">
+        <div className="flex flex-col items-center gap-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
+          <p className="text-muted-foreground">Loading events...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Success screen overlay
   if (showSuccessScreen && successUser) {
     return (
       <SuccessCheckInScreen
@@ -207,26 +223,28 @@ const CheckInPage: React.FC = () => {
     );
   }
 
+  // Empty state - no events
   if (events.length === 0) {
     return (
       <div className="checkin-page h-full flex flex-col items-center justify-center p-6">
-        <Empty>
+        <Empty className="border-2 border-dashed border-muted-foreground/20">
           <EmptyHeader>
-            <EmptyMedia variant="icon">
-              <QrCodeIcon className='size-20' />
+            <EmptyMedia>
+              <div className="relative">
+                <div className="absolute inset-0 bg-primary/10 rounded-full blur-xl animate-pulse" />
+                <div className="relative bg-linear-to-br from-primary/20 to-primary/5 p-6 rounded-full">
+                  <QrCode className="size-16 text-primary" />
+                </div>
+              </div>
             </EmptyMedia>
-            <EmptyTitle>No Events</EmptyTitle>
-            <EmptyDescription>
-              Create or Pick an event to start checking in attendees
+            <EmptyTitle className="text-2xl">No Events Available</EmptyTitle>
+            <EmptyDescription className="max-w-md">
+              Create your first event to start checking in attendees. Events help you track attendance and engage with your community.
             </EmptyDescription>
           </EmptyHeader>
-          <EmptyContent>
-            <Button onClick={handleCreateEvent} size="lg">
-              <Plus className="w-4 h-4 mr-2" />
-              Pick an Event
-            </Button>
-            <Button onClick={handleCreateEvent} size="lg">
-              <Plus className="w-4 h-4 mr-2" />
+          <EmptyContent className="gap-3">
+            <Button onClick={handleCreateEvent} size="lg" className="gap-2">
+              <Plus className="w-5 h-5" />
               Create New Event
             </Button>
           </EmptyContent>
@@ -235,113 +253,219 @@ const CheckInPage: React.FC = () => {
     );
   }
 
+  // Event selection state
   if (!selectedEventId) {
     return (
-      <div className="checkin-page h-full flex flex-col p-6 gap-6">
-        <div className="flex flex-col gap-2">
-          <h1 className="text-3xl font-bold">Check-In</h1>
-          <p className="text-muted-foreground">
-            Select an event or create a new one to start checking in attendees
+      <div className="checkin-page h-full flex flex-col p-6 gap-6 overflow-auto">
+        <div className="flex flex-col gap-2 text-center md:text-left">
+          <h1 className="text-3xl font-bold tracking-tight">Event Check-In</h1>
+          <p className="text-muted-foreground text-lg">
+            Select an event to start checking in attendees
           </p>
         </div>
 
-        <div className="flex-1 flex flex-col gap-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Quick select dropdown */}
+        <Card className="border-primary/20 bg-linear-to-br from-primary/5 to-transparent">
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Calendar className="w-5 h-5 text-primary" />
+              Quick Select
+            </CardTitle>
+            <CardDescription>
+              Choose an event from the dropdown or browse below
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col sm:flex-row gap-3">
+            <Select onValueChange={handleEventSelect}>
+              <SelectTrigger className="flex-1">
+                <SelectValue>Select an event...</SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  {events.map((event) => (
+                    <SelectItem key={event.id} value={event.id}>
+                      <div className="flex items-center gap-2">
+                        <span>{event.name}</span>
+                        <Badge variant="outline" className={`text-xs ${statusColors[event.status] || ''}`}>
+                          {event.status}
+                        </Badge>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+            <Button onClick={handleCreateEvent} variant="outline" className="gap-2">
+              <Plus className="w-4 h-4" />
+              New Event
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Event cards grid */}
+        <div className="flex-1">
+          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <Calendar className="w-5 h-5" />
+            Available Events
+            <Badge variant="secondary">{events.length}</Badge>
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {events.map((event) => (
               <Card
                 key={event.id}
-                className="cursor-pointer hover:shadow-lg transition-shadow"
+                className="cursor-pointer hover:shadow-lg hover:border-primary/50 transition-all duration-200 group"
                 onClick={() => handleEventSelect(event.id)}
               >
-                <CardHeader>
-                  <CardTitle className="text-lg">{event.name}</CardTitle>
-                  <CardDescription>{event.location}</CardDescription>
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between">
+                    <CardTitle className="text-lg group-hover:text-primary transition-colors">
+                      {event.name}
+                    </CardTitle>
+                    <Badge variant="outline" className={`${statusColors[event.status] || ''}`}>
+                      {event.status}
+                    </Badge>
+                  </div>
+                  {event.description && (
+                    <CardDescription className="line-clamp-2">
+                      {event.description}
+                    </CardDescription>
+                  )}
                 </CardHeader>
-                <CardContent>
-                  <div className="flex justify-between text-sm text-muted-foreground">
-                    <span>Status: {event.status}</span>
-                    <span>Cap: {event.capacity}</span>
+                <CardContent className="pt-0">
+                  <div className="space-y-2 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-2">
+                      <MapPin className="w-4 h-4" />
+                      <span className="truncate">{event.location || 'No location'}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Users className="w-4 h-4" />
+                      <span>Capacity: {event.capacity || 'Unlimited'}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-4 h-4" />
+                      <span>
+                        {event.startTime
+                          ? new Date(event.startTime).toLocaleDateString('en-US', {
+                              month: 'short',
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })
+                          : 'No date set'}
+                      </span>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
             ))}
           </div>
-
-          <Button onClick={handleCreateEvent} variant="outline" className="w-full">
-            <Plus className="w-4 h-4 mr-2" />
-            Create New Event
-          </Button>
         </div>
       </div>
     );
   }
 
+  // Active check-in session
   return (
-    <div className="checkin-page h-full flex flex-col p-6 gap-6">
-      <div className="flex justify-between items-start">
-        <div className="flex flex-col gap-2">
-          <h1 className="text-3xl font-bold">Check-In</h1>
-          <p className="text-muted-foreground">{session.activeEventName}</p>
+    <div className="checkin-page h-full flex flex-col p-6 gap-6 overflow-auto">
+      {/* Header with check-in count */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setSelectedEventId('');
+              setCheckInCount(0);
+            }}
+            className="gap-2"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back
+          </Button>
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">{session.activeEventName}</h1>
+            <div className="flex items-center gap-2 text-muted-foreground text-sm">
+              <MapPin className="w-4 h-4" />
+              {session.activeEventLocation || 'No location'}
+            </div>
+          </div>
         </div>
-        <div className="bg-primary text-primary-foreground rounded-lg px-4 py-2 text-center">
-          <p className="text-sm font-medium">Check-ins</p>
-          <p className="text-2xl font-bold">{checkInCount}</p>
+
+        {/* Check-in counter */}
+        <div className="bg-linear-to-br from-primary to-primary/80 text-primary-foreground rounded-2xl px-6 py-3 shadow-lg">
+          <div className="flex items-center gap-3">
+            <Users className="w-6 h-6" />
+            <div>
+              <p className="text-xs font-medium opacity-90">Check-ins Today</p>
+              <p className="text-3xl font-bold">{checkInCount}</p>
+            </div>
+          </div>
         </div>
       </div>
 
+      {/* Main content grid */}
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
+        {/* QR Code Section */}
+        <Card className="flex flex-col">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <QrCodeIcon className="w-5 h-5" />
-              QR Code Check-In
-            </CardTitle>
-            <CardDescription>
-              {timeRemaining && (
-                <div className="flex items-center gap-1 mt-2">
-                  <Clock className="w-4 h-4" />
-                  Expires in {timeRemaining}
-                </div>
-              )}
-            </CardDescription>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <QrCode className="w-5 h-5 text-primary" />
+                QR Code Check-In
+              </CardTitle>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleRefreshQR}
+                className="gap-2"
+              >
+                <RefreshCw className="w-4 h-4" />
+                Refresh
+              </Button>
+            </div>
+            {timeRemaining && (
+              <CardDescription className="flex items-center gap-2">
+                <Clock className="w-4 h-4" />
+                Expires in <span className="font-mono font-semibold">{timeRemaining}</span>
+              </CardDescription>
+            )}
           </CardHeader>
-          <CardContent className="flex flex-col items-center gap-4">
+          <CardContent className="flex-1 flex flex-col items-center justify-center gap-6">
             {hasValidSession && qrCodeData ? (
-              <div className="bg-white p-4 rounded-lg shadow-md">
+              <div className="bg-white p-6 rounded-2xl shadow-lg border">
                 <QRCode
                   value={qrCodeData}
-                  size={240}
+                  size={220}
                   level="H"
                   includeMargin
                 />
               </div>
             ) : (
-              <div className="w-full aspect-square bg-muted rounded-lg flex items-center justify-center">
-                <QrCodeIcon className="w-16 h-16 text-muted-foreground" />
+              <div className="w-64 h-64 bg-muted rounded-2xl flex flex-col items-center justify-center gap-4">
+                <QrCode className="w-16 h-16 text-muted-foreground" />
+                <p className="text-sm text-muted-foreground text-center px-4">
+                  QR code expired or not generated
+                </p>
+                <Button variant="outline" size="sm" onClick={handleRefreshQR}>
+                  Generate New Code
+                </Button>
               </div>
             )}
-            {hasValidSession && (
-              <div className="w-full space-y-2">
-                <Item variant="outline" size="sm">
-                  <ItemMedia variant="icon">
-                    <div className="size-4" />
-                  </ItemMedia>
-                  <ItemContent>
-                    <ItemDescription>
-                      <p className="inline mr-2 font-semibold">Staff:</p>
-                      {session.currentUserName}
-                    </ItemDescription>
-                  </ItemContent>
-                </Item>
-              </div>
-            )}
+            <p className="text-sm text-muted-foreground text-center max-w-xs">
+              Attendees can scan this code with their phone to check in instantly
+            </p>
           </CardContent>
         </Card>
 
-        <div className="flex flex-col gap-4">
+        {/* Right column */}
+        <div className="flex flex-col gap-6">
+          {/* Manual Check-In Card */}
           <Card className="flex-1">
             <CardHeader>
-              <CardTitle>Manual Check-In</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="w-5 h-5 text-primary" />
+                Manual Check-In
+              </CardTitle>
               <CardDescription>
                 Enter attendee details for manual check-in
               </CardDescription>
@@ -351,37 +475,63 @@ const CheckInPage: React.FC = () => {
             </CardContent>
           </Card>
 
+          {/* Event Details Card */}
           <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Event Details</CardTitle>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-primary" />
+                Event Details
+              </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-2">
-              {[
-                { label: 'Event', value: session.activeEventName },
-                { label: 'Location', value: session.activeEventLocation },
-                { label: 'Status', value: session.activeEventStatus },
-                { label: 'Capacity', value: session.activeEventCapacity },
-              ].map((item, idx) => (
-                <div key={idx} className="flex justify-between text-sm">
-                  <span className="text-muted-foreground font-medium">{item.label}:</span>
-                  <span className="font-semibold">{item.value || 'N/A'}</span>
-                </div>
-              ))}
+            <CardContent className="space-y-3">
+              {selectedEvent && (
+                <>
+                  <Item variant="outline" size="sm">
+                    <ItemMedia variant="icon">
+                      <Calendar className="w-4 h-4" />
+                    </ItemMedia>
+                    <ItemContent>
+                      <ItemTitle className="text-xs text-muted-foreground">Event Name</ItemTitle>
+                      <ItemDescription className="font-medium">{selectedEvent.name}</ItemDescription>
+                    </ItemContent>
+                  </Item>
+                  <Item variant="outline" size="sm">
+                    <ItemMedia variant="icon">
+                      <MapPin className="w-4 h-4" />
+                    </ItemMedia>
+                    <ItemContent>
+                      <ItemTitle className="text-xs text-muted-foreground">Location</ItemTitle>
+                      <ItemDescription className="font-medium">{selectedEvent.location || 'Not specified'}</ItemDescription>
+                    </ItemContent>
+                  </Item>
+                  <Item variant="outline" size="sm">
+                    <ItemMedia variant="icon">
+                      <Users className="w-4 h-4" />
+                    </ItemMedia>
+                    <ItemContent>
+                      <ItemTitle className="text-xs text-muted-foreground">Capacity</ItemTitle>
+                      <ItemDescription className="font-medium">{selectedEvent.capacity || 'Unlimited'}</ItemDescription>
+                    </ItemContent>
+                  </Item>
+                  <Item variant="outline" size="sm">
+                    <ItemMedia variant="icon">
+                      <Clock className="w-4 h-4" />
+                    </ItemMedia>
+                    <ItemContent>
+                      <ItemTitle className="text-xs text-muted-foreground">Status</ItemTitle>
+                      <ItemDescription>
+                        <Badge variant="outline" className={`${statusColors[selectedEvent.status] || ''}`}>
+                          {selectedEvent.status}
+                        </Badge>
+                      </ItemDescription>
+                    </ItemContent>
+                  </Item>
+                </>
+              )}
             </CardContent>
           </Card>
         </div>
       </div>
-
-      <Button
-        variant="outline"
-        onClick={() => {
-          setSelectedEventId('');
-          setCheckInCount(0);
-        }}
-        className="w-full"
-      >
-        Back to Events
-      </Button>
     </div>
   );
 };

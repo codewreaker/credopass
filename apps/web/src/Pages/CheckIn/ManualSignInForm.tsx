@@ -1,7 +1,7 @@
 import { useForm } from '@tanstack/react-form';
 import * as z from 'zod';
-import { Button, Input, FieldError, FieldGroup, FieldLabel } from '@credopass/ui';
-import { UserPlus } from 'lucide-react';
+import { Button, Input, FieldError, FieldGroup, FieldLabel, Field } from '@credopass/ui';
+import { UserPlus, Mail, User as UserIcon } from 'lucide-react';
 import type { User } from '@credopass/lib/schemas';
 
 interface ManualSignInFormProps {
@@ -12,11 +12,13 @@ const manualSignInSchema = z.object({
   firstName: z
     .string()
     .min(2, 'First name must be at least 2 characters.')
-    .max(50, 'First name must be at most 50 characters.'),
+    .max(50, 'First name must be at most 50 characters.')
+    .regex(/^[a-zA-Z\s'-]+$/, 'First name can only contain letters.'),
   lastName: z
     .string()
     .min(2, 'Last name must be at least 2 characters.')
-    .max(50, 'Last name must be at most 50 characters.'),
+    .max(50, 'Last name must be at most 50 characters.')
+    .regex(/^[a-zA-Z\s'-]+$/, 'Last name can only contain letters.'),
   email: z
     .string()
     .email('Please enter a valid email address.')
@@ -62,68 +64,92 @@ const ManualSignInForm: React.FC<ManualSignInFormProps> = ({ onSubmit }) => {
       }}
       className="space-y-4"
     >
-      <form.Field
-        name="firstName"
-        children={(field) => (
-          <FieldGroup>
-            <FieldLabel htmlFor="firstName">First Name</FieldLabel>
-            <Input
-              id="firstName"
-              name={field.name}
-              value={field.state.value}
-              onBlur={field.handleBlur}
-              onChange={(e) => field.handleChange(e.target.value)}
-              placeholder="John"
-            />
-            <FieldError>{field.state.meta.errors[0]}</FieldError>
-          </FieldGroup>
-        )}
-      />
+      <div className="grid grid-cols-2 gap-3">
+        <form.Field
+          name="firstName"
+          children={(field) => {
+            const isInvalid = field.state.meta.isTouched && field.state.meta.errors.length > 0;
+            return (
+              <Field data-invalid={isInvalid}>
+                <FieldLabel htmlFor="firstName" className="flex items-center gap-1.5 text-sm">
+                  <UserIcon className="w-3.5 h-3.5" />
+                  First Name
+                </FieldLabel>
+                <Input
+                  id="firstName"
+                  name={field.name}
+                  value={field.state.value}
+                  onBlur={field.handleBlur}
+                  onChange={(e) => field.handleChange(e.target.value)}
+                  placeholder="John"
+                  aria-invalid={isInvalid}
+                />
+                {isInvalid && <FieldError>{field.state.meta.errors[0]}</FieldError>}
+              </Field>
+            );
+          }}
+        />
 
-      <form.Field
-        name="lastName"
-        children={(field) => (
-          <FieldGroup>
-            <FieldLabel htmlFor="lastName">Last Name</FieldLabel>
-            <Input
-              id="lastName"
-              name={field.name}
-              value={field.state.value}
-              onBlur={field.handleBlur}
-              onChange={(e) => field.handleChange(e.target.value)}
-              placeholder="Doe"
-            />
-            <FieldError>{field.state.meta.errors[0]}</FieldError>
-          </FieldGroup>
-        )}
-      />
+        <form.Field
+          name="lastName"
+          children={(field) => {
+            const isInvalid = field.state.meta.isTouched && field.state.meta.errors.length > 0;
+            return (
+              <Field data-invalid={isInvalid}>
+                <FieldLabel htmlFor="lastName" className="flex items-center gap-1.5 text-sm">
+                  <UserIcon className="w-3.5 h-3.5" />
+                  Last Name
+                </FieldLabel>
+                <Input
+                  id="lastName"
+                  name={field.name}
+                  value={field.state.value}
+                  onBlur={field.handleBlur}
+                  onChange={(e) => field.handleChange(e.target.value)}
+                  placeholder="Doe"
+                  aria-invalid={isInvalid}
+                />
+                {isInvalid && <FieldError>{field.state.meta.errors[0]}</FieldError>}
+              </Field>
+            );
+          }}
+        />
+      </div>
 
       <form.Field
         name="email"
-        children={(field) => (
-          <FieldGroup>
-            <FieldLabel htmlFor="email">Email</FieldLabel>
-            <Input
-              id="email"
-              name={field.name}
-              type="email"
-              value={field.state.value}
-              onBlur={field.handleBlur}
-              onChange={(e) => field.handleChange(e.target.value)}
-              placeholder="john@example.com"
-            />
-            <FieldError>{field.state.meta.errors[0]}</FieldError>
-          </FieldGroup>
-        )}
+        children={(field) => {
+          const isInvalid = field.state.meta.isTouched && field.state.meta.errors.length > 0;
+          return (
+            <Field data-invalid={isInvalid}>
+              <FieldLabel htmlFor="email" className="flex items-center gap-1.5 text-sm">
+                <Mail className="w-3.5 h-3.5" />
+                Email Address
+              </FieldLabel>
+              <Input
+                id="email"
+                name={field.name}
+                type="email"
+                value={field.state.value}
+                onBlur={field.handleBlur}
+                onChange={(e) => field.handleChange(e.target.value)}
+                placeholder="john@example.com"
+                aria-invalid={isInvalid}
+              />
+              {isInvalid && <FieldError>{field.state.meta.errors[0]}</FieldError>}
+            </Field>
+          );
+        }}
       />
 
       <Button
         type="submit"
-        className="w-full"
+        className="w-full gap-2"
+        size="lg"
         disabled={form.state.isSubmitting}
       >
-        <UserPlus className="w-4 h-4 mr-2" />
-        {form.state.isSubmitting ? 'Checking In...' : 'Check In'}
+        <UserPlus className="w-4 h-4" />
+        {form.state.isSubmitting ? 'Checking In...' : 'Check In Attendee'}
       </Button>
     </form>
   );

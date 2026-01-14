@@ -1,6 +1,7 @@
 .checkin-page {
-  background: linear-gradient(135deg, hsl(var(--background)) 0%, hsl(var(--secondary)) 100%);
+  background: linear-gradient(145deg, hsl(var(--background)) 0%, hsl(var(--secondary) / 0.3) 100%);
   animation: fadeIn 0.3s ease-in-out;
+  min-height: 100%;
 }
 
 @keyframes fadeIn {
@@ -33,9 +34,72 @@
   perspective: 1000px;
 }
 
+/* QR Code styling */
+.checkin-page [data-slot="card"] {
+  transition: all 0.2s ease-in-out;
+}
+
+.checkin-page [data-slot="card"]:hover {
+  transform: translateY(-2px);
+}
+
+/* Event cards hover effect */
+.checkin-page .grid [data-slot="card"] {
+  border: 1px solid hsl(var(--border));
+}
+
+.checkin-page .grid [data-slot="card"]:hover {
+  border-color: hsl(var(--primary) / 0.5);
+  box-shadow: 0 10px 30px -10px hsl(var(--primary) / 0.15);
+}
+
+/* Counter badge animation */
+@keyframes countUp {
+  from {
+    transform: scale(1.2);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+.checkin-page .bg-linear-to-br {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    box-shadow: 0 4px 20px -4px hsl(var(--primary) / 0.4);
+  }
+  50% {
+    box-shadow: 0 4px 30px -4px hsl(var(--primary) / 0.6);
+  }
+}
+
+/* Empty state styling */
+.checkin-page [data-slot="empty"] {
+  max-width: 500px;
+}
+
+/* Responsive adjustments */
 @media (max-width: 768px) {
   .checkin-page {
     padding: 1rem;
     gap: 1rem;
+  }
+  
+  .checkin-page h1 {
+    font-size: 1.5rem;
+  }
+  
+  .checkin-page .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Dark mode enhancements */
+@media (prefers-color-scheme: dark) {
+  .checkin-page {
+    background: linear-gradient(145deg, hsl(var(--background)) 0%, hsl(var(--secondary) / 0.15) 100%);
   }
 }
