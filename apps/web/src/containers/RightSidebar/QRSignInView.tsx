@@ -1,8 +1,10 @@
-import React, { useMemo } from 'react';
-import { QrCodeIcon, AlertCircle, Clock } from 'lucide-react';
+import React, { useMemo, useEffect } from 'react';
+import { QrCodeIcon, AlertCircle, BadgeCheckIcon } from 'lucide-react';
 import { QRCodeSVG as QRCode } from 'qrcode.react';
 import { useEventSessionStore } from '../../stores/store';
 import { API_BASE_URL } from '../../config';
+import { Item, ItemContent, ItemDescription, ItemMedia, ItemTitle } from '@credopass/ui/components/item';
+import type { EventType, User } from '@credopass/lib/schemas';
 
 /**
  * Generates sign-in params for QR code encoding
@@ -51,6 +53,19 @@ const generateSignInParams = (session: any): SignInParams | null => {
         apiEndpoint: API_BASE_URL,
     };
 };
+/**
+ * Generates a shareable URL from sign-in parameters
+ */
+export const generateSignInUrl = (params: SignInParams): string => {
+    const queryString = new URLSearchParams(
+        Object.entries(params).reduce((acc, [key, value]) => {
+            acc[key] = typeof value === 'object' ? JSON.stringify(value) : String(value);
+            return acc;
+        }, {} as Record<string, string>)
+    ).toString();
+    
+    return `${params.apiEndpoint}/signin?${queryString}`;
+};
 
 export const handleQRScan = () => {
     // TODO: Implement QR code scanner logic on mobile device
@@ -62,9 +77,64 @@ export const handleManualSignIn = () => {
     console.log('Manual sign-in...');
 };
 
+/**
+ * Mock data for demonstration - replace with actual API calls later
+ */
+const mockEventData: Partial<EventType> = {
+    id: 'event-001',
+    name: 'Community Gathering',
+    description: 'A community event for networking and engagement',
+    location: 'Community Center, Main Hall',
+    status: 'ongoing',
+    startTime: new Date(),
+    endTime: new Date(Date.now() + 3 * 60 * 60 * 1000), // 3 hours from now
+    capacity: 500,
+    hostId: 'host-001',
+};
+
+const mockUserData: Partial<User> = {
+    id: 'user-001',
+    email: 'staff@example.com',
+    firstName: 'John',
+    lastName: 'Doe',
+};
+
+const mockSessionToken = `token_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+
 const QRSignInView: React.FC = () => {
     const session = useEventSessionStore((state) => state.session);
     const isQRValid = useEventSessionStore((state) => state.isQRValid());
+    const setActiveEvent = useEventSessionStore((state) => state.setActiveEvent);
+    const setCurrentUser = useEventSessionStore((state) => state.setCurrentUser);
+    const initializeSession = useEventSessionStore((state) => state.initializeSession);
+
+    /**
+     * Initialize the complete session using all store functions
+     */
+    const initializeCompleteSession = () => {
+        try {
+            // Step 1: Set the active event
+            setActiveEvent(mockEventData.id || '', mockEventData);
+            console.log('✓ Active event set:', mockEventData.name);
+
+            // Step 2: Set the current user (event organizer/staff)
+            setCurrentUser(mockUserData.id || '', mockUserData);
+            console.log('✓ Current user set:', `${mockUserData.firstName} ${mockUserData.lastName}`);
+
+            // Step 3: Initialize the session token and QR metadata
+            initializeSession(mockSessionToken);
+            console.log('✓ Session initialized with token');
+
+            console.log('✓ Complete session initialized successfully');
+        } catch (error) {
+            console.error('✗ Failed to initialize session:', error);
+        }
+    };
+
+    // Auto-initialize session when component mounts
+    useEffect(() => {
+        initializeCompleteSession();
+    }, []);
 
     // Generate QR code data from current session
     const qrCodeData = useMemo(() => {
@@ -72,7 +142,7 @@ const QRSignInView: React.FC = () => {
             const params = generateSignInParams(session);
             if (!params) return null;
             // Encode params as JSON string for QR code
-            return JSON.stringify(params);
+            return generateSignInUrl(params);
         } catch (error) {
             console.error('Failed to generate QR code data:', error);
             return null;
@@ -90,17 +160,13 @@ const QRSignInView: React.FC = () => {
     }, [session, isQRValid]);
 
 
-    console.log('QRSignInView render - hasValidSession:', session.activeEventId,
-        session.currentUserId,
-        session.sessionToken,
-        session.qrExpiresAt,
-        isQRValid);
+    console.log('QRSignInView render - hasValidSession:', qrCodeData);
 
 
     // Calculate remaining time until QR expires
     const timeRemaining = useMemo(() => {
         if (!session.qrExpiresAt) return null;
-        const remaining = Math.max(0, session.qrExpiresAt - Date.now());
+        const remaining = Math.max(0, session.qrExpiresAt - (new Date().getTime()));
         const minutes = Math.floor(remaining / 60000);
         const seconds = Math.floor((remaining % 60000) / 1000);
         return `${minutes}:${seconds.toString().padStart(2, '0')}`;
@@ -117,7 +183,7 @@ const QRSignInView: React.FC = () => {
                                     value={qrCodeData}
                                     size={256}
                                     level="H"
-                                    downloadFileName={`${session.activeEventName}-signin-qr`}
+
                                 />
                             ) : (
                                 <div className="flex items-center justify-center w-64 h-64 bg-gray-100 rounded">
@@ -137,41 +203,29 @@ const QRSignInView: React.FC = () => {
                     <p className="qr-description text-sm text-gray-600">
                         {hasValidSession
                             ? `Scan to check in to ${session.activeEventName}`
-                            : 'No active event session - select an event to begin'}
+                            : 'Initialize the session to generate QR code'}
                     </p>
                 </div>
 
                 {hasValidSession && (
                     <div className="session-info space-y-2 w-full">
-                        <div className="text-sm bg-blue-50 p-3 rounded border border-blue-200">
-                            <p className="text-blue-900 font-medium">
-                                Event: {session.activeEventName}
-                            </p>
-                            <p className="text-blue-800 text-xs">
-                                Location: {session.activeEventLocation}
-                            </p>
-                        </div>
-
-                        <div className="text-sm bg-green-50 p-3 rounded border border-green-200">
-                            <p className="text-green-900">
-                                <strong>Staff:</strong> {session.currentUserName}
-                            </p>
-                            <p className="text-green-800 text-xs">
-                                {session.currentUserEmail}
-                            </p>
-                        </div>
-
-                        <div className="text-sm bg-amber-50 p-3 rounded border border-amber-200 flex items-center gap-2">
-                            <Clock size={16} className="text-amber-700" />
-                            <div>
-                                <p className="text-amber-900 font-medium">
-                                    Expires in: {timeRemaining}
-                                </p>
-                                <p className="text-amber-800 text-xs">
-                                    Check-ins: {session.checkInCount || 0}
-                                </p>
-                            </div>
-                        </div>
+                        {[
+                            { title: 'Event', value: session.activeEventName || 'Unknown' },
+                            { title: 'Location', value: session.activeEventLocation || 'Unknown' },
+                            { title: 'Staff', value: session.currentUserName || 'Unknown' },
+                            { title: 'Email', value: session.currentUserEmail || 'Unknown' },
+                            { title: 'Expires In', value: timeRemaining || '-' },
+                            { title: 'Check-ins', value: session.checkInCount || 0 },
+                        ].map((item, index) => (
+                            <Item key={index} variant="outline" size="sm">
+                                <ItemMedia variant="icon">
+                                    <BadgeCheckIcon className="size-5" />
+                                </ItemMedia>
+                                <ItemContent>
+                                    <ItemDescription><p className='inline mr-2 font-extrabold text-accent-foreground'>{item.title}</p>{item.value}</ItemDescription>
+                                </ItemContent>
+                            </Item>
+                        ))}
                     </div>
                 )}
 
