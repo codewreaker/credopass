@@ -401,7 +401,7 @@ const CheckInPage: React.FC = () => {
         </div>
 
         {/* Check-in counter */}
-        <div className="bg-linear-to-br from-primary to-primary/80 text-primary-foreground rounded-2xl px-6 py-3 shadow-lg">
+        <div className="text-primary-foreground rounded-2xl px-6 py-3 shadow-lg">
           <div className="flex items-center gap-3">
             <Users className="w-6 h-6" />
             <div>
