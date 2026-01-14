@@ -2,12 +2,13 @@
 import type { DialogRootActions } from '@credopass/ui/components/dialog'
 import { create } from 'zustand'
 import { combine, devtools } from 'zustand/middleware'
+import type { EventType, EventStatus, User } from '@credopass/lib/schemas'
 
 type ActionEvents = 'add' | 'delete' | 'update'
 
 export interface ViewedItemState {
-  id: string;
-  content: any;
+    id: string;
+    content: any;
 }
 
 export const useAppStore = create(
@@ -80,8 +81,13 @@ export interface EventSessionState {
     // Active event information
     activeEventId?: string;
     activeEventName?: string;
+    activeEventDescription?: string | null;
     activeEventLocation?: string;
-    activeEventStatus?: 'draft' | 'scheduled' | 'ongoing' | 'completed' | 'cancelled';
+    activeEventStatus?: EventStatus;
+    activeEventStartTime?: Date;
+    activeEventEndTime?: Date;
+    activeEventCapacity?: number | null;
+    activeEventHostId?: string;
 
     // Current user (event organizer/staff) managing the check-in
     currentUserId?: string;
@@ -99,18 +105,35 @@ export interface EventSessionState {
     checkInCount?: number; // Count of attendees checked in during this session
 }
 
+/**
+ * Creates a default event for today with placeholder values
+ */
+const createDefaultEvent = () => {
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    return {
+        activeEventId: 'default-today',
+        activeEventName: 'Today\'s Event',
+        activeEventDescription: 'Default event for today',
+        activeEventLocation: 'TBD',
+        activeEventStatus: 'scheduled' as EventStatus,
+        activeEventStartTime: today,
+        activeEventEndTime: tomorrow,
+        activeEventCapacity: null,
+        activeEventHostId: undefined,
+        currentUserId: 'israel.agyeman.prempeh@gmail.com',
+        currentUserEmail: 'israel.agyeman.prempeh@gmail.com',
+        currentUserName: 'Israel Agyeman-Prempeh'
+    };
+};
+
 export const useEventSessionStore = create(
     devtools(
         combine({
             session: {
-                activeEventId: undefined,
-                activeEventName: undefined,
-                activeEventLocation: undefined,
-                activeEventStatus: undefined,
-                currentUserId: undefined,
-                currentUserEmail: undefined,
-                currentUserName: undefined,
-                sessionToken: undefined,
+                ...createDefaultEvent(),
                 qrSessionId: undefined,
                 qrGeneratedAt: undefined,
                 qrExpiresAt: undefined,
@@ -119,31 +142,30 @@ export const useEventSessionStore = create(
             } as EventSessionState,
         }, (set, get) => ({
             // Set the active event and associated session
-            setActiveEvent: (eventId: string, eventData: {
-                name: string;
-                location: string;
-                status: 'draft' | 'scheduled' | 'ongoing' | 'completed' | 'cancelled';
-            }) => set((state) => ({
+            setActiveEvent: (eventId: string, eventData: Partial<EventType>) => set((state) => ({
                 session: {
                     ...state.session,
-                    activeEventId: eventId,
+                    activeEventId: eventData.id || eventId,
                     activeEventName: eventData.name,
+                    activeEventDescription: eventData.description,
                     activeEventLocation: eventData.location,
                     activeEventStatus: eventData.status,
+                    activeEventStartTime: eventData.startTime,
+                    activeEventEndTime: eventData.endTime,
+                    activeEventCapacity: eventData.capacity,
+                    activeEventHostId: eventData.hostId,
                 }
             })),
 
             // Set current user managing the check-in
-            setCurrentUser: (userId: string, userData: {
-                email: string;
-                firstName: string;
-                lastName: string;
-            }) => set((state) => ({
+            setCurrentUser: (userId: string, userData: Partial<User>) => set((state) => ({
                 session: {
                     ...state.session,
                     currentUserId: userId,
                     currentUserEmail: userData.email,
-                    currentUserName: `${userData.firstName} ${userData.lastName}`,
+                    currentUserName: userData.firstName && userData.lastName
+                        ? `${userData.firstName} ${userData.lastName}`
+                        : userData.firstName,
                 }
             })),
 
@@ -171,13 +193,10 @@ export const useEventSessionStore = create(
                 }
             })),
 
-            // Clear current session
+            // Clear current session (reset to default event)
             clearSession: () => set({
                 session: {
-                    activeEventId: undefined,
-                    activeEventName: undefined,
-                    activeEventLocation: undefined,
-                    activeEventStatus: undefined,
+                    ...createDefaultEvent(),
                     currentUserId: undefined,
                     currentUserEmail: undefined,
                     currentUserName: undefined,
