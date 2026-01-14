@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useForm } from '@tanstack/react-form';
+import { toast } from 'sonner';
 import * as z from 'zod';
 import {
   Calendar as CalendarIcon,
@@ -94,30 +95,27 @@ export const launchEventForm = (
   });
 };
 
+const { events: eventCollection } = getCollections();
+
 // Event Form Component
 const EventForm = ({ initialData = {}, isEditing = false, onClose }: EventFormProps) => {
   const [isMutating, setIsMutating] = useState(false);
-  const { events: collection } = getCollections();
 
+  const rand = crypto.randomUUID();
   const form = useForm({
     defaultValues: {
-      name: initialData.name || '',
+      name: initialData.name || `New Event ${rand.slice(0, 8)}`,
       description: initialData.description || '',
       status: (initialData.status || 'scheduled') as EventStatus,
       startTime: initialData.startTime || '',
       endTime: initialData.endTime || '',
-      location: initialData.location || '',
+      location: initialData.location || 'london',
       capacity: initialData.capacity || '',
       hostId: initialData.hostId || '',
     },
     validators: {
-      onChange: ({ value }) => {
-        const result = eventFormSchema.safeParse(value);
-        if (!result.success) {
-          return result.error.flatten().fieldErrors;
-        }
-        return undefined;
-      },
+      //@ts-ignore
+      onChange: eventFormSchema,
     },
     onSubmit: async ({ value }) => {
       setIsMutating(true);
@@ -134,8 +132,10 @@ const EventForm = ({ initialData = {}, isEditing = false, onClose }: EventFormPr
       };
 
       try {
+        let tx;
+
         if (isEditing && initialData.id) {
-          collection?.update(initialData.id, (draft) => {
+          tx = eventCollection.update(initialData.id, (draft) => {
             draft.name = eventData.name;
             draft.description = eventData.description;
             draft.status = eventData.status;
@@ -147,16 +147,18 @@ const EventForm = ({ initialData = {}, isEditing = false, onClose }: EventFormPr
             draft.updatedAt = now;
           });
         } else {
-          collection?.insert({
+          tx = eventCollection.insert({
             ...eventData,
             id: crypto.randomUUID(),
             createdAt: now,
             updatedAt: now,
           });
         }
-        onClose?.();
+
+        await tx.isPersisted.promise;
       } catch (error) {
-        console.error('Failed to save event:', error);
+        toast.error(error instanceof Error ? error.message : 'An unexpected error occurred.');
+        onClose?.();
       } finally {
         setIsMutating(false);
       }
@@ -167,7 +169,7 @@ const EventForm = ({ initialData = {}, isEditing = false, onClose }: EventFormPr
     if (initialData.id && confirm('Are you sure you want to delete this event?')) {
       setIsMutating(true);
       try {
-        collection?.delete(initialData.id);
+        eventCollection?.delete(initialData.id);
         onClose?.();
       } catch (error) {
         console.error('Failed to delete event:', error);

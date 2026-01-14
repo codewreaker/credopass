@@ -12,6 +12,7 @@ import {
   Calendar,
   ChartNoAxesCombined,
   Database,
+  QrCode,
 } from "lucide-react";
 import "./layout.css";
 import { useIsMobile } from "../hooks/use-mobile";
@@ -49,9 +50,14 @@ export function RootLayout() {
             nav={{
               main: [
                 {
+                  url: "/checkin",
+                  icon: QrCode,
+                  label: "Check-In"
+                },
+                {
                   url: "/",
                   icon: LayoutDashboard,
-                  label: "Home",
+                  label: "Dashboard",
                   isActive: true
                 },
                 {
@@ -84,7 +90,7 @@ export function RootLayout() {
           >
             <SidebarInset className="main-content">
               <header className="flex justify-between h-16 shrink-0 items-center gap-2 border-b px-4">
-                {isMobile ? <BrandIcon /> :<SidebarTrigger className="-ml-1" />}
+                {isMobile ? <BrandIcon /> : <SidebarTrigger className="-ml-1" />}
                 <TopNavBar />
                 <RightSidebarTrigger />
               </header>
@@ -98,7 +104,10 @@ export function RootLayout() {
         {/* <SignInModal /> */}
         <ModalPortal />
       </div>
-      <Toaster />
+      <Toaster
+        position="top-center"
+        richColors
+      />
     </>
   );
 }

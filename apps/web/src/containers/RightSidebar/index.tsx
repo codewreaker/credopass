@@ -1,9 +1,8 @@
 import React from 'react';
-import { LucidePanelRightOpen, ShieldCheck } from 'lucide-react';
+import { LucidePanelRightOpen } from 'lucide-react';
 import { useAppStore } from '../../stores/store';
 import ProfileView from './ProfileView';
 import OverviewView from './OverviewView';
-import QRSignInView, {handleManualSignIn, handleQRScan} from './QRSignInView';
 
 import {
   Sheet,
@@ -50,8 +49,6 @@ export const RightSidebar: React.FC = () => {
     switch (viewedItem.id) {
       case 'profile':
         return <ProfileView data={viewedItem.content} />;
-      case 'qr-signin':
-        return <QRSignInView />;
       default:
         return <OverviewView />;
     }
@@ -65,8 +62,6 @@ export const RightSidebar: React.FC = () => {
     switch (viewedItem.id) {
       case 'profile':
         return "Profile";
-      case 'qr-signin':
-        return "Check In";
       default:
         return "Overview";
     }
@@ -80,8 +75,6 @@ export const RightSidebar: React.FC = () => {
     switch (viewedItem.id) {
       case 'profile':
         return `${viewedItem.content?.firstName} ${viewedItem.content?.lastName}`;
-      case 'qr-signin':
-        return "Please Scan QR code or manually sign in.";
       default:
         return "Overview of loyalty status and upcoming events.";
     }
@@ -103,25 +96,6 @@ export const RightSidebar: React.FC = () => {
             <Button type="submit">Save changes</Button>
             <SheetClose>
               <Button variant="outline">Close</Button>
-            </SheetClose>
-          </>
-        );
-      case 'qr-signin':
-        return (
-          <>
-            <Button
-              onClick={handleQRScan}
-            >
-              <ShieldCheck/> QR Code Scan
-            </Button>
-            <SheetClose>
-              <Button
-                onClick={handleManualSignIn}
-                variant="outline"
-                className="w-full"
-              >
-                Manual Sign In
-              </Button>
             </SheetClose>
           </>
         );

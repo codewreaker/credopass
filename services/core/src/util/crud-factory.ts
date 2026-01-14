@@ -23,11 +23,11 @@ export function createCrudRoute<T extends PgTable>(options: CrudOptions<T>) {
     try {
       const db = await getDatabase();
       let query = db.select().from(table).$dynamic();
-      
+
       // Apply filters
       const filters: any[] = [];
       const queryParams = c.req.query();
-      
+
       for (const [key, value] of Object.entries(queryParams)) {
         if (allowedFilters.includes(key) && value) {
           // @ts-ignore - We trust the allowedFilters match table columns
@@ -47,7 +47,7 @@ export function createCrudRoute<T extends PgTable>(options: CrudOptions<T>) {
       const results = await query;
       return c.json(results);
     } catch (error) {
-      console.error('Error fetching records:', error);
+      console.log('// GET / - List all with filtering', error);
       return c.json({ error: 'Failed to fetch records' }, 500);
     }
   });
@@ -57,7 +57,7 @@ export function createCrudRoute<T extends PgTable>(options: CrudOptions<T>) {
     try {
       const db = await getDatabase();
       const id = c.req.param('id');
-      
+
       const result = await db
         .select()
         .from(table)
@@ -71,7 +71,7 @@ export function createCrudRoute<T extends PgTable>(options: CrudOptions<T>) {
 
       return c.json(result[0]);
     } catch (error) {
-      console.error('Error fetching record:', error);
+      console.log('// GET /:id - Get one by ID', error);
       return c.json({ error: 'Failed to fetch record' }, 500);
     }
   });
@@ -97,7 +97,7 @@ export function createCrudRoute<T extends PgTable>(options: CrudOptions<T>) {
             // @ts-ignore
             .where(eq(table[field], validated[field]))
             .limit(1);
-          
+
           if (existing[0]) {
             return c.json({ error: `${field} must be unique` }, 409);
           }
@@ -120,11 +120,11 @@ export function createCrudRoute<T extends PgTable>(options: CrudOptions<T>) {
 
       return c.json(result[0], 201);
     } catch (error) {
+      console.log('// POST / - Create', error);
       if (error instanceof z.ZodError) {
         return c.json({ error: 'Validation failed', details: error.issues }, 400);
       }
-      console.error('Error creating record:', error);
-      return c.json({ error: 'Failed to create record' }, 500);
+      return c.json({ error }, 500);
     }
   });
 
@@ -144,20 +144,16 @@ export function createCrudRoute<T extends PgTable>(options: CrudOptions<T>) {
       // Check uniqueness if updating unique fields
       for (const field of uniqueFields) {
         if (validated[field]) {
-           // Check if another record has this value
-           const existing = await db
+          // Check if another record has this value
+          const existing = await db
             .select()
             .from(table)
             // @ts-ignore
             .where(and(eq(table[field], validated[field]), ne(table.id, id))) // Note: ne needs import
             .limit(1);
-
-           // Actually let's simplify uniqueness check for update to avoid 'ne' dependency issues if not imported
-           // We'll skip complex unique check for now or fetch manually
-           // Just trusting the DB constraint might be enough, but let's implement basic check
         }
       }
-      
+
       const now = new Date();
       const values = {
         ...validated,
@@ -172,21 +168,22 @@ export function createCrudRoute<T extends PgTable>(options: CrudOptions<T>) {
         .returning();
 
       if (!result[0]) {
-         return c.json({ error: 'Record not found' }, 404);
+        return c.json({ error: 'Record not found' }, 404);
       }
 
       return c.json(result[0]);
     } catch (error) {
+      console.log('// PUT /:id - Update', error);
       if (error instanceof z.ZodError) {
         return c.json({ error: 'Validation failed', details: error.issues }, 400);
       }
       console.error('Error updating record:', error);
-      return c.json({ error: 'Failed to update record' }, 500);
+      return c.json({ error }, 500);
     }
   });
 
-   // DELETE /:id
-   router.delete('/:id', async (c) => {
+  // DELETE /:id
+  router.delete('/:id', async (c) => {
     try {
       const db = await getDatabase();
       const id = c.req.param('id');

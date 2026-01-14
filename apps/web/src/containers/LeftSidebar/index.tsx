@@ -193,6 +193,10 @@ const MainSidebar: React.FC<SidebarProps> = ({
             })) as BottomNavItem[]
     }, [navMain]);
 
+    // Get navigate function from TanStack Router for mobile bottom nav
+    const handleNavigate = React.useCallback((url: string) => {
+        navigate({ to: url });
+    }, [navigate]);
 
     return (
         <SidebarProvider defaultOpen={isOpen}
@@ -201,7 +205,7 @@ const MainSidebar: React.FC<SidebarProps> = ({
                 "--sidebar-width": "14rem"
             }}
         >
-            <Sidebar collapsible="icon" variant="inset" navItems={bottomNavItems}>
+            <Sidebar collapsible="icon" variant="inset" navItems={bottomNavItems} navigate={handleNavigate} currentPathname={location.pathname}>
                 <SidebarHeader>
                     <SidebarMenu>
                         <SidebarMenuItem>
@@ -284,7 +288,7 @@ const MainSidebar: React.FC<SidebarProps> = ({
                         </SidebarMenu>
                     </SidebarGroup>
                     {navs.map(([label, items]) => (
-                        <SidebarGroup className="group-data-[collapsible=icon]:hidden">
+                        <SidebarGroup key={label} className="group-data-[collapsible=icon]:hidden">
                             <SidebarGroupLabel>{`${label}`.toLocaleUpperCase()}</SidebarGroupLabel>
                             <SidebarMenu>
                                 {items?.map((item) => (

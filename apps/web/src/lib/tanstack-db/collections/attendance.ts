@@ -41,7 +41,8 @@ export function createAttendanceCollection(queryClient: QueryClient) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(newRecord),
         });
-        if (!response.ok) throw new Error('Failed to create attendance record');
+        if (!response.ok) throw new Error(`Failed to create attendance record | HTTP ${response.status}: ${response.statusText}`);
+        return response.json();
       },
 
       // Handle UPDATE
