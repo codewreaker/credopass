@@ -158,6 +158,7 @@ function Sidebar({
   children,
   navItems,
   navigate,
+  currentPathname,
   ...props
 }: React.ComponentProps<"div"> & {
   side?: "left" | "right"
@@ -166,6 +167,8 @@ function Sidebar({
   navItems?: BottomNavItem[]
   /** Navigation function for mobile bottom nav - pass your router's navigate function */
   navigate?: NavigateFn
+  /** Current pathname for mobile bottom nav - pass your router's pathname to track active state */
+  currentPathname?: string
 }) {
   const { isMobile, state, openMobile, setOpenMobile } = useSidebar()
 
@@ -209,7 +212,7 @@ function Sidebar({
         </Sheet>
       )
     }
-    return navItems ? <BottomNav items={navItems} navigate={navigate} /> : null
+    return navItems ? <BottomNav items={navItems} navigate={navigate} currentPathname={currentPathname} /> : null
   }
 
 

@@ -205,7 +205,7 @@ const MainSidebar: React.FC<SidebarProps> = ({
                 "--sidebar-width": "14rem"
             }}
         >
-            <Sidebar collapsible="icon" variant="inset" navItems={bottomNavItems} navigate={handleNavigate}>
+            <Sidebar collapsible="icon" variant="inset" navItems={bottomNavItems} navigate={handleNavigate} currentPathname={location.pathname}>
                 <SidebarHeader>
                     <SidebarMenu>
                         <SidebarMenuItem>
