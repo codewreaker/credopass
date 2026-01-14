@@ -4,8 +4,8 @@
   "private": true,
   "type": "module",
   "dependencies": {
-    "@credopass/ui": "workspace:*",
     "@credopass/lib": "workspace:*",
+    "@credopass/ui": "workspace:*",
     "@fontsource-variable/inter": "^5.2.8",
     "@fullcalendar/core": "^6.1.19",
     "@fullcalendar/daygrid": "^6.1.19",
@@ -24,6 +24,7 @@
     "ag-grid-react": "^35.0.0",
     "clsx": "^2.1.1",
     "lucide-react": "^0.562.0",
+    "qrcode.react": "^4.2.0",
     "react": "^19.2.1",
     "react-dom": "^19.2.1",
     "recharts": "3.6.0",
