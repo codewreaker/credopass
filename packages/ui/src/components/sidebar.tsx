@@ -24,7 +24,7 @@ import {
 } from './tooltip'
 import { useIsMobile } from '../hooks/use-mobile'
 import { PanelLeftIcon } from "lucide-react"
-import { BottomNav, type BottomNavItem } from "./bottom-nav"
+import { BottomNav, type BottomNavItem, type NavigateFn } from "./bottom-nav"
 
 export const SIDEBAR_COOKIE_NAME = "sidebar_state"
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7
@@ -157,12 +157,15 @@ function Sidebar({
   className,
   children,
   navItems,
+  navigate,
   ...props
 }: React.ComponentProps<"div"> & {
   side?: "left" | "right"
   variant?: "sidebar" | "floating" | "inset"
   collapsible?: "offcanvas" | "icon" | "none"
   navItems?: BottomNavItem[]
+  /** Navigation function for mobile bottom nav - pass your router's navigate function */
+  navigate?: NavigateFn
 }) {
   const { isMobile, state, openMobile, setOpenMobile } = useSidebar()
 
@@ -206,7 +209,7 @@ function Sidebar({
         </Sheet>
       )
     }
-    return navItems ? <BottomNav items={navItems} /> : null
+    return navItems ? <BottomNav items={navItems} navigate={navigate} /> : null
   }
 
 

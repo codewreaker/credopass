@@ -5,16 +5,6 @@
   gap: 1rem;
 }
 
-.calendar-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.calendar-header h2 {
-  color: var(--foreground);
-}
-
 .calendar-container {
   flex: 1;
   background-color: var(--card);

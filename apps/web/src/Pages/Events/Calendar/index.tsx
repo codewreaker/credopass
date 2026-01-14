@@ -6,11 +6,7 @@ import interactionPlugin from '@fullcalendar/interaction';
 import listPlugin from '@fullcalendar/list';
 import type { EventClickArg, DateSelectArg, EventDropArg } from '@fullcalendar/core';
 import type { EventResizeDoneArg } from '@fullcalendar/interaction';
-import {
-  Plus,
-} from 'lucide-react';
 import type { EventType } from '@credopass/lib/schemas';
-import { Button } from '@credopass/ui';
 import type { EventFormProps } from '../../../containers/EventForm/index';
 import { getCollections } from '../../../lib/tanstack-db';
 import './style.css';
@@ -150,30 +146,9 @@ export default function CalendarPage({
     }
   }, [collection]);
 
-  const handleAddEventClick = () => {
-    const now = new Date();
-    now.setMinutes(0, 0, 0);
-    const end = new Date(now);
-    end.setHours(now.getHours() + 1);
-    launch({
-      initialData: {
-        startTime: formatDateForInput(now),
-        endTime: formatDateForInput(end),
-      },
-      isEditing: false
-    });
-  };
 
   return (
     <div className="calendar-page">
-      <div className="calendar-header">
-        <h2>Events Calendar</h2>
-        <Button variant="default" onClick={handleAddEventClick}>
-          <Plus size={16} />
-          New Event
-        </Button>
-      </div>
-
       <div className="calendar-container">
         {isMutating && (
           <div className="loading-overlay">

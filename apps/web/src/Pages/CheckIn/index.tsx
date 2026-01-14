@@ -227,7 +227,7 @@ const CheckInPage: React.FC = () => {
   if (events.length === 0) {
     return (
       <div className="checkin-page h-full flex flex-col items-center justify-center p-6">
-        <Empty className="border-2 border-dashed border-muted-foreground/20">
+        <Empty>
           <EmptyHeader>
             <EmptyMedia>
               <div className="relative">

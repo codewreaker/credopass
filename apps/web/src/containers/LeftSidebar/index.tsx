@@ -193,6 +193,10 @@ const MainSidebar: React.FC<SidebarProps> = ({
             })) as BottomNavItem[]
     }, [navMain]);
 
+    // Get navigate function from TanStack Router for mobile bottom nav
+    const handleNavigate = React.useCallback((url: string) => {
+        navigate({ to: url });
+    }, [navigate]);
 
     return (
         <SidebarProvider defaultOpen={isOpen}
@@ -201,7 +205,7 @@ const MainSidebar: React.FC<SidebarProps> = ({
                 "--sidebar-width": "14rem"
             }}
         >
-            <Sidebar collapsible="icon" variant="inset" navItems={bottomNavItems}>
+            <Sidebar collapsible="icon" variant="inset" navItems={bottomNavItems} navigate={handleNavigate}>
                 <SidebarHeader>
                     <SidebarMenu>
                         <SidebarMenuItem>
