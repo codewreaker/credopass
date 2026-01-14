@@ -5,14 +5,17 @@ import { combine, devtools } from 'zustand/middleware'
 
 type ActionEvents = 'add' | 'delete' | 'update'
 
-
+export interface ViewedItemState {
+  id: string;
+  content: any;
+}
 
 export const useAppStore = create(
     devtools(
         combine({
             sidebarOpen: { left: true, right: false },
             events: [] as ActionEvents[],
-            viewedItem: null as any,
+            viewedItem: null as ViewedItemState | null,
         }, (set) => ({
             toggleSidebar: (pos: 'left' | 'right', isOpen?: boolean) => set((state) => ({
                 sidebarOpen: {

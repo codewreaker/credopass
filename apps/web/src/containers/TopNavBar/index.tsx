@@ -11,7 +11,7 @@ import { launchSignInForm } from '../SignInModal/index';
 import { launchUserForm } from '../UserForm/index';
 
 import './style.css';
-import { useLauncher } from '../../stores/store';
+import { useLauncher, useAppStore } from '../../stores/store';
 import { launchEventForm } from '../EventForm/index';
 import CommandPalette from './Command';
 import { useNavigate } from '@tanstack/react-router';
@@ -21,6 +21,7 @@ import { useIsMobile } from '@credopass/ui/hooks/use-mobile';
 
 export const TopNavBar: React.FC = () => {
   const { openLauncher, closeLauncher } = useLauncher();
+  const { setViewedItem, toggleSidebar } = useAppStore();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const searchButtonRef = useRef<HTMLButtonElement>(null);
@@ -34,6 +35,12 @@ export const TopNavBar: React.FC = () => {
       onClose: closeLauncher,
     });
   }, [openLauncher, closeLauncher, isMobile]);
+
+  // Handle QR Code check-in
+  const handleQRCheckIn = useCallback(() => {
+    setViewedItem({ id: 'qr-signin', content: {} });
+    toggleSidebar('right', true);
+  }, [setViewedItem, toggleSidebar]);
 
 
   // Keyboard shortcuts
@@ -121,7 +128,7 @@ export const TopNavBar: React.FC = () => {
 
         <Tooltip>
           <TooltipTrigger>
-            <Button>
+            <Button onClick={handleQRCheckIn}>
               <QrCodeIcon />
               /
               <UserPlus />

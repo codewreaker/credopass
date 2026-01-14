@@ -115,7 +115,7 @@ const GridTable: React.FC<GridTableProps> = ({
         className="view-action-btn"
         onClick={(e) => {
           e.stopPropagation();
-          setViewedItem(data);
+          setViewedItem({ id: 'profile', content: data });
           toggleSidebar('right');
         }}
       >

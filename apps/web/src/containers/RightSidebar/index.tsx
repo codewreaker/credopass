@@ -3,7 +3,7 @@ import { LucidePanelRightOpen } from 'lucide-react';
 import { useAppStore } from '../../stores/store';
 import ProfileView from './ProfileView';
 import OverviewView from './OverviewView';
-import QRSignInView from './QRSignInView';
+import QRSignInView, {handleManualSignIn, handleQRScan} from './QRSignInView';
 
 import {
   Sheet,
@@ -43,23 +43,95 @@ export const RightSidebar: React.FC = () => {
   const onToggleCollapse = () => toggleSidebar('right')
 
   const getSidebarContent = (viewedItem: any) => {
-    switch (true) {
-      case viewedItem !== null:
-        return <ProfileView data={viewedItem} />;
+    if (!viewedItem) {
+      return <OverviewView />;
+    }
+
+    switch (viewedItem.id) {
+      case 'profile':
+        return <ProfileView data={viewedItem.content} />;
+      case 'qr-signin':
+        return <QRSignInView />;
       default:
         return <OverviewView />;
     }
   };
 
   const getSidebarTitle = () => {
-    return viewedItem !== null ? "Profile" : "Overview";
+    if (!viewedItem) {
+      return "Overview";
+    }
+
+    switch (viewedItem.id) {
+      case 'profile':
+        return "Profile";
+      case 'qr-signin':
+        return "Check In";
+      default:
+        return "Overview";
+    }
   };
 
   const getSidebarDescription = () => {
-    if (viewedItem !== null) {
-      return `${viewedItem?.firstName} ${viewedItem?.lastName}`;
+    if (!viewedItem) {
+      return "Overview of loyalty status and upcoming events.";
     }
-    return "Overview of loyalty status and upcoming events.";
+
+    switch (viewedItem.id) {
+      case 'profile':
+        return `${viewedItem.content?.firstName} ${viewedItem.content?.lastName}`;
+      case 'qr-signin':
+        return "Scan QR code or manually sign in";
+      default:
+        return "Overview of loyalty status and upcoming events.";
+    }
+  };
+
+  const getSidebarFooter = () => {
+    if (!viewedItem) {
+      return (
+        <SheetClose>
+          <Button variant="outline">Close</Button>
+        </SheetClose>
+      );
+    }
+
+    switch (viewedItem.id) {
+      case 'profile':
+        return (
+          <>
+            <Button type="submit">Save changes</Button>
+            <SheetClose>
+              <Button variant="outline">Close</Button>
+            </SheetClose>
+          </>
+        );
+      case 'qr-signin':
+        return (
+          <>
+            <Button
+              onClick={handleQRScan}
+            >
+              Scan QR Code
+            </Button>
+            <SheetClose>
+              <Button
+                onClick={handleManualSignIn}
+                variant="outline"
+                className="w-full"
+              >
+                Manual Sign In
+              </Button>
+            </SheetClose>
+          </>
+        );
+      default:
+        return (
+          <SheetClose>
+            <Button variant="outline">Close</Button>
+          </SheetClose>
+        );
+    }
   };
 
   return (
@@ -79,10 +151,7 @@ export const RightSidebar: React.FC = () => {
         </div>
         {/**Sheet Content */}
         <SheetFooter>
-          <Button type="submit">Save changes</Button>
-          <SheetClose>
-            <Button variant="outline">Close</Button>
-          </SheetClose>
+          {getSidebarFooter()}
         </SheetFooter>
       </SheetContent>
     </Sheet>
