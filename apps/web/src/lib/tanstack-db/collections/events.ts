@@ -8,6 +8,7 @@ import { QueryClient } from '@tanstack/query-core';
 import { queryCollectionOptions } from '@tanstack/query-db-collection';
 import type { Event } from '@credopass/lib/schemas';
 import { API_BASE_URL } from '../../../config';
+import { handleAPIErrors } from '..';
 
 /**
  * Create event collection with a specific QueryClient
@@ -42,7 +43,8 @@ export function createEventCollection(queryClient: QueryClient) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(newEvent),
         });
-        if (!response.ok) throw new Error('Failed to create event');
+        await handleAPIErrors(response);
+        return response.json();
       },
 
       // Handle UPDATE

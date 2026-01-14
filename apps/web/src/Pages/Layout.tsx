@@ -90,7 +90,7 @@ export function RootLayout() {
           >
             <SidebarInset className="main-content">
               <header className="flex justify-between h-16 shrink-0 items-center gap-2 border-b px-4">
-                {isMobile ? <BrandIcon /> :<SidebarTrigger className="-ml-1" />}
+                {isMobile ? <BrandIcon /> : <SidebarTrigger className="-ml-1" />}
                 <TopNavBar />
                 <RightSidebarTrigger />
               </header>
@@ -104,7 +104,10 @@ export function RootLayout() {
         {/* <SignInModal /> */}
         <ModalPortal />
       </div>
-      <Toaster />
+      <Toaster
+        position="top-center"
+        richColors
+      />
     </>
   );
 }

@@ -41,7 +41,8 @@ export function createLoyaltyCollection(queryClient: QueryClient) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(newRecord),
         });
-        if (!response.ok) throw new Error('Failed to create loyalty record');
+        if (!response.ok) throw new Error(`Failed to create loyalty record | HTTP ${response.status}: ${response.statusText}`);
+        return response.json();
       },
 
       // Handle UPDATE

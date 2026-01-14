@@ -217,10 +217,14 @@ const CheckInPage: React.FC = () => {
             </EmptyMedia>
             <EmptyTitle>No Events</EmptyTitle>
             <EmptyDescription>
-              Create a new event to start checking in attendees
+              Create or Pick an event to start checking in attendees
             </EmptyDescription>
           </EmptyHeader>
           <EmptyContent>
+            <Button onClick={handleCreateEvent} size="lg">
+              <Plus className="w-4 h-4 mr-2" />
+              Pick an Event
+            </Button>
             <Button onClick={handleCreateEvent} size="lg">
               <Plus className="w-4 h-4 mr-2" />
               Create New Event

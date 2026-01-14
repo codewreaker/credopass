@@ -284,7 +284,7 @@ const MainSidebar: React.FC<SidebarProps> = ({
                         </SidebarMenu>
                     </SidebarGroup>
                     {navs.map(([label, items]) => (
-                        <SidebarGroup className="group-data-[collapsible=icon]:hidden">
+                        <SidebarGroup key={label} className="group-data-[collapsible=icon]:hidden">
                             <SidebarGroupLabel>{`${label}`.toLocaleUpperCase()}</SidebarGroupLabel>
                             <SidebarMenu>
                                 {items?.map((item) => (

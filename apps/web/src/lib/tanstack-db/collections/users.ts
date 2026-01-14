@@ -1,4 +1,4 @@
-import { toast } from "sonner";
+// import { toast } from "sonner";
 import { createCollection } from '@tanstack/db';
 import { QueryClient } from '@tanstack/query-core';
 import { queryCollectionOptions } from '@tanstack/query-db-collection';
@@ -30,11 +30,8 @@ export function createUserCollection(queryClient: QueryClient) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(newUser),
         });
-        if (!response.ok) {
-          const {error} = await response.json();
-          toast.error(error);
-          throw new Error(error);
-        }
+        if (!response.ok) throw new Error(`Failed to create loyalty record | HTTP ${response.status}: ${response.statusText}`);
+        return response.json();
       },
 
       // Handle UPDATE
