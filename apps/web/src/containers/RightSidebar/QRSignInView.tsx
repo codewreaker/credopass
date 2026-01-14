@@ -5,6 +5,7 @@ import { useEventSessionStore } from '../../stores/store';
 import { API_BASE_URL } from '../../config';
 import { Item, ItemContent, ItemDescription, ItemMedia } from '@credopass/ui/components/item';
 import type { EventType, User } from '@credopass/lib/schemas';
+import { useIsMobile } from '@credopass/ui/hooks/use-mobile';
 
 /**
  * Generates sign-in params for QR code encoding
@@ -108,6 +109,8 @@ const QRSignInView: React.FC = () => {
     const setCurrentUser = useEventSessionStore((state) => state.setCurrentUser);
     const initializeSession = useEventSessionStore((state) => state.initializeSession);
 
+    const isMobile = useIsMobile();
+
     /**
      * Initialize the complete session using all store functions
      */
@@ -134,6 +137,7 @@ const QRSignInView: React.FC = () => {
     // Auto-initialize session when component mounts
     useEffect(() => {
         initializeCompleteSession();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     // Generate QR code data from current session
@@ -160,8 +164,6 @@ const QRSignInView: React.FC = () => {
     }, [session, isQRValid]);
 
 
-    console.log('QRSignInView render - hasValidSession:', qrCodeData);
-
 
     // Calculate remaining time until QR expires
     const timeRemaining = useMemo(() => {
@@ -181,7 +183,7 @@ const QRSignInView: React.FC = () => {
                             {qrCodeData ? (
                                 <QRCode
                                     value={qrCodeData}
-                                    size={220}
+                                    size={isMobile ? 160 : 256}
                                     level="H"
 
                                 />

@@ -69,7 +69,7 @@ export default function ModalPortal() {
 
   return (
     <Dialog open={launcher.isOpen} onOpenChange={handleOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-h-180 overflow-y-auto p-5">
         {launcher.content || <DefaultModal />}
       </DialogContent>
     </Dialog>
