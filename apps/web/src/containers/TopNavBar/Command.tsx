@@ -62,7 +62,6 @@ const CommandPalette: React.FC<{
 
     return (
         <Command 
-            className="rounded-lg border shadow-md" 
             style={{ width: width ? `${width}px` : '100%', maxWidth: width ? `${width}px` : '48rem' }}
         >
             <CommandInput placeholder="Type a command or search..." />

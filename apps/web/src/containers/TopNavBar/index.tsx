@@ -28,13 +28,11 @@ export const TopNavBar: React.FC = () => {
 
   // Open command palette via launcher
   const openCommandPalette = useCallback(() => {
-    const offsetWidth = searchButtonRef.current?.offsetWidth || 0;
-    const width = isMobile ? offsetWidth * 1.6 : offsetWidth;
     openLauncher({
-      content: <CommandPalette onClose={closeLauncher} openLauncher={openLauncher} width={width} />,
+      content: <CommandPalette onClose={closeLauncher} openLauncher={openLauncher} />,
       onClose: closeLauncher,
     });
-  }, [openLauncher, closeLauncher, isMobile]);
+  }, [openLauncher, closeLauncher]);
 
   // Handle QR Code check-in
   const handleQRCheckIn = useCallback(() => {
