@@ -24,7 +24,7 @@ export const useAppStore = create(
                     [pos]: isOpen ?? !state.sidebarOpen[pos]
                 }
             })),
-            setViewedItem: <T>(item: T) => set(() => ({ viewedItem: item })),
+            setViewedItem: <T extends ViewedItemState>(item: T | null) => set(() => ({ viewedItem: item })),
             addEvent: (eventName: ActionEvents) => set((state) => ({
                 events: Array.from(new Set(state.events).add(eventName))
             })),

@@ -3,7 +3,7 @@ import { QrCodeIcon, AlertCircle, BadgeCheckIcon } from 'lucide-react';
 import { QRCodeSVG as QRCode } from 'qrcode.react';
 import { useEventSessionStore } from '../../stores/store';
 import { API_BASE_URL } from '../../config';
-import { Item, ItemContent, ItemDescription, ItemMedia, ItemTitle } from '@credopass/ui/components/item';
+import { Item, ItemContent, ItemDescription, ItemMedia } from '@credopass/ui/components/item';
 import type { EventType, User } from '@credopass/lib/schemas';
 
 /**

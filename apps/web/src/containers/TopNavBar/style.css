@@ -1,14 +1,7 @@
-.top-navbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 1rem;
-
   .navbar-left {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 100%;
 
 
     .search-container {
@@ -45,35 +38,26 @@
         flex-shrink: 0;
       }
 
+    }
+  }
 
+
+
+  /* Notification button with badge */
+  .top-navbar-btn {
+    position: relative;
+    border: 1.5px solid var(--primary);
+    color: var(--primary);
+    cursor: pointer;
+
+    &:hover {
+      background-color: var(--primary);
+      color: var(--card);
     }
 
+    [data-slot="badge"] {
+      position: absolute;
+      top: -10px;
+      right: -10px;
+    }
   }
-
-  .navbar-right {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-  }
-}
-
-
-
-/* Notification button with badge */
-.top-navbar-btn {
-  position: relative;
-  border: 1.5px solid var(--primary);
-  color: var(--primary);
-  cursor: pointer;
-
-  &:hover {
-    background-color: var(--primary);
-    color: var(--card);
-  }
-
-  [data-slot="badge"] {
-    position: absolute;
-    top: -10px;
-    right: -10px;
-  }
-}

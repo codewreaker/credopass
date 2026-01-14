@@ -103,10 +103,10 @@ export const TopNavBar: React.FC = () => {
 
   return (
     <div className={cn(
-      "top-navbar flex items-center justify-between px-4",
-      isMobile ? "w-11/12" : "w-full"
+      "flex items-center px-4 justify-between",
+      isMobile ? "w-10/12" : "w-full"
     )}>
-      <div className={cn("navbar-left", isMobile ? "p-0" : "p-5")} ref={searchButtonRef as unknown as React.RefObject<HTMLDivElement>}>
+      <div className={cn("navbar-left", isMobile ? "p-0 w-4/10" : "w-full p-5")} ref={searchButtonRef as unknown as React.RefObject<HTMLDivElement>}>
         <Button
           variant="outline"
           className="search-container"
@@ -120,10 +120,10 @@ export const TopNavBar: React.FC = () => {
         </Button>
       </div>
 
-      {!isMobile && <div className="navbar-right">
+      {<div className="navbar-right flex items-center gap-2">
         <Button variant="default" onClick={handleNewEvent}>
           <Calendar />
-          New Event
+          {!isMobile && "New Event"}
         </Button>
 
         <Tooltip>
