@@ -1,5 +1,5 @@
 import React from 'react';
-import { QrCodeIcon, Clock, RefreshCw, UserPlus } from 'lucide-react';
+import { QrCodeIcon, Clock, RefreshCw, UserPlus, MapPin, Users} from 'lucide-react';
 import { QRCodeSVG as QRCode } from 'qrcode.react';
 import {
     Button,
@@ -10,7 +10,16 @@ import {
     CardFooter,
     CardHeader,
     CardTitle,
+    Badge,
 } from '@credopass/ui';
+import { statusColors } from '../utils/constants';
+import { EventType } from '@credopass/lib/schemas';
+
+interface EventDetailsCardProps {
+  event?: Partial<EventType>;
+  statusColors: Record<string, string>;
+}
+
 
 interface QRCodeDisplayProps {
     qrCodeData: string | null;
@@ -18,8 +27,33 @@ interface QRCodeDisplayProps {
     timeRemaining: string | null;
     onRefreshQR: () => void;
     onManualCheckInClick: () => void;
-    children?: React.ReactNode;
+    selectedEvent?: Partial<EventType>;
 }
+
+const EventDetailsCard: React.FC<EventDetailsCardProps> = ({ event, statusColors }) => {
+  if (!event) return null;
+  
+  return (
+    <div className="event-details-compact">
+      <div className="event-info-header">
+        <h3 className="event-name">{event.name}</h3>
+        <Badge variant="outline" className={`event-status-badge ${event.status ? statusColors[event.status] || '' : ''}`}>
+          {event.status}
+        </Badge>
+      </div>
+      <div className="event-info-grid">
+        <div className="info-item">
+          <MapPin className="info-icon" />
+          <span className="info-text">{event.location || 'No location'}</span>
+        </div>
+        <div className="info-item">
+          <Users className="info-icon" />
+          <span className="info-text">{event.capacity || 'Unlimited'}</span>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
     qrCodeData,
@@ -27,7 +61,7 @@ const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
     timeRemaining,
     onRefreshQR,
     onManualCheckInClick,
-    children
+    selectedEvent
 }) => {
     return (
         <Card className="flex flex-col">
@@ -53,13 +87,16 @@ const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
                         Expires in <span className="font-mono font-semibold">{timeRemaining}</span>
                     </CardDescription>
                 )}
+                <div className="border border-dashed rounded-xl border-foreground-muted ml-auto w-1/6">
+                    <EventDetailsCard event={selectedEvent} statusColors={statusColors} />
+                </div>
             </CardHeader>
             <CardContent className="flex-1 flex flex-col items-center justify-center gap-6">
                 {hasValidSession && qrCodeData ? (
                     <div className="bg-white p-6 rounded-2xl shadow-lg border">
                         <QRCode
                             value={qrCodeData}
-                            size={220}
+                            size={320}
                             level="H"
                         />
                     </div>
@@ -77,9 +114,6 @@ const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
                 <p className="text-sm text-muted-foreground text-center max-w-xs">
                     Attendees can scan this code with their phone to check in instantly
                 </p>
-                <div className="w-full">
-                    {children}
-                </div>
             </CardContent>
             <CardFooter className='justify-center'>
                 <CardAction>

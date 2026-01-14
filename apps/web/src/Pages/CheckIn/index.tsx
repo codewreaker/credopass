@@ -22,69 +22,10 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
-  Badge
+  CardTitle
 } from '@credopass/ui';
 
 import ManualSignInForm from './ManualSignInForm';
-
-import { Calendar, MapPin, Clock } from 'lucide-react';
-
-import { Item, ItemContent, ItemDescription, ItemMedia, ItemTitle } from '@credopass/ui/components/item';
-
-interface EventDetailsCardProps {
-  event: EventType;
-  statusColors: Record<string, string>;
-}
-
-const EventDetailsCard: React.FC<EventDetailsCardProps> = ({ event, statusColors }) => {
-  return (
-    <>
-      <Item variant="outline" size="sm">
-        <ItemMedia variant="icon">
-          <Calendar className="icon-small" />
-        </ItemMedia>
-        <ItemContent>
-          <ItemTitle className="item-title">Event Name</ItemTitle>
-          <ItemDescription className="item-description">{event.name}</ItemDescription>
-        </ItemContent>
-      </Item>
-      <Item variant="outline" size="sm">
-        <ItemMedia variant="icon">
-          <MapPin className="icon-small" />
-        </ItemMedia>
-        <ItemContent>
-          <ItemTitle className="item-title">Location</ItemTitle>
-          <ItemDescription className="item-description">{event.location || 'Not specified'}</ItemDescription>
-        </ItemContent>
-      </Item>
-      <Item variant="outline" size="sm">
-        <ItemMedia variant="icon">
-          <Users className="icon-small" />
-        </ItemMedia>
-        <ItemContent>
-          <ItemTitle className="item-title">Capacity</ItemTitle>
-          <ItemDescription className="item-description">{event.capacity || 'Unlimited'}</ItemDescription>
-        </ItemContent>
-      </Item>
-      <Item variant="outline" size="sm">
-        <ItemMedia variant="icon">
-          <Clock className="icon-small" />
-        </ItemMedia>
-        <ItemContent>
-          <ItemTitle className="item-title">Status</ItemTitle>
-          <ItemDescription>
-            <Badge variant="outline" className={`${statusColors[event.status] || ''}`}>
-              {event.status}
-            </Badge>
-          </ItemDescription>
-        </ItemContent>
-      </Item>
-    </>
-  );
-};
-
-
 
 interface ManualCheckInCardProps {
   onSubmit: (userData: Partial<User>) => void;
@@ -288,16 +229,12 @@ const CheckInPage: React.FC = () => {
           timeRemaining={timeRemaining}
           onRefreshQR={handleRefreshQR}
           onManualCheckInClick={() => setShowManualCheckIn(true)}
-        >
-          {selectedEvent && (
-            <EventDetailsCard event={selectedEvent} statusColors={statusColors} />
-          )}
-        </QRCodeDisplay>}
+          selectedEvent={selectedEvent}
+        />}
 
 
         <div className="right-column">
-          {showManualCheckIn && <ManualCheckInCard onSubmit={handleManualSignIn} />}
-
+          {showManualCheckIn && <ManualSignInForm onSubmit={handleManualSignIn} onBack={() => setShowManualCheckIn(false)} />}
         </div>
 
       </div>

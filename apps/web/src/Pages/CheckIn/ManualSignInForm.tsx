@@ -6,6 +6,7 @@ import type { User } from '@credopass/lib/schemas';
 
 interface ManualSignInFormProps {
   onSubmit: (userData: Partial<User>) => void;
+  onBack: () => void;
 }
 
 const manualSignInSchema = z.object({
@@ -25,7 +26,7 @@ const manualSignInSchema = z.object({
     .min(5, 'Email must be at least 5 characters.'),
 });
 
-const ManualSignInForm: React.FC<ManualSignInFormProps> = ({ onSubmit }) => {
+const ManualSignInForm: React.FC<ManualSignInFormProps> = ({ onSubmit, onBack }) => {
   const form = useForm({
     defaultValues: {
       firstName: '',
@@ -150,6 +151,14 @@ const ManualSignInForm: React.FC<ManualSignInFormProps> = ({ onSubmit }) => {
       >
         <UserPlus className="w-4 h-4" />
         {form.state.isSubmitting ? 'Checking In...' : 'Check In Attendee'}
+      </Button>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={onBack}
+        className="w-full"
+      >
+        Qr Code
       </Button>
     </form>
   );
