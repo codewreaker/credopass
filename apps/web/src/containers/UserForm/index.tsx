@@ -305,11 +305,10 @@ const UserForm = ({ initialData = {}, isEditing = false, onClose }: UserFormProp
             </Button>
           )}
         </div>
-      </form>
 
-      <DialogFooter>
-        <DialogClose>
-                    <Button
+        <DialogFooter>
+          <DialogClose>
+            <Button
               type="button"
               variant="secondary"
               onClick={onClose}
@@ -317,16 +316,17 @@ const UserForm = ({ initialData = {}, isEditing = false, onClose }: UserFormProp
             >
               Cancel
             </Button>
-            </DialogClose>
-            <Button
-              type="submit"
-              variant="default"
-              disabled={isMutating}
-            >
-              {!isMutating && <UserPlus size={14} />}
-              {isMutating ? 'Saving...' : isEditing ? 'Update Attendee' : 'Register Attendee'}
-            </Button>
-      </DialogFooter>
+          </DialogClose>
+          <Button
+            type="submit"
+            variant="default"
+            disabled={isMutating}
+          >
+            {!isMutating && <UserPlus size={14} />}
+            {isMutating ? 'Saving...' : isEditing ? 'Update Attendee' : 'Register Attendee'}
+          </Button>
+        </DialogFooter>
+      </form>
     </>
   )
 };

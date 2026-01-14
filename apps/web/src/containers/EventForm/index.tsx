@@ -11,21 +11,26 @@ import {
 } from 'lucide-react';
 import { getCollections } from '../../lib/tanstack-db';
 import type { EventStatus } from '@credopass/lib/schemas';
-import { 
-  Button, 
-  Input, 
-  Field, 
-  FieldDescription, 
-  FieldError, 
-  FieldGroup, 
+import {
+  Button,
+  Input,
+  Field,
+  FieldDescription,
+  FieldError,
+  FieldGroup,
   FieldLabel,
-  Select, 
-  SelectContent, 
-  SelectGroup, 
-  SelectItem, 
-  SelectTrigger, 
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
   SelectValue,
-  Textarea
+  Textarea,
+  DialogClose,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
 } from '@credopass/ui';
 import './style.css';
 import type { LauncherState } from '../../stores/store';
@@ -173,15 +178,18 @@ const EventForm = ({ initialData = {}, isEditing = false, onClose }: EventFormPr
   };
 
   return (
-    <div className="event-modal">
-      <div className="modal-header">
-        <h2>{isEditing ? 'Edit Event' : 'New Event'}</h2>
-        <p>{isEditing ? 'Update event details' : 'Create a new calendar event'}</p>
-      </div>
+    <>
+      <DialogHeader>
+        <DialogTitle>{isEditing ? 'Edit Event' : 'New Event'}</DialogTitle>
+        <DialogDescription>
+          {isEditing ? 'Update event details' : 'Create a new calendar event'}
+        </DialogDescription>
+      </DialogHeader>
 
-      <div className="modal-body">
-        <form 
-          className="event-form" 
+
+      <div className="grid gap-4">
+        <form
+          className="event-form"
           onSubmit={(e) => {
             e.preventDefault();
             form.handleSubmit();
@@ -303,9 +311,9 @@ const EventForm = ({ initialData = {}, isEditing = false, onClose }: EventFormPr
                   return (
                     <Field data-invalid={isInvalid} className="form-group">
                       <FieldLabel htmlFor={field.name} className="form-label">Status</FieldLabel>
-                      <Select 
+                      <Select
                         name={field.name}
-                        value={field.state.value} 
+                        value={field.state.value}
                         onValueChange={(value) => field.handleChange(value as EventStatus)}
                       >
                         <SelectTrigger id={field.name} aria-invalid={isInvalid}>
@@ -410,8 +418,7 @@ const EventForm = ({ initialData = {}, isEditing = false, onClose }: EventFormPr
             />
           </FieldGroup>
 
-          {/* Actions */}
-          <div className="form-actions">
+          <DialogFooter>
             {isEditing && (
               <Button
                 type="button"
@@ -422,14 +429,16 @@ const EventForm = ({ initialData = {}, isEditing = false, onClose }: EventFormPr
                 <Trash2 size={14} />
               </Button>
             )}
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={onClose}
-              disabled={isMutating}
-            >
-              Cancel
-            </Button>
+            <DialogClose>
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={onClose}
+                disabled={isMutating}
+              >
+                Cancel
+              </Button>
+            </DialogClose>
             <Button
               type="submit"
               variant="default"
@@ -437,17 +446,12 @@ const EventForm = ({ initialData = {}, isEditing = false, onClose }: EventFormPr
             >
               {isMutating ? 'Saving...' : isEditing ? 'Update Event' : 'Create Event'}
             </Button>
-          </div>
+          </DialogFooter>
         </form>
       </div>
 
-      {isMutating && (
-        <div className="loading-overlay">
-          <div className="loading-spinner" />
-        </div>
-      )}
-    </div>
-  );
+    </>
+  )
 };
 
 
