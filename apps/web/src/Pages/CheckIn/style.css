@@ -203,6 +203,16 @@
   }
 }
 
+/* Spin animation for loading spinner */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* LoadingState styles */
 .loading-state {
   height: 100%;
@@ -230,15 +240,6 @@
 
   .loading-text {
     color: hsl(var(--muted-foreground));
-  }
-
-  @keyframes spin {
-    from {
-      transform: rotate(0deg);
-    }
-    to {
-      transform: rotate(360deg);
-    }
   }
 }
 

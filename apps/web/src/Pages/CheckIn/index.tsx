@@ -15,40 +15,9 @@ import './style.css';
 
 import CheckInHeader from './components/CheckInHeader';
 import QRCodeDisplay from './components/QRCodeDisplay';
-import { Users } from 'lucide-react';
-
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle
-} from '@credopass/ui';
-
 import ManualSignInForm from './ManualSignInForm';
 
-interface ManualCheckInCardProps {
-  onSubmit: (userData: Partial<User>) => void;
-}
 
-const ManualCheckInCard: React.FC<ManualCheckInCardProps> = ({ onSubmit }) => {
-  return (
-    <Card className="manual-checkin-card">
-      <CardHeader>
-        <CardTitle className="card-title">
-          <Users className="icon-medium" />
-          Manual Check-In
-        </CardTitle>
-        <CardDescription>
-          Enter attendee details for manual check-in
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <ManualSignInForm onSubmit={onSubmit} />
-      </CardContent>
-    </Card>
-  );
-};
 
 const LoadingState: React.FC = () => {
   return (
