@@ -12,6 +12,7 @@ import {
   Calendar,
   ChartNoAxesCombined,
   Database,
+  QrCode,
 } from "lucide-react";
 import "./layout.css";
 import { useIsMobile } from "../hooks/use-mobile";
@@ -53,6 +54,11 @@ export function RootLayout() {
                   icon: LayoutDashboard,
                   label: "Home",
                   isActive: true
+                },
+                {
+                  url: "/checkin",
+                  icon: QrCode,
+                  label: "Check-In"
                 },
                 {
                   url: "/members",
