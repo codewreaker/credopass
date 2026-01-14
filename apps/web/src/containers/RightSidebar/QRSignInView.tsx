@@ -137,6 +137,7 @@ const QRSignInView: React.FC = () => {
     // Auto-initialize session when component mounts
     useEffect(() => {
         initializeCompleteSession();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     // Generate QR code data from current session
