@@ -5,6 +5,11 @@ import { MoreVertical } from "lucide-react"
 import { cn } from "../lib/utils"
 import { Popover, PopoverContent, PopoverTrigger } from "./popover"
 import { Button } from "./button"
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
+} from "./tooltip"
 
 export interface BottomNavItem {
     label: string
@@ -35,17 +40,24 @@ export function BottomNavMenuButton({ item, isActive, onClick }: BottomNavMenuBu
     }
 
     return (
-        <Button
-            variant="link"
-            onClick={onClickHandler}
-            className={cn(
-                "flex flex-1 flex-col items-center justify-center gap-1 py-2 text-xs transition-colors",
-                isActive ? "text-[#d4f542]" : "text-sidebar-foreground/70 hover:text-sidebar-foreground",
-            )}
-        >
-            <item.icon className={cn("h-5 w-5", isActive && "stroke-[2.5]")} />
-            <span className="truncate">{item.label}</span>
-        </Button>
+        <Tooltip>
+            <TooltipTrigger >
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={onClickHandler}
+                    className={cn(
+                        "transition-colors",
+                        isActive ? "text-primary bg-sidebar-accent" : "text-sidebar-foreground/70 hover:text-sidebar-foreground",
+                    )}
+                >
+                    <item.icon className={cn("h-5 w-5", isActive && "stroke-[2.5]")} />
+                </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+                <p className="text-xs">{item.label}</p>
+            </TooltipContent>
+        </Tooltip>
     )
 }
 
@@ -62,7 +74,7 @@ export function BottomNav({ items, maxVisibleItems = 5, currentPathname }: Botto
     const shouldShowMore = hiddenItems.length > 0
 
     return (
-        <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-sidebar-border bg-sidebar md:hidden">
+        <nav className="fixed bottom-0 left-0 right-0 z-50 border-sidebar-border bg-sidebar shadow-inner md:hidden">
             <div className="flex h-16 items-center justify-around px-2 pb-safe">
                 {visibleItems.map((item) => {
                     const isActive = pathname === item.url
@@ -75,14 +87,11 @@ export function BottomNav({ items, maxVisibleItems = 5, currentPathname }: Botto
                 {shouldShowMore && (
                     <Popover open={open} onOpenChange={setOpen}>
                         <PopoverTrigger>
-                            <button
-                                className={cn(
-                                    "flex flex-1 flex-col items-center justify-center gap-1 py-2 text-xs transition-colors",
-                                    "text-sidebar-foreground/70 hover:text-sidebar-foreground",
-                                )}
+                            <Button
+                                variant="ghost"
                             >
                                 <MoreVertical className="h-5 w-5" />
-                            </button>
+                            </Button>
                         </PopoverTrigger>
                         <PopoverContent side="top" align="end" className="w-24 border-sidebar-border bg-sidebar p-2">
                             <div className="flex flex-col gap-1">

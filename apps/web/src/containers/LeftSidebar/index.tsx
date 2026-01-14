@@ -3,9 +3,9 @@
 import * as React from "react"
 
 
-import { 
+import {
     Collapsible, CollapsibleContent, CollapsibleTrigger
- } from "@credopass/ui/components/collapsible"
+} from "@credopass/ui/components/collapsible"
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -48,6 +48,7 @@ import { useLocation, useNavigate } from "@tanstack/react-router"
 import UserComponent from "../../components/user"
 import { cn } from "@credopass/ui/lib/utils"
 import { useCookies } from "@credopass/lib/hooks";
+import CredoPassLogoIcon from "./brand-icon";
 
 interface SidebarMenuItemType {
     label: string
@@ -210,33 +211,7 @@ const MainSidebar: React.FC<SidebarProps> = ({
                                         size="lg"
                                         className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                                     >
-                                        <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" className="size-4">
-                                                <rect width="256" height="256" fill="none"></rect>
-                                                <line
-                                                    x1="208"
-                                                    y1="128"
-                                                    x2="128"
-                                                    y2="208"
-                                                    fill="none"
-                                                    stroke="currentColor"
-                                                    strokeLinecap="round"
-                                                    strokeLinejoin="round"
-                                                    strokeWidth="32"
-                                                ></line>
-                                                <line
-                                                    x1="192"
-                                                    y1="40"
-                                                    x2="40"
-                                                    y2="192"
-                                                    fill="none"
-                                                    stroke="currentColor"
-                                                    strokeLinecap="round"
-                                                    strokeLinejoin="round"
-                                                    strokeWidth="32"
-                                                ></line>
-                                            </svg>
-                                        </div>
+                                        <CredoPassLogoIcon size={16} />
                                         <div className="grid flex-1 text-left text-sm leading-tight">
                                             <span className="truncate font-semibold">{activeTeam?.label}</span>
                                             <span className="truncate text-xs">{activeTeam?.plan}</span>
@@ -338,6 +313,6 @@ const MainSidebar: React.FC<SidebarProps> = ({
     )
 }
 
-export { SidebarInset, SidebarTrigger };
+export { SidebarInset, SidebarTrigger, CredoPassLogoIcon as BrandIcon };
 
 export default MainSidebar;

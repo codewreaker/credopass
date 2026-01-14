@@ -2,9 +2,11 @@ import React, { useEffect, useCallback, useRef } from 'react';
 import {
   Search,
   Bell,
-  Calendar
+  Calendar,
+  QrCodeIcon,
+  UserPlus
 } from 'lucide-react';
-import { Button } from '@credopass/ui';
+import { Button, Badge, Tooltip, TooltipContent, TooltipTrigger } from '@credopass/ui';
 import { launchSignInForm } from '../SignInModal/index';
 import { launchUserForm } from '../UserForm/index';
 
@@ -117,10 +119,26 @@ export const TopNavBar: React.FC = () => {
           New Event
         </Button>
 
-        <Button variant="ghost" size="icon" className="notification-btn">
+        <Tooltip>
+          <TooltipTrigger>
+            <Button>
+              <QrCodeIcon />
+              /
+              <UserPlus />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <div className="flex flex-col gap-2">
+              <p className="text-xs">Checkin Members</p>
+            </div>
+          </TooltipContent>
+        </Tooltip>
+
+        <Button size="icon" variant="outline" className="top-navbar-btn">
           <Bell size={15} />
-          <span className="notification-badge">3</span>
+          <Badge>3</Badge>
         </Button>
+
       </div>}
     </div>
   );

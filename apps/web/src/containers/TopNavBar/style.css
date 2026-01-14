@@ -60,29 +60,20 @@
 
 
 /* Notification button with badge */
-.notification-btn {
+.top-navbar-btn {
   position: relative;
-  background-color: var(--card);
   border: 1.5px solid var(--primary);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   color: var(--primary);
-}
+  cursor: pointer;
 
-.notification-badge {
-  position: absolute;
-  top: -3px;
-  right: -3px;
-  width: 13.5px;
-  height: 13.5px;
-  background-color: var(--primary);
-  color: var(--background-darker);
-  border-radius: 50%;
-  font-size: 0.525rem;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  &:hover {
+    background-color: var(--primary);
+    color: var(--card);
+  }
+
+  [data-slot="badge"] {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+  }
 }
