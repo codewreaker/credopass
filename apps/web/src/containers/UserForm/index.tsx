@@ -11,7 +11,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import { getCollections } from '../../lib/tanstack-db';
-import { Button, Input, Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@credopass/ui';
+import { Button, Input, Field, FieldDescription, FieldError, FieldGroup, FieldLabel, DialogFooter, DialogClose, DialogDescription, DialogHeader, DialogTitle } from '@credopass/ui';
 import type { LauncherState } from '../../stores/store';
 
 import './style.css';
@@ -135,198 +135,201 @@ const UserForm = ({ initialData = {}, isEditing = false, onClose }: UserFormProp
     }
   };
 
-
   return (
-    <div className="user-modal">
-      <div className="modal-header">
-        <div className="header-icon">
-          <UserPlus size={24} />
-        </div>
-        <div className="header-text">
+    <>
+      <DialogHeader>
+        <DialogTitle>
+          <div className="header-icon">
+            <UserPlus size={24} />
+          </div>
+        </DialogTitle>
+        <DialogDescription>
           <h2>{isEditing ? 'Edit Attendee' : 'Register New Attendee'}</h2>
           <p>{isEditing ? 'Update attendee information' : 'Add a new community member to your events'}</p>
-        </div>
-      </div>
+        </DialogDescription>
+      </DialogHeader>
 
-      <div className="modal-body">
-        <form 
-          className="user-form" 
-          onSubmit={(e) => {
-            e.preventDefault();
-            form.handleSubmit();
-          }}
-        >
-          {/* Welcome Message for New Users */}
-          {!isEditing && (
-            <div className="welcome-banner">
-              <Sparkles size={16} />
-              <span>Welcome! Let's get you registered for our community events</span>
-            </div>
-          )}
+      <form
+        className="user-form"
+        onSubmit={(e) => {
+          e.preventDefault();
+          form.handleSubmit();
+        }}
+      >
+        {/* Welcome Message for New Users */}
+        {!isEditing && (
+          <div className="welcome-banner">
+            <Sparkles size={16} />
+            <span>Welcome! Let's get you registered for our community events</span>
+          </div>
+        )}
 
-          <FieldGroup>
-            {/* First Name & Last Name */}
-            <div className="form-row">
-              <form.Field
-                name="firstName"
-                children={(field) => {
-                  const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
-                  return (
-                    <Field data-invalid={isInvalid} className="form-group">
-                      <FieldLabel htmlFor={field.name} className="form-label">
-                        <UserIcon size={14} />
-                        First Name
-                      </FieldLabel>
-                      <Input
-                        id={field.name}
-                        name={field.name}
-                        type="text"
-                        placeholder="John"
-                        value={field.state.value}
-                        onBlur={field.handleBlur}
-                        onChange={(e) => field.handleChange(e.target.value)}
-                        aria-invalid={isInvalid}
-                      />
-                      {isInvalid && <FieldError errors={field.state.meta.errors} />}
-                    </Field>
-                  );
-                }}
-              />
-              <form.Field
-                name="lastName"
-                children={(field) => {
-                  const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
-                  return (
-                    <Field data-invalid={isInvalid} className="form-group">
-                      <FieldLabel htmlFor={field.name} className="form-label">
-                        <UserIcon size={14} />
-                        Last Name
-                      </FieldLabel>
-                      <Input
-                        id={field.name}
-                        name={field.name}
-                        type="text"
-                        placeholder="Doe"
-                        value={field.state.value}
-                        onBlur={field.handleBlur}
-                        onChange={(e) => field.handleChange(e.target.value)}
-                        aria-invalid={isInvalid}
-                      />
-                      {isInvalid && <FieldError errors={field.state.meta.errors} />}
-                    </Field>
-                  );
-                }}
-              />
-            </div>
-
-            {/* Email */}
+        <FieldGroup>
+          {/* First Name & Last Name */}
+          <div className="form-row">
             <form.Field
-              name="email"
+              name="firstName"
               children={(field) => {
                 const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
                 return (
-                  <Field data-invalid={isInvalid} className="form-field-wrapper">
+                  <Field data-invalid={isInvalid} className="form-group">
                     <FieldLabel htmlFor={field.name} className="form-label">
-                      <Mail size={14} />
-                      Email Address
+                      <UserIcon size={14} />
+                      First Name
                     </FieldLabel>
                     <Input
                       id={field.name}
                       name={field.name}
-                      type="email"
-                      placeholder="john.doe@example.com"
+                      type="text"
+                      placeholder="John"
                       value={field.state.value}
                       onBlur={field.handleBlur}
                       onChange={(e) => field.handleChange(e.target.value)}
                       aria-invalid={isInvalid}
                     />
-                    <FieldDescription className="field-hint">
-                      We'll use this to send you event updates
-                    </FieldDescription>
                     {isInvalid && <FieldError errors={field.state.meta.errors} />}
                   </Field>
                 );
               }}
             />
-
-            {/* Phone Number */}
             <form.Field
-              name="phone"
+              name="lastName"
               children={(field) => {
                 const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
                 return (
-                  <Field data-invalid={isInvalid} className="form-field-wrapper">
+                  <Field data-invalid={isInvalid} className="form-group">
                     <FieldLabel htmlFor={field.name} className="form-label">
-                      <Phone size={14} />
-                      Phone Number
+                      <UserIcon size={14} />
+                      Last Name
                     </FieldLabel>
                     <Input
                       id={field.name}
                       name={field.name}
-                      type="tel"
-                      placeholder="+1 (555) 000-0000"
+                      type="text"
+                      placeholder="Doe"
                       value={field.state.value}
                       onBlur={field.handleBlur}
                       onChange={(e) => field.handleChange(e.target.value)}
                       aria-invalid={isInvalid}
                     />
-                    <FieldDescription className="field-hint">
-                      Optional - For important event notifications
-                    </FieldDescription>
                     {isInvalid && <FieldError errors={field.state.meta.errors} />}
                   </Field>
                 );
               }}
             />
-          </FieldGroup>
+          </div>
 
-          {/* Info Box */}
-          {!isEditing && (
-            <div className="info-box">
-              <div className="info-icon">ℹ️</div>
-              <div className="info-text">
-                <strong>What happens next?</strong>
-                <p>You'll be added to our community and can start attending events immediately. Track your attendance and earn loyalty rewards!</p>
-              </div>
-            </div>
-          )}
+          {/* Email */}
+          <form.Field
+            name="email"
+            children={(field) => {
+              const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
+              return (
+                <Field data-invalid={isInvalid} className="form-field-wrapper">
+                  <FieldLabel htmlFor={field.name} className="form-label">
+                    <Mail size={14} />
+                    Email Address
+                  </FieldLabel>
+                  <Input
+                    id={field.name}
+                    name={field.name}
+                    type="email"
+                    placeholder="john.doe@example.com"
+                    value={field.state.value}
+                    onBlur={field.handleBlur}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    aria-invalid={isInvalid}
+                  />
+                  <FieldDescription className="field-hint">
+                    We'll use this to send you event updates
+                  </FieldDescription>
+                  {isInvalid && <FieldError errors={field.state.meta.errors} />}
+                </Field>
+              );
+            }}
+          />
 
-          {/* Form Actions */}
-          <div className="form-actions">
-            {isEditing && (
-              <Button
-                type="button"
-                variant="destructive"
-                onClick={handleDelete}
-                disabled={isMutating}
-              >
-                <Trash2 size={14} />
-                Delete
-              </Button>
-            )}
-            <div className="actions-right">
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={onClose}
-                disabled={isMutating}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                variant="default"
-                disabled={isMutating}
-              >
-                {!isMutating && <UserPlus size={14} />}
-                {isMutating ? 'Saving...' : isEditing ? 'Update Attendee' : 'Register Attendee'}
-              </Button>
+          {/* Phone Number */}
+          <form.Field
+            name="phone"
+            children={(field) => {
+              const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
+              return (
+                <Field data-invalid={isInvalid} className="form-field-wrapper">
+                  <FieldLabel htmlFor={field.name} className="form-label">
+                    <Phone size={14} />
+                    Phone Number
+                  </FieldLabel>
+                  <Input
+                    id={field.name}
+                    name={field.name}
+                    type="tel"
+                    placeholder="+1 (555) 000-0000"
+                    value={field.state.value}
+                    onBlur={field.handleBlur}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    aria-invalid={isInvalid}
+                  />
+                  <FieldDescription className="field-hint">
+                    Optional - For important event notifications
+                  </FieldDescription>
+                  {isInvalid && <FieldError errors={field.state.meta.errors} />}
+                </Field>
+              );
+            }}
+          />
+        </FieldGroup>
+
+        {/* Info Box */}
+        {!isEditing && (
+          <div className="info-box">
+            <div className="info-icon">ℹ️</div>
+            <div className="info-text">
+              <strong>What happens next?</strong>
+              <p>You'll be added to our community and can start attending events immediately. Track your attendance and earn loyalty rewards!</p>
             </div>
           </div>
-        </form>
-      </div>
-    </div>
-  );
+        )}
+
+        {/* Form Actions */}
+        <div className="form-actions">
+          {isEditing && (
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={isMutating}
+            >
+              <Trash2 size={14} />
+              Delete
+            </Button>
+          )}
+        </div>
+      </form>
+
+      <DialogFooter>
+        <DialogClose>
+                    <Button
+              type="button"
+              variant="secondary"
+              onClick={onClose}
+              disabled={isMutating}
+            >
+              Cancel
+            </Button>
+            </DialogClose>
+            <Button
+              type="submit"
+              variant="default"
+              disabled={isMutating}
+            >
+              {!isMutating && <UserPlus size={14} />}
+              {isMutating ? 'Saving...' : isEditing ? 'Update Attendee' : 'Register Attendee'}
+            </Button>
+      </DialogFooter>
+    </>
+  )
 };
 
 export default UserForm;
+
