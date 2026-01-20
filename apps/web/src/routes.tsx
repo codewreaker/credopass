@@ -1,4 +1,4 @@
-import { createRootRoute, createRoute } from '@tanstack/react-router'
+import { createRootRoute, createRoute, redirect } from '@tanstack/react-router'
 import { RootLayout } from './Pages/Layout'
 import HomePage from './Pages/Home/index'
 import MembersPage from './Pages/Members/index'
@@ -13,10 +13,22 @@ const rootRoute = createRootRoute({
   component: RootLayout,
 })
 
-// Home route - Dashboard with HeroPanel and AttendanceTable
+// Default redirect path - change this to redirect '/' to any route
+const DEFAULT_REDIRECT_PATH = '/checkin'
+
+// Index route - redirects to the default path (currently /checkin)
 const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/',
+  beforeLoad: () => {
+    throw redirect({ to: DEFAULT_REDIRECT_PATH })
+  },
+})
+
+// Dashboard route - Dashboard with HeroPanel and AttendanceTable
+const dashboardRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/dashboard',
   component: HomePage,
 })
 
@@ -66,6 +78,7 @@ const checkInRoute = createRoute({
 // Route tree - explicitly defines the structure
 export const routeTree = rootRoute.addChildren([
   indexRoute,
+  dashboardRoute,
   membersRoute,
   eventsRoute,
   analyticsRoute,
@@ -77,7 +90,7 @@ export const routeTree = rootRoute.addChildren([
 // Export individual routes for type safety and easy access
 export const routes = {
   root: rootRoute,
-  home: indexRoute,
+  dashboard: dashboardRoute,
   members: membersRoute,
   checkIn: checkInRoute,
   events: eventsRoute,

@@ -55,7 +55,7 @@ export const TopNavBar: React.FC = () => {
             break;
           case 'h':
             e.preventDefault();
-            navigate({ to: '/' });
+            navigate({ to: '/dashboard' });
             break;
           case 'm':
             e.preventDefault();
