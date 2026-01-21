@@ -174,8 +174,8 @@ jobs:
         uses: docker/login-action@v3
         with:
           registry: ${{ env.GAR_LOCATION }}-docker.pkg.dev
-          username: oauth2accesstoken
-          password: ${{ steps.auth.outputs.access_token }}
+          username: _json_key
+          password: ${{ secrets.GCP_CREDENTIALS }}
 
       # ----------------------------------------------------------------------
       # Step 5: Build and push Docker image
