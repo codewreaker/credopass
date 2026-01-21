@@ -1,48 +1,23 @@
 # =============================================================================
 # Dockerfile - Core API Service (services/core)
 # =============================================================================
-# Multi-stage build for Google Cloud Run deployment
-# Runtime: Bun
-# Build: Nx monorepo
+# Optimized for CI/CD pipeline where build happens in GitHub Actions:
+#
+# CI WORKFLOW (GitHub Actions):
+#   1. Install dependencies (bun install)
+#   2. Build application (nx build coreservice)
+#   3. Build Docker image (copies pre-built files)
+#   4. Push to Artifact Registry
+#   5. Deploy to Cloud Run
+#
+# The Docker image only contains the runtime - no build tools needed.
+# This results in faster builds, smaller images, and better caching.
 # =============================================================================
 
 # -----------------------------------------------------------------------------
-# Stage 1: Dependencies
+# Stage 1: Production runtime image
 # -----------------------------------------------------------------------------
-FROM oven/bun:1.3-alpine AS deps
-
-WORKDIR /app
-
-# Copy root package files for workspace resolution
-COPY package.json bun.lock ./
-COPY nx.json tsconfig.base.json ./
-
-# Copy all workspace package.json files for dependency resolution
-COPY packages/lib/package.json ./packages/lib/
-COPY packages/ui/package.json ./packages/ui/
-COPY services/core/package.json ./services/core/
-
-# Install all dependencies (including dev for building)
-RUN bun install --frozen-lockfile
-
-# -----------------------------------------------------------------------------
-# Stage 2: Build
-# -----------------------------------------------------------------------------
-FROM deps AS build
-
-WORKDIR /app
-
-# Copy source code
-COPY packages/ ./packages/
-COPY services/core/ ./services/core/
-
-# Build the coreservice using Nx
-RUN bun nx build coreservice
-
-# -----------------------------------------------------------------------------
-# Stage 3: Production
-# -----------------------------------------------------------------------------
-FROM oven/bun:1.3-alpine AS production
+FROM oven/bun:1.2-alpine AS runtime
 
 WORKDIR /app
 
@@ -50,17 +25,19 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=8080
 
-# Copy only production dependencies
-COPY package.json bun.lock ./
-COPY packages/lib/package.json ./packages/lib/
+# Copy package files for production dependencies
+COPY package.json bun.lockb ./
 COPY services/core/package.json ./services/core/
-RUN bun install --frozen-lockfile --production
+COPY packages/lib/package.json ./packages/lib/
 
-# Copy built application from build stage
-COPY --from=build /app/dist/services/core ./dist
+# Install production dependencies only (no devDependencies)
+RUN bun install --production --frozen-lockfile
+
+# Copy pre-built application (from CI: nx build coreservice)
+COPY dist/services/core ./dist/services/core
 
 # Copy shared packages needed at runtime
-COPY --from=build /app/packages/lib ./packages/lib
+COPY packages/lib/src ./packages/lib/src
 
 # Set up non-root user for security (Cloud Run best practice)
 RUN addgroup -g 1001 -S nodejs && \
@@ -74,7 +51,7 @@ EXPOSE 8080
 
 # Health check endpoint
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:8080/api/core/health || exit 1
+    CMD wget --no-verbose --tries=1 --spider http://localhost:8080/api/core/health || exit 1
 
 # Start the server
-CMD ["bun", "dist/index.js"]
+CMD ["bun", "run", "dist/services/core/index.js"]

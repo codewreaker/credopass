@@ -1,3 +1,34 @@
+# =============================================================================
+# CI/CD Pipeline - Core API Service
+# =============================================================================
+# 
+# This workflow builds and deploys the Core API service to Google Cloud Run.
+#
+# Overview:
+#   1. Check if the API service is affected by changes
+#   2. Run quality checks (lint, typecheck, test)
+#   3. Build the application in CI (faster, cached)
+#   4. Build and push Docker image to Artifact Registry
+#   5. Deploy to Cloud Run using google-github-actions/deploy-cloudrun
+#
+# Prerequisites:
+#   - Enable Cloud Run API: run.googleapis.com
+#   - Enable Artifact Registry API: artifactregistry.googleapis.com
+#   - Configure Workload Identity Federation for GitHub
+#   - Grant required IAM roles:
+#     - roles/run.admin
+#     - roles/iam.serviceAccountUser
+#     - roles/artifactregistry.admin
+#
+# Required GitHub Secrets/Variables:
+#   - WIF_PROVIDER: Workload Identity Federation provider
+#   - WIF_SERVICE_ACCOUNT: Service account email
+#   - GCP_PROJECT_ID: Google Cloud project ID
+#   - GCP_REGION: Deployment region (e.g., us-central1)
+#   - GAR_REPOSITORY: Artifact Registry repository name
+#
+# =============================================================================
+
 name: CI/CD - Core API Service
 
 on:
@@ -23,57 +54,25 @@ on:
 
 env:
   NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
+  
+  # Google Cloud configuration
+  PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+  GAR_LOCATION: ${{ vars.GCP_REGION }}
+  REPOSITORY: ${{ vars.GAR_REPOSITORY }}
+  SERVICE_NAME: credopass-core
+  REGION: ${{ vars.GCP_REGION }}
+  
   # Docker image configuration
   IMAGE_NAME: credopass-core
   DOCKERFILE_PATH: services/core/Dockerfile
 
 jobs:
-  # Check if API is affected
-  check-affected:
-    name: Check API Changes
-    runs-on: ubuntu-latest
-    outputs:
-      should-deploy: ${{ steps.check.outputs.affected }}
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
-
-      - name: Derive SHAs for base and head
-        if: github.event_name != 'workflow_dispatch'
-        uses: nrwl/nx-set-shas@v4
-
-      - name: Check if API is affected
-        id: check
-        run: |
-          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
-            echo "affected=true" >> $GITHUB_OUTPUT
-            echo "🚀 Manual deployment triggered"
-          else
-            if bun nx show project coreservice --affected; then
-              echo "affected=true" >> $GITHUB_OUTPUT
-              echo "✅ Core API service is affected"
-            else
-              echo "affected=false" >> $GITHUB_OUTPUT
-              echo "⏭️ Core API service not affected, skipping deployment"
-            fi
-          fi
-
-  # Quality checks
+  # ==========================================================================
+  # Job 1: Quality checks (lint, typecheck, test)
+  # ==========================================================================
   quality-checks:
     name: Quality Checks
     runs-on: ubuntu-latest
-    needs: check-affected
-    if: needs.check-affected.outputs.should-deploy == 'true'
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -101,48 +100,89 @@ jobs:
       - name: Test Core API service
         run: bun nx test coreservice || echo "No tests configured"
 
-  # Build and deploy to Cloud Run
-  deploy:
-    name: Deploy to Cloud Run
+  # ==========================================================================
+  # Job 3: Build application and Docker image, then deploy to Cloud Run
+  # ==========================================================================
+  build-and-deploy:
+    name: Build & Deploy to Cloud Run
     runs-on: ubuntu-latest
-    needs: [check-affected, quality-checks]
-    if: needs.check-affected.outputs.should-deploy == 'true'
+    needs: [quality-checks]
+    
+    # Required permissions for Workload Identity Federation
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+    
     environment:
       name: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production') || github.ref == 'refs/heads/main' && 'production-api' || 'staging-api' }}
       url: ${{ steps.deploy.outputs.url }}
+    
     steps:
+      # ----------------------------------------------------------------------
+      # Step 1: Checkout and setup
+      # ----------------------------------------------------------------------
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      # ----------------------------------------------------------------------
+      # Step 2: Install dependencies and build in CI
+      # ----------------------------------------------------------------------
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build Core API service
+        run: |
+          echo "📦 Building Core API service..."
+          bun nx build coreservice
+          echo "✅ Build complete!"
+          
+          # List build artifacts
+          echo "📁 Build artifacts:"
+          ls -la dist/services/core/ || echo "Build output directory not found"
+
+      # ----------------------------------------------------------------------
+      # Step 3: Authenticate to Google Cloud using Workload Identity Federation
+      # ----------------------------------------------------------------------
       - name: Authenticate to Google Cloud
         id: auth
         uses: google-github-actions/auth@v2
         with:
-          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+          token_format: 'access_token'
+          workload_identity_provider: ${{ vars.WIF_PROVIDER }}
+          service_account: ${{ vars.WIF_SERVICE_ACCOUNT }}
 
-      - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v2
+      # Alternative: Service Account Key JSON authentication
+      # Uncomment below and comment out Workload Identity Federation if needed
+      # - name: Authenticate to Google Cloud
+      #   id: auth
+      #   uses: google-github-actions/auth@v2
+      #   with:
+      #     credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+      #     token_format: 'access_token'
 
-      - name: Configure Docker to use gcloud as credential helper
-        run: gcloud auth configure-docker ${{ secrets.GCP_REGION }}-docker.pkg.dev
+      # ----------------------------------------------------------------------
+      # Step 4: Authenticate Docker to Google Artifact Registry
+      # ----------------------------------------------------------------------
+      - name: Authenticate Docker to Artifact Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.GAR_LOCATION }}-docker.pkg.dev
+          username: oauth2accesstoken
+          password: ${{ steps.auth.outputs.access_token }}
 
-      - name: Build Docker image
+      # ----------------------------------------------------------------------
+      # Step 5: Build and push Docker image
+      # ----------------------------------------------------------------------
+      - name: Determine environment configuration
+        id: env-config
         run: |
-          docker build \
-            -f ${{ env.DOCKERFILE_PATH }} \
-            -t ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/credopass/${{ env.IMAGE_NAME }}:${{ github.sha }} \
-            -t ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/credopass/${{ env.IMAGE_NAME }}:latest \
-            .
-
-      - name: Push Docker image to Artifact Registry
-        run: |
-          docker push ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/credopass/${{ env.IMAGE_NAME }}:${{ github.sha }}
-          docker push ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/credopass/${{ env.IMAGE_NAME }}:latest
-
-      - name: Deploy to Cloud Run
-        id: deploy
-        run: |
-          # Determine service name and environment
           if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
             ENV="${{ github.event.inputs.environment }}"
           elif [ "${{ github.ref }}" == "refs/heads/main" ]; then
@@ -151,43 +191,82 @@ jobs:
             ENV="staging"
           fi
           
+          echo "environment=$ENV" >> $GITHUB_OUTPUT
+          
           if [ "$ENV" == "production" ]; then
-            SERVICE_NAME="credopass-core"
-            MIN_INSTANCES=1
-            MAX_INSTANCES=10
+            echo "service_name=credopass-core" >> $GITHUB_OUTPUT
+            echo "min_instances=1" >> $GITHUB_OUTPUT
+            echo "max_instances=10" >> $GITHUB_OUTPUT
           else
-            SERVICE_NAME="credopass-core-staging"
-            MIN_INSTANCES=0
-            MAX_INSTANCES=5
+            echo "service_name=credopass-core-staging" >> $GITHUB_OUTPUT
+            echo "min_instances=0" >> $GITHUB_OUTPUT
+            echo "max_instances=5" >> $GITHUB_OUTPUT
           fi
           
-          echo "🚀 Deploying to $ENV environment (service: $SERVICE_NAME)"
-          
-          gcloud run deploy $SERVICE_NAME \
-            --image ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/credopass/${{ env.IMAGE_NAME }}:${{ github.sha }} \
-            --platform managed \
-            --region ${{ secrets.GCP_REGION }} \
-            --allow-unauthenticated \
-            --port 8080 \
-            --memory 512Mi \
-            --cpu 1 \
-            --min-instances $MIN_INSTANCES \
-            --max-instances $MAX_INSTANCES \
-            --set-env-vars NODE_ENV=$ENV \
-            --set-secrets DATABASE_URL=DATABASE_URL:latest \
-            --timeout 300 \
-            --concurrency 80
-          
-          SERVICE_URL=$(gcloud run services describe $SERVICE_NAME --region ${{ secrets.GCP_REGION }} --format 'value(status.url)')
-          echo "url=$SERVICE_URL" >> $GITHUB_OUTPUT
-          echo "✅ Core API deployed to: $SERVICE_URL"
+          echo "🎯 Environment: $ENV"
 
+      - name: Build and push Docker image
+        id: docker-build
+        run: |
+          IMAGE_TAG="${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE_NAME }}"
+          
+          echo "🐳 Building Docker image..."
+          docker build \
+            --file ${{ env.DOCKERFILE_PATH }} \
+            --tag "${IMAGE_TAG}:${{ github.sha }}" \
+            --tag "${IMAGE_TAG}:latest" \
+            --build-arg NODE_ENV=${{ steps.env-config.outputs.environment }} \
+            .
+          
+          echo "📤 Pushing Docker image to Artifact Registry..."
+          docker push "${IMAGE_TAG}:${{ github.sha }}"
+          docker push "${IMAGE_TAG}:latest"
+          
+          echo "image=${IMAGE_TAG}:${{ github.sha }}" >> $GITHUB_OUTPUT
+          echo "✅ Docker image pushed successfully!"
+
+      # ----------------------------------------------------------------------
+      # Step 6: Deploy to Cloud Run
+      # ----------------------------------------------------------------------
+      - name: Deploy to Cloud Run
+        id: deploy
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: ${{ steps.env-config.outputs.service_name }}
+          region: ${{ env.REGION }}
+          image: ${{ steps.docker-build.outputs.image }}
+          flags: |
+            --port=8080
+            --memory=512Mi
+            --cpu=1
+            --min-instances=${{ steps.env-config.outputs.min_instances }}
+            --max-instances=${{ steps.env-config.outputs.max_instances }}
+            --timeout=300
+            --concurrency=80
+            --allow-unauthenticated
+          env_vars: |
+            NODE_ENV=${{ steps.env-config.outputs.environment }}
+          secrets: |
+            DATABASE_URL=DATABASE_URL:latest
+
+      # ----------------------------------------------------------------------
+      # Step 7: Output deployment summary
+      # ----------------------------------------------------------------------
       - name: Deployment summary
         run: |
           echo "## 🚀 Core API Service Deployment" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "✅ **Status**: Deployed successfully" >> $GITHUB_STEP_SUMMARY
-          echo "🔗 **URL**: ${{ steps.deploy.outputs.url }}" >> $GITHUB_STEP_SUMMARY
-          echo "🌿 **Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
-          echo "📝 **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
-          echo "🐳 **Image**: ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/credopass/${{ env.IMAGE_NAME }}:${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "| Property | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| **Status** | ✅ Deployed successfully |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Environment** | ${{ steps.env-config.outputs.environment }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Service** | ${{ steps.env-config.outputs.service_name }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **URL** | ${{ steps.deploy.outputs.url }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Branch** | ${{ github.ref_name }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Commit** | \`${{ github.sha }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Image** | \`${{ steps.docker-build.outputs.image }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Health Check" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "curl ${{ steps.deploy.outputs.url }}/api/core/health" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
