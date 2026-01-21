@@ -1,12 +1,12 @@
-name: CI/CD - API Service
+name: CI/CD - Core API Service
 
 on:
   # Automatic deployment on push to main/develop
   push:
     branches: [main, develop]
     paths:
-      - 'services/api/**'
-      - 'packages/validation/**'
+      - 'services/core/**'
+      - 'packages/lib/**'
       - '.github/workflows/ci-api.yml'
   
   # Manual deployment trigger
@@ -23,6 +23,9 @@ on:
 
 env:
   NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
+  # Docker image configuration
+  IMAGE_NAME: credopass-core
+  DOCKERFILE_PATH: services/core/Dockerfile
 
 jobs:
   # Check if API is affected
@@ -56,12 +59,12 @@ jobs:
             echo "affected=true" >> $GITHUB_OUTPUT
             echo "🚀 Manual deployment triggered"
           else
-            if bun nx show project api --affected; then
+            if bun nx show project coreservice --affected; then
               echo "affected=true" >> $GITHUB_OUTPUT
-              echo "✅ API service is affected"
+              echo "✅ Core API service is affected"
             else
               echo "affected=false" >> $GITHUB_OUTPUT
-              echo "⏭️ API service not affected, skipping deployment"
+              echo "⏭️ Core API service not affected, skipping deployment"
             fi
           fi
 
@@ -89,14 +92,14 @@ jobs:
         if: github.event_name != 'workflow_dispatch'
         uses: nrwl/nx-set-shas@v4
 
-      - name: Lint API service
-        run: bun nx lint api || echo "No lint configured"
+      - name: Lint Core API service
+        run: bun nx lint coreservice || echo "No lint configured"
 
-      - name: Type check API service
-        run: bun nx typecheck api || echo "No typecheck configured"
+      - name: Type check Core API service
+        run: bun nx typecheck coreservice || echo "No typecheck configured"
 
-      - name: Test API service
-        run: bun nx test api || echo "No tests configured"
+      - name: Test Core API service
+        run: bun nx test coreservice || echo "No tests configured"
 
   # Build and deploy to Cloud Run
   deploy:
@@ -126,15 +129,15 @@ jobs:
       - name: Build Docker image
         run: |
           docker build \
-            -f services/api/Dockerfile \
-            -t ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/credopass/api:${{ github.sha }} \
-            -t ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/credopass/api:latest \
+            -f ${{ env.DOCKERFILE_PATH }} \
+            -t ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/credopass/${{ env.IMAGE_NAME }}:${{ github.sha }} \
+            -t ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/credopass/${{ env.IMAGE_NAME }}:latest \
             .
 
       - name: Push Docker image to Artifact Registry
         run: |
-          docker push ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/credopass/api:${{ github.sha }}
-          docker push ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/credopass/api:latest
+          docker push ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/credopass/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          docker push ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/credopass/${{ env.IMAGE_NAME }}:latest
 
       - name: Deploy to Cloud Run
         id: deploy
@@ -149,11 +152,11 @@ jobs:
           fi
           
           if [ "$ENV" == "production" ]; then
-            SERVICE_NAME="credopass-api"
+            SERVICE_NAME="credopass-core"
             MIN_INSTANCES=1
             MAX_INSTANCES=10
           else
-            SERVICE_NAME="credopass-api-staging"
+            SERVICE_NAME="credopass-core-staging"
             MIN_INSTANCES=0
             MAX_INSTANCES=5
           fi
@@ -161,7 +164,7 @@ jobs:
           echo "🚀 Deploying to $ENV environment (service: $SERVICE_NAME)"
           
           gcloud run deploy $SERVICE_NAME \
-            --image ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/credopass/api:${{ github.sha }} \
+            --image ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/credopass/${{ env.IMAGE_NAME }}:${{ github.sha }} \
             --platform managed \
             --region ${{ secrets.GCP_REGION }} \
             --allow-unauthenticated \
@@ -177,14 +180,14 @@ jobs:
           
           SERVICE_URL=$(gcloud run services describe $SERVICE_NAME --region ${{ secrets.GCP_REGION }} --format 'value(status.url)')
           echo "url=$SERVICE_URL" >> $GITHUB_OUTPUT
-          echo "✅ API deployed to: $SERVICE_URL"
+          echo "✅ Core API deployed to: $SERVICE_URL"
 
       - name: Deployment summary
         run: |
-          echo "## 🚀 API Service Deployment" >> $GITHUB_STEP_SUMMARY
+          echo "## 🚀 Core API Service Deployment" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "✅ **Status**: Deployed successfully" >> $GITHUB_STEP_SUMMARY
           echo "🔗 **URL**: ${{ steps.deploy.outputs.url }}" >> $GITHUB_STEP_SUMMARY
           echo "🌿 **Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
           echo "📝 **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
-          echo "🐳 **Image**: ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/credopass/api:${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "🐳 **Image**: ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/credopass/${{ env.IMAGE_NAME }}:${{ github.sha }}" >> $GITHUB_STEP_SUMMARY

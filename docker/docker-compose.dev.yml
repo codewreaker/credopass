@@ -1,0 +1,86 @@
+# =============================================================================
+# Docker Compose - Development Environment
+# =============================================================================
+# Purpose: Local development setup for credopass monorepo
+# Usage:
+#   bun postgres:up          - Start Postgres only
+#   bun docker:dev           - Start Postgres + Core API in Docker
+#   bun docker:dev:build     - Rebuild and start all services
+# =============================================================================
+
+services:
+  # ---------------------------------------------------------------------------
+  # PostgreSQL Database
+  # ---------------------------------------------------------------------------
+  # Primary database for local development
+  # Data persists in named volume (survives container restarts)
+  # ---------------------------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine3.23
+    container_name: credopasspostgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-Ax!rtrysoph123}
+      POSTGRES_DB: ${POSTGRES_DB:-credopass_db}
+    ports:
+      - "5432:5432"
+    volumes:
+      # Named volume for data persistence
+      # Data survives: docker compose down
+      # Data deleted:  docker compose down -v
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 2s
+      timeout: 5s
+      retries: 5
+    networks:
+      - credopass-network
+
+  # ---------------------------------------------------------------------------
+  # Core API Service (Optional - use profile)
+  # ---------------------------------------------------------------------------
+  # Hono API server - runs in Docker for testing containerized builds
+  # Use native Bun for faster development iteration
+  # ---------------------------------------------------------------------------
+  core:
+    build:
+      context: ..
+      dockerfile: services/core/Dockerfile
+    container_name: credopasscore
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      NODE_ENV: development
+      PORT: 8080
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-Ax!rtrysoph123}@postgres:5432/${POSTGRES_DB:-credopass_db}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - credopass-network
+    # Only runs when explicitly requested with --profile services
+    profiles:
+      - services
+
+# =============================================================================
+# Volumes
+# =============================================================================
+# Named volumes persist data between container restarts
+# =============================================================================
+volumes:
+  postgres_data:
+    name: credopass_postgres_data
+
+# =============================================================================
+# Networks
+# =============================================================================
+# Custom bridge network for service communication
+# Services can reference each other by name (e.g., postgres:5432)
+# =============================================================================
+networks:
+  credopass-network:
+    name: credopass-network
+    driver: bridge

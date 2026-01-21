@@ -641,7 +641,7 @@ COPY --from=build /app/dist/services/api ./dist
 
 **Current (.env approach):**
 ```env
-DATABASE_URL=postgresql://postgres:Ax!rtrysoph123@localhost:5432/dwellpass_db
+DATABASE_URL=postgresql://postgres:Ax!rtrysoph123@localhost:5432/credopass_db
 ```
 
 **Issues:**

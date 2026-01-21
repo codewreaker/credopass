@@ -1,8 +1,8 @@
-# AI PROMPT: Multi-Service Docker Setup for dwellpass Monorepo
+# AI PROMPT: Multi-Service Docker Setup for credopass Monorepo
 
 ## Context
 
-I have a monorepo called `dwellpass` (also known as CredoPass) with the following structure:
+I have a monorepo called `credopass` (also known as CredoPass) with the following structure:
 
 - **Frontend**: `apps/web` - React SPA deployed to Vercel
 - **Backend**: `services/core` - Hono API deployed to Google Cloud Run
@@ -29,9 +29,9 @@ Set up a hybrid Docker approach with:
 **PostgreSQL service**:
 
 - Use `postgres:16-alpine3.23` image
-- Container name: `dwellpasspostgres`
+- Container name: `credopasspostgres`
 - Port: `5432:5432`
-- Database: `dwellpass_db`
+- Database: `credopass_db`
 - User: `postgres`
 - Password: `Ax!rtrysoph123`
 - Volume: `postgres_data` (persists data - if exists, reuse; if not, create)
@@ -42,14 +42,14 @@ Set up a hybrid Docker approach with:
 
 - Build from `services/core/Dockerfile`
 - Context: repo root (`..`)
-- Container name: `dwellpasscore`
+- Container name: `credopasscore`
 - Port: `8080:8080`
 - Environment: `NODE_ENV=development`, `DATABASE_URL` pointing to postgres service
 - Depends on postgres health check
 - Hot reload: mount `services/core/src` as volume
 - Use profile `services` so it only runs when explicitly requested
 
-**Shared network**: `dwellpass-network`
+**Shared network**: `credopass-network`
 
 ### 2. Docker Compose Prod (`docker/docker-compose.prod.yml`)
 
@@ -97,7 +97,7 @@ Add these commands to the existing scripts:
     "docker:prod:down": "docker compose -f docker/docker-compose.prod.yml down -v",
 
     // Individual service builds
-    "docker:build:core": "docker build -t dwellpass-core -f services/core/Dockerfile .",
+    "docker:build:core": "docker build -t credopass-core -f services/core/Dockerfile .",
     "docker:core": "docker compose -f docker/docker-compose.dev.yml up postgres core"
   }
 }
@@ -106,7 +106,7 @@ Add these commands to the existing scripts:
 ### 5. Directory Structure
 
 ```
-dwellpass/
+credopass/
 ├── docker/
 │   ├── docker-compose.dev.yml       # Create this
 │   ├── docker-compose.prod.yml      # Create this

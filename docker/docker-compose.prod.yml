@@ -1,0 +1,98 @@
+# =============================================================================
+# Docker Compose - Production-like Environment
+# =============================================================================
+# Purpose: Test production builds locally before deploying
+# Usage:
+#   bun docker:prod          - Build and start all services in prod mode
+#   bun docker:prod:down     - Stop and remove all services + volumes
+#
+# Note: Uses .env.prod for secrets (create from .env.example)
+# =============================================================================
+
+services:
+  # ---------------------------------------------------------------------------
+  # PostgreSQL Database (Production-like)
+  # ---------------------------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine3.23
+    container_name: credopasspostgres-prod
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-credopass_db}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data_prod:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - credopass-network-prod
+    # Resource limits for production-like testing
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+
+  # ---------------------------------------------------------------------------
+  # Core API Service (Production Build)
+  # ---------------------------------------------------------------------------
+  core:
+    build:
+      context: ..
+      dockerfile: services/core/Dockerfile
+      # No cache for clean production builds
+      args:
+        - BUILDKIT_INLINE_CACHE=1
+    container_name: credopasscore-prod
+    restart: always
+    ports:
+      - "8080:8080"
+    environment:
+      NODE_ENV: production
+      PORT: 8080
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-credopass_db}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - credopass-network-prod
+    # Resource limits matching Cloud Run defaults
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+    # Health check for the API
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+# =============================================================================
+# Volumes
+# =============================================================================
+volumes:
+  postgres_data_prod:
+    name: credopass_postgres_data_prod
+
+# =============================================================================
+# Networks
+# =============================================================================
+networks:
+  credopass-network-prod:
+    name: credopass-network-prod
+    driver: bridge

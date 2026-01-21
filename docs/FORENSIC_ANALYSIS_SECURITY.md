@@ -96,12 +96,12 @@ curl -X POST https://api.credopass.com/api/events \
 **Evidence in docs/DATABASE.md:**
 ```markdown
 **Connection String**:
-postgresql://postgres:Ax!rtrysoph123@localhost:5432/dwellpass_db
+postgresql://postgres:Ax!rtrysoph123@localhost:5432/credopass_db
 ```
 
 **Evidence in docs/SETUP.md:**
 ```markdown
-DATABASE_URL=postgresql://postgres:Ax!rtrysoph123@localhost:5432/dwellpass_db
+DATABASE_URL=postgresql://postgres:Ax!rtrysoph123@localhost:5432/credopass_db
 ```
 
 **Evidence in docker/docker-compose.yml:**

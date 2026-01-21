@@ -6,7 +6,7 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: Ax!rtrysoph123
-      POSTGRES_DB: dwellpass_db
+      POSTGRES_DB: credopass_db
     ports:
       - "5432:5432"
     volumes:

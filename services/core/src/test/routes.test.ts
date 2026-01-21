@@ -1,7 +1,7 @@
 
 /**
  * Can test as below (ensure Postgres is running and DATABASE_URL is set):
- * DATABASE_URL='postgresql://postgres:Ax!rtrysoph123@localhost:5432/dwellpass_db' bun test services/core/src/test/routes.test.ts
+ * DATABASE_URL='postgresql://postgres:Ax!rtrysoph123@localhost:5432/credopass_db' bun test services/core/src/test/routes.test.ts
  */
 
 import { describe, expect, it } from "bun:test";
