@@ -55,7 +55,7 @@ export function RootLayout() {
                   label: "Check-In"
                 },
                 {
-                  url: "/",
+                  url: "/dashboard",
                   icon: LayoutDashboard,
                   label: "Dashboard",
                   isActive: true

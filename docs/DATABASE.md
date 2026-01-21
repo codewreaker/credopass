@@ -34,14 +34,14 @@ Complete database schema documentation, relationships, migrations, and managemen
 ```
 Host: localhost
 Port: 5432
-Database: dwellpass_db
+Database: credopass_db
 User: postgres
 Password: Ax!rtrysoph123
 ```
 
 **Connection String**:
 ```
-postgresql://postgres:Ax!rtrysoph123@localhost:5432/dwellpass_db
+postgresql://postgres:Ax!rtrysoph123@localhost:5432/credopass_db
 ```
 
 ### Auto-Detection Logic
@@ -528,7 +528,7 @@ nx run coreservice:studio
 
 ```bash
 # Using psql
-docker exec -it <container-id> psql -U postgres -d dwellpass_db
+docker exec -it <container-id> psql -U postgres -d credopass_db
 
 # Inside psql
 \dt
@@ -538,17 +538,17 @@ docker exec -it <container-id> psql -U postgres -d dwellpass_db
 
 ```bash
 # Dump entire database
-docker exec -it <container-id> pg_dump -U postgres dwellpass_db > backup.sql
+docker exec -it <container-id> pg_dump -U postgres credopass_db > backup.sql
 
 # Dump specific table
-docker exec -it <container-id> pg_dump -U postgres -t users dwellpass_db > users.sql
+docker exec -it <container-id> pg_dump -U postgres -t users credopass_db > users.sql
 ```
 
 #### Import Database
 
 ```bash
 # Restore from dump
-docker exec -i <container-id> psql -U postgres dwellpass_db < backup.sql
+docker exec -i <container-id> psql -U postgres credopass_db < backup.sql
 ```
 
 #### Reset Database

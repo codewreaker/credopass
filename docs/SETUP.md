@@ -76,7 +76,7 @@ Complete setup instructions for getting CredoPass running locally and in product
 
 ```bash
 git clone <repository-url>
-cd dwellpass
+cd credopass
 ```
 
 ### 2. Install Dependencies
@@ -133,7 +133,7 @@ Add the following to `.env`:
 #############################
 # Database Configuration
 #############################
-DATABASE_URL=postgresql://postgres:Ax!rtrysoph123@localhost:5432/dwellpass_db
+DATABASE_URL=postgresql://postgres:Ax!rtrysoph123@localhost:5432/credopass_db
 
 #############################
 # API Configuration
@@ -162,7 +162,7 @@ DEBUG=true
 #### Development (`.env`)
 ```env
 NODE_ENV=development
-DATABASE_URL=postgresql://postgres:Ax!rtrysoph123@localhost:5432/dwellpass_db
+DATABASE_URL=postgresql://postgres:Ax!rtrysoph123@localhost:5432/credopass_db
 API_BASE_URL=http://localhost:3000
 ```
 
@@ -192,7 +192,7 @@ bun run postgres:up
 **What this does**:
 - Starts PostgreSQL 16 container
 - Maps port 5432 to localhost
-- Creates `dwellpass_db` database
+- Creates `credopass_db` database
 - Credentials: `postgres` / `Ax!rtrysoph123`
 - Data persisted in Docker volume `postgres_data`
 
@@ -210,7 +210,7 @@ docker ps
 **Test connection** (optional):
 ```bash
 # Using psql (if installed)
-psql -h localhost -p 5432 -U postgres -d dwellpass_db
+psql -h localhost -p 5432 -U postgres -d credopass_db
 
 # Password: Ax!rtrysoph123
 ```
@@ -473,7 +473,7 @@ bun run postgres:up
 echo $DATABASE_URL
 
 # Test connection
-docker exec -it <container-id> psql -U postgres -d dwellpass_db
+docker exec -it <container-id> psql -U postgres -d credopass_db
 ```
 
 #### 3. Migration Errors
@@ -564,7 +564,7 @@ nx run coreservice:migrate
 
 ```bash
 # Using psql
-docker exec -it <container-id> psql -U postgres -d dwellpass_db
+docker exec -it <container-id> psql -U postgres -d credopass_db
 
 # List tables
 \dt

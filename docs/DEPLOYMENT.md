@@ -305,7 +305,7 @@ CMD ["bun", "dist/index.js"]
 
 ```bash
 # Navigate to project root
-cd /path/to/dwellpass
+cd /path/to/credopass
 
 # Build image
 nx run coreservice:docker:build
@@ -425,7 +425,7 @@ gcloud sql instances create credopass-db \
   --backup-start-time=03:00
 
 # Create database
-gcloud sql databases create dwellpass_db \
+gcloud sql databases create credopass_db \
   --instance=credopass-db
 
 # Create user
@@ -473,7 +473,7 @@ gcloud sql connect credopass-db --user=credopass
 cloud_sql_proxy -instances=credopass-project:us-central1:credopass-db=tcp:5432
 
 # In another terminal
-DATABASE_URL="postgresql://credopass:<password>@localhost:5432/dwellpass_db" \
+DATABASE_URL="postgresql://credopass:<password>@localhost:5432/credopass_db" \
   nx run coreservice:migrate
 ```
 
@@ -527,7 +527,7 @@ Set using **Secret Manager** (recommended) or environment variables:
 
 ```bash
 # Create secret
-echo -n "postgresql://credopass:password@/dwellpass_db?host=/cloudsql/..." | \
+echo -n "postgresql://credopass:password@/credopass_db?host=/cloudsql/..." | \
   gcloud secrets create database-url --data-file=-
 
 # Grant Cloud Run access

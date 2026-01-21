@@ -207,7 +207,7 @@ credopass-monorepo/
 ```bash
 # Clone repository
 git clone <repository-url>
-cd dwellpass
+cd credopass
 
 # Install dependencies
 bun install
@@ -232,7 +232,7 @@ Create a `.env` file in the root:
 
 ```env
 # Database
-DATABASE_URL=postgresql://postgres:Ax!rtrysoph123@localhost:5432/dwellpass_db
+DATABASE_URL=postgresql://postgres:Ax!rtrysoph123@localhost:5432/credopass_db
 
 # API Configuration
 API_BASE_URL=http://localhost:3000

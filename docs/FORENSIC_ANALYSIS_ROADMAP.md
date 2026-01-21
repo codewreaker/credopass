@@ -124,7 +124,7 @@ services:
 
 ```bash
 # .env.example (new file)
-DATABASE_URL=postgresql://postgres:YOUR_PASSWORD@localhost:5432/dwellpass_db
+DATABASE_URL=postgresql://postgres:YOUR_PASSWORD@localhost:5432/credopass_db
 CLERK_SECRET_KEY=sk_test_xxxxxx
 CLERK_PUBLISHABLE_KEY=pk_test_xxxxxx
 ```
