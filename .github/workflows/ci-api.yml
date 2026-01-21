@@ -70,35 +70,35 @@ jobs:
   # ==========================================================================
   # Job 1: Quality checks (lint, typecheck, test)
   # ==========================================================================
-  # quality-checks:
-  #   name: Quality Checks
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Checkout repository
-  #       uses: actions/checkout@v4
-  #       with:
-  #         fetch-depth: 0
+  quality-checks:
+    name: Quality Checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-  #     - name: Setup Bun
-  #       uses: oven-sh/setup-bun@v2
-  #       with:
-  #         bun-version: latest
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
 
-  #     - name: Install dependencies
-  #       run: bun install --frozen-lockfile
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
 
-  #     - name: Derive SHAs for base and head
-  #       if: github.event_name != 'workflow_dispatch'
-  #       uses: nrwl/nx-set-shas@v4
+      - name: Derive SHAs for base and head
+        if: github.event_name != 'workflow_dispatch'
+        uses: nrwl/nx-set-shas@v4
 
-  #     - name: Lint Core API service
-  #       run: bun nx lint coreservice || echo "No lint configured"
+      - name: Lint Core API service
+        run: bun nx lint coreservice || echo "No lint configured"
 
-  #     - name: Type check Core API service
-  #       run: bun nx typecheck coreservice || echo "No typecheck configured"
+      - name: Type check Core API service
+        run: bun nx typecheck coreservice || echo "No typecheck configured"
 
-  #     - name: Test Core API service
-  #       run: bun nx test coreservice || echo "No tests configured"
+      - name: Test Core API service
+        run: bun nx test coreservice || echo "No tests configured"
 
   # ==========================================================================
   # Job 3: Build application and Docker image, then deploy to Cloud Run
@@ -106,7 +106,7 @@ jobs:
   build-and-deploy:
     name: Build & Deploy to Cloud Run
     runs-on: ubuntu-latest
-    # needs: [quality-checks]
+    needs: [quality-checks]
     
     # Required permissions for Workload Identity Federation
     permissions:
