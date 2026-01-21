@@ -15,9 +15,9 @@ services:
   # Primary database for local development
   # Data persists in named volume (survives container restarts)
   # ---------------------------------------------------------------------------
-  postgres:
+  credopass-postgres:
     image: postgres:16-alpine3.23
-    container_name: credopasspostgres
+    container_name: credopass-postgres
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
@@ -44,20 +44,20 @@ services:
   # Hono API server - runs in Docker for testing containerized builds
   # Use native Bun for faster development iteration
   # ---------------------------------------------------------------------------
-  core:
+  credopass-service-core:
     build:
       context: ..
       dockerfile: services/core/Dockerfile
-    container_name: credopasscore
+    container_name: credopass-service-core
     restart: unless-stopped
     ports:
       - "8080:8080"
     environment:
       NODE_ENV: development
       PORT: 8080
-      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-Ax!rtrysoph123}@postgres:5432/${POSTGRES_DB:-credopass_db}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-Ax!rtrysoph123}@credopass-postgres:5432/${POSTGRES_DB:-credopass_db}
     depends_on:
-      postgres:
+      credopass-postgres:
         condition: service_healthy
     networks:
       - credopass-network
