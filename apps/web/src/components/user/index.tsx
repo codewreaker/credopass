@@ -1,8 +1,9 @@
 import React from "react"
-import { Avatar, AvatarFallback, AvatarImage } from "@credopass/ui"
+import { Avatar, AvatarFallback, AvatarImage } from "@credopass/ui/components/avatar"
+
 import {
     SidebarMenuButton
-} from "@credopass/ui"
+} from "@credopass/ui/components/sidebar"
 
 import {
     DropdownMenu, DropdownMenuTrigger, DropdownMenuContent,
@@ -11,6 +12,7 @@ import {
     DropdownMenuPortal, DropdownMenuSubContent, DropdownMenuSeparator,
     DropdownMenuCheckboxItem, DropdownMenuRadioGroup, DropdownMenuRadioItem
 } from "@credopass/ui/components/dropdown-menu"
+
 
 import {
     FileIcon, FolderIcon, FolderOpenIcon, FileCodeIcon,
@@ -21,18 +23,18 @@ import {
     HelpCircleIcon, FileTextIcon, LogOutIcon, ChevronsUpDownIcon
 } from "lucide-react"
 
-import type {SidebarProps} from "../../containers/LeftSidebar"
+import type { SidebarProps } from "../../containers/LeftSidebar"
 
 
-const UserComponent:React.FC<{user: SidebarProps['user']}> = ({user}) => {
+const UserComponent: React.FC<{ user: SidebarProps['user'] }> = ({ user }) => {
 
-      const [notifications, setNotifications] = React.useState({
+    const [notifications, setNotifications] = React.useState({
         email: true,
         sms: false,
         push: true,
-      })
-      const [theme, setTheme] = React.useState("light")
-    
+    })
+    const [theme, setTheme] = React.useState("light")
+
     return (
         <DropdownMenu>
             <DropdownMenuTrigger>
@@ -42,7 +44,9 @@ const UserComponent:React.FC<{user: SidebarProps['user']}> = ({user}) => {
                 >
                     <Avatar className="h-8 w-8 bg-card border-[1.5px] border-primary rounded-full flex items-center justify-center text-primary">
                         <AvatarImage src={user?.avatar || "/placeholder.svg"} alt={user?.name} className={""} />
-                        <AvatarFallback className="rounded-lg flex items-center gap-1.5 bg-transparent border-0 text-primary p-0 cursor-pointer">{user?.name.slice(0, 2).toLocaleUpperCase()}</AvatarFallback>
+                        <AvatarFallback className="rounded-lg flex items-center gap-1.5 bg-transparent border-0 text-primary p-0 cursor-pointer">
+                            {user?.icon ? <user.icon className="h-5 w-5" /> : user?.name?.slice(0, 2).toUpperCase()}
+                        </AvatarFallback>
                     </Avatar>
                     <div className="grid flex-1 text-left text-sm leading-tight">
                         <span className="truncate font-semibold">{user?.name}</span>

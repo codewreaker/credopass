@@ -21,12 +21,12 @@ interface EventCardProps {
 const EventCard: React.FC<EventCardProps> = ({ event, onSelect, statusColors }) => {
   return (
     <Card
-      className="cursor-pointer hover:shadow-lg hover:border-primary/50 transition-all duration-200 group"
+      className="cursor-pointer hover:shadow-lg hover:border-primary/50 transition-all duration-200 group h-16 sm:h-full"
       onClick={() => onSelect(event.id)}
     >
-      <CardHeader className="pb-3">
+      <CardHeader className="sm:pb-3">
         <div className="flex items-start justify-between">
-          <CardTitle className="text-lg group-hover:text-primary transition-colors">
+          <CardTitle className="text-sm md:text-lg group-hover:text-primary transition-colors">
             {event.name}
           </CardTitle>
           <Badge variant="outline" className={`${statusColors[event.status] || ''}`}>
@@ -34,12 +34,12 @@ const EventCard: React.FC<EventCardProps> = ({ event, onSelect, statusColors }) 
           </Badge>
         </div>
         {event.description && (
-          <CardDescription className="line-clamp-2">
+          <CardDescription className="sm:line-clamp-1 hidden">
             {event.description}
           </CardDescription>
         )}
       </CardHeader>
-      <CardContent className="pt-0">
+      <CardContent className="hidden sm:block sm:pt-0">
         <div className="space-y-2 text-sm text-muted-foreground">
           <div className="flex items-center gap-2">
             <MapPin className="w-4 h-4" />

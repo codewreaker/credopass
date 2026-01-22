@@ -70,6 +70,7 @@ interface User {
     name: string
     email: string
     avatar: string
+    icon?: React.ElementType
 }
 
 export interface SidebarProps {

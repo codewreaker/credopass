@@ -7,7 +7,6 @@ import Analytics from './Pages/Analytics/index'
 import TablesPage from './Pages/Tables/index'
 import CheckInPage from './Pages/CheckIn/index'
 import OrganizationsPage from './Pages/Organizations/index'
-import { ComponentExample } from './components/component-example'
 
 // Root route - wraps all pages with layout (sidebar, topbar, etc.)
 const rootRoute = createRootRoute({
@@ -60,12 +59,6 @@ const databaseRoute = createRoute({
   component: TablesPage,
 })
 
-// Component Example route - UI component showcase
-const componentExampleRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/component-example',
-  component: ComponentExample,
-})
 
 // CheckIn route - Check-in page for event attendees
 const checkInRoute = createRoute({
@@ -90,8 +83,8 @@ export const routeTree = rootRoute.addChildren([
   analyticsRoute,
   databaseRoute,
   checkInRoute,
-  organizationsRoute,
-  componentExampleRoute
+  organizationsRoute
+  
 ])
 
 // Export individual routes for type safety and easy access
@@ -102,6 +95,5 @@ export const routes = {
   checkIn: checkInRoute,
   events: eventsRoute,
   organizations: organizationsRoute,
-  componentExample: componentExampleRoute,
   analytics: analyticsRoute
 } as const

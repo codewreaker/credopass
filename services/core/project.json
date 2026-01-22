@@ -14,7 +14,7 @@
     "start": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "bun --watch --no-clear-screen src/index.ts",
+        "command": "NODE_ENV=development PORT=8080 bun --watch --no-clear-screen src/index.ts",
         "cwd": "{projectRoot}"
       }
     },

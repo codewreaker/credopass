@@ -72,12 +72,7 @@ export function RootLayout() {
                   icon: Database,
                   label: "Tables"
                 },
-              ],
-              examples: [{
-                url: "/component-example",
-                icon: LayoutDashboard,
-                label: "Components"
-              }]
+              ]
             }}
           >
             <SidebarInset className="main-content">

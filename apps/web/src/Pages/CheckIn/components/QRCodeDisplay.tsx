@@ -28,6 +28,7 @@ interface QRCodeDisplayProps {
     onRefreshQR: () => void;
     onManualCheckInClick: () => void;
     selectedEvent?: Partial<EventType>;
+    size?: number;
 }
 
 const EventDetailsCard: React.FC<EventDetailsCardProps> = ({ event, statusColors }) => {
@@ -61,7 +62,8 @@ const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
     timeRemaining,
     onRefreshQR,
     onManualCheckInClick,
-    selectedEvent
+    selectedEvent,
+    size = 256,
 }) => {
     return (
         <Card className="flex flex-col">
@@ -96,7 +98,7 @@ const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
                     <div className="bg-white p-6 rounded-2xl shadow-lg border">
                         <QRCode
                             value={qrCodeData}
-                            size={320}
+                            size={size}
                             level="H"
                         />
                     </div>
