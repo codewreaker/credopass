@@ -28,7 +28,7 @@
     "migrate": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "drizzle-kit generate &&drizzle-kit migrate",
+        "command": "drizzle-kit generate && drizzle-kit migrate",
         "cwd": "{projectRoot}"
       }
     },
