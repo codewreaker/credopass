@@ -22,8 +22,9 @@ export const CreateLoyaltySchema = createInsertSchema(loyalty, {
 // Schema for updating a loyalty record
 export const UpdateLoyaltySchema = CreateLoyaltySchema.partial();
 
-// Schema for awarding points
+// Schema for awarding points (includes organizationId for tenant isolation)
 export const AwardPointsSchema = z.object({
+  organizationId: z.string().uuid(),
   patronId: z.string().uuid(),
   points: z.number().int().positive(),
   description: z.string().min(1),
@@ -31,6 +32,7 @@ export const AwardPointsSchema = z.object({
 
 // Schema for awarding a reward
 export const AwardRewardSchema = z.object({
+  organizationId: z.string().uuid(),
   patronId: z.string().uuid(),
   reward: z.string().min(1),
   description: z.string().min(1),
