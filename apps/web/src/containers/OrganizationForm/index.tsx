@@ -95,7 +95,7 @@ const OrganizationForm = ({ initialData = {}, isEditing = false, onClose }: Orga
     defaultValues: {
       name: initialData.name || '',
       slug: initialData.slug || '',
-      plan: (initialData.plan || 'free') as OrganizationPlan,
+      plan: (initialData.plan || 'free') as OrgPlan,
     },
     validators: {
       //@ts-ignore
@@ -125,7 +125,9 @@ const OrganizationForm = ({ initialData = {}, isEditing = false, onClose }: Orga
             ...organizationData,
             id: crypto.randomUUID(),
             externalAuthEndpoint: null,
+            externalAuthApiKey: null,
             stripeCustomerId: null,
+            stripeSubscriptionId: null,
             deletedAt: null,
             createdAt: now,
             updatedAt: now,
@@ -254,7 +256,7 @@ const OrganizationForm = ({ initialData = {}, isEditing = false, onClose }: Orga
                     <Select
                       name={field.name}
                       value={field.state.value}
-                      onValueChange={(value) => field.handleChange(value as OrganizationPlan)}
+                      onValueChange={(value) => field.handleChange(value as OrgPlan)}
                     >
                       <SelectTrigger id={field.name} aria-invalid={isInvalid}>
                         <SelectValue />

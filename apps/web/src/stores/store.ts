@@ -87,7 +87,7 @@ export interface EventSessionState {
     activeEventStartTime?: Date;
     activeEventEndTime?: Date;
     activeEventCapacity?: number | null;
-    activeEventHostId?: string;
+    activeEventOrganizationId?: string;
 
     // Current user (event organizer/staff) managing the check-in
     currentUserId?: string;
@@ -122,7 +122,7 @@ const createDefaultEvent = () => {
         activeEventStartTime: today,
         activeEventEndTime: tomorrow,
         activeEventCapacity: null,
-        activeEventHostId: undefined,
+        activeEventOrganizationId: undefined,
         currentUserId: 'israel.agyeman.prempeh@gmail.com',
         currentUserEmail: 'israel.agyeman.prempeh@gmail.com',
         currentUserName: 'Israel Agyeman-Prempeh'
@@ -153,7 +153,7 @@ export const useEventSessionStore = create(
                     activeEventStartTime: eventData.startTime,
                     activeEventEndTime: eventData.endTime,
                     activeEventCapacity: eventData.capacity,
-                    activeEventHostId: eventData.hostId,
+                    activeEventOrganizationId: eventData.organizationId,
                 }
             })),
 
