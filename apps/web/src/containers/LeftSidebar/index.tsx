@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-
+import { useLiveQuery } from '@tanstack/react-db';
 
 import {
     Collapsible, CollapsibleContent, CollapsibleTrigger
@@ -12,6 +12,7 @@ import {
     DropdownMenuGroup,
     DropdownMenuItem,
     DropdownMenuLabel,
+    DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@credopass/ui/components/dropdown-menu"
 import {
@@ -43,12 +44,19 @@ import {
     PieChartIcon,
     ChevronsUpDownIcon,
     ChevronRightIcon,
+    Plus,
+    Settings,
 } from "lucide-react"
 import { useLocation, useNavigate } from "@tanstack/react-router"
 import UserComponent from "../../components/user"
+import { useDefaultUserMenu } from "../../components/user/default-menu"
 import { cn } from "@credopass/ui/lib/utils"
 import { useCookies } from "@credopass/lib/hooks";
 import CredoPassLogoIcon from "./brand-icon";
+import { getCollections } from "../../lib/tanstack-db";
+import { useOrganizationStore, useLauncher } from "../../stores/store";
+import { launchOrganizationForm } from "../OrganizationForm";
+import type { Organization } from "@credopass/lib/schemas";
 
 interface SidebarMenuItemType {
     label: string
@@ -63,11 +71,11 @@ interface User {
     name: string
     email: string
     avatar: string
+    icon?: React.ElementType
 }
 
 export interface SidebarProps {
     user?: User;
-    teams?: Array<{ label: string, plan: string }>;
     nav?: SidebarMenuProps;
     children?: React.ReactNode;
 }
@@ -82,16 +90,6 @@ const defaultData: SidebarProps = {
         email: "m@example.com",
         avatar: "/avatars/shadcn.jpg",
     },
-    teams: [
-        {
-            label: "Acme Inc",
-            plan: "Enterprise",
-        },
-        {
-            label: "Acme Corp.",
-            plan: "Startup",
-        }
-    ],
     nav: {
         main: [{
             label: "Playground",
@@ -159,23 +157,43 @@ const defaultData: SidebarProps = {
 
 const MainSidebar: React.FC<SidebarProps> = ({
     nav = defaultData.nav,
-    teams = defaultData.teams,
     user = defaultData.user,
     children
 }) => {
 
     const navigate = useNavigate();
     const location = useLocation();
+    const { openLauncher } = useLauncher();
+    const { activeOrganizationId, activeOrganization, setActiveOrganization } = useOrganizationStore();
+    const userMenuGroups = useDefaultUserMenu();
+    
+    // Get collections inside component
+    const { organizations: organizationCollection } = getCollections();
+
+    // Fetch organizations from API
+    const orgsQuery = useLiveQuery((query) =>
+        query
+            .from({ organizationCollection })
+    );
+    const organizations = React.useMemo(() => 
+        (orgsQuery.data ?? []) as Organization[]
+    , [orgsQuery.data]);
 
     const [sidebarCookie] = useCookies(SIDEBAR_COOKIE_NAME);
     const isOpen = Boolean(sidebarCookie === 'true');
 
     const isActive = (url: string) => location.pathname === url
 
-    const [activeTeam, setActiveTeam] = React.useState(teams?.[0] || {
-        label: "Acme Inc",
-        plan: "Enterprise",
-    })
+    // Auto-select first organization if none selected
+    React.useEffect(() => {
+        if (!activeOrganizationId && organizations.length > 0) {
+            setActiveOrganization(organizations[0].id, organizations[0]);
+        }
+    }, [activeOrganizationId, organizations, setActiveOrganization]);
+
+    const handleSelectOrganization = (org: Organization) => {
+        setActiveOrganization(org.id, org);
+    };
 
     const navMain = React.useMemo(() => nav?.main || [], [nav]);
     const navs = React.useMemo(() => {
@@ -217,8 +235,12 @@ const MainSidebar: React.FC<SidebarProps> = ({
                                     >
                                         <CredoPassLogoIcon size={16} />
                                         <div className="grid flex-1 text-left text-sm leading-tight">
-                                            <span className="truncate font-semibold">{activeTeam?.label}</span>
-                                            <span className="truncate text-xs">{activeTeam?.plan}</span>
+                                            <span className="truncate font-semibold">
+                                                {activeOrganization?.name || 'Select Organization'}
+                                            </span>
+                                            <span className="truncate text-xs">
+                                                {activeOrganization?.plan || 'No org selected'}
+                                            </span>
                                         </div>
                                         <ChevronsUpDownIcon className="ml-auto" />
                                     </SidebarMenuButton>
@@ -230,16 +252,45 @@ const MainSidebar: React.FC<SidebarProps> = ({
                                     sideOffset={4}
                                 >
                                     <DropdownMenuGroup>
-                                        <DropdownMenuLabel className="text-xs text-muted-foreground">Teams</DropdownMenuLabel>
+                                        <DropdownMenuLabel className="text-xs text-muted-foreground">Organizations</DropdownMenuLabel>
                                     </DropdownMenuGroup>
-                                    {teams?.map((team) => (
-                                        <DropdownMenuItem key={team.label} onClick={() => setActiveTeam(team)} className="gap-2 p-2">
+                                    {organizations.map((org) => (
+                                        <DropdownMenuItem 
+                                            key={org.id} 
+                                            onClick={() => handleSelectOrganization(org)} 
+                                            className={cn(
+                                                "gap-2 p-2",
+                                                activeOrganizationId === org.id && "bg-accent"
+                                            )}
+                                        >
                                             <div className="flex size-6 items-center justify-center rounded-sm border">
-                                                {team.label.charAt(0)}
+                                                {org.name?.charAt(0) || 'O'}
                                             </div>
-                                            {team.label}
+                                            <div className="flex flex-col">
+                                                <span>{org.name}</span>
+                                                <span className="text-xs text-muted-foreground">{org.plan}</span>
+                                            </div>
                                         </DropdownMenuItem>
                                     ))}
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem 
+                                        onClick={() => launchOrganizationForm({}, openLauncher)}
+                                        className="gap-2 p-2"
+                                    >
+                                        <div className="flex size-6 items-center justify-center rounded-sm border border-dashed">
+                                            <Plus className="h-4 w-4" />
+                                        </div>
+                                        <span>New Organization</span>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem 
+                                        onClick={() => navigate({ to: '/organizations' })}
+                                        className="gap-2 p-2"
+                                    >
+                                        <div className="flex size-6 items-center justify-center rounded-sm border">
+                                            <Settings className="h-4 w-4" />
+                                        </div>
+                                        <span>Manage Organizations</span>
+                                    </DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
                         </SidebarMenuItem>
@@ -306,7 +357,7 @@ const MainSidebar: React.FC<SidebarProps> = ({
                 <SidebarFooter>
                     <SidebarMenu>
                         <SidebarMenuItem>
-                            <UserComponent user={user} />
+                            <UserComponent user={user} menuGroups={userMenuGroups} />
                         </SidebarMenuItem>
                     </SidebarMenu>
                 </SidebarFooter>

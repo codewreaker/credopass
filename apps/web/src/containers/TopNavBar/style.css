@@ -46,14 +46,14 @@
   /* Notification button with badge */
   .top-navbar-btn {
     position: relative;
-    border: 1.5px solid var(--primary);
+    /*border: 1.5px solid var(--primary);
     color: var(--primary);
     cursor: pointer;
 
     &:hover {
       background-color: var(--primary);
       color: var(--card);
-    }
+    } */
 
     [data-slot="badge"] {
       position: absolute;

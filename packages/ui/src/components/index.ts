@@ -27,3 +27,4 @@ export * from './textarea';
 export * from './tooltip';
 export * from './empty';
 export * from './spinner';
+export * from './alert';

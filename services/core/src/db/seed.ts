@@ -5,7 +5,15 @@
 
 import { desc } from 'drizzle-orm';
 import { getDatabase, closeDatabase } from './client';
-import { users, events, attendance, loyalty } from '@credopass/lib/schemas/tables';
+import { 
+  users, 
+  organizations, 
+  orgMemberships,
+  events, 
+  eventMembers,
+  attendance, 
+  loyalty 
+} from '@credopass/lib/schemas/tables';
 
 console.log('🌱 Starting database seed...\n');
 
@@ -20,31 +28,63 @@ interface UserInsert {
   updatedAt: Date;
 }
 
+interface OrganizationInsert {
+  id: string;
+  name: string;
+  slug: string;
+  plan: 'free' | 'starter' | 'pro' | 'enterprise';
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+interface OrgMembershipInsert {
+  id: string;
+  userId: string;
+  organizationId: string;
+  role: 'owner' | 'admin' | 'member' | 'viewer';
+  acceptedAt: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 interface EventInsert {
   id: string;
+  organizationId: string;
   name: string;
   description: string;
   status: 'draft' | 'scheduled' | 'ongoing' | 'completed' | 'cancelled';
+  checkInMethods: string[];
   startTime: Date;
   endTime: Date;
   location: string;
   capacity: number;
-  hostId: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+interface EventMemberInsert {
+  id: string;
+  eventId: string;
+  userId: string;
+  role: 'organizer' | 'co-host' | 'staff' | 'volunteer';
   createdAt: Date;
   updatedAt: Date;
 }
 
 interface AttendanceInsert {
   id: string;
+  organizationId: string;
   eventId: string;
   patronId: string;
   attended: boolean;
   checkInTime: Date | null;
   checkOutTime: Date | null;
+  checkInMethod: 'qr' | 'manual' | 'external_auth' | null;
 }
 
 interface LoyaltyInsert {
   id: string;
+  organizationId: string;
   patronId: string;
   description: string;
   tier: 'bronze' | 'silver' | 'gold' | 'platinum' | null;
@@ -70,6 +110,42 @@ async function seed() {
 
     // Generate sample data
     console.log('📝 Generating seed data...\n');
+    const now = new Date();
+
+    // 0. Create Organizations first (multi-tenancy)
+    console.log('🏢 Creating organizations...');
+    const createdOrganizations: OrganizationInsert[] = [
+      {
+        id: crypto.randomUUID(),
+        name: 'Kharis Church',
+        slug: 'kharis-church',
+        plan: 'pro',
+        createdAt: now,
+        updatedAt: now,
+      },
+      {
+        id: crypto.randomUUID(),
+        name: 'Tech Community Hub',
+        slug: 'tech-community-hub',
+        plan: 'starter',
+        createdAt: now,
+        updatedAt: now,
+      },
+      {
+        id: crypto.randomUUID(),
+        name: 'Fitness Club',
+        slug: 'fitness-club',
+        plan: 'free',
+        createdAt: now,
+        updatedAt: now,
+      }
+    ];
+
+    await db.insert(organizations).values(createdOrganizations);
+    console.log(`✓ Created ${createdOrganizations.length} organizations\n`);
+
+    // Use first org as default for seed data
+    const defaultOrgId = createdOrganizations[0]!.id;
 
     // 1. Create Users (Patrons)
     const firstNames: string[] = [
@@ -86,7 +162,6 @@ async function seed() {
 
     console.log('👥 Creating users...');
     const createdUsers: UserInsert[] = [];
-    const now = new Date();
 
     for (let i = 0; i < 25; i++) {
       const userData: UserInsert = {
@@ -104,31 +179,77 @@ async function seed() {
     await db.insert(users).values(createdUsers);
     console.log(`✓ Created ${createdUsers.length} users\n`);
 
-    // 2. Create Events
+    // 1.5 Create Org Memberships (link users to organizations)
+    console.log('🔗 Creating organization memberships...');
+    const createdOrgMemberships: OrgMembershipInsert[] = [];
+
+    // First user is owner of first org
+    createdOrgMemberships.push({
+      id: crypto.randomUUID(),
+      userId: createdUsers[0]!.id,
+      organizationId: defaultOrgId,
+      role: 'owner',
+      acceptedAt: now,
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    // Next 4 users are admins
+    for (let i = 1; i < 5; i++) {
+      createdOrgMemberships.push({
+        id: crypto.randomUUID(),
+        userId: createdUsers[i]!.id,
+        organizationId: defaultOrgId,
+        role: 'admin',
+        acceptedAt: now,
+        createdAt: now,
+        updatedAt: now,
+      });
+    }
+
+    // Rest are members
+    for (let i = 5; i < createdUsers.length; i++) {
+      createdOrgMemberships.push({
+        id: crypto.randomUUID(),
+        userId: createdUsers[i]!.id,
+        organizationId: defaultOrgId,
+        role: 'member',
+        acceptedAt: now,
+        createdAt: now,
+        updatedAt: now,
+      });
+    }
+
+    await db.insert(orgMemberships).values(createdOrgMemberships);
+    console.log(`✓ Created ${createdOrgMemberships.length} organization memberships\n`);
+
+    // 2. Create Events (now with organizationId)
     const eventNames: string[] = [
-      'Tech Conference 2024',
-      'Summer Music Festival',
+      'Sunday Service',
+      'Youth Fellowship',
       'Community Meetup',
-      'Art Exhibition',
-      'Charity Gala',
+      'Bible Study Group',
+      'Prayer Meeting',
       'Startup Pitch Night',
       'Networking Breakfast',
-      'Product Launch Event',
-      'Workshop: Web Development',
-      'Annual Company Party'
+      'Worship Night',
+      'Leadership Workshop',
+      'Annual Conference',
+      'Easter Celebration'
     ];
 
     const locations: string[] = [
-      'Main Conference Center',
-      'City Park Amphitheater',
-      'Downtown Community Hall',
-      'Modern Art Gallery',
-      'Grand Hotel Ballroom',
+      'Main Auditorium',
+      'Youth Hall',
+      'Community Center',
+      'Room 101',
+      'Chapel',
       'Innovation Hub',
-      'Sunrise Cafe & Coworking',
-      'Tech Campus Auditorium',
-      'Learning Center Room 101',
-      'Corporate HQ Rooftop'
+      'Fellowship Hall',
+      'Outdoor Pavilion',
+      'Conference Room A',
+      'Grand Hall',
+      'Sanctuary'
     ];
 
     console.log('🎉 Creating events...');
@@ -136,7 +257,7 @@ async function seed() {
     const nowTime = Date.now();
     const nowDate = new Date();
 
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 11; i++) {
       const daysOffset = Math.floor(Math.random() * 60) - 30;
       const startTime = new Date(nowTime + daysOffset * 24 * 60 * 60 * 1000);
       const duration = (Math.floor(Math.random() * 6) + 2) * 60 * 60 * 1000;
@@ -155,14 +276,15 @@ async function seed() {
 
       const eventData: EventInsert = {
         id: crypto.randomUUID(),
-        name: eventNames[i]!,
-        description: `Join us for an amazing ${eventNames[i]?.toLowerCase()}! This will be an unforgettable experience.`,
+        organizationId: defaultOrgId,
+        name: eventNames[i % eventNames.length]!,
+        description: `Join us for an amazing ${eventNames[i % eventNames.length]?.toLowerCase()}! This will be an unforgettable experience.`,
         status,
+        checkInMethods: ['qr', 'manual'],
         startTime,
         endTime,
         location: locations[Math.floor(Math.random() * locations.length)]!,
         capacity: Math.floor(Math.random() * 150) + 50,
-        hostId: createdUsers[Math.floor(Math.random() * Math.min(5, createdUsers.length))]!.id,
         createdAt: nowDate,
         updatedAt: nowDate,
       };
@@ -173,9 +295,42 @@ async function seed() {
     await db.insert(events).values(createdEvents);
     console.log(`✓ Created ${createdEvents.length} events\n`);
 
-    // 3. Create Attendance Records
+    // 2.5 Create Event Members (organizers for each event)
+    console.log('👔 Creating event members...');
+    const createdEventMembers: EventMemberInsert[] = [];
+
+    for (const event of createdEvents) {
+      // First admin user is the organizer
+      createdEventMembers.push({
+        id: crypto.randomUUID(),
+        eventId: event.id,
+        userId: createdUsers[0]!.id,
+        role: 'organizer',
+        createdAt: nowDate,
+        updatedAt: nowDate,
+      });
+
+      // Add 1-2 co-hosts from admins
+      const numCoHosts = Math.floor(Math.random() * 2) + 1;
+      for (let i = 0; i < numCoHosts; i++) {
+        createdEventMembers.push({
+          id: crypto.randomUUID(),
+          eventId: event.id,
+          userId: createdUsers[1 + i]!.id,
+          role: 'co-host',
+          createdAt: nowDate,
+          updatedAt: nowDate,
+        });
+      }
+    }
+
+    await db.insert(eventMembers).values(createdEventMembers);
+    console.log(`✓ Created ${createdEventMembers.length} event members\n`);
+
+    // 3. Create Attendance Records (with organizationId)
     console.log('✓ Creating attendance records...');
     const attendanceRecords: AttendanceInsert[] = [];
+    const checkInMethods: ('qr' | 'manual')[] = ['qr', 'manual'];
 
     for (const event of createdEvents) {
       if (event.status === 'draft' || event.status === 'cancelled') continue;
@@ -190,23 +345,28 @@ async function seed() {
         const attended = event.status === 'completed' ? Math.random() > 0.1 : Math.random() > 0.3;
         let checkInTime: Date | null = null;
         let checkOutTime: Date | null = null;
+        let checkInMethod: 'qr' | 'manual' | null = null;
 
         if (attended && event.status === 'completed') {
           checkInTime = new Date(event.startTime.getTime() + Math.floor(Math.random() * 30 * 60 * 1000));
           const remainingTime = event.endTime.getTime() - checkInTime.getTime();
           checkOutTime = new Date(checkInTime.getTime() + Math.floor(Math.random() * remainingTime));
+          checkInMethod = checkInMethods[Math.floor(Math.random() * checkInMethods.length)]!;
         } else if (attended && event.status === 'ongoing') {
           checkInTime = new Date(event.startTime.getTime() + Math.floor(Math.random() * 30 * 60 * 1000));
           checkOutTime = null;
+          checkInMethod = checkInMethods[Math.floor(Math.random() * checkInMethods.length)]!;
         }
 
         const attendanceData: AttendanceInsert = {
           id: crypto.randomUUID(),
+          organizationId: event.organizationId,
           eventId: event.id,
           patronId: patron.id,
           attended,
           checkInTime,
           checkOutTime,
+          checkInMethod,
         };
 
         attendanceRecords.push(attendanceData);
@@ -216,7 +376,7 @@ async function seed() {
     await db.insert(attendance).values(attendanceRecords);
     console.log(`✓ Created ${attendanceRecords.length} attendance records\n`);
 
-    // 4. Create Loyalty Records
+    // 4. Create Loyalty Records (with organizationId)
     console.log('🏆 Creating loyalty records...');
     const rewardTypes: string[] = [
       'Free Event Ticket',
@@ -247,6 +407,7 @@ async function seed() {
 
       const loyaltyData: LoyaltyInsert = {
         id: crypto.randomUUID(),
+        organizationId: defaultOrgId,
         patronId: user.id,
         description: `Loyalty account - ${tier.charAt(0).toUpperCase() + tier.slice(1)} member`,
         tier,
@@ -266,6 +427,7 @@ async function seed() {
 
           const rewardData: LoyaltyInsert = {
             id: crypto.randomUUID(),
+            organizationId: defaultOrgId,
             patronId: user.id,
             description: `Reward earned for attending ${Math.floor(Math.random() * 10) + 5} events`,
             tier: null,
@@ -285,8 +447,11 @@ async function seed() {
 
     // Summary
     console.log('📊 Seed Summary:');
+    console.log(`   Organizations: ${createdOrganizations.length}`);
     console.log(`   Users: ${createdUsers.length}`);
+    console.log(`   Org Memberships: ${createdOrgMemberships.length}`);
     console.log(`   Events: ${createdEvents.length}`);
+    console.log(`   Event Members: ${createdEventMembers.length}`);
     console.log(`   Attendance Records: ${attendanceRecords.length}`);
     console.log(`   Loyalty Records: ${loyaltyRecords.length}`);
     console.log('\n✅ Database seed completed successfully!');

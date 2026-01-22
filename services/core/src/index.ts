@@ -3,7 +3,10 @@ import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import { swaggerUI } from "@hono/swagger-ui";
 import usersRoutes from "./routes/users";
+import organizationsRoutes from "./routes/organizations";
+import orgMembershipsRoutes from "./routes/org-memberships";
 import eventsRoutes from "./routes/events";
+import eventMembersRoutes from "./routes/event-members";
 import attendanceRoutes from "./routes/attendance";
 import loyaltyRoutes from "./routes/loyalty";
 import { createMiddleware } from "hono/factory";
@@ -40,7 +43,10 @@ if (isDevelopment) {
     console.log("⚙️  CORS: Production mode - restricting origins");
     // Production: Restrict origins
     app.use("*", cors({
-        origin: ["https://yourdomain.com"], // Add your production domain
+        origin: [
+            "https://app.credopass.com",
+            "https://credopass.com"
+        ],
         credentials: true,
     }));
 }
@@ -55,11 +61,11 @@ app.get(`${API_BASE_PATH}/openapi.json`, (c) => c.json({
     openapi: "3.0.0",
     info: {
         title: "CredoPass Core API",
-        version: "1.0.0",
-        description: "Core service API for CredoPass platform",
+        version: "2.0.0",
+        description: "Multi-tenant attendance tracking platform API",
     },
     servers: [
-        { url: isDevelopment ? "http://localhost:3000" : "https://your-cloud-run-url.run.app" }
+        { url: isDevelopment ? "http://localhost:3000" : "https://api.credopass.com" }
     ],
     paths: {
         [`${API_BASE_PATH}/health`]: {
@@ -68,18 +74,35 @@ app.get(`${API_BASE_PATH}/openapi.json`, (c) => c.json({
                 responses: { "200": { description: "Service is healthy" } }
             }
         },
+        // Organizations (multi-tenancy)
+        [`${API_BASE_PATH}/organizations`]: {
+            get: { summary: "List organizations", tags: ["Organizations"] },
+            post: { summary: "Create organization", tags: ["Organizations"] }
+        },
+        [`${API_BASE_PATH}/org-memberships`]: {
+            get: { summary: "List org memberships", tags: ["Organizations"] },
+            post: { summary: "Invite user to org", tags: ["Organizations"] }
+        },
+        // Users
         [`${API_BASE_PATH}/users`]: {
             get: { summary: "Get users", tags: ["Users"] },
             post: { summary: "Create user", tags: ["Users"] }
         },
+        // Events
         [`${API_BASE_PATH}/events`]: {
-            get: { summary: "Get events", tags: ["Events"] },
+            get: { summary: "Get events (filter by organizationId)", tags: ["Events"] },
             post: { summary: "Create event", tags: ["Events"] }
         },
+        [`${API_BASE_PATH}/event-members`]: {
+            get: { summary: "List event members", tags: ["Events"] },
+            post: { summary: "Add member to event", tags: ["Events"] }
+        },
+        // Attendance
         [`${API_BASE_PATH}/attendance`]: {
             get: { summary: "Get attendance records", tags: ["Attendance"] },
             post: { summary: "Record attendance", tags: ["Attendance"] }
         },
+        // Loyalty
         [`${API_BASE_PATH}/loyalty`]: {
             get: { summary: "Get loyalty data", tags: ["Loyalty"] },
             post: { summary: "Update loyalty", tags: ["Loyalty"] }
@@ -90,9 +113,14 @@ app.get(`${API_BASE_PATH}/openapi.json`, (c) => c.json({
 // Health check
 app.get(`${API_BASE_PATH}/health`, (c) => c.json({ status: "ok", timestamp: Date.now() }));
 
-// API routes
+// API routes - Multi-tenancy
+app.route(`${API_BASE_PATH}/organizations`, organizationsRoutes);
+app.route(`${API_BASE_PATH}/org-memberships`, orgMembershipsRoutes);
+
+// API routes - Core resources
 app.route(`${API_BASE_PATH}/users`, usersRoutes);
 app.route(`${API_BASE_PATH}/events`, eventsRoutes);
+app.route(`${API_BASE_PATH}/event-members`, eventMembersRoutes);
 app.route(`${API_BASE_PATH}/attendance`, attendanceRoutes);
 app.route(`${API_BASE_PATH}/loyalty`, loyaltyRoutes);
 

@@ -32,7 +32,7 @@ const QuickSelectDropdown: React.FC<QuickSelectDropdownProps> = ({
 }) => {
   return (
     <Card className="border-primary/20 bg-linear-to-br from-primary/5 to-transparent">
-      <CardHeader className="pb-4">
+      <CardHeader className="flex flex-row items-center flex-wrap pb-4 justify-center md:justify-between">
         <CardTitle className="flex items-center gap-2 text-lg">
           <Calendar className="w-5 h-5 text-primary" />
           Quick Select
@@ -43,7 +43,7 @@ const QuickSelectDropdown: React.FC<QuickSelectDropdownProps> = ({
       </CardHeader>
       <CardContent className="flex flex-col sm:flex-row gap-3">
         <Select onValueChange={onEventSelect}>
-          <SelectTrigger className="flex-1">
+          <SelectTrigger className="flex-1 w-full">
             <SelectValue>Select an event...</SelectValue>
           </SelectTrigger>
           <SelectContent>

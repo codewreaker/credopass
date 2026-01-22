@@ -2,7 +2,7 @@
 import type { DialogRootActions } from '@credopass/ui/components/dialog'
 import { create } from 'zustand'
 import { combine, devtools } from 'zustand/middleware'
-import type { EventType, EventStatus, User } from '@credopass/lib/schemas'
+import type { EventType, EventStatus, User, Organization } from '@credopass/lib/schemas'
 
 type ActionEvents = 'add' | 'delete' | 'update'
 
@@ -87,7 +87,7 @@ export interface EventSessionState {
     activeEventStartTime?: Date;
     activeEventEndTime?: Date;
     activeEventCapacity?: number | null;
-    activeEventHostId?: string;
+    activeEventOrganizationId?: string;
 
     // Current user (event organizer/staff) managing the check-in
     currentUserId?: string;
@@ -122,7 +122,7 @@ const createDefaultEvent = () => {
         activeEventStartTime: today,
         activeEventEndTime: tomorrow,
         activeEventCapacity: null,
-        activeEventHostId: undefined,
+        activeEventOrganizationId: undefined,
         currentUserId: 'israel.agyeman.prempeh@gmail.com',
         currentUserEmail: 'israel.agyeman.prempeh@gmail.com',
         currentUserName: 'Israel Agyeman-Prempeh'
@@ -153,7 +153,7 @@ export const useEventSessionStore = create(
                     activeEventStartTime: eventData.startTime,
                     activeEventEndTime: eventData.endTime,
                     activeEventCapacity: eventData.capacity,
-                    activeEventHostId: eventData.hostId,
+                    activeEventOrganizationId: eventData.organizationId,
                 }
             })),
 
@@ -217,5 +217,33 @@ export const useEventSessionStore = create(
             },
         })),
         { name: 'EventSessionStore' }
+    )
+);
+
+/**
+ * Organization Store
+ * Manages the active organization context for multi-tenant operations
+ */
+export interface OrganizationState {
+    activeOrganizationId: string | null;
+    activeOrganization: Organization | null;
+}
+
+export const useOrganizationStore = create(
+    devtools(
+        combine({
+            activeOrganizationId: null as string | null,
+            activeOrganization: null as Organization | null,
+        }, (set) => ({
+            setActiveOrganization: (organizationId: string, organization?: Organization) => set({
+                activeOrganizationId: organizationId,
+                activeOrganization: organization ?? null,
+            }),
+            clearActiveOrganization: () => set({
+                activeOrganizationId: null,
+                activeOrganization: null,
+            }),
+        })),
+        { name: 'OrganizationStore' }
     )
 );

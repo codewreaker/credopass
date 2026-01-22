@@ -6,7 +6,7 @@
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 import { events } from './tables/events';
 import { z } from 'zod';
-import { EventStatusEnum } from './enums';
+import { EventStatusEnum, CheckInMethodEnum } from './enums';
 
 // Base event schema (SELECT from database)
 export const EventSchema = createSelectSchema(events, {
@@ -19,10 +19,12 @@ export const CreateEventSchema = createInsertSchema(events, {
   location: z.string().min(1),
   status: EventStatusEnum,
   capacity: z.number().int().positive().nullable(),
+  checkInMethods: z.array(CheckInMethodEnum).min(1),
 }).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+  deletedAt: true,
 });
 
 // Schema for updating an event (all fields optional)
@@ -34,6 +36,7 @@ export const InsertEventSchema = createInsertSchema(events, {
   location: z.string().min(1),
   status: EventStatusEnum,
   capacity: z.number().int().positive().nullable(),
+  checkInMethods: z.array(CheckInMethodEnum).min(1),
 });
 
 // TypeScript types inferred from Zod schemas

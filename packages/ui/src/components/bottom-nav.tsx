@@ -46,31 +46,25 @@ export function BottomNavMenuButton({ item, isActive, navigate, onClick }: Botto
         <button
             onClick={onClickHandler}
             className={cn(
-                "flex flex-col items-center justify-center gap-1 min-w-16 py-2 px-3 rounded-2xl transition-all duration-200 active:scale-95",
-                isActive 
-                    ? "text-primary bg-primary/10" 
+                "flex flex-col items-center justify-center gap-1 py-2 px-3 rounded-2xl transition-all duration-200 active:scale-95",
+                isActive
+                    ? "text-primary bg-primary/10"
                     : "text-muted-foreground hover:text-foreground hover:bg-muted/50 active:bg-muted",
             )}
         >
             <item.icon className={cn(
-                "h-5 w-5 transition-transform",
+                "h-5 w- transition-transform",
                 isActive && "stroke-[2.5] scale-110"
             )} />
-            <span className={cn(
-                "text-[10px] font-medium transition-colors",
-                isActive && "font-semibold"
-            )}>
-                {item.label}
-            </span>
         </button>
     )
 }
 
-export function BottomNav({ 
-    items, 
-    maxVisibleItems = 5, 
+export function BottomNav({
+    items,
+    maxVisibleItems = 5,
     currentPathname,
-    navigate = defaultNavigate 
+    navigate = defaultNavigate
 }: BottomNavProps) {
     const [open, setOpen] = React.useState(false)
 
@@ -84,20 +78,20 @@ export function BottomNav({
     const shouldShowMore = hiddenItems.length > 0
 
     return (
-        <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden">
+        <nav className="fixed bottom-0 left-0 right-0 z-50 sm:hidden">
             {/* Gradient fade effect at top */}
             <div className="absolute inset-x-0 -top-6 h-6 bg-linear-to-t from-background to-transparent pointer-events-none" />
-            
+
             {/* Main nav container */}
             <div className="bg-background/95 backdrop-blur-lg border-t border-border/50 shadow-[0_-4px_20px_-4px_rgba(0,0,0,0.1)]">
-                <div className="flex h-18 items-center justify-around px-2 pb-safe">
+                <div className="flex h-1/2 items-center justify-around px-2 pb-safe">
                     {visibleItems.map((item) => {
                         const isActive = pathname === item.url;
-                        console.log('BottomNav Item:', pathname, 'isActive:', item.url);
+
                         return (
-                            <BottomNavMenuButton 
-                                key={item.label} 
-                                item={item} 
+                            <BottomNavMenuButton
+                                key={item.label}
+                                item={item}
                                 isActive={isActive}
                                 navigate={navigate}
                             />
@@ -109,18 +103,15 @@ export function BottomNav({
                         <Popover open={open} onOpenChange={setOpen}>
                             <PopoverTrigger>
                                 <button
-                                    className={cn(
-                                        "flex flex-col items-center justify-center gap-1 min-w-16 py-2 px-3 rounded-2xl transition-all duration-200 active:scale-95",
-                                        "text-muted-foreground hover:text-foreground hover:bg-muted/50 active:bg-muted",
-                                    )}
+                                    className={"flex flex-col items-center justify-center gap-1 min-w-16 py-2 px-3 rounded-2xl transition-all duration-200 active:scale-95 text-muted-foreground hover:text-foreground hover:bg-muted/50 active:bg-muted"}
                                 >
-                                    <MoreVertical className="h-5 w-5" />
+                                    <MoreVertical className="h-3 w-3" />
                                     <span className="text-[10px] font-medium">More</span>
                                 </button>
                             </PopoverTrigger>
-                            <PopoverContent 
-                                side="top" 
-                                align="end" 
+                            <PopoverContent
+                                side="top"
+                                align="end"
                                 sideOffset={8}
                                 className="w-auto min-w-35 border-border/50 bg-background/95 backdrop-blur-lg p-2 rounded-2xl shadow-xl"
                             >
@@ -136,13 +127,13 @@ export function BottomNav({
                                                 }}
                                                 className={cn(
                                                     "flex items-center gap-3 w-full px-3 py-2.5 rounded-xl transition-all duration-200 active:scale-95",
-                                                    isActive 
-                                                        ? "text-primary bg-primary/10" 
+                                                    isActive
+                                                        ? "text-primary bg-primary/10"
                                                         : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
                                                 )}
                                             >
                                                 <item.icon className={cn(
-                                                    "h-5 w-5",
+                                                    "h-3 w-3",
                                                     isActive && "stroke-[2.5]"
                                                 )} />
                                                 <span className={cn(

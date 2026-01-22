@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
-import { eq, desc, and } from 'drizzle-orm';
+import { eq, desc, and, ne } from 'drizzle-orm';
 import { getDatabase } from '../db/client';
 import type { PgTable } from 'drizzle-orm/pg-core';
 
@@ -12,22 +12,39 @@ export type CrudOptions<T extends PgTable> = {
   allowedFilters?: string[];
   uniqueFields?: string[];
   transformBody?: (body: any) => any;
+  // Multi-tenancy: if true, organizationId filter will be required
+  requireOrganizationId?: boolean;
 };
 
 export function createCrudRoute<T extends PgTable>(options: CrudOptions<T>) {
   const router = new Hono();
-  const { table, createSchema, updateSchema, sortField, allowedFilters = [], uniqueFields = [], transformBody } = options;
+  const { 
+    table, 
+    createSchema, 
+    updateSchema, 
+    sortField, 
+    allowedFilters = [], 
+    uniqueFields = [], 
+    transformBody,
+    requireOrganizationId = false 
+  } = options;
 
   // GET / - List all with filtering
   router.get('/', async (c) => {
     try {
       const db = await getDatabase();
+      const queryParams = c.req.query();
+
+      // Check for required organizationId in multi-tenant mode
+      if (requireOrganizationId && !queryParams.organizationId) {
+        return c.json({ error: 'organizationId is required' }, 400);
+      }
+
       //@ts-ignore todo investigate
       let query = db.select().from(table).$dynamic();
 
       // Apply filters
       const filters: any[] = [];
-      const queryParams = c.req.query();
 
       for (const [key, value] of Object.entries(queryParams)) {
         if (allowedFilters.includes(key) && value) {
@@ -46,6 +63,7 @@ export function createCrudRoute<T extends PgTable>(options: CrudOptions<T>) {
       }
 
       const results = await query;
+      
       return c.json(results);
     } catch (error) {
       console.log('// GET / - List all with filtering', error);

@@ -14,7 +14,7 @@
     "start": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "bun --watch --no-clear-screen src/index.ts",
+        "command": "NODE_ENV=development PORT=8080 bun --watch --no-clear-screen src/index.ts",
         "cwd": "{projectRoot}"
       }
     },
@@ -25,10 +25,17 @@
         "cwd": "{projectRoot}"
       }
     },
-    "migrate-and-seed": {
+    "migrate": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "drizzle-kit migrate && bun src/db/seed.ts",
+        "command": "drizzle-kit generate && drizzle-kit migrate",
+        "cwd": "{projectRoot}"
+      }
+    },
+    "seed":{
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun src/db/seed.ts",
         "cwd": "{projectRoot}"
       }
     },
@@ -50,13 +57,6 @@
       "executor": "nx:run-commands",
       "options": {
         "command": "drizzle-kit studio",
-        "cwd": "{projectRoot}"
-      }
-    },
-    "setup": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "drizzle-kit generate && drizzle-kit migrate && bun src/db/seed.ts",
         "cwd": "{projectRoot}"
       }
     }

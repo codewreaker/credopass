@@ -49,7 +49,7 @@ export default function CalendarPage({
       status: event.status,
       location: event.location,
       capacity: event.capacity,
-      hostId: event.hostId,
+      organizationId: event.organizationId,
     },
     classNames: [`event-${event.status}`],
   })), [events]);
@@ -104,7 +104,7 @@ export default function CalendarPage({
         endTime: formatDateForInput(event.end || getEndOfDay(event.start!)),
         location: event.extendedProps.location || '',
         capacity: event.extendedProps.capacity?.toString() || '',
-        hostId: event.extendedProps.hostId || '',
+        organizationId: event.extendedProps.organizationId || '',
       },
       isEditing: true
     });

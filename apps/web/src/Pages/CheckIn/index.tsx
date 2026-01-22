@@ -8,6 +8,7 @@ import SuccessCheckInScreen from './SuccessCheckInScreen';
 import EmptyEventsState from './components/EmptyEventsState';
 import EventSelectionView from './components/EventSelectionView';
 import { generateSignInParams, generateSignInUrl } from './utils/qrCodeUtils';
+import { useIsMobile } from '@credopass/ui/hooks/use-mobile';
 import { statusColors } from './utils/constants';
 import './style.css';
 
@@ -33,6 +34,7 @@ const LoadingState: React.FC = () => {
 const CheckInPage: React.FC = () => {
   const { events: eventCollection } = getCollections();
   const { openLauncher } = useLauncher();
+  const isMobile = useIsMobile();
 
   // Fetch events using TanStack DB live query
   const { data: eventsData, isLoading } = useLiveQuery((q) => q.from({ eventCollection }));
@@ -199,6 +201,7 @@ const CheckInPage: React.FC = () => {
           onRefreshQR={handleRefreshQR}
           onManualCheckInClick={() => setShowManualCheckIn(true)}
           selectedEvent={selectedEvent}
+          size={isMobile ? 220 : 326}
         />}
 
 

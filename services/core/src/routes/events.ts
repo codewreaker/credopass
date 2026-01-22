@@ -9,11 +9,13 @@ eventsRouter.route('/', createCrudRoute({
   createSchema: CreateEventSchema,
   updateSchema: UpdateEventSchema,
   sortField: events.startTime,
-  allowedFilters: ['status', 'hostId'],
+  allowedFilters: ['status', 'organizationId'],
   transformBody: (body) => ({
     ...body,
     startTime: body.startTime ? new Date(body.startTime) : undefined,
     endTime: body.endTime ? new Date(body.endTime) : undefined,
+    // Ensure checkInMethods is an array
+    checkInMethods: body.checkInMethods || ['qr'],
   })
 }));
 

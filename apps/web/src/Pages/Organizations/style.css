@@ -1,0 +1,106 @@
+/* Organizations Page - Inspired by CheckIn page design */
+.organizations-page {
+  background: linear-gradient(145deg, hsl(var(--background)) 0%, hsl(var(--secondary) / 0.3) 100%);
+  animation: fadeIn 0.3s ease-in-out;
+  min-height: 100%;
+  padding: 1.5rem;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Page Header */
+.org-page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.header-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 0.75rem;
+  background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary) / 0.8) 100%);
+  color: hsl(var(--primary-foreground));
+  box-shadow: 0 4px 12px -2px hsl(var(--primary) / 0.3);
+}
+
+/* Organization Grid */
+.org-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.5rem;
+}
+
+/* Organization Card */
+.org-card {
+  border: 1px solid hsl(var(--border));
+  transition: all 0.2s ease-in-out;
+}
+
+.org-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px -10px hsl(var(--primary) / 0.15);
+}
+
+.org-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+/* Stats Row */
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: hsl(var(--muted) / 0.3);
+  border-radius: 0.5rem;
+  transition: all 0.15s ease;
+}
+
+.stat-item:hover {
+  background: hsl(var(--muted) / 0.5);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .organizations-page {
+    padding: 1rem;
+  }
+
+  .org-page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .org-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Dark mode enhancements */
+@media (prefers-color-scheme: dark) {
+  .organizations-page {
+    background: linear-gradient(145deg, hsl(var(--background)) 0%, hsl(var(--secondary) / 0.15) 100%);
+  }
+}
