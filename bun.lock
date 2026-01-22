@@ -121,6 +121,7 @@
       "version": "0.0.1",
       "dependencies": {
         "@credopass/lib": "workspace:*",
+        "@hono/swagger-ui": "^0.5.0",
         "@hono/zod-validator": "^0.7.5",
         "@types/pg": "^8.16.0",
         "drizzle-orm": "^0.45.1",
@@ -452,6 +453,8 @@
     "@fullcalendar/react": ["@fullcalendar/react@6.1.20", "", { "peerDependencies": { "@fullcalendar/core": "~6.1.20", "react": "^16.7.0 || ^17 || ^18 || ^19", "react-dom": "^16.7.0 || ^17 || ^18 || ^19" } }, "sha512-1w0pZtceaUdfAnxMSCGHCQalhi+mR1jOe76sXzyAXpcPz/Lf0zHSdcGK/U2XpZlnQgQtBZW+d+QBnnzVQKCxAA=="],
 
     "@fullcalendar/timegrid": ["@fullcalendar/timegrid@6.1.20", "", { "dependencies": { "@fullcalendar/daygrid": "~6.1.20" }, "peerDependencies": { "@fullcalendar/core": "~6.1.20" } }, "sha512-4H+/MWbz3ntA50lrPif+7TsvMeX3R1GSYjiLULz0+zEJ7/Yfd9pupZmAwUs/PBpA6aAcFmeRr0laWfcz1a9V1A=="],
+
+    "@hono/swagger-ui": ["@hono/swagger-ui@0.5.3", "", { "peerDependencies": { "hono": ">=4.0.0" } }, "sha512-Hn90DOOJ62ICJQplQvCDVpi9Jcn6EhtRaiffyJIS53wA5RmRLtMCDQGVc0bor8vQD7JIwpkweWjs+3cycp+IvA=="],
 
     "@hono/zod-validator": ["@hono/zod-validator@0.7.6", "", { "peerDependencies": { "hono": ">=3.9.0", "zod": "^3.25.0 || ^4.0.0" } }, "sha512-Io1B6d011Gj1KknV4rXYz4le5+5EubcWEU/speUjuw9XMMIaP3n78yXLhjd2A3PXaXaUwEAluOiAyLqhBEJgsw=="],
 

@@ -180,7 +180,7 @@ bun nx build web
 bun nx build api
 
 # Test Docker build
-docker build -f services/api/Dockerfile -t credopass-api:test .
+docker build -f services/core/Dockerfile -t credopass-api:test .
 
 # Check affected projects
 bun nx show projects --affected
