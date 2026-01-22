@@ -3,7 +3,7 @@
 // Events table definition for Drizzle ORM (PostgreSQL)
 // ============================================================================
 
-import { pgTable, text, integer, timestamp, index, uuid } from 'drizzle-orm/pg-core';
+import { pgTable, text, integer, timestamp, index, uuid, boolean } from 'drizzle-orm/pg-core';
 import { organizations } from './organizations';
 
 export const events = pgTable('events', {
@@ -21,7 +21,7 @@ export const events = pgTable('events', {
   
   // Check-in configuration
   checkInMethods: text('checkInMethods').array().notNull().default(['qr']), // ['qr', 'manual', 'external_auth']
-  requireCheckOut: text('requireCheckOut').notNull().default('false'), // Track check-out times
+  requireCheckOut: boolean('requireCheckOut').notNull().default(false), // Track check-out times
   
   // Schedule
   startTime: timestamp('startTime', { mode: 'date', withTimezone: true }).notNull(),

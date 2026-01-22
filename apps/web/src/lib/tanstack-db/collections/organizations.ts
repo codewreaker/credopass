@@ -20,9 +20,7 @@ export function createOrganizationCollection(queryClient: QueryClient) {
       queryFn: async (): Promise<Organization[]> => {
         const response = await fetch(`${API_BASE_URL}/organizations`);
         if (!response.ok) throw new Error('Failed to fetch organizations');
-        const json = await response.json();
-        // Handle paginated response
-        const data = json.data || json;
+        const data = await response.json();
         return data.map((org: Organization) => ({
           ...org,
           createdAt: new Date(org.createdAt),

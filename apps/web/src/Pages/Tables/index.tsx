@@ -13,7 +13,7 @@ import Loader from '../../components/loader';
 import './style.css';
 import EmptyState from '../../components/empty-state';
 
-type TableName = 'users' | 'events' | 'attendance' | 'loyalty';
+type TableName = 'users' | 'events' | 'attendance' | 'loyalty' | 'organizations';
 
 interface TableData {
   [key: string]: any[];
@@ -25,7 +25,7 @@ export default function DatabasePage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const tables: TableName[] = ['users', 'events', 'attendance', 'loyalty'];
+  const tables: TableName[] = ['users', 'events', 'attendance', 'loyalty', 'organizations'];
 
   const fetchTableData = async (table: TableName) => {
     setLoading(true);

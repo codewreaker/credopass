@@ -20,9 +20,7 @@ export function createLoyaltyCollection(queryClient: QueryClient) {
       queryFn: async (): Promise<Loyalty[]> => {
         const response = await fetch(`${API_BASE}/loyalty`);
         if (!response.ok) throw new Error('Failed to fetch loyalty records');
-        const json = await response.json();
-        // Handle paginated response
-        const data = json.data || json;
+        const data = await response.json();
         // Transform dates from the API response
         return data.map((record: Loyalty) => ({
           ...record,

@@ -4,10 +4,6 @@ import { eq, desc, and, ne } from 'drizzle-orm';
 import { getDatabase } from '../db/client';
 import type { PgTable } from 'drizzle-orm/pg-core';
 
-// Default pagination limits
-const DEFAULT_LIMIT = 50;
-const MAX_LIMIT = 500;
-
 export type CrudOptions<T extends PgTable> = {
   table: T;
   createSchema: z.ZodType<any>;
@@ -33,18 +29,11 @@ export function createCrudRoute<T extends PgTable>(options: CrudOptions<T>) {
     requireOrganizationId = false 
   } = options;
 
-  // GET / - List all with filtering and pagination
+  // GET / - List all with filtering
   router.get('/', async (c) => {
     try {
       const db = await getDatabase();
       const queryParams = c.req.query();
-      
-      // Pagination params
-      const limit = Math.min(
-        parseInt(queryParams.limit || String(DEFAULT_LIMIT), 10),
-        MAX_LIMIT
-      );
-      const offset = parseInt(queryParams.offset || '0', 10);
 
       // Check for required organizationId in multi-tenant mode
       if (requireOrganizationId && !queryParams.organizationId) {
@@ -58,9 +47,6 @@ export function createCrudRoute<T extends PgTable>(options: CrudOptions<T>) {
       const filters: any[] = [];
 
       for (const [key, value] of Object.entries(queryParams)) {
-        // Skip pagination params
-        if (['limit', 'offset'].includes(key)) continue;
-        
         if (allowedFilters.includes(key) && value) {
           // @ts-ignore - We trust the allowedFilters match table columns
           filters.push(eq(table[key], value));
@@ -76,21 +62,9 @@ export function createCrudRoute<T extends PgTable>(options: CrudOptions<T>) {
         query = query.orderBy(desc(sortField));
       }
 
-      // Apply pagination
-      query = query.limit(limit).offset(offset);
-
       const results = await query;
       
-      // Return with pagination metadata
-      return c.json({
-        data: results,
-        pagination: {
-          limit,
-          offset,
-          count: results.length,
-          hasMore: results.length === limit
-        }
-      });
+      return c.json(results);
     } catch (error) {
       console.log('// GET / - List all with filtering', error);
       return c.json({ error: 'Failed to fetch records' }, 500);

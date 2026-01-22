@@ -1,28 +1,46 @@
+/* Organizations Page - Inspired by CheckIn page design */
 .organizations-page {
+  background: linear-gradient(145deg, hsl(var(--background)) 0%, hsl(var(--secondary) / 0.3) 100%);
+  animation: fadeIn 0.3s ease-in-out;
+  min-height: 100%;
   padding: 1.5rem;
-  max-width: 1200px;
-  margin: 0 auto;
 }
 
-.organizations-page__header {
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Page Header */
+.org-page-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
 }
 
-.organizations-page__title {
-  font-size: 1.875rem;
-  font-weight: 700;
-  margin: 0;
+.header-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 0.75rem;
+  background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary) / 0.8) 100%);
+  color: hsl(var(--primary-foreground));
+  box-shadow: 0 4px 12px -2px hsl(var(--primary) / 0.3);
 }
 
-.organizations-page__subtitle {
-  color: var(--color-muted-foreground, #6b7280);
-  margin-top: 0.25rem;
-}
-
-.organizations-page__grid {
+/* Organization Grid */
+.org-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 1.5rem;
@@ -30,107 +48,59 @@
 
 /* Organization Card */
 .org-card {
-  cursor: pointer;
-  transition: all 0.2s ease;
-  border: 2px solid transparent;
+  border: 1px solid hsl(var(--border));
+  transition: all 0.2s ease-in-out;
 }
 
 .org-card:hover {
-  border-color: var(--color-border, #e5e7eb);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 10px 30px -10px hsl(var(--primary) / 0.15);
 }
 
-.org-card--active {
-  border-color: var(--color-primary, #3b82f6);
-  background: var(--color-primary-foreground, #eff6ff);
-}
-
-.org-card__header {
-  padding-bottom: 0.75rem;
-}
-
-.org-card__title-row {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
-}
-
-.org-card__icon {
+.org-icon-wrapper {
   display: flex;
   align-items: center;
   justify-content: center;
   width: 2.5rem;
   height: 2.5rem;
   border-radius: 0.5rem;
-  background: var(--color-muted, #f3f4f6);
-  flex-shrink: 0;
+  transition: all 0.2s ease;
 }
 
-.org-card__title-content {
-  flex: 1;
-  min-width: 0;
-}
-
-.org-card__name {
-  font-size: 1.125rem;
-  font-weight: 600;
-  margin: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.org-card__slug {
-  font-size: 0.875rem;
-  color: var(--color-muted-foreground, #6b7280);
-  margin: 0;
-}
-
-.org-card__menu-btn {
-  flex-shrink: 0;
-}
-
-.org-card__badges {
-  display: flex;
-  gap: 0.5rem;
-  margin-top: 0.75rem;
-}
-
-.org-card__plan-badge {
-  display: flex;
-  align-items: center;
-}
-
-.org-card__active-badge {
-  background: var(--color-primary, #3b82f6);
-  color: white;
-  border-color: var(--color-primary, #3b82f6);
-}
-
-.org-card__content {
-  padding-top: 0;
-}
-
-.org-card__stats {
-  display: flex;
-  gap: 1.5rem;
-}
-
-.org-card__stat {
+/* Stats Row */
+.stat-item {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: hsl(var(--muted) / 0.3);
+  border-radius: 0.5rem;
+  transition: all 0.15s ease;
+}
+
+.stat-item:hover {
+  background: hsl(var(--muted) / 0.5);
 }
 
 /* Responsive */
-@media (max-width: 640px) {
-  .organizations-page__header {
-    flex-direction: column;
-    gap: 1rem;
+@media (max-width: 768px) {
+  .organizations-page {
+    padding: 1rem;
   }
 
-  .organizations-page__grid {
+  .org-page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .org-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+/* Dark mode enhancements */
+@media (prefers-color-scheme: dark) {
+  .organizations-page {
+    background: linear-gradient(145deg, hsl(var(--background)) 0%, hsl(var(--secondary) / 0.15) 100%);
   }
 }

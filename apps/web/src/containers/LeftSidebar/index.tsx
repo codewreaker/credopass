@@ -153,8 +153,6 @@ const defaultData: SidebarProps = {
     },
 }
 
-const { organizations: organizationCollection } = getCollections();
-
 const MainSidebar: React.FC<SidebarProps> = ({
     nav = defaultData.nav,
     user = defaultData.user,
@@ -165,14 +163,18 @@ const MainSidebar: React.FC<SidebarProps> = ({
     const location = useLocation();
     const { openLauncher } = useLauncher();
     const { activeOrganizationId, activeOrganization, setActiveOrganization } = useOrganizationStore();
+    
+    // Get collections inside component
+    const { organizations: organizationCollection } = getCollections();
 
     // Fetch organizations from API
     const orgsQuery = useLiveQuery((query) =>
         query
-            .from({ organizations: organizationCollection })
-            .select('@organizations')
+            .from({ organizationCollection })
     );
-    const organizations = orgsQuery.data ?? [];
+    const organizations = React.useMemo(() => 
+        (orgsQuery.data ?? []) as Organization[]
+    , [orgsQuery.data]);
 
     const [sidebarCookie] = useCookies(SIDEBAR_COOKIE_NAME);
     const isOpen = Boolean(sidebarCookie === 'true');
@@ -259,7 +261,7 @@ const MainSidebar: React.FC<SidebarProps> = ({
                                             )}
                                         >
                                             <div className="flex size-6 items-center justify-center rounded-sm border">
-                                                {org.name.charAt(0)}
+                                                {org.name?.charAt(0) || 'O'}
                                             </div>
                                             <div className="flex flex-col">
                                                 <span>{org.name}</span>

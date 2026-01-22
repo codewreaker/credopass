@@ -20,9 +20,7 @@ export function createEventCollection(queryClient: QueryClient) {
       queryFn: async (): Promise<Event[]> => {
         const response = await fetch(`${API_BASE_URL}/events`);
         if (!response.ok) throw new Error('Failed to fetch events');
-        const json = await response.json();
-        // Handle paginated response
-        const data = json.data || json;
+        const data = await response.json();
         // Transform dates from the API response
         return data.map((event: Event) => ({
           ...event,
