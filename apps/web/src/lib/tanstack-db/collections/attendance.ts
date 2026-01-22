@@ -20,7 +20,9 @@ export function createAttendanceCollection(queryClient: QueryClient) {
       queryFn: async (): Promise<Attendance[]> => {
         const response = await fetch(`${API_BASE}/attendance`);
         if (!response.ok) throw new Error('Failed to fetch attendance');
-        const data = await response.json();
+        const json = await response.json();
+        // Handle paginated response
+        const data = json.data || json;
         // Transform dates from the API response
         return data.map((record: Attendance) => ({
           ...record,

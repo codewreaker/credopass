@@ -8,7 +8,9 @@ import {
   MapPin,
   Users,
   FileText,
-  Trash2
+  Trash2,
+  Building2,
+  AlertCircle
 } from 'lucide-react';
 import { getCollections } from '../../lib/tanstack-db';
 import type { EventStatus } from '@credopass/lib/schemas';
@@ -31,10 +33,14 @@ import {
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle
+  DialogTitle,
+  Alert,
+  AlertDescription,
+  AlertTitle
 } from '@credopass/ui';
 import './style.css';
 import type { LauncherState } from '../../stores/store';
+import { useOrganizationStore } from '../../stores/store';
 
 // Modal form data type - exported for type safety
 export interface EventFormData {
@@ -46,7 +52,7 @@ export interface EventFormData {
   endTime: string;
   location: string;
   capacity: string;
-  hostId: string;
+  organizationId: string;
 }
 
 export interface EventFormProps {
@@ -73,7 +79,7 @@ const eventFormSchema = z.object({
   endTime: z.string().min(1, 'End time is required.'),
   location: z.string().min(3, 'Location must be at least 3 characters.').max(200, 'Location must be at most 200 characters.'),
   capacity: z.string().refine((val) => !val || (!isNaN(Number(val)) && Number(val) > 0), 'Capacity must be a positive number.').default(''),
-  hostId: z.string().min(1, 'Host ID is required.'),
+  organizationId: z.string().min(1, 'Organization is required.'),
 }).superRefine((data, ctx) => {
   if (data.startTime && data.endTime) {
     if (new Date(data.endTime) <= new Date(data.startTime)) {
@@ -100,6 +106,7 @@ const { events: eventCollection } = getCollections();
 // Event Form Component
 const EventForm = ({ initialData = {}, isEditing = false, onClose }: EventFormProps) => {
   const [isMutating, setIsMutating] = useState(false);
+  const { activeOrganizationId, activeOrganization } = useOrganizationStore();
 
   const rand = crypto.randomUUID();
   const form = useForm({
@@ -111,13 +118,18 @@ const EventForm = ({ initialData = {}, isEditing = false, onClose }: EventFormPr
       endTime: initialData.endTime || '',
       location: initialData.location || 'london',
       capacity: initialData.capacity || '',
-      hostId: initialData.hostId || '',
+      organizationId: initialData.organizationId || activeOrganizationId || '',
     },
     validators: {
       //@ts-ignore
       onChange: eventFormSchema,
     },
     onSubmit: async ({ value }) => {
+      if (!value.organizationId) {
+        toast.error('Please select an organization first');
+        return;
+      }
+      
       setIsMutating(true);
       const now = new Date();
       const eventData = {
@@ -128,7 +140,7 @@ const EventForm = ({ initialData = {}, isEditing = false, onClose }: EventFormPr
         endTime: new Date(value.endTime),
         location: value.location,
         capacity: value.capacity ? parseInt(value.capacity, 10) : null,
-        hostId: value.hostId,
+        organizationId: value.organizationId,
       };
 
       try {
@@ -143,22 +155,26 @@ const EventForm = ({ initialData = {}, isEditing = false, onClose }: EventFormPr
             draft.endTime = eventData.endTime;
             draft.location = eventData.location;
             draft.capacity = eventData.capacity;
-            draft.hostId = eventData.hostId;
+            draft.organizationId = eventData.organizationId;
             draft.updatedAt = now;
           });
         } else {
           tx = eventCollection.insert({
             ...eventData,
             id: crypto.randomUUID(),
+            checkInMethods: ['qr', 'manual'],
+            requireCheckOut: false,
+            deletedAt: null,
             createdAt: now,
             updatedAt: now,
           });
         }
 
         await tx.isPersisted.promise;
+        toast.success(isEditing ? 'Event updated!' : 'Event created!');
+        onClose?.();
       } catch (error) {
         toast.error(error instanceof Error ? error.message : 'An unexpected error occurred.');
-        onClose?.();
       } finally {
         setIsMutating(false);
       }
@@ -364,28 +380,34 @@ const EventForm = ({ initialData = {}, isEditing = false, onClose }: EventFormPr
               />
             </div>
 
-            {/* Host ID */}
+            {/* Organization - Read-only display of active organization */}
             <form.Field
-              name="hostId"
+              name="organizationId"
               children={(field) => {
-                const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
+                const isInvalid = !field.state.value;
                 return (
                   <Field data-invalid={isInvalid} className="form-group full-width">
                     <FieldLabel htmlFor={field.name} className="form-label">
-                      <Users size={14} />
-                      Host ID
+                      <Building2 size={14} />
+                      Organization
                     </FieldLabel>
-                    <Input
-                      id={field.name}
-                      name={field.name}
-                      type="text"
-                      placeholder="Host ID (Current User)"
-                      value={field.state.value}
-                      onBlur={field.handleBlur}
-                      onChange={(e) => field.handleChange(e.target.value)}
-                      aria-invalid={isInvalid}
-                    />
-                    {isInvalid && <FieldError errors={field.state.meta.errors} />}
+                    {activeOrganization ? (
+                      <div className="organization-display">
+                        <Building2 size={16} className="text-muted-foreground" />
+                        <span>{activeOrganization.name}</span>
+                      </div>
+                    ) : (
+                      <Alert variant="destructive" className="organization-alert">
+                        <AlertCircle size={14} />
+                        <AlertTitle>No organization selected</AlertTitle>
+                        <AlertDescription>
+                          Please go to Organizations and select an active organization before creating events.
+                        </AlertDescription>
+                      </Alert>
+                    )}
+                    <FieldDescription>
+                      Events are created under the currently active organization
+                    </FieldDescription>
                   </Field>
                 );
               }}

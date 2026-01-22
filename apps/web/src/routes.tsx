@@ -6,6 +6,7 @@ import EventsPage from './Pages/Events/index'
 import Analytics from './Pages/Analytics/index'
 import TablesPage from './Pages/Tables/index'
 import CheckInPage from './Pages/CheckIn/index'
+import OrganizationsPage from './Pages/Organizations/index'
 import { ComponentExample } from './components/component-example'
 
 // Root route - wraps all pages with layout (sidebar, topbar, etc.)
@@ -73,7 +74,12 @@ const checkInRoute = createRoute({
   component: CheckInPage,
 })
 
-
+// Organizations route - Manage organizations
+const organizationsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/organizations',
+  component: OrganizationsPage,
+})
 
 // Route tree - explicitly defines the structure
 export const routeTree = rootRoute.addChildren([
@@ -84,6 +90,7 @@ export const routeTree = rootRoute.addChildren([
   analyticsRoute,
   databaseRoute,
   checkInRoute,
+  organizationsRoute,
   componentExampleRoute
 ])
 
@@ -94,6 +101,7 @@ export const routes = {
   members: membersRoute,
   checkIn: checkInRoute,
   events: eventsRoute,
+  organizations: organizationsRoute,
   componentExample: componentExampleRoute,
   analytics: analyticsRoute
 } as const

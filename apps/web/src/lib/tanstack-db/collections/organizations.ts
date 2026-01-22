@@ -1,33 +1,33 @@
 // ============================================================================
-// FILE: packages/tanstack-db/src/collections/loyalty.ts
-// TanStack DB collection for Loyalty
+// FILE: apps/web/src/lib/tanstack-db/collections/organizations.ts
+// TanStack DB collection for Organizations
 // ============================================================================
 
 import { createCollection } from '@tanstack/db';
 import { QueryClient } from '@tanstack/query-core';
 import { queryCollectionOptions } from '@tanstack/query-db-collection';
-import type { Loyalty } from '@credopass/lib/schemas';
-
-const API_BASE = '/api';
+import type { Organization } from '@credopass/lib/schemas';
+import { API_BASE_URL } from '../../../config';
+import { handleAPIErrors } from '..';
 
 /**
- * Create loyalty collection with a specific QueryClient
+ * Create organization collection with a specific QueryClient
  */
-export function createLoyaltyCollection(queryClient: QueryClient) {
+export function createOrganizationCollection(queryClient: QueryClient) {
   return createCollection(
     queryCollectionOptions({
-      queryKey: ['loyalty'],
-      queryFn: async (): Promise<Loyalty[]> => {
-        const response = await fetch(`${API_BASE}/loyalty`);
-        if (!response.ok) throw new Error('Failed to fetch loyalty records');
+      queryKey: ['organizations'],
+      queryFn: async (): Promise<Organization[]> => {
+        const response = await fetch(`${API_BASE_URL}/organizations`);
+        if (!response.ok) throw new Error('Failed to fetch organizations');
         const json = await response.json();
         // Handle paginated response
         const data = json.data || json;
-        // Transform dates from the API response
-        return data.map((record: Loyalty) => ({
-          ...record,
-          issuedAt: new Date(record.issuedAt),
-          expiresAt: record.expiresAt ? new Date(record.expiresAt) : null,
+        return data.map((org: Organization) => ({
+          ...org,
+          createdAt: new Date(org.createdAt),
+          updatedAt: new Date(org.updatedAt),
+          deletedAt: org.deletedAt ? new Date(org.deletedAt) : null,
         }));
       },
       getKey: (item) => item.id,
@@ -37,13 +37,13 @@ export function createLoyaltyCollection(queryClient: QueryClient) {
       onInsert: async ({ transaction }) => {
         const mutation = transaction.mutations[0];
         if (!mutation) return;
-        const { modified: newRecord } = mutation;
-        const response = await fetch(`${API_BASE}/loyalty`, {
+        const { modified: newOrg } = mutation;
+        const response = await fetch(`${API_BASE_URL}/organizations`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(newRecord),
+          body: JSON.stringify(newOrg),
         });
-        if (!response.ok) throw new Error(`Failed to create loyalty record | HTTP ${response.status}: ${response.statusText}`);
+        await handleAPIErrors(response);
         return response.json();
       },
 
@@ -52,12 +52,12 @@ export function createLoyaltyCollection(queryClient: QueryClient) {
         const mutation = transaction.mutations[0];
         if (!mutation) return;
         const { original, modified } = mutation;
-        const response = await fetch(`${API_BASE}/loyalty/${original.id}`, {
+        const response = await fetch(`${API_BASE_URL}/organizations/${original.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(modified),
         });
-        if (!response.ok) throw new Error('Failed to update loyalty record');
+        if (!response.ok) throw new Error('Failed to update organization');
       },
 
       // Handle DELETE
@@ -65,13 +65,13 @@ export function createLoyaltyCollection(queryClient: QueryClient) {
         const mutation = transaction.mutations[0];
         if (!mutation) return;
         const { original } = mutation;
-        const response = await fetch(`${API_BASE}/loyalty/${original.id}`, {
+        const response = await fetch(`${API_BASE_URL}/organizations/${original.id}`, {
           method: 'DELETE',
         });
-        if (!response.ok) throw new Error('Failed to delete loyalty record');
+        if (!response.ok) throw new Error('Failed to delete organization');
       },
     })
   );
 }
 
-export type LoyaltyCollection = ReturnType<typeof createLoyaltyCollection>;
+export type OrganizationCollection = ReturnType<typeof createOrganizationCollection>;

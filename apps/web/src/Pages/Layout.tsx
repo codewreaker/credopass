@@ -13,6 +13,7 @@ import {
   ChartNoAxesCombined,
   Database,
   QrCode,
+  Building2,
 } from "lucide-react";
 import "./layout.css";
 import { useIsMobile } from "../hooks/use-mobile";
@@ -33,20 +34,6 @@ export function RootLayout() {
               email: 'israel.agyeman.prempeh@gmail.com',
               avatar: "/avatars/shadcn.jpg",
             }}
-            teams={[
-              {
-                label: "Kharis Church",
-                plan: "Enterprise",
-              },
-              {
-                label: "Kharis Church",
-                plan: "Free",
-              },
-              {
-                label: "Kharis Phase 2",
-                plan: "Free",
-              },
-            ]}
             nav={{
               main: [
                 {
@@ -74,6 +61,11 @@ export function RootLayout() {
                   url: "/events",
                   icon: Calendar,
                   label: "Events"
+                },
+                {
+                  url: "/organizations",
+                  icon: Building2,
+                  label: "Organizations"
                 },
                 {
                   url: "/database",
