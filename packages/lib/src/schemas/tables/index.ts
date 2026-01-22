@@ -27,7 +27,10 @@ export { loyalty } from './loyalty';
 
 // Users can belong to multiple organizations and manage multiple events
 export const usersRelations = relations(users, ({ many }) => ({
-  orgMemberships: many(orgMemberships),
+  // Memberships where this user is the member (disambiguated with relationName)
+  orgMemberships: many(orgMemberships, { relationName: 'membershipUser' }),
+  // Memberships where this user invited someone (disambiguated with relationName)
+  invitedMemberships: many(orgMemberships, { relationName: 'membershipInviter' }),
   eventMemberships: many(eventMembers),
   attendances: many(attendance),
   loyaltyRecords: many(loyalty),
@@ -46,6 +49,7 @@ export const orgMembershipsRelations = relations(orgMemberships, ({ one }) => ({
   user: one(users, {
     fields: [orgMemberships.userId],
     references: [users.id],
+    relationName: 'membershipUser',
   }),
   organization: one(organizations, {
     fields: [orgMemberships.organizationId],
@@ -54,6 +58,7 @@ export const orgMembershipsRelations = relations(orgMemberships, ({ one }) => ({
   inviter: one(users, {
     fields: [orgMemberships.invitedBy],
     references: [users.id],
+    relationName: 'membershipInviter',
   }),
 }));
 

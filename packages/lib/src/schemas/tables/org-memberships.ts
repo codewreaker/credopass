@@ -43,6 +43,6 @@ export const orgMemberships = pgTable('org_memberships', {
   index('idx_org_memberships_userId').on(table.userId),
   index('idx_org_memberships_organizationId').on(table.organizationId),
   index('idx_org_memberships_role').on(table.role),
-]);
+]).enableRLS();
 
 export type OrgMembershipTable = typeof orgMemberships;

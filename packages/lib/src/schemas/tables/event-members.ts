@@ -38,6 +38,6 @@ export const eventMembers = pgTable('event_members', {
   index('idx_event_members_eventId').on(table.eventId),
   index('idx_event_members_userId').on(table.userId),
   index('idx_event_members_role').on(table.role),
-]);
+]).enableRLS();
 
 export type EventMemberTable = typeof eventMembers;

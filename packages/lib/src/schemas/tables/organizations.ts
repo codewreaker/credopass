@@ -39,6 +39,6 @@ export const organizations = pgTable('organizations', {
   index('idx_organizations_slug').on(table.slug),
   index('idx_organizations_plan').on(table.plan),
   index('idx_organizations_stripeCustomerId').on(table.stripeCustomerId),
-]);
+]).enableRLS();
 
 export type OrganizationTable = typeof organizations;

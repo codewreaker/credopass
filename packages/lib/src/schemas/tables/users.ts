@@ -16,6 +16,6 @@ export const users = pgTable('users', {
 }, (table) => [
   index('idx_users_email').on(table.email),
   index('idx_users_createdAt').on(table.createdAt),
-]);
+]).enableRLS();
 
 export type UserTable = typeof users;

@@ -32,6 +32,6 @@ export const loyalty = pgTable('loyalty', {
   index('idx_loyalty_patronId').on(table.patronId),
   index('idx_loyalty_tier').on(table.tier),
   index('idx_loyalty_expiresAt').on(table.expiresAt),
-]);
+]).enableRLS();
 
 export type LoyaltyTable = typeof loyalty;

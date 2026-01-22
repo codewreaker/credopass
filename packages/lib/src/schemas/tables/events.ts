@@ -40,6 +40,6 @@ export const events = pgTable('events', {
   index('idx_events_status').on(table.status),
   index('idx_events_startTime').on(table.startTime),
   index('idx_events_deletedAt').on(table.deletedAt),
-]);
+]).enableRLS();
 
 export type EventTable = typeof events;

@@ -38,6 +38,6 @@ export const attendance = pgTable('attendance', {
   index('idx_attendance_patronId').on(table.patronId),
   index('idx_attendance_attended').on(table.attended),
   index('idx_attendance_checkInTime').on(table.checkInTime),
-]);
+]).enableRLS();
 
 export type AttendanceTable = typeof attendance;
