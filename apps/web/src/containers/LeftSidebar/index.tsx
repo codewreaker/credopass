@@ -49,6 +49,7 @@ import {
 } from "lucide-react"
 import { useLocation, useNavigate } from "@tanstack/react-router"
 import UserComponent from "../../components/user"
+import { useDefaultUserMenu } from "../../components/user/default-menu"
 import { cn } from "@credopass/ui/lib/utils"
 import { useCookies } from "@credopass/lib/hooks";
 import CredoPassLogoIcon from "./brand-icon";
@@ -164,6 +165,7 @@ const MainSidebar: React.FC<SidebarProps> = ({
     const location = useLocation();
     const { openLauncher } = useLauncher();
     const { activeOrganizationId, activeOrganization, setActiveOrganization } = useOrganizationStore();
+    const userMenuGroups = useDefaultUserMenu();
     
     // Get collections inside component
     const { organizations: organizationCollection } = getCollections();
@@ -355,7 +357,7 @@ const MainSidebar: React.FC<SidebarProps> = ({
                 <SidebarFooter>
                     <SidebarMenu>
                         <SidebarMenuItem>
-                            <UserComponent user={user} />
+                            <UserComponent user={user} menuGroups={userMenuGroups} />
                         </SidebarMenuItem>
                     </SidebarMenu>
                 </SidebarFooter>

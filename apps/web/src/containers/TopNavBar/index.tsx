@@ -16,6 +16,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { cn } from '@credopass/ui/lib/utils';
 import { useIsMobile } from '@credopass/ui/hooks/use-mobile';
 import UserComponent from '../../components/user';
+import { useDefaultUserMenu } from '../../components/user/default-menu';
 
 
 export const TopNavBar: React.FC = () => {
@@ -23,6 +24,7 @@ export const TopNavBar: React.FC = () => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const searchButtonRef = useRef<HTMLButtonElement>(null);
+  const userMenuGroups = useDefaultUserMenu();
 
   // Open command palette via launcher
   const openCommandPalette = useCallback(() => {
@@ -119,12 +121,15 @@ export const TopNavBar: React.FC = () => {
 
         <div className="top-navbar-btn">
           {/* <User size={15} /> */}
-          <UserComponent user={{
-            name: "shadcn",
-            email: "m@example.com",
-            avatar: "/avatars/shadcn.jpg",
-            icon: UserIcon
-          }} />
+          <UserComponent 
+            user={{
+              name: "shadcn",
+              email: "m@example.com",
+              avatar: "/avatars/shadcn.jpg",
+              icon: UserIcon
+            }} 
+            menuGroups={userMenuGroups}
+          />
           <Badge>3</Badge>
         </div>
 
