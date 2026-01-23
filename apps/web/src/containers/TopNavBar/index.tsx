@@ -126,8 +126,8 @@ export const TopNavBar: React.FC = () => {
           {/* <User size={15} /> */}
           <UserComponent
             user={{
-              name: "shadcn",
-              email: "m@example.com",
+              name: "israel",
+              email: "izzy@credopass.com",
               avatar: "/avatars/shadcn.jpg",
               icon: UserIcon
             }}
