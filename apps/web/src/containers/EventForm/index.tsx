@@ -83,7 +83,7 @@ const eventFormSchema = z.object({
   organizationId: z.string().min(1, 'Organization is required.'),
 }).superRefine((data, ctx) => {
   if (data.dateTimeRange?.from && data.dateTimeRange?.to) {
-    if (data.dateTimeRange.to <= data.dateTimeRange.from) {
+    if (data.dateTimeRange.to < data.dateTimeRange.from) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: 'End time must be after start time.',
