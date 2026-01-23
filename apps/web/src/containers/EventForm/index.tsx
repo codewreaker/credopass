@@ -49,6 +49,8 @@ export interface EventFormData {
   description: string;
   status: EventStatus;
   dateTimeRange: { from?: Date; to?: Date } | undefined;
+  startTime?: string;
+  endTime?: string;
   location: string;
   capacity: string;
   organizationId: string;

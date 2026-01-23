@@ -48,19 +48,9 @@ interface OrgCardProps {
   eventCount?: number;
 }
 
-
-
-const OrgMap: Record<keyof typeof OrgMap, string> = {
-  '02d3a1ea-c395-46fa-ac5c-0d1615babe9d': 'Fitness Club',
-  '0558ae61-4162-4852-8ecb-d028a04a6ed7': 'Kharis Church',
-  'd60e3927-e17a-49c5-a4e4-3279c138c4cc': 'Tech Community Hub',
-}
-
 const OrganizationCard: React.FC<OrgCardProps> = ({ org, isActive, onSelect, onEdit, eventCount }) => {
   const plan = planConfig[org.plan] || planConfig.free;
   const PlanIcon = plan.icon;
-
-  console.log('Rendering org:', org.id, OrgMap[org.id] || org.name);
 
   return (
     <Card
