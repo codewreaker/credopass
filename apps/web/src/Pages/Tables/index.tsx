@@ -149,7 +149,7 @@ export default function DatabasePage() {
 
   return (    
     <>
-        <Tabs defaultValue="preview" className="flex ml-auto pt-2 pb-2 w-full" value={selectedTable} orientation={isMobile ? "vertical" : "horizontal"} >
+        <Tabs defaultValue={selectedTable} className="flex ml-auto pt-2 pb-2 w-full" value={selectedTable} orientation={isMobile ? "vertical" : "horizontal"} >
           <TabsList className="w-full">
             {tables.map((table) => {
               const Icon = IconMapping[table];

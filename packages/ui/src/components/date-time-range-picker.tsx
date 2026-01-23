@@ -53,7 +53,22 @@ function DateTimeRangePicker({
   const combineDateTime = React.useCallback(
     (date: Date | undefined, time: string): Date | undefined => {
       if (!date) return undefined
-      const [hours, minutes] = time.split(":").map(Number)
+
+      const [hoursStr, minutesStr] = time.split(":")
+      const hours = Number(hoursStr)
+      const minutes = Number(minutesStr)
+
+      if (
+        !Number.isFinite(hours) ||
+        !Number.isFinite(minutes) ||
+        hours < 0 ||
+        hours > 23 ||
+        minutes < 0 ||
+        minutes > 59
+      ) {
+        // If the time string is malformed, return the original date unchanged
+        return date
+      }
       const combined = new Date(date)
       combined.setHours(hours, minutes, 0, 0)
       return combined
