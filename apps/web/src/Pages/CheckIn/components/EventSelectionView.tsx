@@ -34,7 +34,7 @@ const EventCard: React.FC<EventCardProps> = ({ event, onSelect, statusColors }) 
           </Badge>
         </div>
         {event.description && (
-          <CardDescription className="sm:line-clamp-1 hidden">
+          <CardDescription className="hidden sm:block sm:line-clamp-1">
             {event.description}
           </CardDescription>
         )}
