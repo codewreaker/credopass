@@ -28,3 +28,6 @@ export * from './tooltip';
 export * from './empty';
 export * from './spinner';
 export * from './alert';
+export * from './popover';
+export * from './calendar';
+export * from './date-time-range-picker';
