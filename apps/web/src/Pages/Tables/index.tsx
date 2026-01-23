@@ -5,13 +5,25 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import GridTable, { type MenuItem } from '../../components/grid-table/index';
-import { Button } from '@credopass/ui';
-import { RefreshCw, DatabaseBackup } from 'lucide-react';
+import {
+  RefreshCw, DatabaseBackup, AppWindowIcon, BuildingIcon, Building2,
+  TicketCheck
+
+} from 'lucide-react';
 import type { ColDef } from 'ag-grid-community';
 import { API_BASE_URL } from '../../config';
 import Loader from '../../components/loader';
 import './style.css';
 import EmptyState from '../../components/empty-state';
+
+import {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+} from "@credopass/ui/components/tabs"
+import { useIsMobile } from '@credopass/ui/hooks/use-mobile';
+
+const GRID_EXT = '_grid';
 
 type TableName = 'users' | 'events' | 'attendance' | 'loyalty' | 'organizations';
 
@@ -19,11 +31,22 @@ interface TableData {
   [key: string]: any[];
 }
 
+
+const IconMapping: { [key in TableName]: React.ElementType } = {
+  users: AppWindowIcon,
+  events: TicketCheck,
+  attendance: DatabaseBackup,
+  loyalty: Building2,
+  organizations: BuildingIcon,
+};
+
+
 export default function DatabasePage() {
   const [selectedTable, setSelectedTable] = useState<TableName>('users');
   const [tableData, setTableData] = useState<TableData>({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const isMobile = useIsMobile();
 
   const tables: TableName[] = ['users', 'events', 'attendance', 'loyalty', 'organizations'];
 
@@ -86,48 +109,64 @@ export default function DatabasePage() {
     [selectedTable]
   );
 
-  if (loading) return <Loader />;
+  const handleDbDelete = (selectedItems: any[], gridId?: string) => {
+    const gridName = gridId?.split(GRID_EXT)[0];
+    console.log('Delete action for items:', selectedItems, 'in grid:', gridName);
+    // Implement delete logic here
+  }
 
-  return (
+
+  return (    
     <>
-      <div className="database-page-header">
-        <div className="page-header">
-          <h1>Database Admin</h1>
-          <p className="page-subtitle">View all database tables</p>
-        </div>
-        <div className="table-selector">
-          {tables.map(table => (
-            <Button
-              key={table}
-              variant="outline"
-              className={selectedTable === table ? 'active' : ''}
-              onClick={() => setSelectedTable(table)}
-            >
-              {table.charAt(0).toUpperCase() + table.slice(1)}
-              {tableData[table] && (
-                <span className="count">({tableData[table].length})</span>
-              )}
-            </Button>
-          ))}
-        </div>
-      </div>
+        <Tabs defaultValue="preview" className="flex ml-auto pt-2 pb-2 w-full" value={selectedTable} orientation={isMobile ? "vertical" : "horizontal"} >
+          <TabsList className="w-full">
+            {tables.map((table) => {
+              const Icon = IconMapping[table];
+              return (
+                <TabsTrigger
+                  key={table}
+                  value={table}
+                  onClick={() => setSelectedTable(table)}
+                >
+                  <Icon size={16} style={{ marginRight: 4 }} />
+                  {table.charAt(0).toUpperCase() + table.slice(1)}
+                  {tableData[table] ? ` (${tableData[table].length})` : ' (--)'}
+                </TabsTrigger>
+              );
+            })}
+          </TabsList>
+        </Tabs>
 
-      {!error ? (
-        <GridTable
-          title={`${selectedTable.charAt(0).toUpperCase() + selectedTable.slice(1)} Table`}
-          subtitle={currentData.length > 0 ? `${currentData.length} records` : 'No records found'}
-          menu={menuItems}
-          loading={loading}
-          columnDefs={columnDefs}
-          rowData={currentData}
+      {!loading ? (
+        !error ? (
+          <GridTable
+            gridId={selectedTable + GRID_EXT}
+            title={`${selectedTable.charAt(0).toUpperCase() + selectedTable.slice(1)} Table`}
+            subtitle={currentData.length > 0 ? `${currentData.length} records` : 'No records found'}
+            bulkActions={[
+              {
+                key: 'delete',
+                label: 'Delete',
+                action: handleDbDelete,
+                variant: 'destructive'
+              }
+            ]}
+            rowSelection={{
+              mode: 'multiRow',
+            }}
+            menu={menuItems}
+            loading={loading}
+            columnDefs={columnDefs}
+            rowData={currentData}
+          />
+        ) : <EmptyState
+          error
+          title={`Error Loading ${selectedTable}`}
+          icon={<DatabaseBackup />}
+          description={`An error occurred while fetching ${selectedTable}: ${error}`}
+          action={{ label: "Retry", onClick: () => fetchTableData(selectedTable) }}
         />
-      ) : <EmptyState
-        error
-        title={`Error Loading ${selectedTable}`}
-        icon={<DatabaseBackup />}
-        description={`An error occurred while fetching ${selectedTable}: ${error}`}
-        action={{ label: "Retry", onClick: () => fetchTableData(selectedTable) }}
-      />}
+      ) : (<Loader />)}
     </>
   );
 }

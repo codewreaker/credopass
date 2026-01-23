@@ -6,7 +6,7 @@ export interface BulkActionItem {
   key: string;
   label: string;
   icon?: React.ReactElement;
-  action: (selectedItems: any[]) => void;
+  action: (selectedItems: any[], gridId?: string) => void;
   variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
 }
 
@@ -17,6 +17,7 @@ interface HeaderProps {
   loading?: boolean;
   selectedItems?: any[];
   bulkActions?: BulkActionItem[];
+  gridId?: string;
 }
 
 const Header: React.FC<HeaderProps> = ({
@@ -26,6 +27,7 @@ const Header: React.FC<HeaderProps> = ({
   loading = false,
   selectedItems = [],
   bulkActions = [],
+  gridId,
 }) => {
   const showHeader = title || menu.length > 0 || selectedItems.length > 0;
 
@@ -50,7 +52,7 @@ const Header: React.FC<HeaderProps> = ({
                 key={action.key}
                 variant={action.variant || "secondary"}
                 size='sm'
-                onClick={() => action.action(selectedItems)}
+                onClick={() => action.action(selectedItems, gridId)}
               >
                 {action.icon}
                 {`${action.label} (${selectedItems.length})`}

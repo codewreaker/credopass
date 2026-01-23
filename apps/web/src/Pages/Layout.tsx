@@ -76,7 +76,7 @@ export function RootLayout() {
             }}
           >
             <SidebarInset className="main-content">
-              <header className="flex justify-between h-16 shrink-0 items-center gap-2 border-b px-4 group" data-collapsible={isMobile ? "icon" : ""} >
+              <header className="flex justify-between h-16 shrink-0 items-center gap-2 px-4 group" data-collapsible={isMobile ? "icon" : ""} >
                 {isMobile ? <OrgSelector /> : <SidebarTrigger className="-ml-1" />}
                 <TopNavBar />
                 <RightSidebarTrigger />

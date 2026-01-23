@@ -5,6 +5,8 @@ import { Eye } from 'lucide-react';
 import Header, { type BulkActionItem } from './Header';
 import { useAppStore } from '../../stores/store';
 import './style.css';
+import { cn } from '@credopass/ui/lib/utils';
+import { useIsMobile } from '@credopass/ui/hooks/use-mobile';
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
@@ -67,10 +69,12 @@ const GridTable: React.FC<GridTableProps> = ({
     enableClickSelection: true,
   },
   onGridReady,
+  gridId = '__unnamed_grid__',
   ...gridProps
 }) => {
   const [selectedItems, setSelectedItems] = useState<any[]>([]);
   const [gridApi, setGridApi] = useState<GridApi | null>(null);
+  const isMobile = useIsMobile();
 
   // const viewItemSet = useAppStore(state => state.viewedItem !== null);
   const setViewedItem = useAppStore(state => state.setViewedItem);
@@ -149,7 +153,7 @@ const GridTable: React.FC<GridTableProps> = ({
   }, [onGridReady]);
 
   return (
-    <div className="grid-table-container">
+    <div className={cn("grid-table-container rounded-lg overflow-hidden border", isMobile ? "h-screen" : "h-[calc(100%-80px)]")}>
       <Header
         title={title}
         subtitle={subtitle}
@@ -157,6 +161,7 @@ const GridTable: React.FC<GridTableProps> = ({
         loading={loading}
         selectedItems={selectedItems}
         bulkActions={bulkActions}
+        gridId={gridId}
       />
       <AgGridReact
         onGridReady={memoizedOnGridReady}
@@ -166,6 +171,7 @@ const GridTable: React.FC<GridTableProps> = ({
         theme={theme}
         rowSelection={rowSelection}
         gridOptions={gridOptionsMemoized}
+        gridId={gridId}
         {...gridProps}
       />
     </div>

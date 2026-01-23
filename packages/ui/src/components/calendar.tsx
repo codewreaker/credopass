@@ -213,3 +213,5 @@ function CalendarDayButton({
 }
 
 export { Calendar, CalendarDayButton }
+
+// background-color: var(--background-darker);
