@@ -1,20 +1,11 @@
 "use client"
 
 import * as React from "react"
-import { useLiveQuery } from '@tanstack/react-db';
 
 import {
     Collapsible, CollapsibleContent, CollapsibleTrigger
 } from "@credopass/ui/components/collapsible"
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuGroup,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from "@credopass/ui/components/dropdown-menu"
+
 import {
     Sidebar,
     SidebarContent,
@@ -42,10 +33,7 @@ import {
     BookOpen,
     FrameIcon,
     PieChartIcon,
-    ChevronsUpDownIcon,
-    ChevronRightIcon,
-    Plus,
-    Settings,
+    ChevronRightIcon
 } from "lucide-react"
 import { useLocation, useNavigate } from "@tanstack/react-router"
 import UserComponent from "../../components/user"
@@ -53,10 +41,7 @@ import { useDefaultUserMenu } from "../../components/user/default-menu"
 import { cn } from "@credopass/ui/lib/utils"
 import { useCookies } from "@credopass/lib/hooks";
 import CredoPassLogoIcon from "./brand-icon";
-import { getCollections } from "../../lib/tanstack-db";
-import { useOrganizationStore, useLauncher } from "../../stores/store";
-import { launchOrganizationForm } from "../OrganizationForm";
-import type { Organization } from "@credopass/lib/schemas";
+import OrgSelector from "../OrgSelector";
 
 interface SidebarMenuItemType {
     label: string
@@ -155,6 +140,8 @@ const defaultData: SidebarProps = {
     },
 }
 
+
+
 const MainSidebar: React.FC<SidebarProps> = ({
     nav = defaultData.nav,
     user = defaultData.user,
@@ -163,37 +150,18 @@ const MainSidebar: React.FC<SidebarProps> = ({
 
     const navigate = useNavigate();
     const location = useLocation();
-    const { openLauncher } = useLauncher();
-    const { activeOrganizationId, activeOrganization, setActiveOrganization } = useOrganizationStore();
-    const userMenuGroups = useDefaultUserMenu();
-    
-    // Get collections inside component
-    const { organizations: organizationCollection } = getCollections();
 
-    // Fetch organizations from API
-    const orgsQuery = useLiveQuery((query) =>
-        query
-            .from({ organizationCollection })
-    );
-    const organizations = React.useMemo(() => 
-        (orgsQuery.data ?? []) as Organization[]
-    , [orgsQuery.data]);
+
+    
+    const userMenuGroups = useDefaultUserMenu();
+
 
     const [sidebarCookie] = useCookies(SIDEBAR_COOKIE_NAME);
     const isOpen = Boolean(sidebarCookie === 'true');
 
     const isActive = (url: string) => location.pathname === url
 
-    // Auto-select first organization if none selected
-    React.useEffect(() => {
-        if (!activeOrganizationId && organizations.length > 0) {
-            setActiveOrganization(organizations[0].id, organizations[0]);
-        }
-    }, [activeOrganizationId, organizations, setActiveOrganization]);
 
-    const handleSelectOrganization = (org: Organization) => {
-        setActiveOrganization(org.id, org);
-    };
 
     const navMain = React.useMemo(() => nav?.main || [], [nav]);
     const navs = React.useMemo(() => {
@@ -216,6 +184,7 @@ const MainSidebar: React.FC<SidebarProps> = ({
         navigate({ to: url });
     }, [navigate]);
 
+
     return (
         <SidebarProvider defaultOpen={isOpen}
             style={{
@@ -227,72 +196,7 @@ const MainSidebar: React.FC<SidebarProps> = ({
                 <SidebarHeader>
                     <SidebarMenu>
                         <SidebarMenuItem>
-                            <DropdownMenu>
-                                <DropdownMenuTrigger>
-                                    <SidebarMenuButton
-                                        size="lg"
-                                        className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
-                                    >
-                                        <CredoPassLogoIcon size={16} />
-                                        <div className="grid flex-1 text-left text-sm leading-tight">
-                                            <span className="truncate font-semibold">
-                                                {activeOrganization?.name || 'Select Organization'}
-                                            </span>
-                                            <span className="truncate text-xs">
-                                                {activeOrganization?.plan || 'No org selected'}
-                                            </span>
-                                        </div>
-                                        <ChevronsUpDownIcon className="ml-auto" />
-                                    </SidebarMenuButton>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent
-                                    className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
-                                    align="start"
-                                    side="bottom"
-                                    sideOffset={4}
-                                >
-                                    <DropdownMenuGroup>
-                                        <DropdownMenuLabel className="text-xs text-muted-foreground">Organizations</DropdownMenuLabel>
-                                    </DropdownMenuGroup>
-                                    {organizations.map((org) => (
-                                        <DropdownMenuItem 
-                                            key={org.id} 
-                                            onClick={() => handleSelectOrganization(org)} 
-                                            className={cn(
-                                                "gap-2 p-2",
-                                                activeOrganizationId === org.id && "bg-accent"
-                                            )}
-                                        >
-                                            <div className="flex size-6 items-center justify-center rounded-sm border">
-                                                {org.name?.charAt(0) || 'O'}
-                                            </div>
-                                            <div className="flex flex-col">
-                                                <span>{org.name}</span>
-                                                <span className="text-xs text-muted-foreground">{org.plan}</span>
-                                            </div>
-                                        </DropdownMenuItem>
-                                    ))}
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuItem 
-                                        onClick={() => launchOrganizationForm({}, openLauncher)}
-                                        className="gap-2 p-2"
-                                    >
-                                        <div className="flex size-6 items-center justify-center rounded-sm border border-dashed">
-                                            <Plus className="h-4 w-4" />
-                                        </div>
-                                        <span>New Organization</span>
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem 
-                                        onClick={() => navigate({ to: '/organizations' })}
-                                        className="gap-2 p-2"
-                                    >
-                                        <div className="flex size-6 items-center justify-center rounded-sm border">
-                                            <Settings className="h-4 w-4" />
-                                        </div>
-                                        <span>Manage Organizations</span>
-                                    </DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
+                            <OrgSelector/>
                         </SidebarMenuItem>
                     </SidebarMenu>
                 </SidebarHeader>
@@ -368,6 +272,6 @@ const MainSidebar: React.FC<SidebarProps> = ({
     )
 }
 
-export { SidebarInset, SidebarTrigger, CredoPassLogoIcon as BrandIcon };
+export { SidebarInset, SidebarTrigger, CredoPassLogoIcon as BrandIcon, OrgSelector };
 
 export default MainSidebar;

@@ -15,6 +15,7 @@ const EmptyState: React.FC<{
     description?: string;
     action?: {
         label: string;
+        icon?: React.ReactElement;
         onClick: () => void;
     };
     secondaryAction?: {
@@ -36,17 +37,17 @@ const EmptyState: React.FC<{
         return (
             <Empty className="position-absolute z-50">
                 <EmptyHeader>
-                    <EmptyMedia variant="icon">
+                    <EmptyMedia variant={icon ? 'default' : 'icon'}>
                         {icon}
                     </EmptyMedia>
-                    <EmptyTitle className={error ? "text-destructive" : ""}>{title}</EmptyTitle>
-                    <EmptyDescription className={error ? "text-destructive/80" : ""}>
+                    <EmptyTitle className={error ? "text-2xl text-destructive" : "text-2xl"}>{title}</EmptyTitle>
+                    <EmptyDescription className={error ? "text-destructive/80 max-w-md" : "max-w-md"}>
                         {description}
                     </EmptyDescription>
                 </EmptyHeader>
                 <EmptyContent>
                     <div className="flex gap-2">
-                        <Button onClick={action?.onClick} className={"cursor-pointer"}>{action.label}</Button>
+                        <Button onClick={action?.onClick} className={"cursor-pointer"}>{action?.icon}{action.label}</Button>
                         {secondaryAction && <Button variant="outline" onClick={secondaryAction.onClick}>{secondaryAction.label}</Button>}
                     </div>
                 </EmptyContent>

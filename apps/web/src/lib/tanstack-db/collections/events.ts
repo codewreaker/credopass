@@ -18,17 +18,21 @@ export function createEventCollection(queryClient: QueryClient) {
     queryCollectionOptions({
       queryKey: ['events'],
       queryFn: async (): Promise<Event[]> => {
-        const response = await fetch(`${API_BASE_URL}/events`);
-        if (!response.ok) throw new Error('Failed to fetch events');
-        const data = await response.json();
-        // Transform dates from the API response
-        return data.map((event: Event) => ({
-          ...event,
-          startTime: new Date(event.startTime),
-          endTime: new Date(event.endTime),
-          createdAt: new Date(event.createdAt),
-          updatedAt: new Date(event.updatedAt),
-        }));
+        try {
+          const response = await fetch(`${API_BASE_URL}/events`);
+          const data = await response.json();
+          // Transform dates from the API response
+          return data.map((event: Event) => ({
+            ...event,
+            startTime: new Date(event.startTime),
+            endTime: new Date(event.endTime),
+            createdAt: new Date(event.createdAt),
+            updatedAt: new Date(event.updatedAt),
+          }));
+        } catch (error) {
+          throw `An error occurred while fetching events: ${String(error)}. Please ensure the API server is running and accessible.`;
+        }
+
       },
       getKey: (item) => item.id,
       queryClient,

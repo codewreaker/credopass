@@ -129,7 +129,7 @@ const EventForm = ({ initialData = {}, isEditing = false, onClose }: EventFormPr
         toast.error('Please select an organization first');
         return;
       }
-      
+
       setIsMutating(true);
       const now = new Date();
       const eventData = {
@@ -172,11 +172,11 @@ const EventForm = ({ initialData = {}, isEditing = false, onClose }: EventFormPr
 
         await tx.isPersisted.promise;
         toast.success(isEditing ? 'Event updated!' : 'Event created!');
-        onClose?.();
       } catch (error) {
         toast.error(error instanceof Error ? error.message : 'An unexpected error occurred.');
       } finally {
         setIsMutating(false);
+        onClose?.();
       }
     },
   });

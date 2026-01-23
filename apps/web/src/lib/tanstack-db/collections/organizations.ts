@@ -17,7 +17,7 @@ export function createOrganizationCollection(queryClient: QueryClient) {
   return createCollection(
     queryCollectionOptions({
       queryKey: ['organizations'],
-      queryFn: async (): Promise<Organization[]> => {
+      queryFn: async (): Promise<Array<Organization>> => {
         const response = await fetch(`${API_BASE_URL}/organizations`);
         if (!response.ok) throw new Error('Failed to fetch organizations');
         const data = await response.json();
@@ -25,7 +25,7 @@ export function createOrganizationCollection(queryClient: QueryClient) {
           ...org,
           createdAt: new Date(org.createdAt),
           updatedAt: new Date(org.updatedAt),
-          deletedAt: org.deletedAt ? new Date(org.deletedAt) : null,
+          deletedAt: org.deletedAt ? new Date(org.deletedAt) : null
         }));
       },
       getKey: (item) => item.id,
