@@ -1,6 +1,6 @@
 // Zustand Based Store to handle App State
 import type { DialogRootActions } from '@credopass/ui/components/dialog'
-import { create } from 'zustand'
+import { create, ExtractState } from 'zustand'
 import { combine, devtools } from 'zustand/middleware'
 import type { EventType, EventStatus, User, Organization } from '@credopass/lib/schemas'
 
@@ -247,3 +247,6 @@ export const useOrganizationStore = create(
         { name: 'OrganizationStore' }
     )
 );
+
+type UseOrganizationStoreState = ExtractState<typeof useOrganizationStore>;
+export type { UseOrganizationStoreState };

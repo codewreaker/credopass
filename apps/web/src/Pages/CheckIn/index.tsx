@@ -5,19 +5,20 @@ import type { User, EventType } from '@credopass/lib/schemas';
 import { getCollections } from '../../lib/tanstack-db';
 import { launchEventForm } from '../../containers/EventForm';
 import SuccessCheckInScreen from './SuccessCheckInScreen';
-import EmptyEventsState from './components/EmptyEventsState';
 import EventSelectionView from './components/EventSelectionView';
 import { generateSignInParams, generateSignInUrl } from './utils/qrCodeUtils';
 import { useIsMobile } from '@credopass/ui/hooks/use-mobile';
 import { statusColors } from './utils/constants';
-import './style.css';
+import { Plus, RefreshCcw, QrCodeIcon } from 'lucide-react';
 
+import './style.css';
 
 
 import CheckInHeader from './components/CheckInHeader';
 import QRCodeDisplay from './components/QRCodeDisplay';
 import ManualSignInForm from './ManualSignInForm';
-
+import EmptyState from '../../components/empty-state';
+import { toast } from 'sonner';
 
 
 const LoadingState: React.FC = () => {
@@ -38,6 +39,7 @@ const CheckInPage: React.FC = () => {
 
   // Fetch events using TanStack DB live query
   const { data: eventsData, isLoading } = useLiveQuery((q) => q.from({ eventCollection }));
+
   const events = useMemo<EventType[]>(() => Array.isArray(eventsData) ? eventsData : [], [eventsData]);
 
   const session = useEventSessionStore((state) => state.session);
@@ -51,6 +53,11 @@ const CheckInPage: React.FC = () => {
   const [successUser, setSuccessUser] = useState<Partial<User> | null>(null);
   const [checkInCount, setCheckInCount] = useState(0);
   const [showManualCheckIn, setShowManualCheckIn] = useState(false);
+
+
+  const isError = eventCollection.utils.isError;
+  const errorDetails = eventCollection.utils.lastError;
+  const clearError = eventCollection.utils.refetch;
 
   const mockStaffUser: Partial<User> = React.useMemo(
     () => ({
@@ -145,6 +152,8 @@ const CheckInPage: React.FC = () => {
     return events.find((e) => e.id === selectedEventId);
   }, [events, selectedEventId]);
 
+
+
   // Loading state
   if (isLoading) {
     return <LoadingState />;
@@ -161,9 +170,38 @@ const CheckInPage: React.FC = () => {
     );
   }
 
+
+
   // Empty state - no events
   if (events.length === 0) {
-    return <EmptyEventsState onCreateEvent={handleCreateEvent} />;
+    if(isError) toast.error(`Error fetching events: ${errorDetails}`);
+    return (
+      <div className="checkin-page h-full flex flex-col items-center justify-center p-6">
+        <EmptyState
+          error={isError}
+          icon={
+            <div className="relative">
+              <div className="absolute inset-0 bg-primary/10 rounded-full blur-xl animate-pulse" />
+              <div className="relative bg-linear-to-br from-primary/20 to-primary/5 p-6 rounded-full">
+                <QrCodeIcon className="size-16 text-primary" />
+              </div>
+            </div>
+          }
+          title={isError ? "Error Loading Events" : 'No Events Available'}
+          description={
+            isError
+              ? errorDetails as string
+              : 'Create your first event to start checking in attendees. Events help you track attendance and engage with your community.'
+          }
+          action={
+            isError ?
+              { label: "Retry", onClick: clearError, icon: <RefreshCcw className="w-5 h-5" /> } :
+              { label: "Create Event", icon: <Plus className="w-5 h-5" />, onClick: handleCreateEvent }
+          }
+        />
+
+      </div>
+    )
   }
 
   // Event selection state

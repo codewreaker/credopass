@@ -98,7 +98,7 @@ export const TopNavBar: React.FC = () => {
       "flex items-center px-4 justify-between",
       isMobile ? "w-10/12" : "w-full"
     )}>
-      <div className={cn("navbar-left", isMobile ? "p-0 w-4/10" : "w-full p-5")} ref={searchButtonRef as unknown as React.RefObject<HTMLDivElement>}>
+      <div className={cn("navbar-left", isMobile ? "p-0 w-4/10" : "w-7/10 p-5")} ref={searchButtonRef as unknown as React.RefObject<HTMLDivElement>}>
         <Button
           variant="outline"
           className="search-container"
@@ -119,15 +119,18 @@ export const TopNavBar: React.FC = () => {
         </Button>
 
 
-        <div className="top-navbar-btn">
+        <div
+          className="top-navbar-btn group rounded-4xl"
+          data-collapsible={isMobile ? "icon" : ""}
+        >
           {/* <User size={15} /> */}
-          <UserComponent 
+          <UserComponent
             user={{
               name: "shadcn",
               email: "m@example.com",
               avatar: "/avatars/shadcn.jpg",
               icon: UserIcon
-            }} 
+            }}
             menuGroups={userMenuGroups}
           />
           <Badge>3</Badge>

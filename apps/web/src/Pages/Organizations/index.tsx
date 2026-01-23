@@ -1,11 +1,11 @@
 import React from 'react';
-import { useLiveQuery } from '@tanstack/react-db';
+import { count, useLiveQuery } from '@tanstack/react-db';
 
-import { 
-  Building2, 
-  Plus, 
-  Users, 
-  Calendar, 
+import {
+  Building2,
+  Plus,
+  Users,
+  Calendar,
   Settings,
   Crown,
   Sparkles,
@@ -41,22 +41,31 @@ const planConfig: Record<OrgPlan, { color: string; icon: React.ElementType; labe
 
 // Organization Card Component
 interface OrgCardProps {
-  org: Organization;
+  org: Organization & { members?: number; events?: number; };
   isActive: boolean;
   onSelect: () => void;
   onEdit: () => void;
+  eventCount?: number;
 }
 
-const OrganizationCard: React.FC<OrgCardProps> = ({ org, isActive, onSelect, onEdit }) => {
+
+
+const OrgMap: Record<keyof typeof OrgMap, string> = {
+  '02d3a1ea-c395-46fa-ac5c-0d1615babe9d': 'Fitness Club',
+  '0558ae61-4162-4852-8ecb-d028a04a6ed7': 'Kharis Church',
+  'd60e3927-e17a-49c5-a4e4-3279c138c4cc': 'Tech Community Hub',
+}
+
+const OrganizationCard: React.FC<OrgCardProps> = ({ org, isActive, onSelect, onEdit, eventCount }) => {
   const plan = planConfig[org.plan] || planConfig.free;
   const PlanIcon = plan.icon;
 
+  console.log('Rendering org:', org.id, OrgMap[org.id] || org.name);
+
   return (
     <Card
-      className={`org-card cursor-pointer hover:shadow-lg transition-all duration-200 group ${
-        isActive ? 'ring-2 ring-primary border-primary' : 'hover:border-primary/50'
-      }`}
-      onClick={onSelect}
+      className={`org-card cursor-pointer hover:shadow-lg transition-all duration-200 group ${isActive ? 'ring-2 ring-primary border-primary' : 'hover:border-primary/50'
+        }`}
     >
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
@@ -84,14 +93,14 @@ const OrganizationCard: React.FC<OrgCardProps> = ({ org, isActive, onSelect, onE
           <div className="grid grid-cols-2 gap-3">
             <div className="stat-item">
               <Users className="w-4 h-4 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">-- members</span>
+              <span className="text-sm text-muted-foreground">{org.members ?? '--'} members</span>
             </div>
             <div className="stat-item">
               <Calendar className="w-4 h-4 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">-- events</span>
+              <span className="text-sm text-muted-foreground">{eventCount ?? '--'} events</span>
             </div>
           </div>
-          
+
           {/* External Auth Indicator */}
           {org.externalAuthEndpoint && (
             <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/50 px-2 py-1 rounded">
@@ -99,7 +108,7 @@ const OrganizationCard: React.FC<OrgCardProps> = ({ org, isActive, onSelect, onE
               External auth configured
             </div>
           )}
-          
+
           {/* Stripe Indicator */}
           {org.stripeCustomerId && (
             <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/50 px-2 py-1 rounded">
@@ -110,9 +119,9 @@ const OrganizationCard: React.FC<OrgCardProps> = ({ org, isActive, onSelect, onE
 
           {/* Actions */}
           <div className="flex gap-2 pt-2">
-            <Button 
-              variant={isActive ? "default" : "outline"} 
-              size="sm" 
+            <Button
+              variant={isActive ? "default" : "outline"}
+              size="sm"
               className="flex-1"
               onClick={(e) => {
                 e.stopPropagation();
@@ -121,8 +130,8 @@ const OrganizationCard: React.FC<OrgCardProps> = ({ org, isActive, onSelect, onE
             >
               {isActive ? 'Active' : 'Select'}
             </Button>
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               size="sm"
               onClick={(e) => {
                 e.stopPropagation();
@@ -173,30 +182,48 @@ const PageHeader: React.FC<HeaderProps> = ({ orgCount, onCreateNew }) => (
 const OrganizationsPage: React.FC = () => {
   const { openLauncher } = useLauncher();
   const { activeOrganizationId, setActiveOrganization } = useOrganizationStore();
-  
+
   // Get collections inside component
-  const { organizations: organizationCollection } = getCollections();
-  
+  const {
+    organizations: organizationCollection,
+    events: eventCollection
+  } = getCollections();
+
+
   const orgsQuery = useLiveQuery((query) =>
     query
       .from({ organizationCollection })
   );
 
-  const organizations = (orgsQuery.data ?? []) as Organization[];
+  // Filter events by organization ID
+  // Count events grouped by organizationId
+  const eventCount = useLiveQuery((q) =>
+    q
+      .from({ ev: eventCollection })
+      .groupBy(({ ev }) => ev.organizationId)
+      .select(({ ev }) => ({
+        organizationId: ev.organizationId,
+        eventCount: count(ev.id),
+      }))
+  ).data;
+
+
+  const organizations = (orgsQuery.data ?? []);
+  console.log('Organizations fetched:', organizations);
 
   const handleSelectOrganization = (org: Organization) => {
     setActiveOrganization(org.id, org);
   };
 
   const handleEditOrganization = (org: Organization) => {
-    launchOrganizationForm({ 
+    launchOrganizationForm({
       initialData: {
         id: org.id,
         name: org.name,
         slug: org.slug,
         plan: org.plan,
       },
-      isEditing: true 
+      isEditing: true
     }, openLauncher);
   };
 
@@ -220,16 +247,18 @@ const OrganizationsPage: React.FC = () => {
       </div>
     );
   }
+  
 
   return (
     <div className="organizations-page">
       <PageHeader orgCount={organizations.length} onCreateNew={handleCreateNew} />
-      
+
       <div className="org-grid">
         {organizations.map((org) => (
           <OrganizationCard
             key={org.id}
             org={org}
+            eventCount={eventCount?.find(ec => ec.organizationId === org.id)?.eventCount || 0}
             isActive={org.id === activeOrganizationId}
             onSelect={() => handleSelectOrganization(org)}
             onEdit={() => handleEditOrganization(org)}
