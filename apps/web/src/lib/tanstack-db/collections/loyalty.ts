@@ -7,8 +7,8 @@ import { createCollection } from '@tanstack/db';
 import { QueryClient } from '@tanstack/query-core';
 import { queryCollectionOptions } from '@tanstack/query-db-collection';
 import type { Loyalty } from '@credopass/lib/schemas';
-
-const API_BASE = '/api';
+import { API_BASE_URL } from '../../../config';
+import { handleAPIErrors } from '..';
 
 /**
  * Create loyalty collection with a specific QueryClient
@@ -18,15 +18,18 @@ export function createLoyaltyCollection(queryClient: QueryClient) {
     queryCollectionOptions({
       queryKey: ['loyalty'],
       queryFn: async (): Promise<Loyalty[]> => {
-        const response = await fetch(`${API_BASE}/loyalty`);
-        if (!response.ok) throw new Error('Failed to fetch loyalty records');
-        const data = await response.json();
-        // Transform dates from the API response
-        return data.map((record: Loyalty) => ({
-          ...record,
-          issuedAt: new Date(record.issuedAt),
-          expiresAt: record.expiresAt ? new Date(record.expiresAt) : null,
-        }));
+        try {
+          const response = await fetch(`${API_BASE_URL}/loyalty`);
+          const data = await response.json();
+          // Transform dates from the API response
+          return data.map((record: Loyalty) => ({
+            ...record,
+            issuedAt: new Date(record.issuedAt),
+            expiresAt: record.expiresAt ? new Date(record.expiresAt) : null,
+          }));
+        } catch (error) {
+          throw `An error occurred while fetching loyalty records: ${String(error)}. Please ensure the API server is running and accessible.`;
+        }
       },
       getKey: (item) => item.id,
       queryClient,
@@ -36,12 +39,12 @@ export function createLoyaltyCollection(queryClient: QueryClient) {
         const mutation = transaction.mutations[0];
         if (!mutation) return;
         const { modified: newRecord } = mutation;
-        const response = await fetch(`${API_BASE}/loyalty`, {
+        const response = await fetch(`${API_BASE_URL}/loyalty`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(newRecord),
         });
-        if (!response.ok) throw new Error(`Failed to create loyalty record | HTTP ${response.status}: ${response.statusText}`);
+        await handleAPIErrors(response);
         return response.json();
       },
 
@@ -50,7 +53,7 @@ export function createLoyaltyCollection(queryClient: QueryClient) {
         const mutation = transaction.mutations[0];
         if (!mutation) return;
         const { original, modified } = mutation;
-        const response = await fetch(`${API_BASE}/loyalty/${original.id}`, {
+        const response = await fetch(`${API_BASE_URL}/loyalty/${original.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(modified),
@@ -63,7 +66,7 @@ export function createLoyaltyCollection(queryClient: QueryClient) {
         const mutation = transaction.mutations[0];
         if (!mutation) return;
         const { original } = mutation;
-        const response = await fetch(`${API_BASE}/loyalty/${original.id}`, {
+        const response = await fetch(`${API_BASE_URL}/loyalty/${original.id}`, {
           method: 'DELETE',
         });
         if (!response.ok) throw new Error('Failed to delete loyalty record');

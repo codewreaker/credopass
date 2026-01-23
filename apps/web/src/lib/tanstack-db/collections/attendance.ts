@@ -7,8 +7,8 @@ import { createCollection } from '@tanstack/db';
 import { QueryClient } from '@tanstack/query-core';
 import { queryCollectionOptions } from '@tanstack/query-db-collection';
 import type { Attendance } from '@credopass/lib/schemas';
-
-const API_BASE = '/api';
+import { API_BASE_URL } from '../../../config';
+import { handleAPIErrors } from '..';
 
 /**
  * Create attendance collection with a specific QueryClient
@@ -18,15 +18,18 @@ export function createAttendanceCollection(queryClient: QueryClient) {
     queryCollectionOptions({
       queryKey: ['attendance'],
       queryFn: async (): Promise<Attendance[]> => {
-        const response = await fetch(`${API_BASE}/attendance`);
-        if (!response.ok) throw new Error('Failed to fetch attendance');
-        const data = await response.json();
-        // Transform dates from the API response
-        return data.map((record: Attendance) => ({
-          ...record,
-          checkInTime: record.checkInTime ? new Date(record.checkInTime) : null,
-          checkOutTime: record.checkOutTime ? new Date(record.checkOutTime) : null,
-        }));
+        try {
+          const response = await fetch(`${API_BASE_URL}/attendance`);
+          const data = await response.json();
+          // Transform dates from the API response
+          return data.map((record: Attendance) => ({
+            ...record,
+            checkInTime: record.checkInTime ? new Date(record.checkInTime) : null,
+            checkOutTime: record.checkOutTime ? new Date(record.checkOutTime) : null,
+          }));
+        } catch (error) {
+          throw `An error occurred while fetching attendance: ${String(error)}. Please ensure the API server is running and accessible.`;
+        }
       },
       getKey: (item) => item.id,
       queryClient,
@@ -36,12 +39,12 @@ export function createAttendanceCollection(queryClient: QueryClient) {
         const mutation = transaction.mutations[0];
         if (!mutation) return;
         const { modified: newRecord } = mutation;
-        const response = await fetch(`${API_BASE}/attendance`, {
+        const response = await fetch(`${API_BASE_URL}/attendance`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(newRecord),
         });
-        if (!response.ok) throw new Error(`Failed to create attendance record | HTTP ${response.status}: ${response.statusText}`);
+        await handleAPIErrors(response);
         return response.json();
       },
 
@@ -50,7 +53,7 @@ export function createAttendanceCollection(queryClient: QueryClient) {
         const mutation = transaction.mutations[0];
         if (!mutation) return;
         const { original, modified } = mutation;
-        const response = await fetch(`${API_BASE}/attendance/${original.id}`, {
+        const response = await fetch(`${API_BASE_URL}/attendance/${original.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(modified),
@@ -63,7 +66,7 @@ export function createAttendanceCollection(queryClient: QueryClient) {
         const mutation = transaction.mutations[0];
         if (!mutation) return;
         const { original } = mutation;
-        const response = await fetch(`${API_BASE}/attendance/${original.id}`, {
+        const response = await fetch(`${API_BASE_URL}/attendance/${original.id}`, {
           method: 'DELETE',
         });
         if (!response.ok) throw new Error('Failed to delete attendance record');

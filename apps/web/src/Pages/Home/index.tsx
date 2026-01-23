@@ -1,5 +1,5 @@
 import Analytics from '../Analytics/index'
-import Members from '../Members/index'
+import Tables from '../Tables'
 
 
 export default function HomePage() {
@@ -8,7 +8,7 @@ export default function HomePage() {
     <>
       <Analytics />
       <div className="my-2 h-px bg-border/50" />
-      <Members/>
+      <Tables/>
     </>
   )
 }
