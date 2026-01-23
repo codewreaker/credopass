@@ -49,8 +49,6 @@ export interface EventFormData {
   description: string;
   status: EventStatus;
   dateTimeRange: { from?: Date; to?: Date } | undefined;
-  startTime?: string;
-  endTime?: string;
   location: string;
   capacity: string;
   organizationId: string;
@@ -271,35 +269,34 @@ const EventForm = ({ initialData = {}, isEditing = false, onClose }: EventFormPr
               }}
             />
 
-            {/* Location */}
-            <form.Field
-              name="location"
-              children={(field) => {
-                const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
-                return (
-                  <Field data-invalid={isInvalid} className="form-group full-width">
-                    <FieldLabel htmlFor={field.name} className="form-label">
-                      <MapPin size={14} />
-                      Location
-                    </FieldLabel>
-                    <Input
-                      id={field.name}
-                      name={field.name}
-                      type="text"
-                      placeholder="Enter location"
-                      value={field.state.value}
-                      onBlur={field.handleBlur}
-                      onChange={(e) => field.handleChange(e.target.value)}
-                      aria-invalid={isInvalid}
-                    />
-                    {isInvalid && <FieldError errors={field.state.meta.errors} />}
-                  </Field>
-                );
-              }}
-            />
-
             {/* Status & Capacity */}
             <div className="form-row">
+              {/* Location */}
+              <form.Field
+                name="location"
+                children={(field) => {
+                  const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
+                  return (
+                    <Field data-invalid={isInvalid} className="form-group">
+                      <FieldLabel htmlFor={field.name} className="form-label">
+                        <MapPin size={14} />
+                        Location
+                      </FieldLabel>
+                      <Input
+                        id={field.name}
+                        name={field.name}
+                        type="text"
+                        placeholder="Enter location"
+                        value={field.state.value}
+                        onBlur={field.handleBlur}
+                        onChange={(e) => field.handleChange(e.target.value)}
+                        aria-invalid={isInvalid}
+                      />
+                      {isInvalid && <FieldError errors={field.state.meta.errors} />}
+                    </Field>
+                  );
+                }}
+              />
               <form.Field
                 name="status"
                 children={(field) => {
@@ -350,46 +347,47 @@ const EventForm = ({ initialData = {}, isEditing = false, onClose }: EventFormPr
                         onChange={(e) => field.handleChange(e.target.value)}
                         aria-invalid={isInvalid}
                       />
-                      <FieldDescription>Optional - Leave blank for unlimited capacity</FieldDescription>
+                      <FieldDescription> Leave blank for unlimited (optional)</FieldDescription>
                       {isInvalid && <FieldError errors={field.state.meta.errors} />}
+                    </Field>
+                  );
+                }}
+              />
+
+              {/* Organization - Read-only display of active organization */}
+              <form.Field
+                name="organizationId"
+                children={(field) => {
+                  const isInvalid = !field.state.value;
+                  return (
+                    <Field data-invalid={isInvalid} className="form-group">
+                      <FieldLabel htmlFor={field.name} className="form-label">
+                        <Building2 size={14} />
+                        Organization
+                      </FieldLabel>
+                      {activeOrganization ? (
+                        <div className="organization-display">
+                          <Building2 size={16} className="text-muted-foreground" />
+                          <span>{activeOrganization.name}</span>
+                        </div>
+                      ) : (
+                        <Alert variant="destructive" className="organization-alert">
+                          <AlertCircle size={14} />
+                          <AlertTitle>No organization selected</AlertTitle>
+                          <AlertDescription>
+                            Please go to Organizations and select an active organization before creating events.
+                          </AlertDescription>
+                        </Alert>
+                      )}
+                      <FieldDescription>
+                        Events are created under the currently active organization
+                      </FieldDescription>
                     </Field>
                   );
                 }}
               />
             </div>
 
-            {/* Organization - Read-only display of active organization */}
-            <form.Field
-              name="organizationId"
-              children={(field) => {
-                const isInvalid = !field.state.value;
-                return (
-                  <Field data-invalid={isInvalid} className="form-group full-width">
-                    <FieldLabel htmlFor={field.name} className="form-label">
-                      <Building2 size={14} />
-                      Organization
-                    </FieldLabel>
-                    {activeOrganization ? (
-                      <div className="organization-display">
-                        <Building2 size={16} className="text-muted-foreground" />
-                        <span>{activeOrganization.name}</span>
-                      </div>
-                    ) : (
-                      <Alert variant="destructive" className="organization-alert">
-                        <AlertCircle size={14} />
-                        <AlertTitle>No organization selected</AlertTitle>
-                        <AlertDescription>
-                          Please go to Organizations and select an active organization before creating events.
-                        </AlertDescription>
-                      </Alert>
-                    )}
-                    <FieldDescription>
-                      Events are created under the currently active organization
-                    </FieldDescription>
-                  </Field>
-                );
-              }}
-            />
 
             {/* Description */}
             <form.Field
