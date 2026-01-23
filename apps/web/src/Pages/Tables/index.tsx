@@ -3,55 +3,103 @@
 // Admin page to view all database tables using reusable GridTable component
 // ============================================================================
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
+import { useLiveQuery } from '@tanstack/react-db';
+import { getCollections } from '../../lib/tanstack-db';
 import GridTable, { type MenuItem } from '../../components/grid-table/index';
-import { Button } from '@credopass/ui';
-import { RefreshCw, DatabaseBackup } from 'lucide-react';
+import {
+  RefreshCw, DatabaseBackup, AppWindowIcon, BuildingIcon, Building2,
+  TicketCheck
+} from 'lucide-react';
 import type { ColDef } from 'ag-grid-community';
-import { API_BASE_URL } from '../../config';
 import Loader from '../../components/loader';
 import './style.css';
-import EmptyState from '../../components/empty-state';
+
+import {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+} from "@credopass/ui/components/tabs"
+import { useIsMobile } from '@credopass/ui/hooks/use-mobile';
+import { toast } from 'sonner';
+
+const GRID_EXT = '_grid';
 
 type TableName = 'users' | 'events' | 'attendance' | 'loyalty' | 'organizations';
 
-interface TableData {
-  [key: string]: any[];
-}
+const IconMapping: { [key in TableName]: React.ElementType } = {
+  users: AppWindowIcon,
+  events: TicketCheck,
+  attendance: DatabaseBackup,
+  loyalty: Building2,
+  organizations: BuildingIcon,
+};
+
 
 export default function DatabasePage() {
   const [selectedTable, setSelectedTable] = useState<TableName>('users');
-  const [tableData, setTableData] = useState<TableData>({});
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const isMobile = useIsMobile();
 
   const tables: TableName[] = ['users', 'events', 'attendance', 'loyalty', 'organizations'];
 
-  const fetchTableData = async (table: TableName) => {
-    setLoading(true);
-    setError(null);
+  // Get all collections
+  const {
+    users: userCollection,
+    events: eventCollection,
+    attendance: attendanceCollection,
+    loyalty: loyaltyCollection,
+    organizations: organizationCollection,
+  } = getCollections();
 
-    try {
-      const response = await fetch(`${API_BASE_URL}/${table}`);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch ${table}`);
-      }
-      const data = await response.json();
+  // Map collections for easy access
+  const collectionMap = useMemo(() => ({
+    users: userCollection,
+    events: eventCollection,
+    attendance: attendanceCollection,
+    loyalty: loyaltyCollection,
+    organizations: organizationCollection,
+  }), [userCollection, eventCollection, attendanceCollection, loyaltyCollection, organizationCollection]);
 
-      setTableData(prev => ({
-        ...prev,
-        [table]: data,
-      }));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
-    } finally {
-      setLoading(false);
-    }
+  // Query all tables using useLiveQuery
+  const { data: usersData, isLoading: usersLoading } = useLiveQuery(
+    (q) => q.from({ userCollection })
+  );
+  const { data: eventsData, isLoading: eventsLoading } = useLiveQuery(
+    (q) => q.from({ eventCollection })
+  );
+  const { data: attendanceData, isLoading: attendanceLoading } = useLiveQuery(
+    (q) => q.from({ attendanceCollection })
+  );
+  const { data: loyaltyData, isLoading: loyaltyLoading } = useLiveQuery(
+    (q) => q.from({ loyaltyCollection })
+  );
+  const { data: organizationsData, isLoading: organizationsLoading } = useLiveQuery(
+    (q) => q.from({ organizationCollection })
+  );
+
+  // Map table data and loading states
+  const tableData = useMemo(() => ({
+    users: Array.isArray(usersData) ? usersData : [],
+    events: Array.isArray(eventsData) ? eventsData : [],
+    attendance: Array.isArray(attendanceData) ? attendanceData : [],
+    loyalty: Array.isArray(loyaltyData) ? loyaltyData : [],
+    organizations: Array.isArray(organizationsData) ? organizationsData : [],
+  }), [usersData, eventsData, attendanceData, loyaltyData, organizationsData]);
+
+  const loadingStates: Record<TableName, boolean> = {
+    users: usersLoading,
+    events: eventsLoading,
+    attendance: attendanceLoading,
+    loyalty: loyaltyLoading,
+    organizations: organizationsLoading,
   };
 
-  useEffect(() => {
-    fetchTableData(selectedTable);
-  }, [selectedTable]);
+  const loading = loadingStates[selectedTable];
+
+  // Refresh handler using collection.utils.refetch
+  const handleRefresh = useCallback(() => {
+    collectionMap[selectedTable].utils.refetch();
+  }, [collectionMap, selectedTable]);
 
   // Generate column definitions dynamically from data
   const generateColumnDefs = (data: any[]): ColDef[] => {
@@ -80,54 +128,68 @@ export default function DatabasePage() {
         id: 'refresh',
         label: 'Refresh',
         icon: <RefreshCw />,
-        action: () => fetchTableData(selectedTable),
+        action: handleRefresh,
       },
     ],
-    [selectedTable]
+    [handleRefresh]
   );
 
-  if (loading) return <Loader />;
+  const handleDbDelete = (selectedItems: any[], gridId?: string) => {
+    const tableName = (gridId?.split(GRID_EXT)[0] || selectedTable) as TableName;
 
-  return (
+    const collection = collectionMap[tableName];
+    if (!collection) return;
+
+    toast.success(`Deleting ${selectedItems.length} item(s) from ${tableName} table.`);
+    selectedItems.forEach((item) => {
+      collection.delete(item.id);
+    });
+  }
+
+
+  return (    
     <>
-      <div className="database-page-header">
-        <div className="page-header">
-          <h1>Database Admin</h1>
-          <p className="page-subtitle">View all database tables</p>
-        </div>
-        <div className="table-selector">
-          {tables.map(table => (
-            <Button
-              key={table}
-              variant="outline"
-              className={selectedTable === table ? 'active' : ''}
-              onClick={() => setSelectedTable(table)}
-            >
-              {table.charAt(0).toUpperCase() + table.slice(1)}
-              {tableData[table] && (
-                <span className="count">({tableData[table].length})</span>
-              )}
-            </Button>
-          ))}
-        </div>
-      </div>
+        <Tabs defaultValue={selectedTable} className="flex ml-auto pt-2 pb-2 w-full" value={selectedTable} orientation={isMobile ? "vertical" : "horizontal"} >
+          <TabsList className="w-full">
+            {tables.map((table) => {
+              const Icon = IconMapping[table];
+              return (
+                <TabsTrigger
+                  key={table}
+                  value={table}
+                  onClick={() => setSelectedTable(table)}
+                >
+                  <Icon size={16} style={{ marginRight: 4 }} />
+                  {table.charAt(0).toUpperCase() + table.slice(1)}
+                  {tableData[table] ? ` (${tableData[table].length})` : ' (--)'}
+                </TabsTrigger>
+              );
+            })}
+          </TabsList>
+        </Tabs>
 
-      {!error ? (
-        <GridTable
-          title={`${selectedTable.charAt(0).toUpperCase() + selectedTable.slice(1)} Table`}
-          subtitle={currentData.length > 0 ? `${currentData.length} records` : 'No records found'}
-          menu={menuItems}
-          loading={loading}
-          columnDefs={columnDefs}
-          rowData={currentData}
-        />
-      ) : <EmptyState
-        error
-        title={`Error Loading ${selectedTable}`}
-        icon={<DatabaseBackup />}
-        description={`An error occurred while fetching ${selectedTable}: ${error}`}
-        action={{ label: "Retry", onClick: () => fetchTableData(selectedTable) }}
-      />}
+      {!loading ? (
+          <GridTable
+            gridId={selectedTable + GRID_EXT}
+            title={`${selectedTable.charAt(0).toUpperCase() + selectedTable.slice(1)} Table`}
+            subtitle={currentData.length > 0 ? `${currentData.length} records` : 'No records found'}
+            bulkActions={[
+              {
+                key: 'delete',
+                label: 'Delete',
+                action: handleDbDelete,
+                variant: 'destructive'
+              }
+            ]}
+            rowSelection={{
+              mode: 'multiRow',
+            }}
+            menu={menuItems}
+            loading={loading}
+            columnDefs={columnDefs}
+            rowData={currentData}
+          />
+      ) : (<Loader />)}
     </>
   );
 }

@@ -4,7 +4,6 @@ import { toast } from 'sonner';
 import * as z from 'zod';
 import {
   Calendar as CalendarIcon,
-  Clock,
   MapPin,
   Users,
   FileText,
@@ -36,7 +35,8 @@ import {
   DialogTitle,
   Alert,
   AlertDescription,
-  AlertTitle
+  AlertTitle,
+  DateTimeRangePicker
 } from '@credopass/ui';
 import './style.css';
 import type { LauncherState } from '../../stores/store';
@@ -48,8 +48,7 @@ export interface EventFormData {
   name: string;
   description: string;
   status: EventStatus;
-  startTime: string;
-  endTime: string;
+  dateTimeRange: { from?: Date; to?: Date } | undefined;
   location: string;
   capacity: string;
   organizationId: string;
@@ -75,18 +74,20 @@ const eventFormSchema = z.object({
   name: z.string().min(3, 'Event name must be at least 3 characters.').max(100, 'Event name must be at most 100 characters.'),
   description: z.string().max(500, 'Description must be at most 500 characters.').default(''),
   status: z.enum(['draft', 'scheduled', 'ongoing', 'completed', 'cancelled'] as const),
-  startTime: z.string().min(1, 'Start time is required.'),
-  endTime: z.string().min(1, 'End time is required.'),
+  dateTimeRange: z.object({
+    from: z.date().optional(),
+    to: z.date().optional(),
+  }).optional().refine((val) => val?.from, 'Start date/time is required.'),
   location: z.string().min(3, 'Location must be at least 3 characters.').max(200, 'Location must be at most 200 characters.'),
   capacity: z.string().refine((val) => !val || (!isNaN(Number(val)) && Number(val) > 0), 'Capacity must be a positive number.').default(''),
   organizationId: z.string().min(1, 'Organization is required.'),
 }).superRefine((data, ctx) => {
-  if (data.startTime && data.endTime) {
-    if (new Date(data.endTime) <= new Date(data.startTime)) {
+  if (data.dateTimeRange?.from && data.dateTimeRange?.to) {
+    if (data.dateTimeRange.to < data.dateTimeRange.from) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: 'End time must be after start time.',
-        path: ['endTime'],
+        path: ['dateTimeRange'],
       });
     }
   }
@@ -114,8 +115,7 @@ const EventForm = ({ initialData = {}, isEditing = false, onClose }: EventFormPr
       name: initialData.name || `New Event ${rand.slice(0, 8)}`,
       description: initialData.description || '',
       status: (initialData.status || 'scheduled') as EventStatus,
-      startTime: initialData.startTime || '',
-      endTime: initialData.endTime || '',
+      dateTimeRange: initialData.dateTimeRange || undefined,
       location: initialData.location || 'london',
       capacity: initialData.capacity || '',
       organizationId: initialData.organizationId || activeOrganizationId || '',
@@ -130,14 +130,19 @@ const EventForm = ({ initialData = {}, isEditing = false, onClose }: EventFormPr
         return;
       }
 
+      if (!value.dateTimeRange?.from) {
+        toast.error('Please select a date range');
+        return;
+      }
+
       setIsMutating(true);
       const now = new Date();
       const eventData = {
         name: value.name,
         description: value.description || null,
         status: value.status,
-        startTime: new Date(value.startTime),
-        endTime: new Date(value.endTime),
+        startTime: value.dateTimeRange.from,
+        endTime: value.dateTimeRange.to || value.dateTimeRange.from,
         location: value.location,
         capacity: value.capacity ? parseInt(value.capacity, 10) : null,
         organizationId: value.organizationId,
@@ -241,79 +246,23 @@ const EventForm = ({ initialData = {}, isEditing = false, onClose }: EventFormPr
               }}
             />
 
-            {/* Start & End Time */}
-            <div className="form-row">
-              <form.Field
-                name="startTime"
-                children={(field) => {
-                  const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
-                  return (
-                    <Field data-invalid={isInvalid} className="form-group">
-                      <FieldLabel htmlFor={field.name} className="form-label">
-                        <Clock size={14} />
-                        Start Time
-                      </FieldLabel>
-                      <Input
-                        id={field.name}
-                        name={field.name}
-                        type="datetime-local"
-                        value={field.state.value}
-                        onBlur={field.handleBlur}
-                        onChange={(e) => field.handleChange(e.target.value)}
-                        aria-invalid={isInvalid}
-                      />
-                      {isInvalid && <FieldError errors={field.state.meta.errors} />}
-                    </Field>
-                  );
-                }}
-              />
-              <form.Field
-                name="endTime"
-                children={(field) => {
-                  const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
-                  return (
-                    <Field data-invalid={isInvalid} className="form-group">
-                      <FieldLabel htmlFor={field.name} className="form-label">
-                        <Clock size={14} />
-                        End Time
-                      </FieldLabel>
-                      <Input
-                        id={field.name}
-                        name={field.name}
-                        type="datetime-local"
-                        value={field.state.value}
-                        onBlur={field.handleBlur}
-                        onChange={(e) => field.handleChange(e.target.value)}
-                        aria-invalid={isInvalid}
-                      />
-                      {isInvalid && <FieldError errors={field.state.meta.errors} />}
-                    </Field>
-                  );
-                }}
-              />
-            </div>
-
-            {/* Location */}
+            {/* Date & Time Range */}
             <form.Field
-              name="location"
+              name="dateTimeRange"
               children={(field) => {
                 const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
                 return (
                   <Field data-invalid={isInvalid} className="form-group full-width">
                     <FieldLabel htmlFor={field.name} className="form-label">
-                      <MapPin size={14} />
-                      Location
+                      <CalendarIcon size={14} />
+                      Date & Time
                     </FieldLabel>
-                    <Input
+                    <DateTimeRangePicker
                       id={field.name}
-                      name={field.name}
-                      type="text"
-                      placeholder="Enter location"
                       value={field.state.value}
-                      onBlur={field.handleBlur}
-                      onChange={(e) => field.handleChange(e.target.value)}
-                      aria-invalid={isInvalid}
+                      onChange={(range) => field.handleChange(range)}
                     />
+                    <FieldDescription>Select the start and end date/time for your event</FieldDescription>
                     {isInvalid && <FieldError errors={field.state.meta.errors} />}
                   </Field>
                 );
@@ -322,6 +271,32 @@ const EventForm = ({ initialData = {}, isEditing = false, onClose }: EventFormPr
 
             {/* Status & Capacity */}
             <div className="form-row">
+              {/* Location */}
+              <form.Field
+                name="location"
+                children={(field) => {
+                  const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
+                  return (
+                    <Field data-invalid={isInvalid} className="form-group">
+                      <FieldLabel htmlFor={field.name} className="form-label">
+                        <MapPin size={14} />
+                        Location
+                      </FieldLabel>
+                      <Input
+                        id={field.name}
+                        name={field.name}
+                        type="text"
+                        placeholder="Enter location"
+                        value={field.state.value}
+                        onBlur={field.handleBlur}
+                        onChange={(e) => field.handleChange(e.target.value)}
+                        aria-invalid={isInvalid}
+                      />
+                      {isInvalid && <FieldError errors={field.state.meta.errors} />}
+                    </Field>
+                  );
+                }}
+              />
               <form.Field
                 name="status"
                 children={(field) => {
@@ -372,46 +347,47 @@ const EventForm = ({ initialData = {}, isEditing = false, onClose }: EventFormPr
                         onChange={(e) => field.handleChange(e.target.value)}
                         aria-invalid={isInvalid}
                       />
-                      <FieldDescription>Optional - Leave blank for unlimited capacity</FieldDescription>
+                      <FieldDescription> Leave blank for unlimited (optional)</FieldDescription>
                       {isInvalid && <FieldError errors={field.state.meta.errors} />}
+                    </Field>
+                  );
+                }}
+              />
+
+              {/* Organization - Read-only display of active organization */}
+              <form.Field
+                name="organizationId"
+                children={(field) => {
+                  const isInvalid = !field.state.value;
+                  return (
+                    <Field data-invalid={isInvalid} className="form-group">
+                      <FieldLabel htmlFor={field.name} className="form-label">
+                        <Building2 size={14} />
+                        Organization
+                      </FieldLabel>
+                      {activeOrganization ? (
+                        <div className="organization-display">
+                          <Building2 size={16} className="text-muted-foreground" />
+                          <span>{activeOrganization.name}</span>
+                        </div>
+                      ) : (
+                        <Alert variant="destructive" className="organization-alert">
+                          <AlertCircle size={14} />
+                          <AlertTitle>No organization selected</AlertTitle>
+                          <AlertDescription>
+                            Please go to Organizations and select an active organization before creating events.
+                          </AlertDescription>
+                        </Alert>
+                      )}
+                      <FieldDescription>
+                        Events are created under the currently active organization
+                      </FieldDescription>
                     </Field>
                   );
                 }}
               />
             </div>
 
-            {/* Organization - Read-only display of active organization */}
-            <form.Field
-              name="organizationId"
-              children={(field) => {
-                const isInvalid = !field.state.value;
-                return (
-                  <Field data-invalid={isInvalid} className="form-group full-width">
-                    <FieldLabel htmlFor={field.name} className="form-label">
-                      <Building2 size={14} />
-                      Organization
-                    </FieldLabel>
-                    {activeOrganization ? (
-                      <div className="organization-display">
-                        <Building2 size={16} className="text-muted-foreground" />
-                        <span>{activeOrganization.name}</span>
-                      </div>
-                    ) : (
-                      <Alert variant="destructive" className="organization-alert">
-                        <AlertCircle size={14} />
-                        <AlertTitle>No organization selected</AlertTitle>
-                        <AlertDescription>
-                          Please go to Organizations and select an active organization before creating events.
-                        </AlertDescription>
-                      </Alert>
-                    )}
-                    <FieldDescription>
-                      Events are created under the currently active organization
-                    </FieldDescription>
-                  </Field>
-                );
-              }}
-            />
 
             {/* Description */}
             <form.Field

@@ -12,13 +12,6 @@ import { getCollections } from '../../../lib/tanstack-db';
 import './style.css';
 
 
-// Helper to format date for datetime-local input
-const formatDateForInput = (date: Date): string => {
-  const d = new Date(date);
-  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
-  return d.toISOString().slice(0, 16);
-};
-
 // Helper to get end of day
 const getEndOfDay = (date: Date): Date => {
   const end = new Date(date);
@@ -78,8 +71,10 @@ export default function CalendarPage({
     // Open modal with the EventForm component
     launch({
       initialData: {
-        startTime: formatDateForInput(startTime),
-        endTime: formatDateForInput(endTime),
+        dateTimeRange: {
+          from: startTime,
+          to: endTime,
+        },
       },
       isEditing: false
     })
@@ -100,8 +95,10 @@ export default function CalendarPage({
         name: event.title,
         description: event.extendedProps.description || '',
         status: event.extendedProps.status,
-        startTime: formatDateForInput(event.start!),
-        endTime: formatDateForInput(event.end || getEndOfDay(event.start!)),
+        dateTimeRange: {
+          from: event.start!,
+          to: event.end || getEndOfDay(event.start!),
+        },
         location: event.extendedProps.location || '',
         capacity: event.extendedProps.capacity?.toString() || '',
         organizationId: event.extendedProps.organizationId || '',

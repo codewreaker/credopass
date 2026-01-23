@@ -98,7 +98,7 @@ export const TopNavBar: React.FC = () => {
       "flex items-center px-4 justify-between",
       isMobile ? "w-10/12" : "w-full"
     )}>
-      <div className={cn("navbar-left", isMobile ? "p-0 w-4/10" : "w-7/10 p-5")} ref={searchButtonRef as unknown as React.RefObject<HTMLDivElement>}>
+      <div className={cn("navbar-left", isMobile ? "p-0 w-6/10" : "w-7/10 p-5")} ref={searchButtonRef as unknown as React.RefObject<HTMLDivElement>}>
         <Button
           variant="outline"
           className="search-container"
@@ -126,8 +126,8 @@ export const TopNavBar: React.FC = () => {
           {/* <User size={15} /> */}
           <UserComponent
             user={{
-              name: "shadcn",
-              email: "m@example.com",
+              name: "israel",
+              email: "izzy@credopass.com",
               avatar: "/avatars/shadcn.jpg",
               icon: UserIcon
             }}

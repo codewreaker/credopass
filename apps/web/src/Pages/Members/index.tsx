@@ -182,11 +182,6 @@ export default function MembersPage() {
 
   return (
     <>
-      <div className="page-header">
-        <h1>Users</h1>
-        <p className="page-subtitle">View all users</p>
-      </div>
-
       {!isError ?
         <GridTable
           title="Member Attendance Records"

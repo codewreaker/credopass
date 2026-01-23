@@ -1,9 +1,6 @@
 /* Grid Table Container */
 .grid-table-container {
-  border-radius: 8px;
   overflow: hidden;
-  border: 1px solid var(--border);
-  height: calc(100% - 80px);
 
   .ag-overlay {
     pointer-events: revert;
@@ -33,6 +30,9 @@
       margin-bottom: 0.1875rem;
       font-weight: bolder;
       font-size: 1rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .subtitle {
@@ -42,6 +42,9 @@
       font-weight: bolder;
       border-radius: 6px;
       padding: 0px 5px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
   }
 
