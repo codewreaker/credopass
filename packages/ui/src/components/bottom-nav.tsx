@@ -78,7 +78,7 @@ export function BottomNav({
     const shouldShowMore = hiddenItems.length > 0
 
     return (
-        <nav className="fixed bottom-0 left-0 right-0 z-50 sm:hidden">
+        <nav className="fixed bottom-0 left-0 right-0 z-2000 sm:hidden">
             {/* Gradient fade effect at top */}
             <div className="absolute inset-x-0 -top-6 h-6 bg-linear-to-t from-background to-transparent pointer-events-none" />
 
