@@ -56,6 +56,9 @@ export function BottomNavMenuButton({ item, isActive, navigate, onClick }: Botto
                 "h-5 w- transition-transform",
                 isActive && "stroke-[2.5] scale-110"
             )} />
+            <span className="text-[0.4rem] font-medium">
+                {item.label}
+            </span>
         </button>
     )
 }
@@ -84,7 +87,7 @@ export function BottomNav({
 
             {/* Main nav container */}
             <div className="bg-background/95 backdrop-blur-lg border-t border-border/50 shadow-[0_-4px_20px_-4px_rgba(0,0,0,0.1)]">
-                <div className="flex h-1/2 items-center justify-around px-2 pb-safe">
+                <div className="flex h-1/2 items-center justify-around py-1 pb-safe">
                     {visibleItems.map((item) => {
                         const isActive = pathname === item.url;
 

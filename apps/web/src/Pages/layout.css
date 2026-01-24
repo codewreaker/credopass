@@ -17,15 +17,6 @@
   text-align: center;
   padding: 0.8rem;
   background-color: var(--background);
-
-  h2 {
-    color: var(--foreground);
-    margin-bottom: 0.75rem;
-  }
-
-  p {
-    color: var(--muted-foreground);
-  }
 }
 
 /* React Grid Layout overrides */

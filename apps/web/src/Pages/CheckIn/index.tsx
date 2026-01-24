@@ -224,6 +224,8 @@ const CheckInPage: React.FC = () => {
       <CheckInHeader
         eventName={session.activeEventName || 'Unknown Event'}
         eventLocation={session.activeEventLocation || null}
+        eventStatus={selectedEvent?.status}
+        eventCapacity={selectedEvent?.capacity}
         checkInCount={checkInCount}
         onBack={() => {
           setSelectedEventId('');
@@ -238,7 +240,6 @@ const CheckInPage: React.FC = () => {
           timeRemaining={timeRemaining}
           onRefreshQR={handleRefreshQR}
           onManualCheckInClick={() => setShowManualCheckIn(true)}
-          selectedEvent={selectedEvent}
           size={isMobile ? 220 : 326}
         />}
 
