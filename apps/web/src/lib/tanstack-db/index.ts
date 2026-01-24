@@ -4,6 +4,8 @@ import { createOrganizationCollection } from './collections/organizations';
 import { createEventCollection } from './collections/events';
 import { createAttendanceCollection } from './collections/attendance';
 import { createLoyaltyCollection } from './collections/loyalty';
+import { createOrgMembershipCollection } from './collections/org-memberships';
+import { createEventMemberCollection } from './collections/event-members';
 
 
 export type CredoPassCollections = {
@@ -12,6 +14,8 @@ export type CredoPassCollections = {
     events: ReturnType<typeof createEventCollection>;
     attendance: ReturnType<typeof createAttendanceCollection>;
     loyalty: ReturnType<typeof createLoyaltyCollection>;
+    orgMemberships: ReturnType<typeof createOrgMembershipCollection>;
+    eventMembers: ReturnType<typeof createEventMemberCollection>;
     queryClient: QueryClient;
 };
 
@@ -22,7 +26,9 @@ export {
     createOrganizationCollection,
     createEventCollection,
     createAttendanceCollection,
-    createLoyaltyCollection
+    createLoyaltyCollection,
+    createOrgMembershipCollection,
+    createEventMemberCollection
 } from './collections';
 
 
@@ -41,6 +47,8 @@ export function getCollections(): CredoPassCollections {
             events: createEventCollection(client),
             attendance: createAttendanceCollection(client),
             loyalty: createLoyaltyCollection(client),
+            orgMemberships: createOrgMembershipCollection(client),
+            eventMembers: createEventMemberCollection(client),
             queryClient: client,
         };
     }

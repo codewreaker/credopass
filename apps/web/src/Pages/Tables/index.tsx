@@ -9,7 +9,7 @@ import { getCollections } from '../../lib/tanstack-db';
 import GridTable, { type MenuItem } from '../../components/grid-table/index';
 import {
   RefreshCw, DatabaseBackup, AppWindowIcon, BuildingIcon, Building2,
-  TicketCheck
+  TicketCheck, Users, UserPlus
 } from 'lucide-react';
 import type { ColDef } from 'ag-grid-community';
 import Loader from '../../components/loader';
@@ -25,7 +25,7 @@ import { toast } from 'sonner';
 
 const GRID_EXT = '_grid';
 
-type TableName = 'users' | 'events' | 'attendance' | 'loyalty' | 'organizations';
+type TableName = 'users' | 'events' | 'attendance' | 'loyalty' | 'organizations' | 'orgMemberships' | 'eventMembers';
 
 const IconMapping: { [key in TableName]: React.ElementType } = {
   users: AppWindowIcon,
@@ -33,6 +33,8 @@ const IconMapping: { [key in TableName]: React.ElementType } = {
   attendance: DatabaseBackup,
   loyalty: Building2,
   organizations: BuildingIcon,
+  orgMemberships: Users,
+  eventMembers: UserPlus,
 };
 
 
@@ -40,7 +42,7 @@ export default function DatabasePage() {
   const [selectedTable, setSelectedTable] = useState<TableName>('users');
   const isMobile = useIsMobile();
 
-  const tables: TableName[] = ['users', 'events', 'attendance', 'loyalty', 'organizations'];
+  const tables: TableName[] = ['users', 'events', 'attendance', 'loyalty', 'organizations', 'orgMemberships', 'eventMembers'];
 
   // Get all collections
   const {
@@ -49,6 +51,8 @@ export default function DatabasePage() {
     attendance: attendanceCollection,
     loyalty: loyaltyCollection,
     organizations: organizationCollection,
+    orgMemberships: orgMembershipCollection,
+    eventMembers: eventMemberCollection,
   } = getCollections();
 
   // Map collections for easy access
@@ -58,7 +62,9 @@ export default function DatabasePage() {
     attendance: attendanceCollection,
     loyalty: loyaltyCollection,
     organizations: organizationCollection,
-  }), [userCollection, eventCollection, attendanceCollection, loyaltyCollection, organizationCollection]);
+    orgMemberships: orgMembershipCollection,
+    eventMembers: eventMemberCollection,
+  }), [userCollection, eventCollection, attendanceCollection, loyaltyCollection, organizationCollection, orgMembershipCollection, eventMemberCollection]);
 
   // Query all tables using useLiveQuery
   const { data: usersData, isLoading: usersLoading } = useLiveQuery(
@@ -76,6 +82,12 @@ export default function DatabasePage() {
   const { data: organizationsData, isLoading: organizationsLoading } = useLiveQuery(
     (q) => q.from({ organizationCollection })
   );
+  const { data: orgMembershipsData, isLoading: orgMembershipsLoading } = useLiveQuery(
+    (q) => q.from({ orgMembershipCollection })
+  );
+  const { data: eventMembersData, isLoading: eventMembersLoading } = useLiveQuery(
+    (q) => q.from({ eventMemberCollection })
+  );
 
   // Map table data and loading states
   const tableData = useMemo(() => ({
@@ -84,7 +96,9 @@ export default function DatabasePage() {
     attendance: Array.isArray(attendanceData) ? attendanceData : [],
     loyalty: Array.isArray(loyaltyData) ? loyaltyData : [],
     organizations: Array.isArray(organizationsData) ? organizationsData : [],
-  }), [usersData, eventsData, attendanceData, loyaltyData, organizationsData]);
+    orgMemberships: Array.isArray(orgMembershipsData) ? orgMembershipsData : [],
+    eventMembers: Array.isArray(eventMembersData) ? eventMembersData : [],
+  }), [usersData, eventsData, attendanceData, loyaltyData, organizationsData, orgMembershipsData, eventMembersData]);
 
   const loadingStates: Record<TableName, boolean> = {
     users: usersLoading,
@@ -92,6 +106,8 @@ export default function DatabasePage() {
     attendance: attendanceLoading,
     loyalty: loyaltyLoading,
     organizations: organizationsLoading,
+    orgMemberships: orgMembershipsLoading,
+    eventMembers: eventMembersLoading,
   };
 
   const loading = loadingStates[selectedTable];
