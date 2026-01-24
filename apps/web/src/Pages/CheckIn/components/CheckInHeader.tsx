@@ -36,27 +36,34 @@ const CheckInHeader: React.FC<CheckInHeaderProps> = ({
   onBack,
 }) => {
   return (
-    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-      <div className="flex items-center gap-4">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onBack}
-          className="gap-2"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back
-        </Button>
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">{eventName}</h1>
-          <div className="flex items-center gap-2 text-muted-foreground text-sm">
-            <MapPin className="w-4 h-4" />
-            {eventLocation || 'No location'}
-          </div>
+    <div className="flex items-center justify-between gap-2" data-testid="check-in-header">
+      {/* Back button */}
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={onBack}
+        className="shrink-0 -ml-2"
+      >
+        <ArrowLeft className="w-4 h-4" />
+      </Button>
+
+      {/* Event info - center */}
+      <div className="text-center flex-1 min-w-0">
+        <h1 className="text-xs sm:text-2xl font-bold tracking-tight truncate">{eventName}</h1>
+        <div className="flex items-center justify-center gap-1 text-muted-foreground text-xs">
+          <MapPin className="w-3 h-3 shrink-0" />
+          <span className="truncate">{eventLocation || 'No location'}</span>
         </div>
       </div>
 
-      <CheckInCountBadge count={checkInCount} />
+      {/* Check-in count - compact */}
+      <div className="shrink-0 text-right">
+        <div className="flex items-center gap-1.5">
+          <Users className="w-4 h-4 text-primary" />
+          <span className="text-xl font-bold">{checkInCount}</span>
+        </div>
+        <p className="text-[10px] text-muted-foreground">Today</p>
+      </div>
     </div>
   );
 };
