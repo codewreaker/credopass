@@ -27,7 +27,12 @@ import { useState } from 'react';
 
 export function Home() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showPricing] = useState(true);
   const { theme, toggleTheme } = useTheme();
+
+  const navigateToApp = () => {
+    location.href = 'https://app.credopass.com';
+  }
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -143,8 +148,8 @@ export function Home() {
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-              <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 text-base px-8 h-12">
-                Start Free Trial
+              <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 text-base px-8 h-12" onClick={navigateToApp} >
+                Start For Free
                 <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
               <Button size="lg" variant="outline" className="text-base px-8 h-12">
@@ -156,7 +161,7 @@ export function Home() {
             <div className="flex flex-wrap items-center justify-center gap-6 pt-4 text-sm text-muted-foreground">
               <div className="flex items-center space-x-2">
                 <CheckCircle2 className="w-4 h-4 text-primary" />
-                <span>Free 30-day trial</span>
+                <span>Free Hobby Plan</span>
               </div>
               <div className="flex items-center space-x-2">
                 <CheckCircle2 className="w-4 h-4 text-primary" />
@@ -379,24 +384,20 @@ export function Home() {
             </div>
             <div className="relative">
               <div className="absolute inset-0 bg-linear-to-br from-primary/20 to-transparent rounded-2xl blur-3xl" />
-                  <div className="relative grid grid-cols-2 gap-4">
-                    <div className="col-span-2 relative">
-                    <div className="rounded-xl lg:rounded-2xl overflow-hidden border border-border shadow-2xl">
-                      <ImageWithFallback
-                      src="/images/qr-page.png"
-                      alt="QR Code Check-in"
-                      className="w-full h-auto"
-                      />
-                    </div>
-                    <div className="absolute -bottom-6 -right-6 w-1/3 rounded-xl lg:rounded-2xl overflow-hidden shadow-2xl border border-border bg-background">
-                      <ImageWithFallback
-                      src="/images/mobile-1.png"
-                      alt="Mobile Check-in"
-                      className="w-full h-auto object-cover"
-                      />
-                    </div>
-                    </div>
-                  </div>
+              <div className="relative rounded-xl lg:rounded-2xl overflow-hidden border border-border shadow-2xl">
+                <ImageWithFallback
+                  src="/images/qr-page.png"
+                  alt="QR Code Check-in"
+                  className="w-full h-auto"
+                />
+              </div>
+              <div className="absolute -bottom-6 -right-6 w-1/3 rounded-xl lg:rounded-2xl overflow-hidden shadow-2xl border border-border bg-background">
+                <ImageWithFallback
+                  src="/images/mobile-1.png"
+                  alt="Mobile Check-in"
+                  className="w-full h-auto object-cover"
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -457,24 +458,24 @@ export function Home() {
               </p>
               <ul className="space-y-4">
                 <li className="flex items-start space-x-3">
-                  <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                  <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 shrink-0" />
                   <span className="text-muted-foreground">One-click CSV import from any system</span>
                 </li>
                 <li className="flex items-start space-x-3">
-                  <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                  <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 shrink-0" />
                   <span className="text-muted-foreground">Custom fields for your organization</span>
                 </li>
                 <li className="flex items-start space-x-3">
-                  <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                  <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 shrink-0" />
                   <span className="text-muted-foreground">Full attendance history per member</span>
                 </li>
               </ul>
             </div>
             <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-transparent rounded-2xl blur-3xl" />
+              <div className="absolute inset-0 bg-linear-to-br from-primary/20 to-transparent rounded-2xl blur-3xl" />
               <div className="relative rounded-xl lg:rounded-2xl overflow-hidden border border-border shadow-2xl">
                 <ImageWithFallback
-                  src="https://images.unsplash.com/photo-1570894808314-677b57f25e45?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtb2JpbGUlMjBhcHAlMjBjaGVjay1pbiUyMGludGVyZmFjZXxlbnwxfHx8fDE3Njk4OTIwMTB8MA&ixlib=rb-4.1.0&q=80&w=1080"
+                  src="/images/members1.png"
                   alt="Member Management"
                   className="w-full h-auto"
                 />
@@ -589,142 +590,150 @@ export function Home() {
       </section>
 
       {/* Pricing */}
-      <section id="pricing" className="py-20 lg:py-32 bg-muted/30">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="max-w-2xl mx-auto text-center mb-16">
-            <Badge variant="outline" className="mb-4">Pricing</Badge>
-            <h2 className="text-4xl sm:text-5xl font-bold tracking-tight mb-4">
-              Simple, transparent pricing
-            </h2>
-            <p className="text-lg text-muted-foreground">
-              Start with a 30-day free trial. No credit card required.
-            </p>
-          </div>
+      {
+        showPricing && (
+          <section id="pricing" className="py-20 lg:py-32 bg-muted/30">
+            <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="max-w-2xl mx-auto text-center mb-16">
+                <Badge variant="outline" className="mb-4">Pricing</Badge>
+                <h2 className="text-4xl sm:text-5xl font-bold tracking-tight mb-4">
+                  Simple, transparent pricing
+                </h2>
+                <p className="text-lg text-muted-foreground">
+                  Start with a 30-day free trial. No credit card required.
+                </p>
+              </div>
 
-          <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
-            {/* Starter */}
-            <Card className="p-8 bg-card border-border">
-              <div className="space-y-6">
-                <div>
-                  <h3 className="text-xl font-semibold mb-2">Starter</h3>
-                  <p className="text-sm text-muted-foreground">For small groups</p>
-                </div>
-                <div>
-                  <span className="text-5xl font-bold">$29</span>
-                  <span className="text-muted-foreground">/month</span>
-                </div>
-                <ul className="space-y-3">
-                  <li className="flex items-start space-x-3">
-                    <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
-                    <span className="text-sm">Up to 100 members</span>
-                  </li>
-                  <li className="flex items-start space-x-3">
-                    <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
-                    <span className="text-sm">Unlimited events</span>
-                  </li>
-                  <li className="flex items-start space-x-3">
-                    <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
-                    <span className="text-sm">QR code check-in</span>
-                  </li>
-                  <li className="flex items-start space-x-3">
-                    <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
-                    <span className="text-sm">Basic analytics</span>
-                  </li>
-                  <li className="flex items-start space-x-3">
-                    <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
-                    <span className="text-sm">Email support</span>
-                  </li>
-                </ul>
-                <Button variant="outline" className="w-full">Get Started</Button>
-              </div>
-            </Card>
+              <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
+                {/* Free */}
+                <Card className="p-8 bg-card border-border">
+                  <div className="space-y-6">
+                    <div>
+                      <h3 className="text-xl font-semibold mb-2">Free</h3>
+                      <p className="text-sm text-muted-foreground">For small groups</p>
+                    </div>
+                    <div>
+                      <span className="text-5xl font-bold">$0</span>
+                      <span className="text-muted-foreground">/month</span>
+                    </div>
+                    <ul className="space-y-3">
+                      <li className="flex items-start space-x-3">
+                        <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+                        <span className="text-sm">Up to 100 members</span>
+                      </li>
+                      <li className="flex items-start space-x-3">
+                        <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+                        <span className="text-sm">Unlimited events</span>
+                      </li>
+                      <li className="flex items-start space-x-3">
+                        <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+                        <span className="text-sm">QR code check-in</span>
+                      </li>
+                      <li className="flex items-start space-x-3">
+                        <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+                        <span className="text-sm">Basic analytics</span>
+                      </li>
+                      <li className="flex items-start space-x-3">
+                        <div className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+                        <span className="text-sm"></span>
+                      </li>
+                      <li className="flex items-start space-x-3">
+                        <div className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+                        <span className="text-sm"></span>
+                      </li>
+                    </ul>
+                    <Button variant="outline" className="w-full" onClick={navigateToApp}>Get Started</Button>
+                  </div>
+                </Card>
 
-            {/* Pro - Featured */}
-            <Card className="p-8 bg-card border-primary shadow-xl relative">
-              <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                <Badge className="bg-primary text-primary-foreground border-0">Most Popular</Badge>
-              </div>
-              <div className="space-y-6">
-                <div>
-                  <h3 className="text-xl font-semibold mb-2">Pro</h3>
-                  <p className="text-sm text-muted-foreground">For growing teams</p>
-                </div>
-                <div>
-                  <span className="text-5xl font-bold">$79</span>
-                  <span className="text-muted-foreground">/month</span>
-                </div>
-                <ul className="space-y-3">
-                  <li className="flex items-start space-x-3">
-                    <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
-                    <span className="text-sm">Up to 500 members</span>
-                  </li>
-                  <li className="flex items-start space-x-3">
-                    <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
-                    <span className="text-sm">Everything in Starter</span>
-                  </li>
-                  <li className="flex items-start space-x-3">
-                    <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
-                    <span className="text-sm">Advanced analytics</span>
-                  </li>
-                  <li className="flex items-start space-x-3">
-                    <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
-                    <span className="text-sm">Loyalty program</span>
-                  </li>
-                  <li className="flex items-start space-x-3">
-                    <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
-                    <span className="text-sm">Priority support</span>
-                  </li>
-                  <li className="flex items-start space-x-3">
-                    <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
-                    <span className="text-sm">Custom branding</span>
-                  </li>
-                </ul>
-                <Button className="w-full bg-primary text-primary-foreground">Get Started</Button>
-              </div>
-            </Card>
+                {/* Starter - Featured */}
+                <Card className="p-8 bg-card border-primary shadow-xl relative">
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2">
+                    <Badge className="bg-primary text-primary-foreground border-0">Most Popular</Badge>
+                  </div>
+                  <div className="space-y-6">
+                    <div>
+                      <h3 className="text-xl font-semibold mb-2">Starter</h3>
+                      <p className="text-sm text-muted-foreground">For growing teams</p>
+                    </div>
+                    <div>
+                      <span className="text-5xl font-bold">$5</span>
+                      <span className="text-muted-foreground">/month</span>
+                    </div>
+                    <ul className="space-y-3">
+                      <li className="flex items-start space-x-3">
+                        <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+                        <span className="text-sm">Up to 500 members</span>
+                      </li>
+                      <li className="flex items-start space-x-3">
+                        <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+                        <span className="text-sm">Everything in Free</span>
+                      </li>
+                      <li className="flex items-start space-x-3">
+                        <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+                        <span className="text-sm">Advanced analytics</span>
+                      </li>
+                      <li className="flex items-start space-x-3">
+                        <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+                        <span className="text-sm">Loyalty program</span>
+                      </li>
+                      <li className="flex items-start space-x-3">
+                        <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+                        <span className="text-sm">Custom branding</span>
+                      </li>
+                      <li className="flex items-start space-x-3">
+                        <div className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+                        <span className="text-sm"></span>
+                      </li>
+                    </ul>
+                    <Button className="w-full bg-primary text-primary-foreground">Get Started</Button>
+                  </div>
+                </Card>
 
-            {/* Enterprise */}
-            <Card className="p-8 bg-card border-border">
-              <div className="space-y-6">
-                <div>
-                  <h3 className="text-xl font-semibold mb-2">Enterprise</h3>
-                  <p className="text-sm text-muted-foreground">For large organizations</p>
-                </div>
-                <div>
-                  <span className="text-5xl font-bold">Custom</span>
-                </div>
-                <ul className="space-y-3">
-                  <li className="flex items-start space-x-3">
-                    <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
-                    <span className="text-sm">Unlimited members</span>
-                  </li>
-                  <li className="flex items-start space-x-3">
-                    <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
-                    <span className="text-sm">Everything in Pro</span>
-                  </li>
-                  <li className="flex items-start space-x-3">
-                    <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
-                    <span className="text-sm">API access</span>
-                  </li>
-                  <li className="flex items-start space-x-3">
-                    <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
-                    <span className="text-sm">Custom integrations</span>
-                  </li>
-                  <li className="flex items-start space-x-3">
-                    <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
-                    <span className="text-sm">Dedicated support</span>
-                  </li>
-                  <li className="flex items-start space-x-3">
-                    <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
-                    <span className="text-sm">SLA guarantee</span>
-                  </li>
-                </ul>
-                <Button variant="outline" className="w-full">Contact Sales</Button>
+                {/* Pro */}
+                <Card className="p-8 bg-card border-border">
+                  <div className="space-y-6">
+                    <div>
+                      <h3 className="text-xl font-semibold mb-2">Pro</h3>
+                      <p className="text-sm text-muted-foreground">For large organizations</p>
+                    </div>
+                    <div>
+                      <span className="text-5xl font-bold">Custom</span>
+                    </div>
+                    <ul className="space-y-3">
+                      <li className="flex items-start space-x-3">
+                        <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+                        <span className="text-sm">Unlimited members</span>
+                      </li>
+                      <li className="flex items-start space-x-3">
+                        <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+                        <span className="text-sm">Everything in Pro</span>
+                      </li>
+                      <li className="flex items-start space-x-3">
+                        <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+                        <span className="text-sm">API access</span>
+                      </li>
+                      <li className="flex items-start space-x-3">
+                        <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+                        <span className="text-sm">Custom integrations</span>
+                      </li>
+                      <li className="flex items-start space-x-3">
+                        <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+                        <span className="text-sm">Dedicated support</span>
+                      </li>
+                      <li className="flex items-start space-x-3">
+                        <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+                        <span className="text-sm">SLA guarantee</span>
+                      </li>
+                    </ul>
+                    <Button variant="outline" className="w-full">Contact Sales</Button>
+                  </div>
+                </Card>
               </div>
-            </Card>
-          </div>
-        </div>
-      </section>
+            </div>
+          </section>
+        )
+      }
 
       {/* Final CTA */}
       <section className="py-20 lg:py-32 relative overflow-hidden">
@@ -739,8 +748,8 @@ export function Home() {
               Join thousands of organizations using CredoPass to understand member engagement.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-              <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 text-base px-8 h-12">
-                Start Free Trial
+              <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 text-base px-8 h-12" onClick={navigateToApp}>
+                Start For Free
                 <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
               <Button size="lg" variant="outline" className="text-base px-8 h-12">
