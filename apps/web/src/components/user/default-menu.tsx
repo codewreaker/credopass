@@ -2,9 +2,10 @@ import React from "react"
 import {
     UserIcon, CreditCardIcon, SettingsIcon,
     HelpCircleIcon, FileTextIcon, LogOutIcon,
-    SunIcon, MoonIcon, MonitorIcon, PaletteIcon,
+    SunIcon, MoonIcon, PaletteIcon,
     BellIcon
 } from "lucide-react"
+import { useTheme } from "@credopass/lib/theme"
 import type { MenuGroupConfig } from "./index"
 
 // ============================================================================
@@ -21,7 +22,7 @@ interface UseDefaultUserMenuOptions {
 }
 
 export const useDefaultUserMenu = (options: UseDefaultUserMenuOptions = {}): MenuGroupConfig[] => {
-    const [theme, setTheme] = React.useState("system")
+    const { theme, setTheme } = useTheme()
     const [notifications, setNotifications] = React.useState({
         push: true,
         email: true,
@@ -48,31 +49,30 @@ export const useDefaultUserMenu = (options: UseDefaultUserMenuOptions = {}): Men
                     onClick: options.onNavigateToBilling,
                 },
                 {
+                    id: 'theme',
+                    type: 'submenu',
+                    label: 'Theme',
+                    icon: PaletteIcon,
+                    items: [
+                        {
+                            id: 'theme-options',
+                            type: 'radio-group',
+                            label: 'Appearance',
+                            value: theme,
+                            onValueChange: (value) => setTheme(value as 'light' | 'dark'),
+                            options: [
+                                { value: 'light', label: 'Light', icon: SunIcon },
+                                { value: 'dark', label: 'Dark', icon: MoonIcon },
+                            ],
+                        },
+                    ],
+                },
+                {
                     id: 'settings',
                     type: 'submenu',
                     label: 'Settings',
                     icon: SettingsIcon,
                     items: [
-                        {
-                            id: 'theme',
-                            type: 'submenu',
-                            label: 'Theme',
-                            icon: PaletteIcon,
-                            items: [
-                                {
-                                    id: 'theme-options',
-                                    type: 'radio-group',
-                                    label: 'Appearance',
-                                    value: theme,
-                                    onValueChange: setTheme,
-                                    options: [
-                                        { value: 'light', label: 'Light', icon: SunIcon },
-                                        { value: 'dark', label: 'Dark', icon: MoonIcon },
-                                        { value: 'system', label: 'System', icon: MonitorIcon },
-                                    ],
-                                },
-                            ],
-                        },
                         {
                             id: 'notifications',
                             type: 'submenu',

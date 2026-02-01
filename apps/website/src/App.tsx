@@ -1,4 +1,4 @@
-import { ThemeProvider } from '../../../packages/lib/src/theme';
+import { ThemeProvider } from '@credopass/lib/theme';
 import { Home } from './pages/Home';
 
 export default function App() {

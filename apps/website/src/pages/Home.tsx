@@ -2,10 +2,10 @@ import { Button } from '@credopass/ui/components/button';
 import { Card } from '@credopass/ui/components/card';
 import { Badge } from '@credopass/ui/components/badge';
 import { useTheme } from '@credopass/lib/theme';
-import { 
-  QrCode, 
-  Users, 
-  TrendingUp, 
+import {
+  QrCode,
+  Users,
+  TrendingUp,
   Clock,
   CheckCircle2,
   ArrowRight,
@@ -67,7 +67,7 @@ export function Home() {
               <Button variant="ghost" size="sm" className="text-sm">
                 Sign In
               </Button>
-              <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90 text-sm">
+              <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90 text-sm rounded-lg">
                 Get Started
                 <ArrowRight className="ml-2 w-4 h-4" />
               </Button>
@@ -122,7 +122,7 @@ export function Home() {
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/5 via-transparent to-transparent" />
         <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl" />
         <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
-        
+
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative">
           <div className="max-w-4xl mx-auto text-center space-y-8">
             {/* Badge */}
@@ -174,16 +174,16 @@ export function Home() {
             <div className="relative">
               {/* Glow effect */}
               <div className="absolute inset-0 bg-gradient-to-t from-primary/20 to-transparent blur-3xl" />
-              
+
               {/* Screenshot container */}
               <div className="relative rounded-xl lg:rounded-2xl overflow-hidden border border-border/50 shadow-2xl bg-card">
                 <ImageWithFallback
-                  src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxhbmFseXRpY3MlMjBkYXNoYm9hcmQlMjBkYXRhJTIwY2hhcnRzfGVufDF8fHx8MTc2OTg5MjAxMHww&ixlib=rb-4.1.0&q=80&w=1080"
+                  src="/images/dash-1.png"
                   alt="CredoPass Dashboard"
                   className="w-full h-auto"
                 />
               </div>
-              
+
               {/* Floating elements */}
               <div className="hidden lg:block absolute -left-6 top-1/4 bg-card border border-border rounded-xl p-4 shadow-xl">
                 <div className="flex items-center space-x-3">
@@ -364,28 +364,39 @@ export function Home() {
               </p>
               <ul className="space-y-4">
                 <li className="flex items-start space-x-3">
-                  <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                  <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 shrink-0" />
                   <span className="text-muted-foreground">Unique QR code per event with auto-expiration</span>
                 </li>
                 <li className="flex items-start space-x-3">
-                  <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                  <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 shrink-0" />
                   <span className="text-muted-foreground">Manual check-in for members without phones</span>
                 </li>
                 <li className="flex items-start space-x-3">
-                  <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                  <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 shrink-0" />
                   <span className="text-muted-foreground">Real-time attendance counter on display</span>
                 </li>
               </ul>
             </div>
             <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-transparent rounded-2xl blur-3xl" />
-              <div className="relative rounded-xl lg:rounded-2xl overflow-hidden border border-border shadow-2xl">
-                <ImageWithFallback
-                  src="https://images.unsplash.com/photo-1595079676339-1534801ad6cf?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxzbWFydHBob25lJTIwUVIlMjBjb2RlJTIwc2Nhbm5pbmd8ZW58MXx8fHwxNzY5ODkxOTMyfDA&ixlib=rb-4.1.0&q=80&w=1080"
-                  alt="QR Code Check-in"
-                  className="w-full h-auto"
-                />
-              </div>
+              <div className="absolute inset-0 bg-linear-to-br from-primary/20 to-transparent rounded-2xl blur-3xl" />
+                  <div className="relative grid grid-cols-2 gap-4">
+                    <div className="col-span-2 relative">
+                    <div className="rounded-xl lg:rounded-2xl overflow-hidden border border-border shadow-2xl">
+                      <ImageWithFallback
+                      src="/images/qr-page.png"
+                      alt="QR Code Check-in"
+                      className="w-full h-auto"
+                      />
+                    </div>
+                    <div className="absolute -bottom-6 -right-6 w-1/3 rounded-xl lg:rounded-2xl overflow-hidden shadow-2xl border border-border bg-background">
+                      <ImageWithFallback
+                      src="/images/mobile-1.png"
+                      alt="Mobile Check-in"
+                      className="w-full h-auto object-cover"
+                      />
+                    </div>
+                    </div>
+                  </div>
             </div>
           </div>
         </div>
@@ -396,10 +407,10 @@ export function Home() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
             <div className="relative order-2 lg:order-1">
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-transparent rounded-2xl blur-3xl" />
+              <div className="absolute inset-0 bg-linear-to-br from-primary/20 to-transparent rounded-2xl blur-3xl" />
               <div className="relative rounded-xl lg:rounded-2xl overflow-hidden border border-border shadow-2xl">
                 <ImageWithFallback
-                  src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxhbmFseXRpY3MlMjBkYXNoYm9hcmQlMjBkYXRhJTIwY2hhcnRzfGVufDF8fHx8MTc2OTg5MjAxMHww&ixlib=rb-4.1.0&q=80&w=1080"
+                  src="/images/dash-2.png"
                   alt="Analytics Dashboard"
                   className="w-full h-auto"
                 />
@@ -718,7 +729,7 @@ export function Home() {
       {/* Final CTA */}
       <section className="py-20 lg:py-32 relative overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-primary/10 via-transparent to-transparent" />
-        
+
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative">
           <div className="max-w-3xl mx-auto text-center space-y-8">
             <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight">
