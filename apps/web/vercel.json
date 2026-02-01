@@ -3,7 +3,7 @@
   "framework": "vite",
   "buildCommand": "cd ../.. && bun nx build web",
   "outputDirectory": "dist",
-  "installCommand": "cd ../.. && bun install",
+  "installCommand": "echo 'Skipping install - already done by CI'",
   "rewrites": [
     {
       "source": "/api/:path*",
