@@ -28,7 +28,7 @@ const EmptyState: React.FC<{
     link?: { label: string; url: string };
     icon?: React.ReactElement;
 }> = ({
-    title = "No Event Found",
+    title = "No Event Found.",
     description = "You haven&apos;t created any events yet. Get started by creating your first event.",
     action = { label: "Create Event", onClick: () => { } },
     secondaryAction,
