@@ -72,7 +72,7 @@ interface SidebarMenuProps {
 const defaultData: SidebarProps = {
     user: {
         name: "israel",
-        email: "izzy@credopass.com",
+        email: "iz@credopass.com",
         avatar: "/avatars/shadcn.jpg",
     },
     nav: {

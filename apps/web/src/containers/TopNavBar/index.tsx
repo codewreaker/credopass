@@ -127,7 +127,7 @@ export const TopNavBar: React.FC = () => {
           <UserComponent
             user={{
               name: "israel",
-              email: "izzy@credopass.com",
+              email: "iz@credopass.com",
               avatar: "/avatars/shadcn.jpg",
               icon: UserIcon
             }}
