@@ -11,6 +11,7 @@ import {
 } from "@credopass/ui/components/empty"
 
 
+
 const EmptyState: React.FC<{
     title?: string;
     description?: string;
