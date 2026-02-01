@@ -10,6 +10,7 @@ import {
     EmptyTitle,
 } from "@credopass/ui/components/empty"
 
+
 const EmptyState: React.FC<{
     title?: string;
     description?: string;
@@ -26,9 +27,9 @@ const EmptyState: React.FC<{
     link?: { label: string; url: string };
     icon?: React.ReactElement;
 }> = ({
-    title = "No Projects Found",
-    description = "You haven&apos;t created any projects yet. Get started by creating your first project.",
-    action = { label: "Create Project", onClick: () => { } },
+    title = "No Event Found",
+    description = "You haven&apos;t created any events yet. Get started by creating your first event.",
+    action = { label: "Create Event", onClick: () => { } },
     secondaryAction,
     link,
     icon = <UserPlus />,
