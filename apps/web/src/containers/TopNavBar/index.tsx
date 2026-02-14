@@ -2,7 +2,8 @@ import React, { useEffect, useCallback, useRef } from 'react';
 import {
   Search,
   Calendar,
-  User as UserIcon
+  User as UserIcon,
+  Bell,
 } from 'lucide-react';
 import { Button, Badge } from '@credopass/ui';
 import { launchSignInForm } from '../SignInModal/index';
@@ -26,7 +27,6 @@ export const TopNavBar: React.FC = () => {
   const searchButtonRef = useRef<HTMLButtonElement>(null);
   const userMenuGroups = useDefaultUserMenu();
 
-  // Open command palette via launcher
   const openCommandPalette = useCallback(() => {
     openLauncher({
       content: <CommandPalette onClose={closeLauncher} openLauncher={openLauncher} />,
@@ -34,18 +34,20 @@ export const TopNavBar: React.FC = () => {
     });
   }, [openLauncher, closeLauncher]);
 
+  // Keyboard shortcuts - stable ref pattern
+  const shortcutsRef = useRef({ openCommandPalette, openLauncher, navigate });
+  shortcutsRef.current = { openCommandPalette, openLauncher, navigate };
 
-  // Keyboard shortcuts
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
+      const { openCommandPalette, openLauncher, navigate } = shortcutsRef.current;
 
-      // Cmd/Ctrl + K to open command palette
       if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
         openCommandPalette();
         return;
       }
-      // Direct shortcuts (only when no modals are open)
+
       if ((e.metaKey || e.ctrlKey)) {
         switch (e.key) {
           case 'e':
@@ -86,44 +88,52 @@ export const TopNavBar: React.FC = () => {
 
     document.addEventListener('keydown', down);
     return () => document.removeEventListener('keydown', down);
-  }, [openCommandPalette, openLauncher, navigate]);
+  }, []);
 
-  // Quick action handlers
   const handleNewEvent = useCallback(() => {
     launchEventForm({ isEditing: false }, openLauncher);
   }, [openLauncher]);
 
   return (
     <div className={cn(
-      "flex items-center px-4 justify-between",
-      isMobile ? "w-10/12" : "w-full"
+      "flex items-center justify-between flex-1",
+      isMobile ? "px-2" : "px-4"
     )}>
-      <div className={cn("navbar-left", isMobile ? "p-0 w-6/10" : "w-7/10 p-5")} ref={searchButtonRef as unknown as React.RefObject<HTMLDivElement>}>
+      {/* Search trigger */}
+      <div
+        className={cn("navbar-search-wrapper", isMobile ? "w-3/5" : "w-3/5 max-w-md")}
+        ref={searchButtonRef as unknown as React.RefObject<HTMLDivElement>}
+      >
         <Button
           variant="outline"
-          className="search-container"
+          className="search-trigger"
           onClick={openCommandPalette}
         >
           <Search className="search-icon" size={14} />
-          <span className="search-input">Search or run a command...</span>
-          <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
-            <span className="text-xs">⌘</span>K
-          </kbd>
+          <span className="search-placeholder">
+            {isMobile ? "Search..." : "Search or run a command..."}
+          </span>
+          {!isMobile && (
+            <kbd className="search-kbd">
+              <span className="text-xs">&#8984;</span>K
+            </kbd>
+          )}
         </Button>
       </div>
 
-      {<div className="navbar-right flex items-center gap-2">
-        <Button variant="default" onClick={handleNewEvent}>
-          <Calendar />
-          {!isMobile && "New Event"}
+      {/* Actions */}
+      <div className="flex items-center gap-2">
+        <Button
+          variant="default"
+          size={isMobile ? "icon" : "default"}
+          onClick={handleNewEvent}
+          className="bg-primary text-primary-foreground hover:bg-primary/90 font-medium shadow-sm"
+        >
+          <Calendar size={16} />
+          {!isMobile && <span>New Event</span>}
         </Button>
 
-
-        <div
-          className="top-navbar-btn group rounded-4xl"
-          data-collapsible={isMobile ? "icon" : ""}
-        >
-          {/* <User size={15} /> */}
+        <div className="top-navbar-btn relative">
           <UserComponent
             user={{
               name: "israel",
@@ -133,10 +143,9 @@ export const TopNavBar: React.FC = () => {
             }}
             menuGroups={userMenuGroups}
           />
-          <Badge>3</Badge>
+          <Badge className="notification-badge">3</Badge>
         </div>
-
-      </div>}
+      </div>
     </div>
   );
 };

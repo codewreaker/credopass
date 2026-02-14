@@ -1,7 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "vite",
-  "buildCommand": "cd ../.. && bun nx build website",
+  "buildCommand": "cd ../.. && npx nx build website",
   "outputDirectory": "dist",
   "installCommand": "cd ../.. && bun install",
   "rewrites": [

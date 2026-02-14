@@ -28,8 +28,12 @@ export const RightSidebarTrigger: React.FC = () => {
   }
 
   return (
-    <button className="collapse-toggle-right" onClick={onToggleCollapse}>
-      <LucidePanelRightOpen size={15} />
+    <button
+      className="inline-flex items-center justify-center rounded-md p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+      onClick={onToggleCollapse}
+      aria-label="Toggle sidebar"
+    >
+      <LucidePanelRightOpen size={16} />
     </button>
   )
 }
@@ -55,9 +59,7 @@ export const RightSidebar: React.FC = () => {
   };
 
   const getSidebarTitle = () => {
-    if (!viewedItem) {
-      return "Overview";
-    }
+    if (!viewedItem) return "Overview";
 
     switch (viewedItem.id) {
       case 'profile':
@@ -83,8 +85,8 @@ export const RightSidebar: React.FC = () => {
   const getSidebarFooter = () => {
     if (!viewedItem) {
       return (
-        <SheetClose>
-          <Button variant="outline">Close</Button>
+        <SheetClose asChild>
+          <Button variant="outline" size="sm">Close</Button>
         </SheetClose>
       );
     }
@@ -92,17 +94,19 @@ export const RightSidebar: React.FC = () => {
     switch (viewedItem.id) {
       case 'profile':
         return (
-          <>
-            <Button type="submit">Save changes</Button>
-            <SheetClose>
-              <Button variant="outline">Close</Button>
+          <div className="flex items-center gap-2">
+            <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90">
+              Save changes
+            </Button>
+            <SheetClose asChild>
+              <Button variant="outline" size="sm">Close</Button>
             </SheetClose>
-          </>
+          </div>
         );
       default:
         return (
-          <SheetClose>
-            <Button variant="outline">Close</Button>
+          <SheetClose asChild>
+            <Button variant="outline" size="sm">Close</Button>
           </SheetClose>
         );
     }
@@ -110,21 +114,19 @@ export const RightSidebar: React.FC = () => {
 
   return (
     <Sheet open={isCollapsed} onOpenChange={onToggleCollapse}>
-      <SheetContent>
-        <SheetHeader>
-          <SheetTitle>{getSidebarTitle()}</SheetTitle>
-          <SheetDescription>
+      <SheetContent className="right-sheet-content">
+        <SheetHeader className="right-sheet-header">
+          <SheetTitle className="text-sm font-semibold">{getSidebarTitle()}</SheetTitle>
+          <SheetDescription className="text-xs">
             {getSidebarDescription()}
           </SheetDescription>
         </SheetHeader>
-        {/**Sheet Content */}
-        <div className="grid flex-1 auto-rows-min gap-6 px-4 h-[calc(100vh-52.5px)] overflow-y-auto sticky">
-          <>
-            {getSidebarContent(viewedItem)}
-          </>
+
+        <div className="right-sheet-body">
+          {getSidebarContent(viewedItem)}
         </div>
-        {/**Sheet Content */}
-        <SheetFooter>
+
+        <SheetFooter className="right-sheet-footer">
           {getSidebarFooter()}
         </SheetFooter>
       </SheetContent>
