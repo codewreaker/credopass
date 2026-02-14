@@ -1,5 +1,5 @@
 import React from 'react';
-import { Clock, MapPin, Users, Calendar } from 'lucide-react';
+import { Clock, MapPin, Users, Calendar, ArrowRight } from 'lucide-react';
 import {
   Card,
   CardContent,
@@ -11,7 +11,7 @@ import {
 import type { EventType } from '@credopass/lib/schemas';
 import QuickSelectDropdown from './QuickSelectDropdown';
 
-// EventCard Component
+// EventCard Component -- Luma-inspired: clean, spacious, subtle hover
 interface EventCardProps {
   event: EventType;
   onSelect: (eventId: string) => void;
@@ -19,48 +19,58 @@ interface EventCardProps {
 }
 
 const EventCard: React.FC<EventCardProps> = ({ event, onSelect, statusColors }) => {
+  const formattedDate = event.startTime
+    ? new Date(event.startTime).toLocaleDateString('en-US', {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+      })
+    : 'No date set';
+
   return (
     <Card
-      className="cursor-pointer hover:shadow-lg hover:border-primary/50 transition-all duration-200 group h-16 sm:h-full"
+      className="cursor-pointer group relative overflow-hidden transition-all duration-200 hover:border-primary/30 hover:shadow-[0_8px_30px_-12px_rgba(212,255,0,0.12)]"
       onClick={() => onSelect(event.id)}
     >
-      <CardHeader className="sm:pb-3">
-        <div className="flex items-start justify-between">
-          <CardTitle className="text-sm md:text-lg group-hover:text-primary transition-colors">
+      {/* Top accent bar on hover */}
+      <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-primary to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+      <CardHeader className="pb-2">
+        <div className="flex items-start justify-between gap-3">
+          <CardTitle className="text-base font-semibold group-hover:text-primary transition-colors line-clamp-1">
             {event.name}
           </CardTitle>
-          <Badge variant="outline" className={`${statusColors[event.status] || ''}`}>
+          <Badge variant="outline" className={`text-[0.625rem] shrink-0 ${statusColors[event.status] || ''}`}>
             {event.status}
           </Badge>
         </div>
         {event.description && (
-          <CardDescription className="hidden sm:block sm:line-clamp-1">
+          <CardDescription className="line-clamp-2 text-xs leading-relaxed mt-1">
             {event.description}
           </CardDescription>
         )}
       </CardHeader>
-      <CardContent className="hidden sm:block sm:pt-0">
-        <div className="space-y-2 text-sm text-muted-foreground">
+
+      <CardContent className="pt-0 pb-4">
+        <div className="flex flex-col gap-2 text-xs text-muted-foreground">
+          {event.location && (
+            <div className="flex items-center gap-2">
+              <MapPin className="w-3.5 h-3.5 shrink-0" />
+              <span className="truncate">{event.location}</span>
+            </div>
+          )}
           <div className="flex items-center gap-2">
-            <MapPin className="w-4 h-4" />
-            <span className="truncate">{event.location || 'No location'}</span>
+            <Clock className="w-3.5 h-3.5 shrink-0" />
+            <span>{formattedDate}</span>
           </div>
-          <div className="flex items-center gap-2">
-            <Users className="w-4 h-4" />
-            <span>Capacity: {event.capacity || 'Unlimited'}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Clock className="w-4 h-4" />
-            <span>
-              {event.startTime
-                ? new Date(event.startTime).toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })
-                : 'No date set'}
-            </span>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Users className="w-3.5 h-3.5 shrink-0" />
+              <span>{event.capacity ? `${event.capacity} spots` : 'Unlimited'}</span>
+            </div>
+            <ArrowRight className="w-3.5 h-3.5 text-primary opacity-0 group-hover:opacity-100 transition-opacity" />
           </div>
         </div>
       </CardContent>
@@ -78,12 +88,16 @@ interface EventsGridProps {
 const EventsGrid: React.FC<EventsGridProps> = ({ events, onEventSelect, statusColors }) => {
   return (
     <div className="flex-1">
-      <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-        <Calendar className="w-5 h-5" />
-        Available Events
-        <Badge variant="secondary">{events.length}</Badge>
-      </h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="flex items-center gap-3 mb-4">
+        <Calendar className="w-4 h-4 text-muted-foreground" />
+        <h2 className="text-sm font-medium text-muted-foreground">
+          Available Events
+        </h2>
+        <Badge variant="secondary" className="text-[0.625rem] h-5 px-1.5">
+          {events.length}
+        </Badge>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
         {events.map((event) => (
           <EventCard
             key={event.id}
@@ -97,7 +111,7 @@ const EventsGrid: React.FC<EventsGridProps> = ({ events, onEventSelect, statusCo
   );
 };
 
-// Main EventSelectionView Component
+// Main EventSelectionView Component -- Luma-inspired: clean, centered header
 interface EventSelectionViewProps {
   events: EventType[];
   onEventSelect: (eventId: string | null) => void;
@@ -113,9 +127,9 @@ const EventSelectionView: React.FC<EventSelectionViewProps> = ({
 }) => {
   return (
     <div className="checkin-page h-full flex flex-col p-6 gap-6 overflow-auto">
-      <div className="flex flex-col gap-2 text-center md:text-left">
-        <h1 className="text-3xl font-bold tracking-tight">Event Check-In</h1>
-        <p className="text-muted-foreground text-lg">
+      <div className="flex flex-col gap-1">
+        <h1 className="text-xl font-semibold tracking-tight">Event Check-In</h1>
+        <p className="text-sm text-muted-foreground">
           Select an event to start checking in attendees
         </p>
       </div>

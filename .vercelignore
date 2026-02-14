@@ -1,0 +1,6 @@
+services/
+docker/
+tools/
+docs/
+*.md
+!README.md

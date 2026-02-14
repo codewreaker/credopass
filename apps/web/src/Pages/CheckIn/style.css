@@ -1,5 +1,4 @@
 .checkin-page {
-  background: linear-gradient(145deg, hsl(var(--background)) 0%, hsl(var(--secondary) / 0.3) 100%);
   animation: fadeIn 0.3s ease-in-out;
   min-height: 100%;
 }
@@ -7,7 +6,7 @@
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(8px);
   }
   to {
     opacity: 1;
@@ -36,72 +35,67 @@
 
 /* QR Code styling */
 .checkin-page [data-slot="card"] {
-  transition: all 0.2s ease-in-out;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+  background: var(--card);
+  border: 1px solid var(--border);
 }
 
 .checkin-page [data-slot="card"]:hover {
-  transform: translateY(-2px);
+  border-color: rgba(212, 255, 0, 0.15);
+  box-shadow: 0 8px 32px -8px rgba(0, 0, 0, 0.3);
 }
 
 /* Event cards hover effect */
 .checkin-page .grid [data-slot="card"] {
-  border: 1px solid hsl(var(--border));
+  border: 1px solid var(--border);
+  position: relative;
+  overflow: hidden;
+}
+
+.checkin-page .grid [data-slot="card"]::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--primary), transparent);
+  opacity: 0;
+  transition: opacity 0.3s ease;
 }
 
 .checkin-page .grid [data-slot="card"]:hover {
-  border-color: hsl(var(--primary) / 0.5);
-  box-shadow: 0 10px 30px -10px hsl(var(--primary) / 0.15);
+  border-color: rgba(212, 255, 0, 0.3);
+  box-shadow: 0 12px 40px -12px rgba(212, 255, 0, 0.12);
+}
+
+.checkin-page .grid [data-slot="card"]:hover::before {
+  opacity: 1;
 }
 
 /* Counter badge animation */
 @keyframes countUp {
-  from {
-    transform: scale(1.2);
+  from { transform: scale(1.3); }
+  to { transform: scale(1); }
+}
+
+/* QR glow pulse */
+@keyframes qrPulse {
+  0%, 100% {
+    box-shadow: 0 4px 20px -4px rgba(212, 255, 0, 0.3);
   }
-  to {
-    transform: scale(1);
+  50% {
+    box-shadow: 0 4px 32px -4px rgba(212, 255, 0, 0.5);
   }
 }
 
 .checkin-page .bg-linear-to-br {
-  animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-  0%, 100% {
-    box-shadow: 0 4px 20px -4px hsl(var(--primary) / 0.4);
-  }
-  50% {
-    box-shadow: 0 4px 30px -4px hsl(var(--primary) / 0.6);
-  }
+  animation: qrPulse 3s ease-in-out infinite;
 }
 
 /* Empty state styling */
 .checkin-page [data-slot="empty"] {
   max-width: 500px;
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .checkin-page {
-    padding: 1rem;
-    gap: 1rem;
-  }
-  
-  .checkin-page h1 {
-    font-size: 1.5rem;
-  }
-  
-  .checkin-page .grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* Dark mode enhancements */
-@media (prefers-color-scheme: dark) {
-  .checkin-page {
-    background: linear-gradient(145deg, hsl(var(--background)) 0%, hsl(var(--secondary) / 0.15) 100%);
-  }
 }
 
 /* ManualCheckInCard styles */
@@ -117,18 +111,14 @@
   .icon-medium {
     width: 1.25rem;
     height: 1.25rem;
-    color: hsl(var(--primary));
+    color: var(--primary);
   }
 }
 
 /* Spin animation for loading spinner */
 @keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 /* LoadingState styles */
@@ -150,14 +140,15 @@
   .spinner {
     animation: spin 1s linear infinite;
     border-radius: 9999px;
-    height: 3rem;
-    width: 3rem;
-    border-bottom-width: 2px;
-    border-color: hsl(var(--primary));
+    height: 2.5rem;
+    width: 2.5rem;
+    border: 2px solid var(--border);
+    border-top-color: var(--primary);
   }
 
   .loading-text {
-    color: hsl(var(--muted-foreground));
+    color: var(--muted-foreground);
+    font-size: 0.85rem;
   }
 }
 
@@ -181,5 +172,21 @@
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .checkin-page {
+    padding: 1rem;
+    gap: 1rem;
+  }
+
+  .checkin-page h1 {
+    font-size: 1.5rem;
+  }
+
+  .checkin-page .grid {
+    grid-template-columns: 1fr;
   }
 }

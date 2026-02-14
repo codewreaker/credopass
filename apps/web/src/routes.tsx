@@ -1,12 +1,15 @@
+import { lazy } from 'react'
 import { createRootRoute, createRoute, redirect } from '@tanstack/react-router'
 import { RootLayout } from './Pages/Layout'
-import HomePage from './Pages/Home/index'
-import MembersPage from './Pages/Members/index'
-import EventsPage from './Pages/Events/index'
-import Analytics from './Pages/Analytics/index'
-import TablesPage from './Pages/Tables/index'
-import CheckInPage from './Pages/CheckIn/index'
-import OrganizationsPage from './Pages/Organizations/index'
+
+// --- Lazy-loaded page components (code-split per route) ---
+const HomePage = lazy(() => import('./Pages/Home/index'))
+const MembersPage = lazy(() => import('./Pages/Members/index'))
+const EventsPage = lazy(() => import('./Pages/Events/index'))
+const Analytics = lazy(() => import('./Pages/Analytics/index'))
+const TablesPage = lazy(() => import('./Pages/Tables/index'))
+const CheckInPage = lazy(() => import('./Pages/CheckIn/index'))
+const OrganizationsPage = lazy(() => import('./Pages/Organizations/index'))
 
 // Root route - wraps all pages with layout (sidebar, topbar, etc.)
 const rootRoute = createRootRoute({
@@ -59,7 +62,6 @@ const databaseRoute = createRoute({
   component: TablesPage,
 })
 
-
 // CheckIn route - Check-in page for event attendees
 const checkInRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -83,8 +85,7 @@ export const routeTree = rootRoute.addChildren([
   analyticsRoute,
   databaseRoute,
   checkInRoute,
-  organizationsRoute
-  
+  organizationsRoute,
 ])
 
 // Export individual routes for type safety and easy access
@@ -95,5 +96,5 @@ export const routes = {
   checkIn: checkInRoute,
   events: eventsRoute,
   organizations: organizationsRoute,
-  analytics: analyticsRoute
+  analytics: analyticsRoute,
 } as const

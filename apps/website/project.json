@@ -23,17 +23,18 @@
     },
     "build": {
       "executor": "nx:run-commands",
+      "outputs": ["{projectRoot}/dist"],
       "options": {
         "command": "bun vite build --mode production",
         "cwd": "apps/website"
       }
-    }
-  },
-  "preview": {
-    "executor": "nx:run-commands",
-    "options": {
-      "command": "bun vite preview",
-      "cwd": "apps/website"
+    },
+    "preview": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun vite preview",
+        "cwd": "apps/website"
+      }
     }
   }
 }
