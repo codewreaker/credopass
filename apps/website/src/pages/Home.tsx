@@ -2,6 +2,7 @@ import { Button } from '@credopass/ui/components/button';
 import { Card } from '@credopass/ui/components/card';
 import { Badge } from '@credopass/ui/components/badge';
 import { useTheme } from '@credopass/lib/theme';
+import LogoCloud from '@credopass/ui/components/logo-cloud'
 import {
   QrCode,
   Users,
@@ -147,8 +148,8 @@ export function Home() {
           backgroundImage: 'linear-gradient(to right, currentColor 1px, transparent 1px), linear-gradient(to bottom, currentColor 1px, transparent 1px)',
           backgroundSize: '64px 64px'
         }} />
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-primary/8 rounded-full blur-[128px]" />
-        <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-primary/5 rounded-full blur-[96px]" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-200 h-150 bg-primary/8 rounded-full blur-[128px]" />
+        <div className="absolute bottom-0 right-1/4 w-100 h-100 bg-primary/5 rounded-full blur-[96px]" />
 
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative">
           <div className="max-w-4xl mx-auto text-center flex flex-col items-center gap-8">
@@ -159,7 +160,7 @@ export function Home() {
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
                 </span>
-                <span className="text-foreground font-medium">Trusted by 10,000+ organizations</span>
+                <span className="text-foreground font-medium">Work-In-Progress — Info for demo purposes only</span>
               </div>
             </Reveal>
 
@@ -270,18 +271,10 @@ export function Home() {
       {/* ============================================================
           LOGO CLOUD
           ============================================================ */}
-      <section className="py-16 border-y border-border/40 bg-muted/30">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <p className="text-center text-sm text-muted-foreground mb-8 tracking-wide uppercase">Trusted by leading organizations</p>
-          <div className="flex flex-wrap items-center justify-center gap-x-12 gap-y-8 opacity-40">
-            <div className="text-2xl font-bold tracking-tight">ACME Church</div>
-            <div className="text-2xl font-bold tracking-tight">BookClub+</div>
-            <div className="text-2xl font-bold tracking-tight">Jazz Society</div>
-            <div className="text-2xl font-bold tracking-tight">Community Hub</div>
-            <div className="text-2xl font-bold tracking-tight">Event Co</div>
-          </div>
-        </div>
-      </section>
+      <LogoCloud
+        className="bg-muted/10"
+        title='Trusted by leading organizations'
+      />
 
       {/* ============================================================
           PROBLEM STATEMENT
@@ -292,7 +285,13 @@ export function Home() {
             <div className="max-w-3xl mx-auto text-center flex flex-col gap-6">
               <Badge variant="outline" className="border-destructive/50 text-destructive w-fit mx-auto">The Problem</Badge>
               <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tighter leading-tight text-balance">
-                Ticketing doesn't tell you who <span className="text-primary">actually attended</span>
+                Ticketing doesn't tell you who
+                <span className='relative inline-block ml-2'>
+                  <span className="text-primary">actually attended</span>
+                  <svg className="absolute -bottom-2 left-0 w-full" viewBox="0 0 300 12" fill="none" aria-hidden="true">
+                    <path d="M2 8.5C50 2.5 100 2 150 5.5C200 9 250 4.5 298 7" stroke="currentColor" strokeWidth="3" strokeLinecap="round" className="text-primary/40" />
+                  </svg>
+                </span>
               </h2>
               <p className="text-lg text-muted-foreground leading-relaxed">
                 EventBrite and similar platforms manage payments beautifully. But they don't capture the data you actually need: real attendance, engagement patterns, and member behavior.

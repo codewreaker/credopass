@@ -6,11 +6,12 @@ import type { ColDef, IOverlayParams, RowClickedEvent } from 'ag-grid-community'
 import React, { useCallback } from "react";
 import GridTable, { type MenuItem } from "../../components/grid-table/index";
 
-import { PlusCircle, Filter } from "lucide-react";
+import { PlusCircle, Filter, UserPlus } from "lucide-react";
 import { useLauncher } from '../../stores/store';
 import { launchUserForm } from '../../containers/UserForm/index';
 import EmptyState from '../../components/empty-state';
 import Loader from '../../components/loader';
+import { useToolbarContext, useSearchQuery } from '../../hooks/use-toolbar-context';
 
 
 const columnDefs: ColDef<UserType & LoyaltyType & AttendanceType>[] = [
@@ -133,6 +134,19 @@ export default function MembersPage() {
   const rowData: UserType[] = Array.isArray(data) ? data : []
   const { openLauncher } = useLauncher();
 
+  const handleCreateUser = useCallback(() => {
+    launchUserForm({ isEditing: false }, openLauncher);
+  }, [openLauncher]);
+
+  // Register toolbar context: secondary "Add Person" button + search
+  useToolbarContext({
+    action: { icon: UserPlus, label: 'Add Person', onClick: handleCreateUser },
+    search: { enabled: true, placeholder: 'Search members…' },
+  });
+
+  // Debounced search query from toolbar
+  const searchQuery = useSearchQuery();
+
   const deleteUser = (userIds: User[]) => {
     userIds.forEach((user) => {
       userCollection.delete(user.id);
@@ -182,6 +196,7 @@ export default function MembersPage() {
           menu={menuItems}
           columnDefs={columnDefs}
           rowData={rowData}
+          quickFilterText={searchQuery}
           bulkActions={[
             {
               key: 'delete',

@@ -12,13 +12,23 @@ import {
 } from "@credopass/ui/components/dropdown-menu"
 
 import { cn } from "@credopass/ui/lib/utils";
-import { ChevronsUpDownIcon, Plus, Settings } from "lucide-react";
+import {
+    ChevronsUpDownIcon,
+    Plus,
+    Settings,
+    User,
+    CreditCard,
+    LogOut,
+    HelpCircle,
+} from "lucide-react";
 import { useLauncher, useOrganizationStore } from "../../stores/store";
 import { launchOrganizationForm } from "../OrganizationForm";
+import { launchSignInForm } from "../SignInModal/index";
 import CredoPassLogoIcon from "../LeftSidebar/brand-icon";
 import { useLiveQuery } from '@tanstack/react-db';
 import { getCollections } from "../../lib/tanstack-db";
 import { useNavigate } from "@tanstack/react-router";
+import { Avatar, AvatarFallback, AvatarImage } from "@credopass/ui/components/avatar";
 
 
 const OrgSelector: React.FC<{
@@ -83,6 +93,43 @@ const OrgSelector: React.FC<{
                     side="bottom"
                     sideOffset={4}
                 >
+                    {/* ── User Profile Section ── */}
+                    <DropdownMenuGroup>
+                        <DropdownMenuLabel className="p-0">
+                            <div className="flex items-center gap-2 px-2 py-2">
+                                <Avatar className="h-8 w-8 border border-border">
+                                    <AvatarImage src="/avatars/shadcn.jpg" alt="Israel" />
+                                    <AvatarFallback className="text-[0.625rem] font-semibold bg-muted text-muted-foreground">IA</AvatarFallback>
+                                </Avatar>
+                                <div className="flex flex-col gap-0.5">
+                                    <span className="text-sm font-medium leading-none">Israel</span>
+                                    <span className="text-xs text-muted-foreground leading-none">iz@credopass.com</span>
+                                </div>
+                            </div>
+                        </DropdownMenuLabel>
+                    </DropdownMenuGroup>
+                    <DropdownMenuSeparator />
+
+                    <DropdownMenuGroup>
+                        <DropdownMenuItem
+                            onClick={() => launchSignInForm({}, openLauncher)}
+                            className="gap-2 p-2"
+                        >
+                            <User className="h-4 w-4" />
+                            <span>Profile</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem className="gap-2 p-2">
+                            <CreditCard className="h-4 w-4" />
+                            <span>Billing</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem className="gap-2 p-2">
+                            <Settings className="h-4 w-4" />
+                            <span>Settings</span>
+                        </DropdownMenuItem>
+                    </DropdownMenuGroup>
+                    <DropdownMenuSeparator />
+
+                    {/* ── Organizations Section ── */}
                     <DropdownMenuGroup>
                         <DropdownMenuLabel className="text-xs text-muted-foreground">Organizations</DropdownMenuLabel>
                     </DropdownMenuGroup>
@@ -122,6 +169,18 @@ const OrgSelector: React.FC<{
                             <Settings className="h-4 w-4" />
                         </div>
                         <span>Manage Organizations</span>
+                    </DropdownMenuItem>
+
+                    {/* ── Support & Sign Out ── */}
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem className="gap-2 p-2">
+                        <HelpCircle className="h-4 w-4" />
+                        <span>Help & Support</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem className="gap-2 p-2 text-destructive focus:text-destructive">
+                        <LogOut className="h-4 w-4" />
+                        <span>Sign Out</span>
                     </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>

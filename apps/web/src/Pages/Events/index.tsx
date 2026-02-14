@@ -6,7 +6,8 @@ import { useLauncher } from '../../stores/store';
 import { launchEventForm, type EventFormProps } from '../../containers/EventForm/index';
 import CalendarPage from './Calendar/index';
 import EventListView from './EventListView';
-import { Calendar, List, Plus } from 'lucide-react';
+import { Calendar, CalendarPlus, List, Plus } from 'lucide-react';
+import { useToolbarContext, useSearchQuery } from '../../hooks/use-toolbar-context';
 import './events.css';
 
 type ViewMode = 'calendar' | 'list';
@@ -32,6 +33,27 @@ const EventsPage = () => {
     const handleCreateEvent = useCallback(() => {
         launchEventForm({ isEditing: false }, openLauncher);
     }, [openLauncher]);
+
+    // Register toolbar context: secondary "Create Event" button + search
+    useToolbarContext({
+        action: { icon: CalendarPlus, label: 'Create Event', onClick: handleCreateEvent },
+        search: { enabled: true, placeholder: 'Search events…' },
+    });
+
+    // Subscribe to debounced search query from toolbar
+    const searchQuery = useSearchQuery();
+
+    // Filter events by search query (name, location, description)
+    const filteredEvents = useMemo<EventType[]>(() => {
+        if (!searchQuery.trim()) return events;
+        const q = searchQuery.toLowerCase();
+        return events.filter(
+            (e) =>
+                e.name?.toLowerCase().includes(q) ||
+                e.location?.toLowerCase().includes(q) ||
+                e.description?.toLowerCase().includes(q),
+        );
+    }, [events, searchQuery]);
 
     return (
         <div className="events-page">
@@ -78,11 +100,10 @@ const EventsPage = () => {
 
             <div className="events-content">
                 {viewMode === 'calendar' ? (
-                    <CalendarPage events={events} launch={launch} />
+                    <CalendarPage events={filteredEvents} launch={launch} />
                 ) : (
                     <EventListView
-                        events={events}
-                        onEditEvent={launch}
+                        events={filteredEvents}
                         onCreateEvent={handleCreateEvent}
                     />
                 )}

@@ -6,6 +6,7 @@ import { RootLayout } from './Pages/Layout'
 const HomePage = lazy(() => import('./Pages/Home/index'))
 const MembersPage = lazy(() => import('./Pages/Members/index'))
 const EventsPage = lazy(() => import('./Pages/Events/index'))
+const EventDetailPage = lazy(() => import('./Pages/Events/EventDetailPage'))
 const Analytics = lazy(() => import('./Pages/Analytics/index'))
 const TablesPage = lazy(() => import('./Pages/Tables/index'))
 const CheckInPage = lazy(() => import('./Pages/CheckIn/index'))
@@ -17,7 +18,7 @@ const rootRoute = createRootRoute({
 })
 
 // Default redirect path - change this to redirect '/' to any route
-const DEFAULT_REDIRECT_PATH = '/checkin'
+const DEFAULT_REDIRECT_PATH = '/events'
 
 // Index route - redirects to the default path (currently /checkin)
 const indexRoute = createRoute({
@@ -49,6 +50,13 @@ const eventsRoute = createRoute({
   component: EventsPage,
 })
 
+// Event Detail route - Single event page with full details
+const eventDetailRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/events/$eventId',
+  component: EventDetailPage,
+})
+
 const analyticsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/analytics',
@@ -62,10 +70,10 @@ const databaseRoute = createRoute({
   component: TablesPage,
 })
 
-// CheckIn route - Check-in page for event attendees
+// CheckIn route - Check-in page for specific event
 const checkInRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/checkin',
+  path: '/checkin/$eventId',
   component: CheckInPage,
 })
 
@@ -82,6 +90,7 @@ export const routeTree = rootRoute.addChildren([
   dashboardRoute,
   membersRoute,
   eventsRoute,
+  eventDetailRoute,
   analyticsRoute,
   databaseRoute,
   checkInRoute,
@@ -95,6 +104,7 @@ export const routes = {
   members: membersRoute,
   checkIn: checkInRoute,
   events: eventsRoute,
+  eventDetail: eventDetailRoute,
   organizations: organizationsRoute,
   analytics: analyticsRoute,
 } as const

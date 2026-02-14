@@ -9,7 +9,6 @@ import ModalPortal from "../components/launcher";
 import {
   LayoutDashboard,
   Users,
-  Calendar,
   ChartNoAxesCombined,
   Database,
   QrCode,
@@ -21,11 +20,10 @@ import { Toaster } from "@credopass/ui/components/sonner";
 import { Separator } from "@credopass/ui/components/separator";
 
 const NAV_ITEMS = [
-  { url: "/checkin", icon: QrCode, label: "Check-In" },
-  { url: "/dashboard", icon: LayoutDashboard, label: "Dashboard", isActive: true },
+  { url: "/events", icon: QrCode, label: "Events", isActive: true },
+  { url: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
   { url: "/members", icon: Users, label: "Members" },
   { url: "/analytics", icon: ChartNoAxesCombined, label: "Analytics" },
-  { url: "/events", icon: Calendar, label: "Events" },
   { url: "/organizations", icon: Building2, label: "Organizations" },
   { url: "/database", icon: Database, label: "Tables" },
 ] as const;

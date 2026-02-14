@@ -1,8 +1,8 @@
 import React, { useMemo } from 'react';
+import { useNavigate } from '@tanstack/react-router';
 import { MapPin, Users, MoreHorizontal, Clock } from 'lucide-react';
 import { Badge } from '@credopass/ui';
 import type { EventType } from '@credopass/lib/schemas';
-import type { EventFormProps } from '../../containers/EventForm/index';
 import EmptyState from '../../components/empty-state';
 
 const STATUS_STYLES: Record<string, string> = {
@@ -28,8 +28,8 @@ const DateIcon: React.FC<{ date: Date }> = ({ date }) => {
 /** Single event row -- inspired by Luma desktop event management (Screenshot 7) */
 const EventRow: React.FC<{
     event: EventType;
-    onEdit: (args?: Omit<EventFormProps, 'collection'>) => void;
-}> = ({ event, onEdit }) => {
+    onNavigate: (eventId: string) => void;
+}> = ({ event, onNavigate }) => {
     const startDate = event.startTime ? new Date(event.startTime) : null;
     const endDate = event.endTime ? new Date(event.endTime) : null;
 
@@ -42,22 +42,7 @@ const EventRow: React.FC<{
         : '';
 
     const handleClick = () => {
-        onEdit({
-            initialData: {
-                id: event.id,
-                name: event.name,
-                description: event.description || '',
-                status: event.status,
-                dateTimeRange: {
-                    from: startDate || undefined,
-                    to: endDate || undefined,
-                },
-                location: event.location || '',
-                capacity: event.capacity?.toString() || '',
-                organizationId: event.organizationId || '',
-            },
-            isEditing: true,
-        });
+        onNavigate(event.id);
     };
 
     return (
@@ -136,12 +121,16 @@ function groupEventsByDate(events: EventType[]): Map<string, EventType[]> {
 
 interface EventListViewProps {
     events: EventType[];
-    onEditEvent: (args?: Omit<EventFormProps, 'collection'>) => void;
     onCreateEvent: () => void;
 }
 
-const EventListView: React.FC<EventListViewProps> = ({ events, onEditEvent, onCreateEvent }) => {
+const EventListView: React.FC<EventListViewProps> = ({ events, onCreateEvent }) => {
+    const navigate = useNavigate();
     const grouped = useMemo(() => groupEventsByDate(events), [events]);
+
+    const handleNavigateToEvent = (eventId: string) => {
+        navigate({ to: '/events/$eventId', params: { eventId } });
+    };
 
     if (events.length === 0) {
         return (
@@ -162,7 +151,7 @@ const EventListView: React.FC<EventListViewProps> = ({ events, onEditEvent, onCr
                     <h3 className="event-list-date-heading">{dateLabel}</h3>
                     <div className="event-list-items">
                         {dateEvents.map((event) => (
-                            <EventRow key={event.id} event={event} onEdit={onEditEvent} />
+                            <EventRow key={event.id} event={event} onNavigate={handleNavigateToEvent} />
                         ))}
                     </div>
                 </div>
