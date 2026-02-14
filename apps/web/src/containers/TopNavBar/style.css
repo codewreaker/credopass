@@ -130,7 +130,7 @@
   justify-content: center;
   width: 2rem;
   height: 2rem;
-  border-radius: calc(var(--radius) - 2px);
+  border-radius: 9999px;
   border: 1px solid var(--border);
   background: transparent;
   color: var(--foreground);
@@ -182,7 +182,7 @@
   justify-content: center;
   width: 2rem;
   height: 2rem;
-  border-radius: calc(var(--radius) - 2px);
+  border-radius: 9999px;
   border: none;
   background: var(--primary);
   color: var(--primary-foreground);
