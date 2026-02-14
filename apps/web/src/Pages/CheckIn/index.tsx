@@ -1,15 +1,14 @@
-import React, { useMemo, useState, useCallback } from 'react';
+import React, { useMemo, useState, useCallback, useEffect } from 'react';
 import { useLiveQuery } from '@tanstack/react-db';
+import { useParams, useNavigate } from '@tanstack/react-router';
 import { useEventSessionStore, useLauncher } from '../../stores/store';
 import type { User, EventType } from '@credopass/lib/schemas';
 import { getCollections } from '../../lib/tanstack-db';
 import { launchEventForm } from '../../containers/EventForm';
 import SuccessCheckInScreen from './SuccessCheckInScreen';
-import EventSelectionView from './components/EventSelectionView';
 import { generateSignInParams, generateSignInUrl } from './utils/qrCodeUtils';
 import { useIsMobile } from '@credopass/ui/hooks/use-mobile';
-import { statusColors } from './utils/constants';
-import { Plus, RefreshCcw, QrCodeIcon } from 'lucide-react';
+import { Plus, RefreshCcw, QrCodeIcon, ArrowLeft } from 'lucide-react';
 
 import './style.css';
 
@@ -33,6 +32,8 @@ const LoadingState: React.FC = () => {
 };
 
 const CheckInPage: React.FC = () => {
+  const { eventId } = useParams({ from: '/checkin/$eventId' });
+  const navigate = useNavigate();
   const { events: eventCollection } = getCollections();
   const { openLauncher } = useLauncher();
   const isMobile = useIsMobile();
@@ -48,11 +49,11 @@ const CheckInPage: React.FC = () => {
   const setCurrentUser = useEventSessionStore((state) => state.setCurrentUser);
   const initializeSession = useEventSessionStore((state) => state.initializeSession);
 
-  const [selectedEventId, setSelectedEventId] = useState<string>('');
   const [showSuccessScreen, setShowSuccessScreen] = useState(false);
   const [successUser, setSuccessUser] = useState<Partial<User> | null>(null);
   const [checkInCount, setCheckInCount] = useState(0);
   const [showManualCheckIn, setShowManualCheckIn] = useState(false);
+  const [sessionInitialized, setSessionInitialized] = useState(false);
 
 
   const isError = eventCollection.utils.isError;
@@ -70,27 +71,34 @@ const CheckInPage: React.FC = () => {
   );
 
   const initializeEventSession = useCallback(
-    (eventId: string) => {
-      const selectedEvent = events.find((e) => e.id === eventId);
-      if (!selectedEvent) return;
+    (targetEventId: string) => {
+      const selectedEvent = events.find((e) => e.id === targetEventId);
+      if (!selectedEvent) return false;
 
       try {
         setActiveEvent(selectedEvent.id, selectedEvent);
         setCurrentUser(mockStaffUser.id || '', mockStaffUser);
         const token = `token_${Date.now()}_${Math.random().toString(36).substring(7)}`;
         initializeSession(token);
-        setSelectedEventId(eventId);
+        setSessionInitialized(true);
+        return true;
       } catch (error) {
         console.error('Failed to initialize session:', error);
+        return false;
       }
     },
     [events, setActiveEvent, setCurrentUser, initializeSession, mockStaffUser]
   );
 
-  const handleEventSelect = (eventId: string | null) => {
-    if (eventId) {
+  // Initialize session when eventId and events are available
+  useEffect(() => {
+    if (eventId && events.length > 0 && !sessionInitialized) {
       initializeEventSession(eventId);
     }
+  }, [eventId, events, sessionInitialized, initializeEventSession]);
+
+  const handleBack = () => {
+    navigate({ to: '/events/$eventId', params: { eventId } });
   };
 
   const handleManualSignIn = (userData: Partial<User>) => {
@@ -115,8 +123,9 @@ const CheckInPage: React.FC = () => {
   };
 
   const handleRefreshQR = () => {
-    if (selectedEventId) {
-      initializeEventSession(selectedEventId);
+    if (eventId) {
+      setSessionInitialized(false);
+      initializeEventSession(eventId);
     }
   };
 
@@ -149,8 +158,8 @@ const CheckInPage: React.FC = () => {
   }, [session.qrExpiresAt]);
 
   const selectedEvent = useMemo(() => {
-    return events.find((e) => e.id === selectedEventId);
-  }, [events, selectedEventId]);
+    return events.find((e) => e.id === eventId);
+  }, [events, eventId]);
 
 
 
@@ -172,13 +181,12 @@ const CheckInPage: React.FC = () => {
 
 
 
-  // Empty state - no events
-  if (events.length === 0) {
-    if(isError) toast.error(`Error fetching events: ${errorDetails}`);
+  // Event not found state
+  if (!selectedEvent) {
     return (
       <div className="checkin-page h-full flex flex-col items-center justify-center p-6">
         <EmptyState
-          error={isError}
+          error={true}
           icon={
             <div className="relative">
               <div className="absolute inset-0 bg-primary/10 rounded-full blur-xl animate-pulse" />
@@ -187,33 +195,17 @@ const CheckInPage: React.FC = () => {
               </div>
             </div>
           }
-          title={isError ? "Error Loading Events" : 'No Events Available'}
-          description={
-            isError
-              ? errorDetails as string
-              : 'Create your first event to start checking in attendees. Events help you track attendance and engage with your community.'
-          }
-          action={
-            isError ?
-              { label: "Retry", onClick: clearError, icon: <RefreshCcw className="w-5 h-5" /> } :
-              { label: "Create Event", icon: <Plus className="w-5 h-5" />, onClick: handleCreateEvent }
-          }
+          title="Event Not Found"
+          description="The event you're trying to check in to doesn't exist or has been removed."
+          action={{ 
+            label: "Back to Events", 
+            icon: <ArrowLeft className="w-5 h-5" />, 
+            onClick: () => navigate({ to: '/events' }) 
+          }}
         />
 
       </div>
     )
-  }
-
-  // Event selection state
-  if (!selectedEventId) {
-    return (
-      <EventSelectionView
-        events={events}
-        onEventSelect={handleEventSelect}
-        onCreateEvent={handleCreateEvent}
-        statusColors={statusColors}
-      />
-    );
   }
 
 
@@ -227,10 +219,7 @@ const CheckInPage: React.FC = () => {
         eventStatus={selectedEvent?.status}
         eventCapacity={selectedEvent?.capacity}
         checkInCount={checkInCount}
-        onBack={() => {
-          setSelectedEventId('');
-          setCheckInCount(0);
-        }}
+        onBack={handleBack}
       />
 
       <div className="main-grid">

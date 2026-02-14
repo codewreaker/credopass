@@ -1,4 +1,5 @@
 import { useRef, useCallback, useMemo, useState } from 'react';
+import { useNavigate } from '@tanstack/react-router';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
@@ -27,6 +28,7 @@ export default function CalendarPage({
   events: EventType[]
 }) {
   const calendarRef = useRef<FullCalendar>(null);
+  const navigate = useNavigate();
   const { events: collection } = getCollections();
   const [isMutating, setIsMutating] = useState(false);
 
@@ -86,26 +88,11 @@ export default function CalendarPage({
   }, [launch]);
 
   const handleEventClick = useCallback((clickInfo: EventClickArg) => {
-    const event = clickInfo.event;
-
-    // Open modal with the EventForm component
-    launch({
-      initialData: {
-        id: event.id,
-        name: event.title,
-        description: event.extendedProps.description || '',
-        status: event.extendedProps.status,
-        dateTimeRange: {
-          from: event.start!,
-          to: event.end || getEndOfDay(event.start!),
-        },
-        location: event.extendedProps.location || '',
-        capacity: event.extendedProps.capacity?.toString() || '',
-        organizationId: event.extendedProps.organizationId || '',
-      },
-      isEditing: true
-    });
-  }, [launch]);
+    const eventId = clickInfo.event.id;
+    
+    // Navigate to event detail page
+    navigate({ to: '/events/$eventId', params: { eventId } });
+  }, [navigate]);
 
   const handleEventDrop = useCallback(async (dropInfo: EventDropArg) => {
     const event = dropInfo.event;

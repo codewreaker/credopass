@@ -82,7 +82,6 @@ const EventsPage = () => {
                 ) : (
                     <EventListView
                         events={events}
-                        onEditEvent={launch}
                         onCreateEvent={handleCreateEvent}
                     />
                 )}
