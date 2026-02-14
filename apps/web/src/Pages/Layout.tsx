@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { Outlet } from "@tanstack/react-router";
 import { TopNavBar } from "../containers/TopNavBar/index";
 import LeftSidebar, { SidebarInset, SidebarTrigger, OrgSelector } from "../containers/LeftSidebar";
@@ -15,7 +16,7 @@ import {
   Building2,
 } from "lucide-react";
 import "./layout.css";
-import { useIsMobile } from "../hooks/use-mobile";
+import { useIsMobile } from "@credopass/ui/hooks/use-mobile";
 import { Toaster } from "@credopass/ui/components/sonner";
 import { Separator } from "@credopass/ui/components/separator";
 
@@ -56,7 +57,13 @@ export function RootLayout() {
                 <RightSidebarTrigger />
               </header>
               <div className="page-content page-transition">
-                <Outlet />
+                <Suspense fallback={
+                  <div className="flex items-center justify-center h-full">
+                    <div className="w-6 h-6 border-2 border-border border-t-primary rounded-full animate-spin" />
+                  </div>
+                }>
+                  <Outlet />
+                </Suspense>
               </div>
             </SidebarInset>
           </LeftSidebar>

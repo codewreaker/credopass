@@ -9,9 +9,15 @@
   flex: 1;
   background-color: var(--card);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: 10px;
   padding: 1rem;
   overflow: hidden;
+  position: relative;
+  transition: border-color 0.25s ease;
+}
+
+.calendar-container:hover {
+  border-color: rgba(212, 255, 0, 0.1);
 }
 
 /* FullCalendar Custom Styling */
@@ -21,19 +27,20 @@
 
   .fc-toolbar-title {
     color: var(--foreground);
-    font-size: 1.125rem;
-    font-weight: 600;
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
   }
 
   .fc-button {
     background-color: var(--background-darker);
     border: 1px solid var(--border);
     color: var(--foreground);
-    font-size: 0.75rem;
-    font-weight: 500;
+    font-size: 0.72rem;
+    font-weight: 600;
     padding: 0.4rem 0.75rem;
     border-radius: 6px;
-    transition: all 0.2s;
+    transition: all 0.2s ease;
 
     &:hover {
       background-color: var(--border);
@@ -42,16 +49,16 @@
   }
 
   .fc-button-primary {
-
     &:not(:disabled).fc-button-active,
     &:not(:disabled):active {
       background-color: var(--primary);
       border-color: var(--primary);
-      color: var(--secondary);
+      color: var(--background-darker);
+      font-weight: 700;
     }
 
     &:focus {
-      box-shadow: 0 0 0 2px rgba(212, 255, 0, 0.25);
+      box-shadow: 0 0 0 2px rgba(212, 255, 0, 0.2);
     }
   }
 
@@ -67,31 +74,34 @@
 
   .fc-col-header-cell-cushion {
     color: var(--muted-foreground);
-    font-size: 0.75rem;
-    font-weight: 500;
+    font-size: 0.7rem;
+    font-weight: 600;
     padding: 0.5rem;
     text-transform: uppercase;
+    letter-spacing: 0.05em;
   }
 
   .fc-daygrid-day-number {
     color: var(--foreground);
-    font-size: 0.8rem;
+    font-size: 0.78rem;
     padding: 0.5rem;
+    font-weight: 500;
   }
 
   .fc-daygrid-day.fc-day-today {
-    background-color: rgba(212, 255, 0, 0.1);
+    background-color: rgba(212, 255, 0, 0.06);
 
     .fc-daygrid-day-number {
       background-color: var(--primary);
-      color: var(--secondary);
+      color: var(--background-darker);
       border-radius: 50%;
-      width: 24px;
-      height: 24px;
+      width: 26px;
+      height: 26px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-weight: 600;
+      font-weight: 700;
+      font-size: 0.75rem;
     }
   }
 
@@ -109,60 +119,64 @@
     border: none;
     border-radius: 4px;
     color: var(--background-darker);
-    font-size: 0.7rem;
-    font-weight: 500;
+    font-size: 0.68rem;
+    font-weight: 600;
     padding: 2px 6px;
     cursor: pointer;
     transition: transform 0.15s, box-shadow 0.15s;
 
     &:hover {
       transform: scale(1.02);
-      box-shadow: 0 2px 8px rgba(212, 255, 0, 0.3);
+      box-shadow: 0 2px 10px rgba(212, 255, 0, 0.25);
     }
 
     &.event-draft {
       background-color: var(--muted-foreground);
+      opacity: 0.7;
     }
 
     &.event-scheduled {
       background-color: var(--primary);
-      color: var(--secondary);
+      color: var(--background-darker);
     }
 
     &.event-ongoing {
       background-color: var(--success-green);
+      color: var(--background-darker);
     }
 
     &.event-completed {
       background-color: #6366f1;
+      color: white;
     }
 
     &.event-cancelled {
       background-color: var(--error-red);
       text-decoration: line-through;
-      opacity: 0.7;
+      opacity: 0.6;
     }
   }
 
   .fc-event-main {
-    color: var(--secondary);
+    color: inherit;
   }
 
   .fc-event-title {
-    font-weight: 600;
+    font-weight: 700;
   }
 
   .fc-event-time {
-    font-weight: 500;
+    font-weight: 600;
   }
 
   .fc-timegrid-slot-label-cushion {
     color: var(--muted-foreground);
-    font-size: 0.7rem;
+    font-size: 0.68rem;
   }
 
   .fc-timegrid-now-indicator-line {
     border-color: var(--error-red);
+    border-width: 2px;
   }
 
   .fc-timegrid-now-indicator-arrow {
@@ -176,18 +190,18 @@
   }
 
   .fc-list-day-cushion {
-    background-color: var(--secondary);
+    background-color: var(--background-darker);
   }
 
   .fc-list-day-text,
   .fc-list-day-side-text {
     color: var(--foreground);
-    font-weight: 500;
+    font-weight: 600;
   }
 
   .fc-list-event {
     &:hover td {
-      background-color: var(--border);
+      background-color: rgba(212, 255, 0, 0.04);
     }
   }
 
@@ -197,13 +211,12 @@
   }
 
   .fc-day-other .fc-daygrid-day-number {
-    color: var(--color-muted-foreground);
-    opacity: 0.5;
+    color: var(--muted-foreground);
+    opacity: 0.4;
   }
 
-
   .fc-highlight {
-    background-color: rgba(212, 255, 0, 0.15);
+    background-color: rgba(212, 255, 0, 0.1);
   }
 
   .fc-daygrid-event-dot {
@@ -224,7 +237,7 @@
   justify-content: center;
   z-index: 1000;
   padding: 0.75rem;
-  backdrop-filter: blur(4px);
+  backdrop-filter: blur(8px);
 }
 
 .event-modal {
@@ -235,7 +248,7 @@
   max-width: 480px;
   width: 100%;
   position: relative;
-  box-shadow: 0 15px 45px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
   animation: modalSlideIn 0.3s ease-out;
   max-height: 90vh;
   overflow-y: auto;
@@ -262,7 +275,8 @@
 
     h2 {
       color: var(--foreground);
-      font-size: 1.125rem;
+      font-size: 1.1rem;
+      font-weight: 700;
       margin-bottom: 0.25rem;
     }
 
@@ -276,12 +290,11 @@
 @keyframes modalSlideIn {
   from {
     opacity: 0;
-    transform: translateY(-15px);
+    transform: translateY(-15px) scale(0.98);
   }
-
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
   }
 }
 
@@ -316,8 +329,8 @@
 
   label {
     color: var(--foreground);
-    font-weight: 500;
-    font-size: 0.75rem;
+    font-weight: 600;
+    font-size: 0.72rem;
     display: flex;
     align-items: center;
     gap: 0.375rem;
@@ -347,15 +360,16 @@
     padding: 0.625rem 0.75rem 0.625rem 2.25rem;
     background-color: var(--background-darker);
     border: 1px solid var(--border);
-    border-radius: 7.5px;
+    border-radius: 8px;
     color: var(--foreground);
     font-size: 0.75rem;
     font-family: inherit;
-    transition: border-color 0.2s;
+    transition: border-color 0.2s, box-shadow 0.2s;
 
     &:focus {
       border-color: var(--primary);
       outline: none;
+      box-shadow: 0 0 0 2px rgba(212, 255, 0, 0.1);
     }
 
     &::placeholder {
@@ -392,7 +406,7 @@
   background-color: var(--background-darker);
   border: 1px solid var(--border);
   color: var(--foreground);
-  border-radius: 7.5px;
+  border-radius: 8px;
   font-weight: 600;
   font-size: 0.75rem;
   transition: background-color 0.2s;
@@ -405,16 +419,16 @@
 .btn-save {
   flex: 1;
   padding: 0.625rem;
-  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  background: var(--primary);
   color: var(--background-darker);
-  border-radius: 7.5px;
+  border-radius: 8px;
   font-weight: 700;
   font-size: 0.75rem;
   transition: transform 0.2s, box-shadow 0.2s;
 
   &:hover {
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(212, 255, 0, 0.3);
+    box-shadow: 0 4px 16px rgba(212, 255, 0, 0.3);
   }
 
   &:disabled {
@@ -430,14 +444,14 @@
   background-color: transparent;
   border: 1px solid var(--error-red);
   color: var(--error-red);
-  border-radius: 7.5px;
+  border-radius: 8px;
   font-weight: 600;
   font-size: 0.75rem;
   transition: background-color 0.2s, color 0.2s;
 
   &:hover {
     background-color: var(--error-red);
-    color: var(--foreground);
+    color: white;
   }
 }
 
@@ -446,39 +460,40 @@ input[type="datetime-local"] {
   color-scheme: dark;
 }
 
-/* Status badge in modal */
+/* Status indicator badges */
 .status-indicator {
   display: inline-flex;
   align-items: center;
   gap: 0.375rem;
   padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-  font-size: 0.65rem;
-  font-weight: 600;
+  border-radius: 20px;
+  font-size: 0.62rem;
+  font-weight: 700;
   text-transform: uppercase;
+  letter-spacing: 0.03em;
 
   &.draft {
-    background-color: rgba(160, 160, 160, 0.2);
+    background-color: rgba(160, 160, 160, 0.15);
     color: var(--muted-foreground);
   }
 
   &.scheduled {
-    background-color: rgba(212, 255, 0, 0.2);
+    background-color: rgba(212, 255, 0, 0.15);
     color: var(--primary);
   }
 
   &.ongoing {
-    background-color: rgba(0, 255, 136, 0.2);
+    background-color: rgba(0, 255, 136, 0.15);
     color: var(--success-green);
   }
 
   &.completed {
-    background-color: rgba(99, 102, 241, 0.2);
+    background-color: rgba(99, 102, 241, 0.15);
     color: #6366f1;
   }
 
   &.cancelled {
-    background-color: rgba(255, 68, 68, 0.2);
+    background-color: rgba(255, 68, 68, 0.15);
     color: var(--error-red);
   }
 }
@@ -492,21 +507,20 @@ input[type="datetime-local"] {
   align-items: center;
   justify-content: center;
   border-radius: 12px;
+  backdrop-filter: blur(4px);
 }
 
 .loading-spinner {
   width: 32px;
   height: 32px;
-  border: 3px solid var(--border);
+  border: 2px solid var(--border);
   border-top-color: var(--primary);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
 
 @keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+  to { transform: rotate(360deg); }
 }
 
 /* Responsive */

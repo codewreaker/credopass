@@ -37,7 +37,7 @@ export function Home() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border/40 bg-background/80 backdrop-blur-xl">
+      <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border/30 bg-background/60 backdrop-blur-2xl backdrop-saturate-150">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
@@ -137,8 +137,8 @@ export function Home() {
             </div>
 
             {/* Headline */}
-            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight leading-[1.1]">
-              Track who <span className="text-primary">actually shows up</span>, not just who signed up
+            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-extrabold tracking-tighter leading-[1.05] text-balance">
+              Track who <span className="text-primary relative">actually shows up<span className="absolute -bottom-1 left-0 right-0 h-[3px] bg-primary/40 rounded-full" /></span>, not just who signed up
             </h1>
 
             {/* Subheadline */}
@@ -148,11 +148,11 @@ export function Home() {
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-              <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 text-base px-8 h-12" onClick={navigateToApp} >
+              <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 text-base px-8 h-12 shadow-[0_0_24px_rgba(212,255,0,0.2)] hover:shadow-[0_0_32px_rgba(212,255,0,0.35)] transition-all" onClick={navigateToApp} >
                 Start For Free
                 <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
-              <Button size="lg" variant="outline" className="text-base px-8 h-12">
+              <Button size="lg" variant="outline" className="text-base px-8 h-12 border-border/60 hover:border-primary/40 transition-all">
                 View Demo
               </Button>
             </div>
@@ -181,7 +181,7 @@ export function Home() {
               <div className="absolute inset-0 bg-gradient-to-t from-primary/20 to-transparent blur-3xl" />
 
               {/* Screenshot container */}
-              <div className="relative rounded-xl lg:rounded-2xl overflow-hidden border border-border/50 shadow-2xl bg-card">
+              <div className="relative rounded-xl lg:rounded-2xl overflow-hidden border border-border/40 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.5)] bg-card">
                 <ImageWithFallback
                   src="/images/dash-1.png"
                   alt="CredoPass Dashboard"
@@ -262,92 +262,92 @@ export function Home() {
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {/* Feature Cards */}
-            <Card className="p-6 bg-card border-border hover:border-primary/50 transition-all group">
-              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
-                <QrCode className="w-6 h-6 text-primary" />
+            <Card className="p-6 bg-card border-border/60 hover:border-primary/40 transition-all duration-300 group hover:shadow-[0_8px_32px_-8px_rgba(212,255,0,0.08)]">
+              <div className="w-11 h-11 bg-primary/10 rounded-lg flex items-center justify-center mb-4 group-hover:bg-primary/15 group-hover:scale-105 transition-all duration-300">
+                <QrCode className="w-5 h-5 text-primary" />
               </div>
-              <h3 className="text-xl font-semibold mb-2">QR Code Check-In</h3>
-              <p className="text-muted-foreground text-sm">
-                Instant check-ins with QR codes. No app downloads required—just scan and go.
+              <h3 className="text-lg font-bold mb-2 tracking-tight">QR Code Check-In</h3>
+              <p className="text-muted-foreground text-sm leading-relaxed">
+                Instant check-ins with QR codes. No app downloads required--just scan and go.
               </p>
             </Card>
 
-            <Card className="p-6 bg-card border-border hover:border-primary/50 transition-all group">
-              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
-                <LineChart className="w-6 h-6 text-primary" />
+            <Card className="p-6 bg-card border-border/60 hover:border-primary/40 transition-all duration-300 group hover:shadow-[0_8px_32px_-8px_rgba(212,255,0,0.08)]">
+              <div className="w-11 h-11 bg-primary/10 rounded-lg flex items-center justify-center mb-4 group-hover:bg-primary/15 group-hover:scale-105 transition-all duration-300">
+                <LineChart className="w-5 h-5 text-primary" />
               </div>
-              <h3 className="text-xl font-semibold mb-2">Real-Time Analytics</h3>
-              <p className="text-muted-foreground text-sm">
+              <h3 className="text-lg font-bold mb-2 tracking-tight">Real-Time Analytics</h3>
+              <p className="text-muted-foreground text-sm leading-relaxed">
                 Live attendance dashboards with trends, patterns, and actionable insights.
               </p>
             </Card>
 
-            <Card className="p-6 bg-card border-border hover:border-primary/50 transition-all group">
-              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
-                <Clock className="w-6 h-6 text-primary" />
+            <Card className="p-6 bg-card border-border/60 hover:border-primary/40 transition-all duration-300 group hover:shadow-[0_8px_32px_-8px_rgba(212,255,0,0.08)]">
+              <div className="w-11 h-11 bg-primary/10 rounded-lg flex items-center justify-center mb-4 group-hover:bg-primary/15 group-hover:scale-105 transition-all duration-300">
+                <Clock className="w-5 h-5 text-primary" />
               </div>
-              <h3 className="text-xl font-semibold mb-2">Time Tracking</h3>
-              <p className="text-muted-foreground text-sm">
+              <h3 className="text-lg font-bold mb-2 tracking-tight">Time Tracking</h3>
+              <p className="text-muted-foreground text-sm leading-relaxed">
                 Precise check-in and check-out times. Know exactly when people arrive and leave.
               </p>
             </Card>
 
-            <Card className="p-6 bg-card border-border hover:border-primary/50 transition-all group">
-              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
-                <UserCheck className="w-6 h-6 text-primary" />
+            <Card className="p-6 bg-card border-border/60 hover:border-primary/40 transition-all duration-300 group hover:shadow-[0_8px_32px_-8px_rgba(212,255,0,0.08)]">
+              <div className="w-11 h-11 bg-primary/10 rounded-lg flex items-center justify-center mb-4 group-hover:bg-primary/15 group-hover:scale-105 transition-all duration-300">
+                <UserCheck className="w-5 h-5 text-primary" />
               </div>
-              <h3 className="text-xl font-semibold mb-2">Member Management</h3>
-              <p className="text-muted-foreground text-sm">
+              <h3 className="text-lg font-bold mb-2 tracking-tight">Member Management</h3>
+              <p className="text-muted-foreground text-sm leading-relaxed">
                 Import your existing database. Custom fields and loyalty tiers included.
               </p>
             </Card>
 
-            <Card className="p-6 bg-card border-border hover:border-primary/50 transition-all group">
-              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
-                <Smartphone className="w-6 h-6 text-primary" />
+            <Card className="p-6 bg-card border-border/60 hover:border-primary/40 transition-all duration-300 group hover:shadow-[0_8px_32px_-8px_rgba(212,255,0,0.08)]">
+              <div className="w-11 h-11 bg-primary/10 rounded-lg flex items-center justify-center mb-4 group-hover:bg-primary/15 group-hover:scale-105 transition-all duration-300">
+                <Smartphone className="w-5 h-5 text-primary" />
               </div>
-              <h3 className="text-xl font-semibold mb-2">Offline-First</h3>
-              <p className="text-muted-foreground text-sm">
+              <h3 className="text-lg font-bold mb-2 tracking-tight">Offline-First</h3>
+              <p className="text-muted-foreground text-sm leading-relaxed">
                 Check-ins work without internet. Auto-sync when connection returns.
               </p>
             </Card>
 
-            <Card className="p-6 bg-card border-border hover:border-primary/50 transition-all group">
-              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
-                <Globe className="w-6 h-6 text-primary" />
+            <Card className="p-6 bg-card border-border/60 hover:border-primary/40 transition-all duration-300 group hover:shadow-[0_8px_32px_-8px_rgba(212,255,0,0.08)]">
+              <div className="w-11 h-11 bg-primary/10 rounded-lg flex items-center justify-center mb-4 group-hover:bg-primary/15 group-hover:scale-105 transition-all duration-300">
+                <Globe className="w-5 h-5 text-primary" />
               </div>
-              <h3 className="text-xl font-semibold mb-2">Integrations</h3>
-              <p className="text-muted-foreground text-sm">
+              <h3 className="text-lg font-bold mb-2 tracking-tight">Integrations</h3>
+              <p className="text-muted-foreground text-sm leading-relaxed">
                 Works alongside EventBrite, Meetup, and your existing event tools.
               </p>
             </Card>
 
-            <Card className="p-6 bg-card border-border hover:border-primary/50 transition-all group">
-              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
-                <Award className="w-6 h-6 text-primary" />
+            <Card className="p-6 bg-card border-border/60 hover:border-primary/40 transition-all duration-300 group hover:shadow-[0_8px_32px_-8px_rgba(212,255,0,0.08)]">
+              <div className="w-11 h-11 bg-primary/10 rounded-lg flex items-center justify-center mb-4 group-hover:bg-primary/15 group-hover:scale-105 transition-all duration-300">
+                <Award className="w-5 h-5 text-primary" />
               </div>
-              <h3 className="text-xl font-semibold mb-2">Loyalty Program</h3>
-              <p className="text-muted-foreground text-sm">
+              <h3 className="text-lg font-bold mb-2 tracking-tight">Loyalty Program</h3>
+              <p className="text-muted-foreground text-sm leading-relaxed">
                 Reward frequent attendees with points, tiers, and recognition.
               </p>
             </Card>
 
-            <Card className="p-6 bg-card border-border hover:border-primary/50 transition-all group">
-              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
-                <Shield className="w-6 h-6 text-primary" />
+            <Card className="p-6 bg-card border-border/60 hover:border-primary/40 transition-all duration-300 group hover:shadow-[0_8px_32px_-8px_rgba(212,255,0,0.08)]">
+              <div className="w-11 h-11 bg-primary/10 rounded-lg flex items-center justify-center mb-4 group-hover:bg-primary/15 group-hover:scale-105 transition-all duration-300">
+                <Shield className="w-5 h-5 text-primary" />
               </div>
-              <h3 className="text-xl font-semibold mb-2">Enterprise Security</h3>
-              <p className="text-muted-foreground text-sm">
+              <h3 className="text-lg font-bold mb-2 tracking-tight">Enterprise Security</h3>
+              <p className="text-muted-foreground text-sm leading-relaxed">
                 SOC 2 compliant. Data encryption at rest and in transit.
               </p>
             </Card>
 
-            <Card className="p-6 bg-card border-border hover:border-primary/50 transition-all group">
-              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
-                <Database className="w-6 h-6 text-primary" />
+            <Card className="p-6 bg-card border-border/60 hover:border-primary/40 transition-all duration-300 group hover:shadow-[0_8px_32px_-8px_rgba(212,255,0,0.08)]">
+              <div className="w-11 h-11 bg-primary/10 rounded-lg flex items-center justify-center mb-4 group-hover:bg-primary/15 group-hover:scale-105 transition-all duration-300">
+                <Database className="w-5 h-5 text-primary" />
               </div>
-              <h3 className="text-xl font-semibold mb-2">Export & API</h3>
-              <p className="text-muted-foreground text-sm">
+              <h3 className="text-lg font-bold mb-2 tracking-tight">Export & API</h3>
+              <p className="text-muted-foreground text-sm leading-relaxed">
                 Full API access. Export data for reports, grants, and presentations.
               </p>
             </Card>
@@ -490,20 +490,20 @@ export function Home() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
             <div className="text-center space-y-2">
-              <p className="text-5xl lg:text-6xl font-bold text-primary">10k+</p>
-              <p className="text-sm text-muted-foreground">Active Organizations</p>
+              <p className="text-5xl lg:text-6xl font-extrabold tracking-tighter text-primary drop-shadow-[0_0_24px_rgba(212,255,0,0.3)]">10k+</p>
+              <p className="text-sm font-medium text-muted-foreground">Active Organizations</p>
             </div>
             <div className="text-center space-y-2">
-              <p className="text-5xl lg:text-6xl font-bold text-primary">5M+</p>
-              <p className="text-sm text-muted-foreground">Check-ins Processed</p>
+              <p className="text-5xl lg:text-6xl font-extrabold tracking-tighter text-primary drop-shadow-[0_0_24px_rgba(212,255,0,0.3)]">5M+</p>
+              <p className="text-sm font-medium text-muted-foreground">Check-ins Processed</p>
             </div>
             <div className="text-center space-y-2">
-              <p className="text-5xl lg:text-6xl font-bold text-primary">99.9%</p>
-              <p className="text-sm text-muted-foreground">Uptime</p>
+              <p className="text-5xl lg:text-6xl font-extrabold tracking-tighter text-primary drop-shadow-[0_0_24px_rgba(212,255,0,0.3)]">99.9%</p>
+              <p className="text-sm font-medium text-muted-foreground">Uptime</p>
             </div>
             <div className="text-center space-y-2">
-              <p className="text-5xl lg:text-6xl font-bold text-primary">24/7</p>
-              <p className="text-sm text-muted-foreground">Support</p>
+              <p className="text-5xl lg:text-6xl font-extrabold tracking-tighter text-primary drop-shadow-[0_0_24px_rgba(212,255,0,0.3)]">24/7</p>
+              <p className="text-sm font-medium text-muted-foreground">Support</p>
             </div>
           </div>
         </div>
@@ -520,7 +520,7 @@ export function Home() {
           </div>
 
           <div className="grid md:grid-cols-3 gap-6">
-            <Card className="p-6 bg-card border-border">
+            <Card className="p-6 bg-card border-border/60 hover:border-border transition-all duration-300">
               <div className="flex text-primary mb-4">
                 {[...Array(5)].map((_, i) => (
                   <svg key={i} className="w-5 h-5 fill-current" viewBox="0 0 20 20">
@@ -542,7 +542,7 @@ export function Home() {
               </div>
             </Card>
 
-            <Card className="p-6 bg-card border-border">
+            <Card className="p-6 bg-card border-border/60 hover:border-border transition-all duration-300">
               <div className="flex text-primary mb-4">
                 {[...Array(5)].map((_, i) => (
                   <svg key={i} className="w-5 h-5 fill-current" viewBox="0 0 20 20">
@@ -564,7 +564,7 @@ export function Home() {
               </div>
             </Card>
 
-            <Card className="p-6 bg-card border-border">
+            <Card className="p-6 bg-card border-border/60 hover:border-border transition-all duration-300">
               <div className="flex text-primary mb-4">
                 {[...Array(5)].map((_, i) => (
                   <svg key={i} className="w-5 h-5 fill-current" viewBox="0 0 20 20">
@@ -647,7 +647,7 @@ export function Home() {
                 </Card>
 
                 {/* Starter - Featured */}
-                <Card className="p-8 bg-card border-primary shadow-xl relative">
+                <Card className="p-8 bg-card border-primary shadow-[0_16px_48px_-8px_rgba(212,255,0,0.15)] relative">
                   <div className="absolute -top-4 left-1/2 -translate-x-1/2">
                     <Badge className="bg-primary text-primary-foreground border-0">Most Popular</Badge>
                   </div>
@@ -741,18 +741,18 @@ export function Home() {
 
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative">
           <div className="max-w-3xl mx-auto text-center space-y-8">
-            <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight">
+            <h2 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tighter text-balance">
               Ready to track <span className="text-primary">real attendance</span>?
             </h2>
             <p className="text-lg text-muted-foreground">
               Join thousands of organizations using CredoPass to understand member engagement.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-              <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 text-base px-8 h-12" onClick={navigateToApp}>
+              <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 text-base px-8 h-12 shadow-[0_0_24px_rgba(212,255,0,0.2)] hover:shadow-[0_0_32px_rgba(212,255,0,0.35)] transition-all" onClick={navigateToApp}>
                 Start For Free
                 <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
-              <Button size="lg" variant="outline" className="text-base px-8 h-12">
+              <Button size="lg" variant="outline" className="text-base px-8 h-12 border-border/60 hover:border-primary/40 transition-all">
                 Schedule Demo
               </Button>
             </div>
