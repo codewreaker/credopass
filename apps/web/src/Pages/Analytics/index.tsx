@@ -1,5 +1,6 @@
 import React, { useMemo } from "react";
 import { Users, Calendar, TrendingUp, Award } from "lucide-react";
+import { useToolbarContext } from '../../hooks/use-toolbar-context';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, PieChart, Pie } from "recharts";
 import type { ChartConfig } from "@credopass/ui";
 import {
@@ -133,6 +134,12 @@ const stats = [
 // --- Component ---
 
 const Analytics: React.FC = () => {
+  // Analytics page: no search, no secondary action
+  useToolbarContext({
+    action: null,
+    search: { enabled: false, placeholder: '' },
+  });
+
   const statCards = useMemo(() => {
     return stats.map((stat) => {
       const Icon = stat.icon;

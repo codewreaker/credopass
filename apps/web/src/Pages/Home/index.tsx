@@ -14,8 +14,10 @@ import {
   MapPin,
   Clock,
   ArrowRight,
+  Settings,
 } from 'lucide-react';
 import { useNavigate } from '@tanstack/react-router';
+import { useToolbarContext } from '../../hooks/use-toolbar-context';
 import './home.css';
 
 const GREETINGS: Record<string, string> = {
@@ -97,6 +99,16 @@ export default function HomePage() {
   const greeting = useMemo(() => getGreeting(), []);
   const navigate = useNavigate();
   const { openLauncher } = useLauncher();
+
+  // Dashboard: settings button, no search
+  const handleOpenSettings = useCallback(() => {
+    navigate({ to: '/organizations' });
+  }, [navigate]);
+
+  useToolbarContext({
+    action: { icon: Settings, label: 'Settings', onClick: handleOpenSettings },
+    search: { enabled: false, placeholder: '' },
+  });
 
   const { events: eventCollection } = getCollections();
   const { data: eventsData } = useLiveQuery((q) => q.from({ eventCollection }));

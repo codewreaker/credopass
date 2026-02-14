@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { count, useLiveQuery } from '@tanstack/react-db';
 
 import {
@@ -18,6 +18,7 @@ import {
 import { getCollections } from '../../lib/tanstack-db';
 import { useOrganizationStore, useLauncher } from '../../stores/store';
 import type { Organization, OrgPlan } from '@credopass/lib/schemas';
+import { useToolbarContext, useSearchQuery } from '../../hooks/use-toolbar-context';
 import {
   Card,
   CardContent,
@@ -179,13 +180,25 @@ const OrganizationsPage: React.FC = () => {
     events: eventCollection
   } = getCollections();
 
+  const handleCreateNew = useCallback(() => {
+    launchOrganizationForm({}, openLauncher);
+  }, [openLauncher]);
+
+  // Register toolbar context: secondary "Add Organization" button + search
+  useToolbarContext({
+    action: { icon: Building2, label: 'New Organization', onClick: handleCreateNew },
+    search: { enabled: true, placeholder: 'Search organizations\u2026' },
+  });
+
+  // Subscribe to debounced search query
+  const searchQuery = useSearchQuery();
+
 
   const orgsQuery = useLiveQuery((query) =>
     query
       .from({ organizationCollection })
   );
 
-  // Filter events by organization ID
   // Count events grouped by organizationId
   const eventCount = useLiveQuery((q) =>
     q
@@ -199,7 +212,18 @@ const OrganizationsPage: React.FC = () => {
 
 
   const organizations = (orgsQuery.data ?? []);
-  console.log('Organizations fetched:', organizations);
+
+  // Filter organizations by search query
+  const filteredOrganizations = useMemo(() => {
+    if (!searchQuery.trim()) return organizations;
+    const q = searchQuery.toLowerCase();
+    return organizations.filter(
+      (org: Organization) =>
+        org.name?.toLowerCase().includes(q) ||
+        org.slug?.toLowerCase().includes(q) ||
+        org.plan?.toLowerCase().includes(q),
+    );
+  }, [organizations, searchQuery]);
 
   const handleSelectOrganization = (org: Organization) => {
     setActiveOrganization(org.id, org);
@@ -215,10 +239,6 @@ const OrganizationsPage: React.FC = () => {
       },
       isEditing: true
     }, openLauncher);
-  };
-
-  const handleCreateNew = () => {
-    launchOrganizationForm({}, openLauncher);
   };
 
   // Empty state
@@ -241,10 +261,10 @@ const OrganizationsPage: React.FC = () => {
 
   return (
     <div className="organizations-page">
-      <PageHeader orgCount={organizations.length} onCreateNew={handleCreateNew} />
+      <PageHeader orgCount={filteredOrganizations.length} onCreateNew={handleCreateNew} />
 
       <div className="org-grid">
-        {organizations.map((org) => (
+        {filteredOrganizations.map((org: Organization) => (
           <OrganizationCard
             key={org.id}
             org={org}

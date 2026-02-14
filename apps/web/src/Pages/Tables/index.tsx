@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import type { ColDef } from 'ag-grid-community';
 import Loader from '../../components/loader';
+import { useToolbarContext } from '../../hooks/use-toolbar-context';
 import './style.css';
 
 import {
@@ -41,6 +42,12 @@ const IconMapping: { [key in TableName]: React.ElementType } = {
 export default function DatabasePage() {
   const [selectedTable, setSelectedTable] = useState<TableName>('users');
   const isMobile = useIsMobile();
+
+  // Tables page: no search, no secondary action
+  useToolbarContext({
+    action: null,
+    search: { enabled: false, placeholder: '' },
+  });
 
   const tables: TableName[] = ['users', 'events', 'attendance', 'loyalty', 'organizations', 'orgMemberships', 'eventMembers'];
 

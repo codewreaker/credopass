@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { useLauncher } from '../../stores/store';
 import { launchEventForm } from '../../containers/EventForm/index';
+import { useToolbarContext } from '../../hooks/use-toolbar-context';
 import './event-detail.css';
 
 const STATUS_STYLES: Record<string, string> = {
@@ -41,6 +42,12 @@ const EventDetailPage: React.FC = () => {
         const events = Array.isArray(eventsData) ? eventsData : [];
         return events.find((e) => e.id === eventId);
     }, [eventsData, eventId]);
+
+    // Event detail page: no search, no secondary action
+    useToolbarContext({
+        action: null,
+        search: { enabled: false, placeholder: '' },
+    });
 
     const handleBack = () => {
         navigate({ to: '/events' });

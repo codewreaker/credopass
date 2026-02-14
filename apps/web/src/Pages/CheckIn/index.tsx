@@ -2,6 +2,7 @@ import React, { useMemo, useState, useCallback, useEffect } from 'react';
 import { useLiveQuery } from '@tanstack/react-db';
 import { useParams, useNavigate } from '@tanstack/react-router';
 import { useEventSessionStore, useLauncher } from '../../stores/store';
+import { useToolbarContext } from '../../hooks/use-toolbar-context';
 import type { User, EventType } from '@credopass/lib/schemas';
 import { getCollections } from '../../lib/tanstack-db';
 import { launchEventForm } from '../../containers/EventForm';
@@ -37,6 +38,12 @@ const CheckInPage: React.FC = () => {
   const { events: eventCollection } = getCollections();
   const { openLauncher } = useLauncher();
   const isMobile = useIsMobile();
+
+  // Check-in page: no search, no secondary action
+  useToolbarContext({
+    action: null,
+    search: { enabled: false, placeholder: '' },
+  });
 
   // Fetch events using TanStack DB live query
   const { data: eventsData, isLoading } = useLiveQuery((q) => q.from({ eventCollection }));

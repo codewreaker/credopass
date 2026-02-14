@@ -292,7 +292,13 @@ export function Home() {
             <div className="max-w-3xl mx-auto text-center flex flex-col gap-6">
               <Badge variant="outline" className="border-destructive/50 text-destructive w-fit mx-auto">The Problem</Badge>
               <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tighter leading-tight text-balance">
-                Ticketing doesn't tell you who <span className="text-primary">actually attended</span>
+                Ticketing doesn't tell you who 
+                <span className='relative inline-block ml-2'>
+                  <span className="text-primary">actually attended</span>
+                  <svg className="absolute -bottom-2 left-0 w-full" viewBox="0 0 300 12" fill="none" aria-hidden="true">
+                    <path d="M2 8.5C50 2.5 100 2 150 5.5C200 9 250 4.5 298 7" stroke="currentColor" strokeWidth="3" strokeLinecap="round" className="text-primary/40" />
+                  </svg>
+                </span>
               </h2>
               <p className="text-lg text-muted-foreground leading-relaxed">
                 EventBrite and similar platforms manage payments beautifully. But they don't capture the data you actually need: real attendance, engagement patterns, and member behavior.
