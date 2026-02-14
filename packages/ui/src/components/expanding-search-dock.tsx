@@ -27,7 +27,7 @@ export function ExpandingSearchDock({
   // On mobile, dynamically calculate a width that fits the viewport
   // leaving room for other header elements (plus btn, spacer, secondary action)
   const expandedWidth = isMobile
-    ? Math.min((typeof window !== 'undefined' ? window.innerWidth : 375) - 120, 260)
+    ? Math.min((typeof window !== 'undefined' ? window.innerWidth : 375) - 185, 260)
     : 320;
 
   const handleExpand = () => {
