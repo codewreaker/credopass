@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { count, useLiveQuery } from '@tanstack/react-db';
 
 import {
@@ -18,7 +18,7 @@ import {
 import { getCollections } from '../../lib/tanstack-db';
 import { useOrganizationStore, useLauncher } from '../../stores/store';
 import type { Organization, OrgPlan } from '@credopass/lib/schemas';
-import { useToolbarContext, useSearchQuery } from '../../hooks/use-toolbar-context';
+import { useToolbarContext } from '../../hooks/use-toolbar-context';
 import {
   Card,
   CardContent,
@@ -173,6 +173,7 @@ const PageHeader: React.FC<HeaderProps> = ({ orgCount, onCreateNew }) => (
 const OrganizationsPage: React.FC = () => {
   const { openLauncher } = useLauncher();
   const { activeOrganizationId, setActiveOrganization } = useOrganizationStore();
+  const [searchQuery, setSearchQuery] = useState<string>('')
 
   // Get collections inside component
   const {
@@ -187,11 +188,9 @@ const OrganizationsPage: React.FC = () => {
   // Register toolbar context: secondary "Add Organization" button + search
   useToolbarContext({
     action: { icon: Building2, label: 'New Organization', onClick: handleCreateNew },
-    search: { enabled: true, placeholder: 'Search organizations\u2026' },
+    search: { enabled: true, placeholder: 'Search organizations\u2026', onSearch:setSearchQuery },
   });
 
-  // Subscribe to debounced search query
-  const searchQuery = useSearchQuery();
 
 
   const orgsQuery = useLiveQuery((query) =>

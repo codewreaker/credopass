@@ -7,7 +7,7 @@ import { launchEventForm, type EventFormProps } from '../../containers/EventForm
 import CalendarPage from './Calendar/index';
 import EventListView from './EventListView';
 import { Calendar, CalendarPlus, List, Plus } from 'lucide-react';
-import { useToolbarContext, useSearchQuery } from '../../hooks/use-toolbar-context';
+import { useToolbarContext } from '../../hooks/use-toolbar-context';
 import './events.css';
 
 type ViewMode = 'calendar' | 'list';
@@ -16,6 +16,7 @@ const EventsPage = () => {
     const { openLauncher } = useLauncher();
     const { events: eventCollection } = getCollections();
     const [viewMode, setViewMode] = useState<ViewMode>('list');
+    const [searchQuery, setSearchQuery] = useState<string>('')
 
     const { data: eventsData } = useLiveQuery((q) => q.from({ eventCollection }));
     const events = useMemo<EventType[]>(
@@ -37,11 +38,8 @@ const EventsPage = () => {
     // Register toolbar context: secondary "Create Event" button + search
     useToolbarContext({
         action: { icon: CalendarPlus, label: 'Create Event', onClick: handleCreateEvent },
-        search: { enabled: true, placeholder: 'Search events…' },
+        search: { enabled: true, placeholder: 'Search events…', onSearch: setSearchQuery },
     });
-
-    // Subscribe to debounced search query from toolbar
-    const searchQuery = useSearchQuery();
 
     // Filter events by search query (name, location, description)
     const filteredEvents = useMemo<EventType[]>(() => {

@@ -3,23 +3,26 @@
    ================================================================ */
 
 .app-container {
-  min-height: 100vh;
+  height: 100svh;
   display: flex;
   flex-direction: column;
   background-color: var(--background);
+  overflow: hidden;
 }
 
 .app-layout {
   display: flex;
   flex: 1;
-  position: relative;
+  overflow: hidden;
 }
 
 .main-content {
   flex: 1;
-  min-height: 100vh;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
   background-color: var(--background);
+  overflow: hidden;
+  min-height: 0;
 }
 
 /* Header bar with glass effect */
@@ -34,15 +37,16 @@
   background: var(--glass-bg);
   backdrop-filter: blur(var(--glass-blur));
   -webkit-backdrop-filter: blur(var(--glass-blur));
-  position: sticky;
-  top: 0;
   z-index: 30;
+  flex-shrink: 0;
 }
 
 /* Main content area -- Luma-like generous padding */
 .page-content {
   padding: 1.5rem 1.75rem;
-  min-height: calc(100vh - 3.5rem);
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
 }
 
 /* Page header component */

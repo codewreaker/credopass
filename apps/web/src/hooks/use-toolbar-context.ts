@@ -17,6 +17,7 @@ import { useToolbarStore, type ToolbarContext } from '../stores/toolbar-store';
 export function useToolbarContext(config: Partial<ToolbarContext>) {
   const setContext = useToolbarStore((s) => s.setContext);
   const resetContext = useToolbarStore((s) => s.resetContext);
+  const searchQuery = useToolbarStore((s) => s.searchQuery);
 
   // Store latest config in a ref so the effect closure never goes stale
   // but we don't re-run the effect on every render either.
@@ -32,16 +33,11 @@ export function useToolbarContext(config: Partial<ToolbarContext>) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [setContext, resetContext]);
 
+  useEffect(()=>{
+    configRef.current.search?.onSearch?.(searchQuery);
+  },[searchQuery])
+
   // Expose an imperative update for cases where the page needs to
   // change the toolbar config after mount (e.g., after data loads).
   return { updateContext: setContext };
-}
-
-/**
- * useSearchQuery – subscribe to the debounced search query.
- * Pages call this to read the current value without subscribing
- * to unrelated toolbar state (rerender-derived-state).
- */
-export function useSearchQuery(): string {
-  return useToolbarStore((s) => s.searchQuery);
 }

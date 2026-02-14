@@ -1,6 +1,5 @@
 import React, { useEffect, useCallback, useRef } from 'react';
 import {
-  Bell,
   Plus,
 } from 'lucide-react';
 import { launchSignInForm } from '../SignInModal/index';
@@ -87,17 +86,14 @@ export const TopNavBar: React.FC = () => {
 
   return (
     <div className={cn('topbar-container', isMobile && 'topbar-mobile')}>
-      {/* Contextual search – shows/hides based on page context */}
-      <ContextualSearch />
-
-      {/* Spacer pushes actions to the right when search is hidden */}
+      {/* Spacer pushes actions to the right */}
       <div className="topbar-spacer" />
 
       {/* Right actions -- compact */}
       <div className="topbar-actions">
-        {/* Context-aware secondary action button */}
+        {/* Contextual search + secondary action grouped */}
+        <ContextualSearch />
         <SecondaryActionButton />
-
         {/* Plus button -- opens command palette */}
         <button
           type="button"
@@ -107,16 +103,6 @@ export const TopNavBar: React.FC = () => {
           title="Command palette (⌘K)"
         >
           <Plus size={16} strokeWidth={2} />
-        </button>
-
-        {/* Notifications */}
-        <button
-          type="button"
-          className="topbar-icon-btn"
-          aria-label="Notifications"
-        >
-          <Bell size={16} />
-          <span className="topbar-notification-dot" />
         </button>
       </div>
     </div>

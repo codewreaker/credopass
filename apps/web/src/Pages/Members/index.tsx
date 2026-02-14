@@ -1,9 +1,9 @@
+import React, { useCallback, useState } from "react";
 import { useLiveQuery } from '@tanstack/react-db'
 import { type UserType, type AttendanceType, type LoyaltyType, User } from '@credopass/lib/schemas'
 import { getCollections } from '../../lib/tanstack-db'
 import type { ColDef, IOverlayParams, RowClickedEvent } from 'ag-grid-community'
 
-import React, { useCallback } from "react";
 import GridTable, { type MenuItem } from "../../components/grid-table/index";
 
 import { PlusCircle, Filter, UserPlus } from "lucide-react";
@@ -11,7 +11,7 @@ import { useLauncher } from '../../stores/store';
 import { launchUserForm } from '../../containers/UserForm/index';
 import EmptyState from '../../components/empty-state';
 import Loader from '../../components/loader';
-import { useToolbarContext, useSearchQuery } from '../../hooks/use-toolbar-context';
+import { useToolbarContext } from '../../hooks/use-toolbar-context';
 
 
 const columnDefs: ColDef<UserType & LoyaltyType & AttendanceType>[] = [
@@ -127,6 +127,7 @@ const handleRowClick = (_type: string, _e?: React.SyntheticEvent | RowClickedEve
 export default function MembersPage() {
   const { users: userCollection } = getCollections();
   const { data, isLoading } = useLiveQuery((q) => q.from({ userCollection }));
+  const [searchQuery, setSearchQuery] = useState<string>('')
 
   // Use collection's error tracking utilities
   const isError = userCollection.utils.isError;
@@ -141,11 +142,8 @@ export default function MembersPage() {
   // Register toolbar context: secondary "Add Person" button + search
   useToolbarContext({
     action: { icon: UserPlus, label: 'Add Person', onClick: handleCreateUser },
-    search: { enabled: true, placeholder: 'Search members…' },
+    search: { enabled: true, placeholder: 'Search members…', onSearch: setSearchQuery },
   });
-
-  // Debounced search query from toolbar
-  const searchQuery = useSearchQuery();
 
   const deleteUser = (userIds: User[]) => {
     userIds.forEach((user) => {
@@ -185,7 +183,7 @@ export default function MembersPage() {
   }, [openLauncher]);
 
   if (isLoading) return <Loader />
-  
+
 
   return (
     <>
