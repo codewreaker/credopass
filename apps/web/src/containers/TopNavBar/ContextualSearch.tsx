@@ -29,17 +29,21 @@ const ContextualSearch: React.FC = () => {
 
   const [localValue, setLocalValue] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  // Combined close: clear local + store state
+  const closeSearch = useCallback(() => {
+    setLocalValue('');
+    hideSearch();
+  }, [hideSearch]);
 
   // Focus input when expanded
   useEffect(() => {
     if (searchVisible) {
-      // Small delay to let the CSS transition start before focusing
       const t = setTimeout(() => inputRef.current?.focus(), 60);
       return () => clearTimeout(t);
     }
-    // Clear local state when collapsing
-    setLocalValue('');
+    return undefined;
   }, [searchVisible]);
 
   // Debounce handler
@@ -63,18 +67,18 @@ const ContextualSearch: React.FC = () => {
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
       if (e.key === 'Escape') {
-        hideSearch();
+        closeSearch();
       }
     },
-    [hideSearch],
+    [closeSearch],
   );
 
   // Blur handler: collapse if empty
   const handleBlur = useCallback(() => {
     if (!localValue.trim()) {
-      hideSearch();
+      closeSearch();
     }
-  }, [localValue, hideSearch]);
+  }, [localValue, closeSearch]);
 
   if (!searchEnabled) return null;
 
@@ -97,7 +101,7 @@ const ContextualSearch: React.FC = () => {
           <button
             type="button"
             className="toolbar-search-clear"
-            onClick={hideSearch}
+            onClick={closeSearch}
             aria-label="Close search"
             tabIndex={-1}
           >
