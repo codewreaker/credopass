@@ -1,11 +1,9 @@
 import React, { useEffect, useCallback, useRef } from 'react';
 import {
   Search,
-  Calendar,
   Bell,
   Plus,
 } from 'lucide-react';
-import { Button } from '@credopass/ui';
 import { launchSignInForm } from '../SignInModal/index';
 import { launchUserForm } from '../UserForm/index';
 
@@ -95,10 +93,6 @@ export const TopNavBar: React.FC = () => {
     return () => document.removeEventListener('keydown', down);
   }, []);
 
-  const handleNewEvent = useCallback(() => {
-    launchEventForm({ isEditing: false }, openLauncher);
-  }, [openLauncher]);
-
   return (
     <div className={cn('topbar-container', isMobile && 'topbar-mobile')}>
       {/* Search trigger -- centered, clean */}
@@ -119,22 +113,17 @@ export const TopNavBar: React.FC = () => {
         )}
       </button>
 
-      {/* Right actions -- compact, breathing room */}
+      {/* Right actions -- compact */}
       <div className="topbar-actions">
-        {/* New Event -- primary CTA */}
-        <Button
-          variant="default"
-          size={isMobile ? 'icon' : 'sm'}
-          onClick={handleNewEvent}
-          className="topbar-new-event-btn"
+        {/* Plus button -- opens command palette (like Luma's + button) */}
+        <button
+          type="button"
+          className="topbar-plus-btn"
+          onClick={openCommandPalette}
+          aria-label="Quick actions"
         >
-          {isMobile ? <Plus size={16} /> : (
-            <>
-              <Calendar size={14} />
-              <span>New Event</span>
-            </>
-          )}
-        </Button>
+          <Plus size={16} strokeWidth={2} />
+        </button>
 
         {/* Notifications */}
         <button

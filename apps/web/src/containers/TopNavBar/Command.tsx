@@ -11,7 +11,6 @@ import {
   LogIn,
   QrCode,
   Building2,
-  ArrowRight,
   Hash,
 } from 'lucide-react';
 
@@ -107,7 +106,6 @@ const CommandPalette: React.FC<{
           <CommandItem onSelect={() => handleNavigate('/dashboard')} className="command-palette-item">
             <LayoutDashboard className="command-palette-item-icon" />
             <span>Dashboard</span>
-            <ArrowRight className="ml-auto w-3 h-3 text-muted-foreground/40 opacity-0 group-data-selected:opacity-100 transition-opacity" />
             <CommandShortcut>{'⌘H'}</CommandShortcut>
           </CommandItem>
           <CommandItem onSelect={() => handleNavigate('/checkin')} className="command-palette-item">
