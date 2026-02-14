@@ -86,16 +86,6 @@ export const TopNavBar: React.FC = () => {
 
   return (
     <div className={cn('topbar-container', isMobile && 'topbar-mobile')}>
-      {/* Plus button -- opens command palette */}
-      <button
-        type="button"
-        className="topbar-plus-btn"
-        onClick={openCommandPalette}
-        aria-label="Quick actions"
-        title="Command palette (⌘K)"
-      >
-        <Plus size={16} strokeWidth={2} />
-      </button>
       {/* Spacer pushes actions to the right */}
       <div className="topbar-spacer" />
 
@@ -104,7 +94,16 @@ export const TopNavBar: React.FC = () => {
         {/* Contextual search + secondary action grouped */}
         <ContextualSearch />
         <SecondaryActionButton />
-
+        {/* Plus button -- opens command palette */}
+        <button
+          type="button"
+          className="topbar-plus-btn"
+          onClick={openCommandPalette}
+          aria-label="Quick actions"
+          title="Command palette (⌘K)"
+        >
+          <Plus size={16} strokeWidth={2} />
+        </button>
       </div>
     </div>
   );

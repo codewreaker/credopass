@@ -2,24 +2,36 @@
 
 import { AnimatePresence, motion } from "motion/react";
 import { Search, X } from "lucide-react";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { cn } from "@credopass/ui/lib/utils";
+import { useIsMobile } from "../hooks/use-mobile";
 
 type ExpandingSearchDockProps = {
   onSearch?: (query: string) => void;
   className?: string;
   placeholder?: string;
+  disabled?: boolean;
 };
 
 export function ExpandingSearchDock({
   onSearch,
   className,
-  placeholder = "Search..."
+  placeholder = "Search...",
+  disabled
 }: ExpandingSearchDockProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [query, setQuery] = useState("");
+  const isMobile = useIsMobile();
+
+
+  // On mobile, dynamically calculate a width that fits the viewport
+  // leaving room for other header elements (plus btn, spacer, secondary action)
+  const expandedWidth = isMobile
+    ? Math.min((typeof window !== 'undefined' ? window.innerWidth : 375) - 120, 260)
+    : 320;
 
   const handleExpand = () => {
+    if (disabled) return;
     setIsExpanded(true);
   };
 
@@ -28,12 +40,24 @@ export function ExpandingSearchDock({
     setQuery("");
   };
 
+
   const handleSubmit = (e: React.FormEvent) => {
+    console.log("Submitting search with query:", query);
     e.preventDefault();
     if (onSearch && query) {
       onSearch(query);
     }
   };
+
+  const handleChange = useCallback(({ target: { value } }: React.ChangeEvent<HTMLInputElement>) => {
+    setQuery(value);
+  }, []);
+
+  useEffect(() => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions, react-hooks/set-state-in-effect
+    disabled && handleCollapse();
+  }, [disabled]);
+
 
   return (
     <div className={cn("relative", className)}>
@@ -45,22 +69,21 @@ export function ExpandingSearchDock({
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0, opacity: 0 }}
             onClick={handleExpand}
-            className="flex h-8 w-8 items-center justify-center rounded-full border border-border bg-card transition-colors hover:bg-muted"
+            className={`flex h-8 w-8 items-center justify-center rounded-full border border-border bg-card transition-colors ${disabled ? '' : 'hover:bg-muted'}`}
           >
-            <Search className="h-5 w-5" />
+            <Search className={`h-5 w-5 ${disabled ? "text-muted-foreground" : ""}`} />
           </motion.button>
         ) : (
           <motion.form
             key="input"
             initial={{ width: 48, opacity: 0 }}
-            animate={{ width: 320, opacity: 1 }}
+            animate={{ width: expandedWidth, opacity: 1 }}
             exit={{ width: 48, opacity: 0 }}
             transition={{
               type: "spring",
               stiffness: 300,
               damping: 30,
             }}
-            //onSubmit={handleSubmit}
             onChange={handleSubmit}
             className="relative"
           >
@@ -75,7 +98,7 @@ export function ExpandingSearchDock({
               <input
                 type="text"
                 value={query}
-                onChange={(e) => setQuery(e.target.value)}
+                onChange={handleChange}
                 placeholder={placeholder}
                 autoFocus
                 className="h-8 flex-1 bg-transparent pr-4 text-sm outline-none placeholder:text-muted-foreground"

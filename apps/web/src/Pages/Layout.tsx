@@ -48,7 +48,7 @@ export function RootLayout() {
             <SidebarInset className="main-content">
               <header className="app-header">
                 <div className="flex items-center gap-2">
-                  {isMobile ? <OrgSelector /> : <SidebarTrigger className="-ml-1 text-muted-foreground hover:text-foreground transition-colors" />}
+                  {isMobile ? <OrgSelector compact /> : <SidebarTrigger className="-ml-1 text-muted-foreground hover:text-foreground transition-colors" />}
                   <Separator orientation="vertical" className="h-4 hidden md:block" />
                 </div>
                 <TopNavBar />

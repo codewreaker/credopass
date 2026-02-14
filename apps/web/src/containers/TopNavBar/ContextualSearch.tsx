@@ -36,11 +36,11 @@ const ContextualSearch: React.FC<{ className?: string }> = ({ className }) => {
     [setSearchQuery],
   );
 
-  if (!searchEnabled) return null;
 
   return (
     <ExpandingSearchDock
       className={className}
+      disabled={!searchEnabled}
       onSearch={handleSearch}
       placeholder={placeholder}
     />

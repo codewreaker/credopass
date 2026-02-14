@@ -33,8 +33,10 @@ import { Avatar, AvatarFallback, AvatarImage } from "@credopass/ui/components/av
 
 const OrgSelector: React.FC<{
      onClick?: (org: Organization) => void
+     compact?: boolean
 }> = ({
-     onClick
+     onClick,
+     compact = false
 }) => {
 
 
@@ -72,19 +74,23 @@ const OrgSelector: React.FC<{
             <DropdownMenu>
                 <DropdownMenuTrigger>
                     <SidebarMenuButton
-                        size="lg"
+                        size={compact ? "default" : "lg"}
                         className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                     >
                         <CredoPassLogoIcon size={16} />
-                        <div className="grid flex-1 text-left text-sm leading-tight">
-                            <span className="truncate font-semibold">
-                                {activeOrganization?.name || 'Select Organization'}
-                            </span>
-                            <span className="truncate text-xs">
-                                {activeOrganization?.plan || 'No org selected'}
-                            </span>
-                        </div>
-                        <ChevronsUpDownIcon className="ml-auto" />
+                        {!compact && (
+                            <>
+                                <div className="grid flex-1 text-left text-sm leading-tight">
+                                    <span className="truncate font-semibold">
+                                        {activeOrganization?.name || 'Select Organization'}
+                                    </span>
+                                    <span className="truncate text-xs">
+                                        {activeOrganization?.plan || 'No org selected'}
+                                    </span>
+                                </div>
+                                <ChevronsUpDownIcon className="ml-auto" />
+                            </>
+                        )}
                     </SidebarMenuButton>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
