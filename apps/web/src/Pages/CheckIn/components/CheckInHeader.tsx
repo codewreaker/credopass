@@ -14,6 +14,8 @@ interface CheckInHeaderProps {
 const statusColors: Record<string, string> = {
   active: 'bg-green-500/10 text-green-500 border-green-500/30',
   draft: 'bg-yellow-500/10 text-yellow-500 border-yellow-500/30',
+  scheduled: 'bg-primary/10 text-primary border-primary/30',
+  ongoing: 'bg-green-500/10 text-green-500 border-green-500/30',
   completed: 'bg-blue-500/10 text-blue-500 border-blue-500/30',
   cancelled: 'bg-red-500/10 text-red-500 border-red-500/30',
 };
@@ -27,46 +29,44 @@ const CheckInHeader: React.FC<CheckInHeaderProps> = ({
   onBack,
 }) => {
   return (
-    <div className="flex items-center justify-between gap-2" data-testid="check-in-header">
-      {/* Back button */}
+    <div className="flex items-center gap-3" data-testid="check-in-header">
       <Button
         variant="ghost"
         size="icon"
         onClick={onBack}
-        className="shrink-0 -ml-2"
+        className="shrink-0 -ml-1 h-8 w-8"
       >
-        <ArrowLeft className="w-4 h-4" />
+        <ArrowLeft size={16} />
       </Button>
 
-      {/* Event info - center */}
-      <div className="text-center flex-1 min-w-0">
-        <div className="flex items-center justify-center gap-2">
-            <p className="text-sm sm:text-xl font-bold tracking-tight truncate text-foreground">{eventName}</p>
+      {/* Event info */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <h1 className="text-base font-semibold truncate">{eventName}</h1>
           {eventStatus && (
-            <Badge variant="outline" className={`text-[10px] px-1.5 py-0 h-4 ${statusColors[eventStatus] || ''}`}>
+            <Badge variant="outline" className={`text-[0.5625rem] px-1.5 py-0 h-4 shrink-0 ${statusColors[eventStatus] || ''}`}>
               {eventStatus}
             </Badge>
           )}
         </div>
-        <div className="flex items-center justify-center gap-3 text-muted-foreground text-xs mt-0.5">
-          <div className="flex items-center gap-1">
-            <MapPin className="w-3 h-3 shrink-0" />
-            <span className="truncate">{eventLocation || 'No location'}</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <Users className="w-3 h-3 shrink-0" />
-            <span>{eventCapacity || 'Unlimited'}</span>
-          </div>
+        <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
+          {eventLocation && (
+            <span className="flex items-center gap-1">
+              <MapPin size={11} />
+              <span className="truncate">{eventLocation}</span>
+            </span>
+          )}
+          <span className="flex items-center gap-1">
+            <Users size={11} />
+            {eventCapacity ? `${eventCapacity} capacity` : 'Unlimited'}
+          </span>
         </div>
       </div>
 
-      {/* Check-in count - compact */}
-      <div className="shrink-0 text-right">
-        <div className="flex items-center gap-1.5">
-          <Users className="w-4 h-4 text-primary" />
-          <span className="text-xl font-bold">{checkInCount}</span>
-        </div>
-        <p className="text-[10px] text-muted-foreground">Today</p>
+      {/* Live counter */}
+      <div className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-card">
+        <Users size={14} className="text-primary" />
+        <span className="text-lg font-bold tabular-nums">{checkInCount}</span>
       </div>
     </div>
   );

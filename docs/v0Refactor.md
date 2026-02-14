@@ -354,3 +354,117 @@ Regular modals (event forms, sign-in, etc.) still use the Dialog component.
 | **Delightful micro-interactions** | Hover accent bars, arrow affordances, slide-in animations |
 | **Generous whitespace** | Increased page padding, card spacing, item gaps |
 | **Minimal chrome** | Removed busy gradient bars from stat cards, softer shadows |
+
+---
+
+## 6. Luma Deep-Dive UX Overhaul (Phase 3) {#luma-deep-dive}
+
+Reference: 8 Luma screenshots analyzed covering: login, event creation, event detail, event management dashboard, check-in scanner, guest info sheet, event ticket/pass, cancel event modal, and max capacity modal.
+
+### Luma Pattern Analysis
+
+| Screenshot | Key Patterns Extracted |
+|-----------|----------------------|
+| **Mobile Login** | Floating event card collage, gradient "start here" CTA text, rounded pill auth buttons |
+| **Create Event** | Cover image with edit overlay, section-based form (Ticketing, Options), clean date picker |
+| **Event Detail (Mobile)** | Large hero image, sparkle "Private Event" badge, action button row (Invite/Blast/Manage/More), "Check In Guests" bar |
+| **Check-In Scanner** | Camera viewfinder, "Scan to Check In" header, bottom sheet guest card with avatar/name/email/status/time, large "Check In" CTA |
+| **Event Ticket/Pass** | Apple Wallet-style dark card: brand logo + time + date, LOCATION/GUEST/HOST uppercase labels, QR code |
+| **Event Management (Desktop)** | Tab navigation (Overview/Guests/Registration/Blasts/Insights/More), 3 action cards (Invite/Blast/Share), event preview card inline, "When & Where" with calendar date icon, social share row |
+| **Cancel Event Modal** | Icon + title + description + red warning + toggle + destructive CTA |
+| **Max Capacity Modal** | Bottom sheet: icon + title + description + centered input + Save/Remove |
+
+### Changes Implemented
+
+#### 6.1 Events Page -- List/Calendar Toggle with Luma Event Rows
+**Pattern source:** Luma Desktop Event Management (Screenshot 7)
+
+**Before:** Events page was calendar-only (FullCalendar).
+**After:**
+- Added List/Calendar toggle in the header (segmented control)
+- Default view is now List mode with Luma-style grouped event rows
+- Events grouped by date with day headings
+- Each event row has: date icon (month/day like Luma's FEB/2), event name, status badge, time/location/capacity metadata, hover "more" button
+- Calendar view preserved as toggle option
+- "Create Event" button in header (lime accent)
+
+**New files:**
+- `apps/web/src/Pages/Events/EventListView.tsx` -- EventRow, DateIcon, groupEventsByDate
+- `apps/web/src/Pages/Events/events.css` -- Full CSS for events page, list view, toggle, rows
+
+**Modified:**
+- `apps/web/src/Pages/Events/index.tsx` -- Added viewMode state, header with toggle, conditional rendering
+
+#### 6.2 Check-In QR Display -- "Scan to Check In" Pattern
+**Pattern source:** Luma Check-In Scanner (Screenshot 4)
+
+**Before:** QR code in a generic Card with header/footer/actions.
+**After:**
+- Clean panel layout: "Scan to Check In" header bar with timer
+- QR code centered in dedicated body area with white container + shadow
+- Helper text below QR: "Attendees scan this code with their phone to check in"
+- Action bar at bottom: Refresh (ghost) + Manual Check-In (primary, flex-1)
+
+**Modified:**
+- `apps/web/src/Pages/CheckIn/components/QRCodeDisplay.tsx` -- Complete rewrite using custom `.qr-display-*` classes
+- `apps/web/src/Pages/CheckIn/style.css` -- Added `.qr-display`, `.qr-code-container`, `.qr-code-inner` styles
+
+#### 6.3 Success Check-In Screen -- Luma Guest Info Sheet
+**Pattern source:** Luma Guest Check-In Sheet (Screenshot 4)
+
+**Before:** Full-screen emerald gradient with large icon, decorative blur circles, complex card.
+**After:**
+- Clean dark overlay with centered card (no distracting gradients)
+- Check icon in green ring at top
+- Avatar circle with initials
+- Guest name prominently displayed
+- Data grid: Email / Status ("Going" in green) / Check-In Time
+- Event name as subtle label
+- Pulse dot with "Returning to scanner..." indicator
+- Counter badge in top-right corner
+
+**Modified:**
+- `apps/web/src/Pages/CheckIn/SuccessCheckInScreen.tsx` -- Complete rewrite
+- `apps/web/src/Pages/CheckIn/style.css` -- `.success-overlay`, `.success-card`, `.success-details` styles
+
+#### 6.4 Check-In Header -- Cleaner Layout
+**Before:** Large centered event name with icon/font size mismatch.
+**After:**
+- Left-aligned: back button + event name/status/location in a compact row
+- Live counter in a bordered card on the right (number + icon)
+- Added "scheduled" and "ongoing" to status color map
+
+**Modified:**
+- `apps/web/src/Pages/CheckIn/components/CheckInHeader.tsx` -- Simplified layout
+
+#### 6.5 Dashboard Home -- Luma Action Cards + Upcoming Events
+**Pattern source:** Luma Desktop Overview (Screenshot 7 -- Invite Guests / Send a Blast / Share Event cards)
+
+**Before:** Greeting + Analytics + Tables.
+**After:**
+- 3-column Luma-style action cards: Create Event, Check-In, Members
+  - Each has icon in lime square, label + description
+  - Hover: lime border glow
+- Upcoming Events section with Luma date-icon cards (month/day icon + event name + time/location)
+- Events pulled from TanStack DB, filtered to future non-cancelled, sorted by start time
+- Arrow affordance on hover
+
+**New files:**
+- `apps/web/src/Pages/Home/home.css` -- Action cards grid, upcoming event cards, date icons
+
+**Modified:**
+- `apps/web/src/Pages/Home/index.tsx` -- Action cards, UpcomingEventCard component, event data integration
+
+### Luma Competitive Parity Checklist
+| Feature | Luma | CredoPass (After) |
+|---------|------|-------------------|
+| Event list with date icons | Yes | Yes (EventListView) |
+| Calendar view | Yes | Yes (FullCalendar) |
+| List/Calendar toggle | Implicit (routes) | Segmented control |
+| Action card CTAs | 3 cards on overview | 3 cards on dashboard |
+| "Scan to Check In" header | Yes | Yes |
+| Guest info on scan | Bottom sheet | Success overlay card |
+| Date grouping | By day | By day |
+| Status badges | Colored | Colored with status styles |
+| Live check-in counter | Yes | Yes (top-right badge) |
+| Event creation from dashboard | "Create Event" button | Plus button + command palette + header CTA |
