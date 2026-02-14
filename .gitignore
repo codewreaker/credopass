@@ -46,3 +46,5 @@ Thumbs.db
 
 **/data/credopass/*
 **/drizzle/
+vite.config.*.timestamp*
+vitest.config.*.timestamp*

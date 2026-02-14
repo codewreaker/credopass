@@ -3,6 +3,7 @@
 export * from './util';
 export * from './hooks';
 export * from './schemas';
+export * from './theme';
 
 export type { 
   ResponsiveGridLayoutProps, 

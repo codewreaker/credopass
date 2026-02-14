@@ -1,0 +1,27 @@
+{
+  "name": "@credopass/website",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@credopass/lib": "workspace:*",
+    "@credopass/ui": "workspace:*",
+    "@fontsource-variable/inter": "^5.2.8",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "*",
+    "cmdk": "^1.1.1",
+    "embla-carousel-react": "^8.6.0",
+    "input-otp": "^1.4.2",
+    "lucide-react": "^0.562.0",
+    "next-themes": "^0.4.6",
+    "react-day-picker": "^8.10.1",
+    "react-hook-form": "^7.55.0",
+    "react-resizable-panels": "^2.1.7",
+    "recharts": "^2.15.2",
+    "sonner": "^2.0.3",
+    "tailwind-merge": "*",
+    "vaul": "^1.1.2",
+    "react": "^19.2.1",
+    "react-dom": "^19.2.1"
+  }
+}

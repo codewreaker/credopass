@@ -1,0 +1,40 @@
+{
+  "name": "website",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/website/src",
+  "projectType": "application",
+  "tags": [
+    "credopass",
+    "website",
+    "attendance tracking"
+  ],
+  "targets": {
+    "serve": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun vite --mode development",
+        "cwd": "apps/website"
+      },
+      "configurations": {
+        "production": {
+          "command": "bun vite --mode production"
+        }
+      }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "outputs": ["{projectRoot}/dist"],
+      "options": {
+        "command": "bun vite build --mode production",
+        "cwd": "apps/website"
+      }
+    },
+    "preview": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun vite preview",
+        "cwd": "apps/website"
+      }
+    }
+  }
+}

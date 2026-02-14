@@ -18,7 +18,7 @@
     },
     "build": {
       "executor": "nx:run-commands",
-      "outputs": ["{workspaceRoot}/dist"],
+      "outputs": ["{projectRoot}/dist"],
       "options": {
         "command": "bun vite build",
         "cwd": "apps/web"

@@ -1,10 +1,9 @@
 import React, { useEffect, useCallback, useRef } from 'react';
 import {
   Search,
-  Calendar,
-  User as UserIcon
+  Bell,
+  Plus,
 } from 'lucide-react';
-import { Button, Badge } from '@credopass/ui';
 import { launchSignInForm } from '../SignInModal/index';
 import { launchUserForm } from '../UserForm/index';
 
@@ -15,18 +14,22 @@ import CommandPalette from './Command';
 import { useNavigate } from '@tanstack/react-router';
 import { cn } from '@credopass/ui/lib/utils';
 import { useIsMobile } from '@credopass/ui/hooks/use-mobile';
-import UserComponent from '../../components/user';
-import { useDefaultUserMenu } from '../../components/user/default-menu';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
+} from '@credopass/ui/components/dropdown-menu';
+import { Avatar, AvatarFallback, AvatarImage } from '@credopass/ui/components/avatar';
 
 
 export const TopNavBar: React.FC = () => {
   const { openLauncher, closeLauncher } = useLauncher();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  const searchButtonRef = useRef<HTMLButtonElement>(null);
-  const userMenuGroups = useDefaultUserMenu();
 
-  // Open command palette via launcher
   const openCommandPalette = useCallback(() => {
     openLauncher({
       content: <CommandPalette onClose={closeLauncher} openLauncher={openLauncher} />,
@@ -34,19 +37,21 @@ export const TopNavBar: React.FC = () => {
     });
   }, [openLauncher, closeLauncher]);
 
+  // Keyboard shortcuts - stable ref pattern
+  const shortcutsRef = useRef({ openCommandPalette, openLauncher, navigate });
+  shortcutsRef.current = { openCommandPalette, openLauncher, navigate };
 
-  // Keyboard shortcuts
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
+      const { openCommandPalette, openLauncher, navigate } = shortcutsRef.current;
 
-      // Cmd/Ctrl + K to open command palette
       if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
         openCommandPalette();
         return;
       }
-      // Direct shortcuts (only when no modals are open)
-      if ((e.metaKey || e.ctrlKey)) {
+
+      if (e.metaKey || e.ctrlKey) {
         switch (e.key) {
           case 'e':
             e.preventDefault();
@@ -86,57 +91,80 @@ export const TopNavBar: React.FC = () => {
 
     document.addEventListener('keydown', down);
     return () => document.removeEventListener('keydown', down);
-  }, [openCommandPalette, openLauncher, navigate]);
-
-  // Quick action handlers
-  const handleNewEvent = useCallback(() => {
-    launchEventForm({ isEditing: false }, openLauncher);
-  }, [openLauncher]);
+  }, []);
 
   return (
-    <div className={cn(
-      "flex items-center px-4 justify-between",
-      isMobile ? "w-10/12" : "w-full"
-    )}>
-      <div className={cn("navbar-left", isMobile ? "p-0 w-6/10" : "w-7/10 p-5")} ref={searchButtonRef as unknown as React.RefObject<HTMLDivElement>}>
-        <Button
-          variant="outline"
-          className="search-container"
-          onClick={openCommandPalette}
-        >
-          <Search className="search-icon" size={14} />
-          <span className="search-input">Search or run a command...</span>
-          <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
-            <span className="text-xs">⌘</span>K
+    <div className={cn('topbar-container', isMobile && 'topbar-mobile')}>
+      {/* Search trigger -- centered, clean */}
+      <button
+        type="button"
+        className="search-trigger"
+        onClick={openCommandPalette}
+        aria-label="Open command palette"
+      >
+        <Search className="search-icon" size={14} />
+        <span className="search-placeholder">
+          {isMobile ? 'Search...' : 'Search or run a command...'}
+        </span>
+        {!isMobile && (
+          <kbd className="search-kbd">
+            <span className="text-xs">{'⌘'}</span>K
           </kbd>
-        </Button>
-      </div>
+        )}
+      </button>
 
-      {<div className="navbar-right flex items-center gap-2">
-        <Button variant="default" onClick={handleNewEvent}>
-          <Calendar />
-          {!isMobile && "New Event"}
-        </Button>
-
-
-        <div
-          className="top-navbar-btn group rounded-4xl"
-          data-collapsible={isMobile ? "icon" : ""}
+      {/* Right actions -- compact */}
+      <div className="topbar-actions">
+        {/* Plus button -- opens command palette (like Luma's + button) */}
+        <button
+          type="button"
+          className="topbar-plus-btn"
+          onClick={openCommandPalette}
+          aria-label="Quick actions"
         >
-          {/* <User size={15} /> */}
-          <UserComponent
-            user={{
-              name: "israel",
-              email: "izzy@credopass.com",
-              avatar: "/avatars/shadcn.jpg",
-              icon: UserIcon
-            }}
-            menuGroups={userMenuGroups}
-          />
-          <Badge>3</Badge>
-        </div>
+          <Plus size={16} strokeWidth={2} />
+        </button>
 
-      </div>}
+        {/* Notifications */}
+        <button
+          type="button"
+          className="topbar-icon-btn"
+          aria-label="Notifications"
+        >
+          <Bell size={16} />
+          <span className="topbar-notification-dot" />
+        </button>
+
+        {/* User avatar dropdown */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button type="button" className="topbar-avatar-btn" aria-label="User menu">
+              <Avatar className="topbar-avatar">
+                <AvatarImage src="/avatars/shadcn.jpg" alt="Israel" />
+                <AvatarFallback className="topbar-avatar-fallback">IA</AvatarFallback>
+              </Avatar>
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuLabel className="font-normal">
+              <div className="flex flex-col gap-1">
+                <p className="text-sm font-medium leading-none">Israel</p>
+                <p className="text-xs text-muted-foreground leading-none">iz@credopass.com</p>
+              </div>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => launchSignInForm({}, openLauncher)}>
+              Profile
+            </DropdownMenuItem>
+            <DropdownMenuItem>Billing</DropdownMenuItem>
+            <DropdownMenuItem>Settings</DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem>Help & Support</DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem variant="destructive">Sign Out</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
     </div>
   );
 };

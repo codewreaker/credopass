@@ -1,5 +1,5 @@
 import { useLiveQuery } from '@tanstack/react-db'
-import { LoyaltyTierEnum, type UserType, type AttendanceType, type LoyaltyType, User } from '@credopass/lib/schemas'
+import { type UserType, type AttendanceType, type LoyaltyType, User } from '@credopass/lib/schemas'
 import { getCollections } from '../../lib/tanstack-db'
 import type { ColDef, IOverlayParams, RowClickedEvent } from 'ag-grid-community'
 
@@ -42,10 +42,7 @@ const columnDefs: ColDef<UserType & LoyaltyType & AttendanceType>[] = [
     headerName: 'Tier',
     width: 98,
     cellRenderer: (params: any) => {
-      const enums = Object.keys(LoyaltyTierEnum.enum);
-      const idx = Math.floor(Math.random() * enums.length);
-      const rand = enums[idx]
-      return <MembershipBadge level={params.value || rand} />
+      return <MembershipBadge level={params.value || 'bronze'} />
     },
     filter: true,
   },
@@ -59,7 +56,7 @@ const columnDefs: ColDef<UserType & LoyaltyType & AttendanceType>[] = [
     headerName: 'Total Events',
     width: 98,
     filter: 'agNumberColumnFilter',
-    cellRenderer: () => (<>{Math.floor(Math.random() * 100)}</>)
+    valueGetter: (params: any) => params.data?.totalEvents ?? 0,
   },
   {
     field: 'checkInTime',
@@ -73,7 +70,7 @@ const columnDefs: ColDef<UserType & LoyaltyType & AttendanceType>[] = [
     headerName: 'Points',
     width: 90,
     filter: 'agNumberColumnFilter',
-    valueFormatter: (params: any) => (params.value || String(Math.floor(Math.random() * 100))).toLocaleString(),
+    valueFormatter: (params: any) => (params.value ?? 0).toLocaleString(),
   },
   {
     field: 'attended',
@@ -122,12 +119,8 @@ const AttendanceBar: React.FC<{ rate: number }> = ({ rate }) => {
 
 
 
-const hdl = (type: string, e?: React.SyntheticEvent | RowClickedEvent) => {
-  switch (type) {
-    default:
-      console.log(e)
-      return
-  }
+const handleRowClick = (_type: string, _e?: React.SyntheticEvent | RowClickedEvent) => {
+  // Row click handler - extend as needed
 }
 
 export default function MembersPage() {
@@ -201,7 +194,7 @@ export default function MembersPage() {
             mode: 'multiRow',
           }}
           overlayComponentSelector={overlayComponentSelector}
-          onRowClicked={(e) => hdl(e.type, e)}
+          onRowClicked={(e) => handleRowClick(e.type, e)}
         /> : (
           <GridTable
             title="Member Attendance Records (offline)"

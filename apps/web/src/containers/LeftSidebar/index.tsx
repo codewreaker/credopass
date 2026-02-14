@@ -1,5 +1,3 @@
-"use client"
-
 import * as React from "react"
 
 import {
@@ -27,14 +25,7 @@ import {
 } from "@credopass/ui/components/sidebar"
 import { type BottomNavItem } from "@credopass/ui/components/bottom-nav"
 
-import {
-    TerminalSquareIcon,
-    BotIcon,
-    BookOpen,
-    FrameIcon,
-    PieChartIcon,
-    ChevronRightIcon
-} from "lucide-react"
+import { ChevronRightIcon } from "lucide-react"
 import { useLocation, useNavigate } from "@tanstack/react-router"
 import UserComponent from "../../components/user"
 import { useDefaultUserMenu } from "../../components/user/default-menu"
@@ -64,114 +55,44 @@ export interface SidebarProps {
     nav?: SidebarMenuProps;
     children?: React.ReactNode;
 }
+
 interface SidebarMenuProps {
     main: Array<SidebarMenuItemType>;
     [label: string]: Array<SidebarMenuItemType> | undefined;
 }
 
-const defaultData: SidebarProps = {
-    user: {
-        name: "israel",
-        email: "izzy@credopass.com",
-        avatar: "/avatars/shadcn.jpg",
-    },
-    nav: {
-        main: [{
-            label: "Playground",
-            url: "#",
-            icon: TerminalSquareIcon,
-            items: [
-                {
-                    label: "History",
-                    url: "#",
-                },
-                {
-                    label: "Settings",
-                    url: "#",
-                },
-            ],
-        },
-        {
-            label: "Models",
-            url: "#",
-            icon: BotIcon,
-            items: [
-                {
-                    label: "Genesis",
-                    url: "#",
-                },
-                {
-                    label: "Explorer",
-                    url: "#",
-                },
-                {
-                    label: "Quantum",
-                    url: "#",
-                },
-            ],
-        },
-        {
-            label: "Documentation",
-            url: "#",
-            icon: BookOpen,
-            items: [
-                {
-                    label: "Introduction",
-                    url: "#",
-                },
-                {
-                    label: "Get Started",
-                    url: "#",
-                }
-            ],
-        }],
-        projects: [
-            {
-                label: "Design Engineering",
-                url: "#",
-                icon: FrameIcon,
-            },
-            {
-                label: "Sales & Marketing",
-                url: "#",
-                icon: PieChartIcon,
-            }
-        ]
-    },
-}
-
-
+const DEFAULT_USER: User = {
+    name: "israel",
+    email: "iz@credopass.com",
+    avatar: "/avatars/shadcn.jpg",
+};
 
 const MainSidebar: React.FC<SidebarProps> = ({
-    nav = defaultData.nav,
-    user = defaultData.user,
+    nav,
+    user = DEFAULT_USER,
     children
 }) => {
-
     const navigate = useNavigate();
     const location = useLocation();
-
-
-    
     const userMenuGroups = useDefaultUserMenu();
-
 
     const [sidebarCookie] = useCookies(SIDEBAR_COOKIE_NAME);
     const isOpen = Boolean(sidebarCookie === 'true');
 
-    const isActive = (url: string) => location.pathname === url
-
-
+    const isActive = React.useCallback(
+        (url: string) => location.pathname === url,
+        [location.pathname]
+    );
 
     const navMain = React.useMemo(() => nav?.main || [], [nav]);
+
     const navs = React.useMemo(() => {
         return Object.entries(nav || {}).filter(([key]) => key !== 'main') || []
     }, [nav]);
 
-    // Convert nav items to BottomNavItem format for mobile
     const bottomNavItems = React.useMemo(() => {
         return navMain
-            .filter(item => item.icon && item.url) // Only items with icon and url
+            .filter(item => item.icon && item.url)
             .map(item => ({
                 label: item.label,
                 url: item.url,
@@ -179,77 +100,111 @@ const MainSidebar: React.FC<SidebarProps> = ({
             })) as BottomNavItem[]
     }, [navMain]);
 
-    // Get navigate function from TanStack Router for mobile bottom nav
     const handleNavigate = React.useCallback((url: string) => {
         navigate({ to: url });
     }, [navigate]);
 
-
     return (
-        <SidebarProvider defaultOpen={isOpen}
+        <SidebarProvider
+            defaultOpen={isOpen}
             style={{
                 // @ts-expect-error: Allow custom CSS variables
-                "--sidebar-width": "14rem"
+                "--sidebar-width": "13.5rem"
             }}
         >
-            <Sidebar collapsible="icon" variant="inset" navItems={bottomNavItems} navigate={handleNavigate} currentPathname={location.pathname}>
+            <Sidebar
+                collapsible="icon"
+                variant="inset"
+                navItems={bottomNavItems}
+                navigate={handleNavigate}
+                currentPathname={location.pathname}
+            >
                 <SidebarHeader>
                     <SidebarMenu>
                         <SidebarMenuItem>
-                            <OrgSelector/>
+                            <OrgSelector />
                         </SidebarMenuItem>
                     </SidebarMenu>
                 </SidebarHeader>
-                <SidebarContent>
 
+                <SidebarContent>
                     <SidebarGroup>
-                        <SidebarGroupLabel>Main</SidebarGroupLabel>
+                        <SidebarGroupLabel className="text-[0.625rem] uppercase tracking-widest text-muted-foreground/60 font-medium">
+                            Main
+                        </SidebarGroupLabel>
                         <SidebarMenu>
                             {navMain.map((item) => (
-                                item.items ? (<Collapsible key={item.label} asChild defaultOpen={isActive(item.url)} className="group/collapsible">
-                                    <SidebarMenuItem>
-                                        <CollapsibleTrigger asChild>
-                                            <SidebarMenuButton tooltip={item.label}>
-                                                {item.icon && <item.icon size={16} />}
-                                                <span>{item.label}</span>
-                                                <ChevronRightIcon className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
-                                            </SidebarMenuButton>
-                                        </CollapsibleTrigger>
-                                        <CollapsibleContent>
-                                            <SidebarMenuSub>
-                                                {item.items?.map((subItem) => (
-                                                    <SidebarMenuSubItem key={subItem.label}>
-                                                        <SidebarMenuSubButton href={subItem.url}>{subItem.label}</SidebarMenuSubButton>
-                                                    </SidebarMenuSubItem>
-                                                ))}
-                                            </SidebarMenuSub>
-                                        </CollapsibleContent>
-                                    </SidebarMenuItem>
-                                </Collapsible>) : (
+                                item.items ? (
+                                    <Collapsible
+                                        key={item.label}
+                                        asChild
+                                        defaultOpen={isActive(item.url)}
+                                        className="group/collapsible"
+                                    >
+                                        <SidebarMenuItem>
+                                            <CollapsibleTrigger asChild>
+                                                <SidebarMenuButton tooltip={item.label}>
+                                                    {item.icon && <item.icon size={16} />}
+                                                    <span>{item.label}</span>
+                                                    <ChevronRightIcon className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                                                </SidebarMenuButton>
+                                            </CollapsibleTrigger>
+                                            <CollapsibleContent>
+                                                <SidebarMenuSub>
+                                                    {item.items?.map((subItem) => (
+                                                        <SidebarMenuSubItem key={subItem.label}>
+                                                            <SidebarMenuSubButton href={subItem.url}>
+                                                                {subItem.label}
+                                                            </SidebarMenuSubButton>
+                                                        </SidebarMenuSubItem>
+                                                    ))}
+                                                </SidebarMenuSub>
+                                            </CollapsibleContent>
+                                        </SidebarMenuItem>
+                                    </Collapsible>
+                                ) : (
                                     <SidebarMenuItem key={item.label}>
                                         <SidebarMenuButton
-                                            className={cn(isActive(item.url) && "border border-solid border-primary", "cursor-pointer")}
+                                            className={cn(
+                                                "cursor-pointer relative transition-all duration-200",
+                                                isActive(item.url) && [
+                                                    "bg-primary/10 text-primary font-medium",
+                                                    "before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2",
+                                                    "before:h-5 before:w-[2px] before:rounded-full before:bg-primary",
+                                                    "before:shadow-[0_0_8px_var(--glow-primary)]",
+                                                ]
+                                            )}
                                             isActive={isActive(item.url)}
                                             onClick={() => navigate({ to: item.url })}
                                             tooltip={item.label}
                                         >
-                                            {item.icon && <item.icon />}
+                                            {item.icon && <item.icon size={16} />}
                                             <span>{item.label}</span>
                                         </SidebarMenuButton>
                                     </SidebarMenuItem>
                                 )
-                            )
-                            )}
+                            ))}
                         </SidebarMenu>
                     </SidebarGroup>
+
                     {navs.map(([label, items]) => (
                         <SidebarGroup key={label} className="group-data-[collapsible=icon]:hidden">
-                            <SidebarGroupLabel>{`${label}`.toLocaleUpperCase()}</SidebarGroupLabel>
+                            <SidebarGroupLabel className="text-[0.625rem] uppercase tracking-widest text-muted-foreground/60 font-medium">
+                                {label}
+                            </SidebarGroupLabel>
                             <SidebarMenu>
                                 {items?.map((item) => (
                                     <SidebarMenuItem key={item.label}>
-                                        <SidebarMenuButton isActive={isActive(item.url)} onClick={() => navigate({ to: item.url })} tooltip={item.label}>
-                                            {item.icon && <item.icon />}
+                                        <SidebarMenuButton
+                                            className={cn(
+                                                "cursor-pointer transition-all duration-200",
+                                                isActive(item.url) && "bg-primary/10 text-primary font-medium"
+                                            )}
+                                            isActive={isActive(item.url)}
+                                            onClick={() => navigate({ to: item.url })}
+                                            tooltip={item.label}
+                                        >
+                                            {item.icon && <item.icon size={16} />}
                                             <span>{item.label}</span>
                                         </SidebarMenuButton>
                                     </SidebarMenuItem>
@@ -258,6 +213,7 @@ const MainSidebar: React.FC<SidebarProps> = ({
                         </SidebarGroup>
                     ))}
                 </SidebarContent>
+
                 <SidebarFooter>
                     <SidebarMenu>
                         <SidebarMenuItem>

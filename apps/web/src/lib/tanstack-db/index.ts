@@ -20,6 +20,7 @@ export type CredoPassCollections = {
 };
 
 
+
 // Export collections
 export {
     createUserCollection,
