@@ -9,38 +9,27 @@
   padding: 1.25rem;
 }
 
-/* Command palette mode -- no padding, wider, top-positioned */
+/* Command palette mode -- no padding, wider, top-positioned like Spotlight */
 .launcher-command-mode {
   padding: 0 !important;
   gap: 0 !important;
-  max-width: 36rem !important;
-  overflow: hidden;
-  border-radius: var(--radius) !important;
-  /* Position higher on screen like Spotlight */
-  top: 28% !important;
-  transform: translate(-50%, -50%) !important;
+  max-width: 38rem !important;
+  overflow: hidden !important;
+  border-radius: 0.75rem !important;
+  /* Override the default centering to position higher on screen */
+  top: 20% !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  /* Reset the max-w constraint from base dialog */
+  width: calc(100% - 2rem) !important;
 }
 
-/* ================================================================
-   DARK THEME OVERRIDES (fallback for prefers-color-scheme)
-   ================================================================ */
-
-@media (prefers-color-scheme: dark) {
-  .modal-container {
-    background: var(--background);
-    color: var(--foreground);
-  }
-
-  .modal-header {
-    border-bottom-color: var(--border);
-  }
-
-  .modal-close {
-    color: var(--muted-foreground);
-  }
-
-  .modal-close:hover {
-    background: var(--muted);
-    color: var(--foreground);
+/* Mobile: make command palette nearly full-width and positioned lower */
+@media (max-width: 640px) {
+  .launcher-command-mode {
+    top: 10% !important;
+    max-width: calc(100% - 1.5rem) !important;
+    width: calc(100% - 1.5rem) !important;
+    border-radius: 0.75rem !important;
   }
 }
