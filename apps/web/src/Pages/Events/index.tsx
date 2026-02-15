@@ -1,28 +1,102 @@
 import { useCallback, useMemo, useState } from 'react';
-import { useLiveQuery } from '@tanstack/react-db';
+import { eq, useLiveQuery } from '@tanstack/react-db';
 import { getCollections } from '../../lib/tanstack-db';
 import type { EventType } from '@credopass/lib/schemas';
 import { useLauncher } from '../../stores/store';
 import { launchEventForm, type EventFormProps } from '../../containers/EventForm/index';
 import CalendarPage from './Calendar/index';
-import EventListView from './EventListView';
-import { Calendar, CalendarPlus, List, Plus } from 'lucide-react';
+import EventListView, { STATUS_MAPPING } from './EventListView';
+import { Calendar, CalendarPlus, Filter, List, Plus } from 'lucide-react';
 import { useToolbarContext } from '../../hooks/use-toolbar-context';
+import { Button } from "@credopass/ui/components/button"
+import {
+    DropdownMenu,
+    DropdownMenuCheckboxItem,
+    DropdownMenuContent,
+    DropdownMenuGroup,
+    DropdownMenuLabel,
+    DropdownMenuTrigger,
+} from "@credopass/ui/components/dropdown-menu"
+
+
+
 import './events.css';
 
 type ViewMode = 'calendar' | 'list';
 
+
+const StatusFilterMenu: React.FC<{
+    menuItems: Record<EventType['status'], boolean>;
+    clickHandler: (update: Record<EventType['status'], boolean>) => void;
+}> = ({ menuItems, clickHandler }) => {
+
+
+    return (
+        <DropdownMenu>
+            <DropdownMenuTrigger>
+                <Filter className='status-filter-menu' />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-48">
+                <DropdownMenuGroup>
+                    <DropdownMenuLabel>Notification Preferences</DropdownMenuLabel>
+                    {Object.entries(STATUS_MAPPING).map(([status, entry]) => (
+                        <DropdownMenuCheckboxItem
+                            key={status}
+                            checked={menuItems[status as EventType['status']]}
+                            onCheckedChange={(checked) =>
+                                clickHandler({ ...menuItems, [status]: checked === true })
+                            }
+                        >
+                            {entry.icon}
+                            {status}
+                        </DropdownMenuCheckboxItem>
+                    ))}
+                </DropdownMenuGroup>
+            </DropdownMenuContent>
+        </DropdownMenu>
+    )
+}
+
 const EventsPage = () => {
     const { openLauncher } = useLauncher();
-    const { events: eventCollection } = getCollections();
+    const { events: eventCollection, organizations: orgCollection } = getCollections();
     const [viewMode, setViewMode] = useState<ViewMode>('list');
-    const [searchQuery, setSearchQuery] = useState<string>('')
+    const [searchQuery, setSearchQuery] = useState<string>('');
+    const [statusMenu, setStatusMenuItems] = useState<Record<EventType['status'], boolean>>({
+        draft: false,
+        scheduled: true,
+        ongoing: true,
+        completed: true,
+        cancelled: false,
+    });
 
-    const { data: eventsData } = useLiveQuery((q) => q.from({ eventCollection }));
+    const selStatus = useMemo(() => {
+        const selArr = [];
+        for (const k in statusMenu) {
+            if (statusMenu[k as EventType['status']]) {
+                selArr.push(k);
+            }
+        }
+        return selArr as EventType['status'][];
+    }, [statusMenu])
+
+    const { data: eventsData } = useLiveQuery((q) => q
+        .from({ eventCollection })
+        .join(
+            { orgCollection },
+            ({ eventCollection, orgCollection }) => eq(eventCollection.organizationId, orgCollection.id)
+        )
+        .orderBy(({ eventCollection }) => eventCollection.startTime, 'desc')
+        .select(({ eventCollection, orgCollection }) => ({
+            ...eventCollection,
+            orgCollection,
+        }))
+    );
     const events = useMemo<EventType[]>(
         () => (Array.isArray(eventsData) ? eventsData : []),
         [eventsData],
     );
+
 
     const launch = useCallback(
         (args?: Omit<EventFormProps, 'collection'>) => {
@@ -85,14 +159,7 @@ const EventsPage = () => {
                         </button>
                     </div>
 
-                    <button
-                        type="button"
-                        className="events-create-btn"
-                        onClick={handleCreateEvent}
-                    >
-                        <Plus size={15} />
-                        <span>Create Event</span>
-                    </button>
+                    <StatusFilterMenu menuItems={statusMenu} clickHandler={setStatusMenuItems} />
                 </div>
             </div>
 
@@ -103,6 +170,7 @@ const EventsPage = () => {
                     <EventListView
                         events={filteredEvents}
                         onCreateEvent={handleCreateEvent}
+                        selectedStatus={selStatus}
                     />
                 )}
             </div>
