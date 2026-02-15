@@ -160,7 +160,7 @@ export function Home() {
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
                 </span>
-                <span className="text-foreground font-medium">Work-In-Progress — Info for demo purposes only</span>
+                <span className="text-foreground font-medium">In-Progress.Info for demo purposes only</span>
               </div>
             </Reveal>
 
