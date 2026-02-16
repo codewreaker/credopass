@@ -53,6 +53,8 @@ export const RightSidebar: React.FC = () => {
     switch (viewedItem.id) {
       case 'profile':
         return <ProfileView data={viewedItem.content} />;
+      case 'calendar':
+        return <OverviewView />;
       default:
         return <OverviewView />;
     }
@@ -64,6 +66,8 @@ export const RightSidebar: React.FC = () => {
     switch (viewedItem.id) {
       case 'profile':
         return "Profile";
+      case 'calendar':
+        return "Calendar";
       default:
         return "Overview";
     }
@@ -77,6 +81,8 @@ export const RightSidebar: React.FC = () => {
     switch (viewedItem.id) {
       case 'profile':
         return `${viewedItem.content?.firstName} ${viewedItem.content?.lastName}`;
+      case 'calendar':
+        return "View your upcoming events at a glance.";
       default:
         return "Overview of loyalty status and upcoming events.";
     }
