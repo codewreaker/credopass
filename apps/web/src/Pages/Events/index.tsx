@@ -6,9 +6,10 @@ import { useEventSessionStore, useLauncher } from '../../stores/store';
 import { useAppStore } from '../../stores/store';
 import { launchEventForm } from '../../containers/EventForm/index';
 import EventListView, { STATUS_MAPPING } from './EventListView';
-import { Calendar, CalendarPlus, Filter } from 'lucide-react';
+import { Calendar, CalendarPlus, CalendarsIcon, Filter } from 'lucide-react';
 import { useToolbarContext } from '../../hooks/use-toolbar-context';
 import { Button } from "@credopass/ui/components/button"
+import { ButtonGroup } from '@credopass/ui/components/button-group'
 import { getGreeting } from '../../lib/utils';
 
 import {
@@ -28,7 +29,7 @@ import './events.css';
  * import { EventCalendar } from '../../components/event-calendar';
  */
 
-type ViewMode = 'calendar' | 'list';
+//type ViewMode = 'calendar' | 'list';
 
 
 const StatusFilterMenu: React.FC<{
@@ -37,9 +38,7 @@ const StatusFilterMenu: React.FC<{
 }> = ({ menuItems, clickHandler }) => {
     return (
         <DropdownMenu>
-            <DropdownMenuTrigger>
-                <Button variant='outline' className='p-3' size={'icon-xs'}><Filter /></Button>
-            </DropdownMenuTrigger>
+            <DropdownMenuTrigger render={<Button variant='outline' size={'icon-sm'}><Filter /></Button>} />
             <DropdownMenuContent className="w-48">
                 <DropdownMenuGroup>
                     <DropdownMenuLabel>Show More Statuses</DropdownMenuLabel>
@@ -56,20 +55,19 @@ const StatusFilterMenu: React.FC<{
                     ))}
                 </DropdownMenuGroup>
             </DropdownMenuContent>
-        </DropdownMenu>
+        </DropdownMenu >
     )
 }
 
 const EventsPage = () => {
     const { openLauncher } = useLauncher();
     const { events: eventCollection, organizations: orgCollection } = getCollections();
-    const [viewMode, setViewMode] = useState<ViewMode>('list');
     const [searchQuery, setSearchQuery] = useState<string>('');
     const [statusMenu, setStatusMenuItems] = useState<Record<EventType['status'], boolean>>({
         draft: false,
         scheduled: true,
         ongoing: true,
-        completed: false,
+        completed: true,
         cancelled: false,
     });
 
@@ -141,18 +139,19 @@ const EventsPage = () => {
                 </div>
 
                 <div className="events-header-right">
-                    <Button
-                        variant='outline'
-                        className='p-3'
-                        size={'icon-xs'}
-                        onClick={() => {
-                            useAppStore.getState().setViewedItem({ id: 'calendar', content: null });
-                            useAppStore.getState().toggleSidebar('right', true);
-                        }}
-                    >
-                        <Calendar />
-                    </Button>
-                    <StatusFilterMenu menuItems={statusMenu} clickHandler={setStatusMenuItems} />
+                    <ButtonGroup>
+                        <Button
+                            variant='outline'
+                            size={'icon-sm'}
+                            onClick={() => {
+                                useAppStore.getState().setViewedItem({ id: 'calendar', content: null });
+                                useAppStore.getState().toggleSidebar('right', true);
+                            }}
+                        >
+                            <CalendarsIcon />
+                        </Button>
+                        <StatusFilterMenu menuItems={statusMenu} clickHandler={setStatusMenuItems} />
+                    </ButtonGroup>
                 </div>
             </div>
 
