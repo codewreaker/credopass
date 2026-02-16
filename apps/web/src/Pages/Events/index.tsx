@@ -3,12 +3,13 @@ import { eq, useLiveQuery } from '@tanstack/react-db';
 import { getCollections } from '../../lib/tanstack-db';
 import type { EventType } from '@credopass/lib/schemas';
 import { useEventSessionStore, useLauncher } from '../../stores/store';
-import { useAppStore } from '../../stores/store';
 import { launchEventForm } from '../../containers/EventForm/index';
 import EventListView, { STATUS_MAPPING } from './EventListView';
-import { Calendar, CalendarPlus, Filter } from 'lucide-react';
+import type { EventWithOrg } from './EventListView';
+import { CalendarPlus, CalendarsIcon, Filter } from 'lucide-react';
 import { useToolbarContext } from '../../hooks/use-toolbar-context';
 import { Button } from "@credopass/ui/components/button"
+import { ButtonGroup } from '@credopass/ui/components/button-group'
 import { getGreeting } from '../../lib/utils';
 
 import {
@@ -21,6 +22,7 @@ import {
 } from "@credopass/ui/components/dropdown-menu"
 
 import './events.css';
+import { RightSidebarTrigger } from '../../containers/RightSidebar';
 
 /**
  * EventCalendar is a full blown calendar that can be accessed in the sidebar
@@ -28,7 +30,7 @@ import './events.css';
  * import { EventCalendar } from '../../components/event-calendar';
  */
 
-type ViewMode = 'calendar' | 'list';
+//type ViewMode = 'calendar' | 'list';
 
 
 const StatusFilterMenu: React.FC<{
@@ -37,15 +39,12 @@ const StatusFilterMenu: React.FC<{
 }> = ({ menuItems, clickHandler }) => {
     return (
         <DropdownMenu>
-            <DropdownMenuTrigger>
-                <Button variant='outline' className='p-3' size={'icon-xs'}><Filter /></Button>
-            </DropdownMenuTrigger>
+            <DropdownMenuTrigger render={<Button variant='outline' size={'icon-sm'}><Filter /></Button>} />
             <DropdownMenuContent className="w-48">
                 <DropdownMenuGroup>
                     <DropdownMenuLabel>Show More Statuses</DropdownMenuLabel>
                     {Object.entries(STATUS_MAPPING).map(([status, entry]) => (
                         <DropdownMenuCheckboxItem
-                            key={status}
                             checked={menuItems[status as EventType['status']]}
                             onCheckedChange={(checked) =>
                                 clickHandler({ ...menuItems, [status]: checked === true })
@@ -56,20 +55,19 @@ const StatusFilterMenu: React.FC<{
                     ))}
                 </DropdownMenuGroup>
             </DropdownMenuContent>
-        </DropdownMenu>
+        </DropdownMenu >
     )
 }
 
 const EventsPage = () => {
     const { openLauncher } = useLauncher();
     const { events: eventCollection, organizations: orgCollection } = getCollections();
-    const [viewMode, setViewMode] = useState<ViewMode>('list');
     const [searchQuery, setSearchQuery] = useState<string>('');
     const [statusMenu, setStatusMenuItems] = useState<Record<EventType['status'], boolean>>({
         draft: false,
         scheduled: true,
         ongoing: true,
-        completed: false,
+        completed: true,
         cancelled: false,
     });
 
@@ -109,6 +107,31 @@ const EventsPage = () => {
         launchEventForm({ isEditing: false }, openLauncher);
     }, [openLauncher]);
 
+    const handleEditEvent = useCallback((event: EventWithOrg) => {
+        launchEventForm({
+            isEditing: true,
+            initialData: {
+                id: event.id,
+                name: event.name,
+                description: event.description || '',
+                status: event.status,
+                dateTimeRange: {
+                    from: event.startTime ? new Date(event.startTime) : undefined,
+                    to: event.endTime ? new Date(event.endTime) : undefined,
+                },
+                location: event.location || '',
+                capacity: event.capacity?.toString() || '',
+                organizationId: event.organizationId,
+            },
+        }, openLauncher);
+    }, [openLauncher]);
+
+    const handleDeleteEvent = useCallback((eventId: string) => {
+        if (!confirm('Are you sure you want to delete this event?')) return;
+        const { events: eventCol } = getCollections();
+        eventCol.delete(eventId);
+    }, []);
+
     // Register toolbar context: secondary "Create Event" button + search
     useToolbarContext({
         action: { icon: CalendarPlus, label: 'Create Event', onClick: handleCreateEvent },
@@ -141,18 +164,10 @@ const EventsPage = () => {
                 </div>
 
                 <div className="events-header-right">
-                    <Button
-                        variant='outline'
-                        className='p-3'
-                        size={'icon-xs'}
-                        onClick={() => {
-                            useAppStore.getState().setViewedItem({ id: 'calendar', content: null });
-                            useAppStore.getState().toggleSidebar('right', true);
-                        }}
-                    >
-                        <Calendar />
-                    </Button>
-                    <StatusFilterMenu menuItems={statusMenu} clickHandler={setStatusMenuItems} />
+                    <ButtonGroup>
+                        <RightSidebarTrigger icon={<CalendarsIcon/>}/>
+                        <StatusFilterMenu menuItems={statusMenu} clickHandler={setStatusMenuItems} />
+                    </ButtonGroup>
                 </div>
             </div>
 
@@ -160,6 +175,8 @@ const EventsPage = () => {
                 <EventListView
                     events={filteredEvents}
                     onCreateEvent={handleCreateEvent}
+                    onEditEvent={handleEditEvent}
+                    onDeleteEvent={handleDeleteEvent}
                     selectedStatus={selStatus}
                 />
             </div>

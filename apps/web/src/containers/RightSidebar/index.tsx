@@ -18,7 +18,9 @@ import { Button } from "@credopass/ui/components/button"
 
 import './style.css';
 
-export const RightSidebarTrigger: React.FC = () => {
+export const RightSidebarTrigger: React.FC<{ icon?: React.JSX.Element }> = ({
+  icon = <LucidePanelRightOpen size={12} className='text-muted-foreground hover:text-foreground hover:bg-muted transition-colors'/>
+}) => {
   const toggleSidebar = useAppStore(({ toggleSidebar }) => toggleSidebar);
   const setViewedItem = useAppStore(state => state.setViewedItem);
 
@@ -28,13 +30,14 @@ export const RightSidebarTrigger: React.FC = () => {
   }
 
   return (
-    <button
-      className="inline-flex items-center justify-center rounded-md p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+    <Button
+      variant='outline'
+      size={'icon-sm'}
       onClick={onToggleCollapse}
-      aria-label="Toggle sidebar"
     >
-      <LucidePanelRightOpen size={16} />
-    </button>
+      {icon}
+    </Button>
+
   )
 }
 
