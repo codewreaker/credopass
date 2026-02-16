@@ -63,7 +63,7 @@ const EventsPage = () => {
         draft: false,
         scheduled: true,
         ongoing: true,
-        completed: true,
+        completed: false,
         cancelled: false,
     });
 

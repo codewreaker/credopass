@@ -107,9 +107,11 @@ const EventRow: React.FC<{
                     <div className='flex items-center gap-1'>
                         <AvatarGroup>
                             <Avatar size='sm'>
+                                <AvatarImage src="/icons/zap.png" className={"bg-primary"} />
                                 <AvatarFallback>{orgData?.name.slice(0, 2)}</AvatarFallback>
                             </Avatar>
                             <Avatar size='sm'>
+                                {/* <AvatarImage src="/icons/qr-code.png" className={'grayscale'} /> */}
                                 <AvatarFallback>{orgData?.plan}</AvatarFallback>
                             </Avatar>
                         </AvatarGroup>
