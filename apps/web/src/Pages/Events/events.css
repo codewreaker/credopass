@@ -20,30 +20,22 @@
 
 .events-header-left {
   display: flex;
-  align-items: center;
-  gap: 0.625rem;
+  align-items: start;
+  flex-direction: column;
+
+  .events-header-subtitle {
+    font-size: 0.8125rem;
+    color: var(--muted-foreground);
+  }
 }
 
-.events-title {
+.events-header-title {
   font-size: 1.25rem;
   font-weight: 600;
   letter-spacing: -0.02em;
   color: var(--foreground);
 }
 
-.events-count {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: 1.25rem;
-  min-width: 1.25rem;
-  padding: 0 0.375rem;
-  font-size: 0.6875rem;
-  font-weight: 600;
-  color: var(--muted-foreground);
-  background: var(--muted);
-  border-radius: 999px;
-}
 
 .events-header-right {
   display: flex;
@@ -87,19 +79,6 @@
   border-left: 1px solid var(--border);
 }
 
-/* Filter Menu */
-.status-filter-menu {
-
-  :hover {
-    opacity: 0.9;
-    box-shadow: 0 0 16px oklch(93.604% 0.22511 121.257 / 20%);
-  }
-
-  :active {
-    transform: scale(0.97);
-  }
-}
-
 
 /* ---- Content ---- */
 .events-content {
@@ -131,7 +110,6 @@
     font-weight: 500;
     color: var(--muted-foreground);
     padding: 0 0.25rem 0.25rem;
-    border-bottom: 1px solid var(--border);
 
     h3 {
       text-transform: uppercase;
@@ -151,7 +129,7 @@
 /* Single event row */
 .event-row {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.875rem;
   padding: 0.75rem;
   border-radius: 0.5rem;
@@ -167,6 +145,7 @@
 .event-row:hover {
   background: var(--muted);
 }
+
 
 /* Luma-style date icon (like FEB / 2) */
 .event-date-icon {
@@ -222,6 +201,12 @@
 }
 
 .event-row-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.event-row-title {
   display: flex;
   align-items: center;
   gap: 0.5rem;

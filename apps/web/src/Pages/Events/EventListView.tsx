@@ -12,6 +12,7 @@ import {
 import type { EventType, Organization as OrganizationType } from '@credopass/lib/schemas';
 import EmptyState from '../../components/empty-state';
 import { getGroupedEventsData, groupEventsByStatus } from '../../lib/utils/events';
+import { Separator } from '@credopass/ui';
 
 export const STATUS_MAPPING: Record<EventType['status'], {
     icon?: React.JSX.Element;
@@ -19,27 +20,27 @@ export const STATUS_MAPPING: Record<EventType['status'], {
     style: string;
 }> = {
     draft: {
-        icon: <FileClock size={14} className='text-yellow-500'/>,
+        icon: <FileClock size={14} className='text-yellow-500' />,
         label: 'Draft',
         style: 'bg-yellow-500/10 text-yellow-500 border-yellow-500/30'
     },
     scheduled: {
-        icon: <CalendarClock size={14} className='text-primary/80'/>,
+        icon: <CalendarClock size={14} className='text-primary/80' />,
         label: 'Scheduled',
         style: 'bg-primary/10 text-primary border-primary/30'
     },
     ongoing: {
-        icon: <Clock size={14} className='text-green-500'/>,
+        icon: <Clock size={14} className='text-green-500' />,
         label: 'Ongoing',
         style: 'bg-green-500/10 text-green-500 border-green-500/30'
     },
     completed: {
-        icon: <ClockCheck size={14} className='text-blue-500/50'/>,
+        icon: <ClockCheck size={14} className='text-blue-500/50' />,
         label: 'Completed',
         style: 'bg-blue-500/10 text-blue-500 border-blue-500/30'
     },
     cancelled: {
-        icon: <ClockAlert size={14} className='text-red-500/50'/>,
+        icon: <ClockAlert size={14} className='text-red-500/50' />,
         label: 'Cancelled',
         style: 'bg-red-500/10 text-red-500 border-red-500/30'
     },
@@ -63,33 +64,15 @@ const DateIcon: React.FC<Partial<{ date: Date, url: string, hour12: boolean }>> 
 };
 
 
-const Organization: React.FC<OrganizationType> = (props) => {
-    return (
-        <AvatarGroup className="grayscale">
-            <Avatar>
-                <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
-                <AvatarFallback>CN</AvatarFallback>
-            </Avatar>
-            <Avatar>
-                <AvatarImage src="https://github.com/maxleiter.png" alt="@maxleiter" />
-                <AvatarFallback>LR</AvatarFallback>
-            </Avatar>
-            <Avatar>
-                <AvatarImage
-                    src="https://github.com/evilrabbit.png"
-                    alt="@evilrabbit"
-                />
-                <AvatarFallback>ER</AvatarFallback>
-            </Avatar>
-        </AvatarGroup>
-    )
-}
+
 
 
 
 /** Single event row -- inspired by Luma desktop event management (Screenshot 7) */
 const EventRow: React.FC<{
-    event: EventType;
+    event: EventType & {
+        orgCollection: OrganizationType
+    };
     onNavigate: (eventId: string) => void;
 }> = ({ event, onNavigate }) => {
     const startDate = event.startTime ? new Date(event.startTime) : null;
@@ -107,6 +90,8 @@ const EventRow: React.FC<{
         onNavigate(event.id);
     };
 
+    const orgData = useMemo(() => (event?.orgCollection || {}), [event])
+
     return (
         <button
             type="button"
@@ -118,14 +103,27 @@ const EventRow: React.FC<{
 
             {/* Event details */}
             <div className="event-row-details">
-                <div className="event-row-top">
-                    <span className="event-row-name">{event.name}</span>
+                <div className='event-row-top'>
+                    <div className='flex items-center gap-1'>
+                        <AvatarGroup>
+                            <Avatar size='sm'>
+                                <AvatarFallback>{orgData?.name.slice(0, 2)}</AvatarFallback>
+                            </Avatar>
+                            <Avatar size='sm'>
+                                <AvatarFallback>{orgData?.plan}</AvatarFallback>
+                            </Avatar>
+                        </AvatarGroup>
+                        <p className='text-muted-foreground text-xs'>{orgData?.name}</p>
+                    </div>
                     <Badge
                         variant="outline"
                         className={`event-row-badge ${STATUS_MAPPING[event.status].style || ''}`}
                     >
                         {event.status}
                     </Badge>
+                </div>
+                <div className="event-row-title">
+                    <span className="event-row-name">{event.name}</span>
                 </div>
 
                 <div className="event-row-meta">
@@ -169,7 +167,9 @@ interface EventListViewProps {
 const EventListView: React.FC<EventListViewProps> = ({ events, onCreateEvent, selectedStatus = [] }) => {
     const navigate = useNavigate();
 
-    const grouped = useMemo(() => getGroupedEventsData(groupEventsByStatus(events), selectedStatus), [events, selectedStatus]);
+    const grouped = useMemo(() => getGroupedEventsData<EventType & {
+        orgCollection: OrganizationType
+    }>(groupEventsByStatus(events), selectedStatus), [events, selectedStatus]);
 
     const handleNavigateToEvent = (eventId: string) => {
         navigate({ to: '/events/$eventId', params: { eventId } });
@@ -190,18 +190,22 @@ const EventListView: React.FC<EventListViewProps> = ({ events, onCreateEvent, se
     return (
         <div className="event-list">
             {grouped.map(([statusLabel, eventsData]) => (
-                    <div key={statusLabel} className="event-list-group">
-                        <div className="event-list-date-heading">
-                            {STATUS_MAPPING[statusLabel].icon}
-                            <h3>{STATUS_MAPPING[statusLabel].label}</h3>
-                        </div>
-                        <div className="event-list-items">
-                            {eventsData.map((event) => (
-                                <EventRow key={event.id} event={event} onNavigate={handleNavigateToEvent} />
-                            ))}
-                        </div>
+                <div key={statusLabel} className="event-list-group">
+                    <div className="event-list-date-heading">
+                        {STATUS_MAPPING[statusLabel].icon}
+                        <h3>{STATUS_MAPPING[statusLabel].label}</h3>
+                        <Badge variant={'secondary'} className='size-4'>{eventsData.length}</Badge>
                     </div>
-                )
+                    <div className="event-list-items">
+                        {eventsData.map((event, idx) => (
+                            <>
+                                {idx !== 0 && <Separator className={'bg-gradient-to-r from-transparent via-muted/80 to-transparent'} />}
+                                <EventRow key={event.id} event={event} onNavigate={handleNavigateToEvent} />
+                            </>
+                        ))}
+                    </div>
+                </div>
+            )
             )}
         </div>
     );

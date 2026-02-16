@@ -14,12 +14,14 @@ export function groupEventsByStatus(events: EventType[]): Map<EventType['status'
 
 type GroupedEvents = ReturnType<typeof groupEventsByStatus>;
 
-export function getGroupedEventsData(groupedEventMap: GroupedEvents, statuses:Array<EventType['status']>):Array<[EventType['status'], EventType[]]>{
-    const result:Array<[EventType['status'], EventType[]]> = [];
-    statuses.forEach((s)=>{
+export function getGroupedEventsData<T extends EventType>(
+    groupedEventMap: GroupedEvents, statuses: Array<T['status']>
+): Array<[T['status'], T[]]> {
+    const result: Array<[EventType['status'], T[]]> = [];
+    statuses.forEach((s) => {
         const events = groupedEventMap.get(s);
-        if(events && events.length !== 0){
-            result.push([s,  events])
+        if (events && events.length !== 0) {
+            result.push([s, events as T[]])
         }
     });
     return result;

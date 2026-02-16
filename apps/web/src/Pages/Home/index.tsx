@@ -19,19 +19,9 @@ import {
 import { useNavigate } from '@tanstack/react-router';
 import { useToolbarContext } from '../../hooks/use-toolbar-context';
 import './home.css';
+import { getGreeting } from '../../lib/utils';
 
-const GREETINGS: Record<string, string> = {
-  morning: 'Good morning',
-  afternoon: 'Good afternoon',
-  evening: 'Good evening',
-};
 
-function getGreeting(): string {
-  const hour = new Date().getHours();
-  if (hour < 12) return GREETINGS.morning;
-  if (hour < 17) return GREETINGS.afternoon;
-  return GREETINGS.evening;
-}
 
 /** Luma-style action cards (like Invite Guests / Send a Blast / Share Event) */
 const ACTION_CARDS = [

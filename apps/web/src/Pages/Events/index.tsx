@@ -2,13 +2,15 @@ import { useCallback, useMemo, useState } from 'react';
 import { eq, useLiveQuery } from '@tanstack/react-db';
 import { getCollections } from '../../lib/tanstack-db';
 import type { EventType } from '@credopass/lib/schemas';
-import { useLauncher } from '../../stores/store';
+import { useEventSessionStore, useLauncher } from '../../stores/store';
 import { launchEventForm, type EventFormProps } from '../../containers/EventForm/index';
 import CalendarPage from './Calendar/index';
 import EventListView, { STATUS_MAPPING } from './EventListView';
-import { Calendar, CalendarPlus, Filter, List, Plus } from 'lucide-react';
+import { Calendar, CalendarPlus, Filter, List } from 'lucide-react';
 import { useToolbarContext } from '../../hooks/use-toolbar-context';
 import { Button } from "@credopass/ui/components/button"
+import { getGreeting } from '../../lib/utils';
+
 import {
     DropdownMenu,
     DropdownMenuCheckboxItem,
@@ -17,8 +19,6 @@ import {
     DropdownMenuLabel,
     DropdownMenuTrigger,
 } from "@credopass/ui/components/dropdown-menu"
-
-
 
 import './events.css';
 
@@ -29,24 +29,21 @@ const StatusFilterMenu: React.FC<{
     menuItems: Record<EventType['status'], boolean>;
     clickHandler: (update: Record<EventType['status'], boolean>) => void;
 }> = ({ menuItems, clickHandler }) => {
-
-
     return (
         <DropdownMenu>
             <DropdownMenuTrigger>
-                <Filter className='status-filter-menu' />
+                <Button variant='outline' className='p-3' size={'icon-xs'}><Filter /></Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-48">
                 <DropdownMenuGroup>
-                    <DropdownMenuLabel>Notification Preferences</DropdownMenuLabel>
+                    <DropdownMenuLabel>Show More Statuses</DropdownMenuLabel>
                     {Object.entries(STATUS_MAPPING).map(([status, entry]) => (
                         <DropdownMenuCheckboxItem
                             key={status}
                             checked={menuItems[status as EventType['status']]}
                             onCheckedChange={(checked) =>
                                 clickHandler({ ...menuItems, [status]: checked === true })
-                            }
-                        >
+                            }>
                             {entry.icon}
                             {status}
                         </DropdownMenuCheckboxItem>
@@ -69,6 +66,10 @@ const EventsPage = () => {
         completed: true,
         cancelled: false,
     });
+
+    const userName = useEventSessionStore((s) => s.session.currentUserName);
+    const firstName = useMemo(() => userName?.split(' ')[0] || 'there', [userName]);
+    const greeting = useMemo(() => getGreeting(), []);
 
     const selStatus = useMemo(() => {
         const selArr = [];
@@ -130,9 +131,14 @@ const EventsPage = () => {
     return (
         <div className="events-page">
             <div className="events-header">
+                {/* Greeting */}
                 <div className="events-header-left">
-                    <h1 className="events-title">Events</h1>
-                    <span className="events-count">{events.length}</span>
+                    <h1 className="events-header-title">
+                        {greeting}, {firstName}
+                    </h1>
+                    <p className="events-header-subtitle">
+                        {"Here\u2019s a summary of your events"}
+                    </p>
                 </div>
 
                 <div className="events-header-right">
