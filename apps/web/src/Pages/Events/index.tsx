@@ -3,10 +3,10 @@ import { eq, useLiveQuery } from '@tanstack/react-db';
 import { getCollections } from '../../lib/tanstack-db';
 import type { EventType } from '@credopass/lib/schemas';
 import { useEventSessionStore, useLauncher } from '../../stores/store';
+import { useAppStore } from '../../stores/store';
 import { launchEventForm } from '../../containers/EventForm/index';
-import { EventCalendar } from '../../components/event-calendar';
 import EventListView, { STATUS_MAPPING } from './EventListView';
-import { Calendar, CalendarPlus, Filter, List } from 'lucide-react';
+import { Calendar, CalendarPlus, Filter } from 'lucide-react';
 import { useToolbarContext } from '../../hooks/use-toolbar-context';
 import { Button } from "@credopass/ui/components/button"
 import { getGreeting } from '../../lib/utils';
@@ -21,6 +21,12 @@ import {
 } from "@credopass/ui/components/dropdown-menu"
 
 import './events.css';
+
+/**
+ * EventCalendar is a full blown calendar that can be accessed in the sidebar
+ * should we want to make it available in the event view just import it here
+ * import { EventCalendar } from '../../components/event-calendar';
+ */
 
 type ViewMode = 'calendar' | 'list';
 
@@ -135,43 +141,27 @@ const EventsPage = () => {
                 </div>
 
                 <div className="events-header-right">
-                    <div className="view-toggle" role="tablist" aria-label="View mode">
-                        <button
-                            role="tab"
-                            type="button"
-                            className={`view-toggle-btn ${viewMode === 'list' ? 'active' : ''}`}
-                            onClick={() => setViewMode('list')}
-                            aria-selected={viewMode === 'list'}
-                            aria-label="List view"
-                        >
-                            <List size={15} />
-                        </button>
-                        <button
-                            role="tab"
-                            type="button"
-                            className={`view-toggle-btn ${viewMode === 'calendar' ? 'active' : ''}`}
-                            onClick={() => setViewMode('calendar')}
-                            aria-selected={viewMode === 'calendar'}
-                            aria-label="Calendar view"
-                        >
-                            <Calendar size={15} />
-                        </button>
-                    </div>
-
+                    <Button
+                        variant='outline'
+                        className='p-3'
+                        size={'icon-xs'}
+                        onClick={() => {
+                            useAppStore.getState().setViewedItem({ id: 'calendar', content: null });
+                            useAppStore.getState().toggleSidebar('right', true);
+                        }}
+                    >
+                        <Calendar />
+                    </Button>
                     <StatusFilterMenu menuItems={statusMenu} clickHandler={setStatusMenuItems} />
                 </div>
             </div>
 
             <div className="events-content">
-                {viewMode === 'calendar' ? (
-                        <EventCalendar events={filteredEvents} variant="full" />
-                ) : (
-                    <EventListView
-                        events={filteredEvents}
-                        onCreateEvent={handleCreateEvent}
-                        selectedStatus={selStatus}
-                    />
-                )}
+                <EventListView
+                    events={filteredEvents}
+                    onCreateEvent={handleCreateEvent}
+                    selectedStatus={selStatus}
+                />
             </div>
         </div>
     );

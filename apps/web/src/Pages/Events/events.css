@@ -43,42 +43,6 @@
   gap: 0.5rem;
 }
 
-/* View toggle */
-.view-toggle {
-  display: flex;
-  align-items: center;
-  border: 1px solid var(--border);
-  border-radius: calc(var(--radius) - 2px);
-  overflow: hidden;
-}
-
-.view-toggle-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 2rem;
-  height: 1.75rem;
-  background: transparent;
-  border: none;
-  color: var(--muted-foreground);
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.view-toggle-btn:hover {
-  background: var(--muted);
-  color: var(--foreground);
-}
-
-.view-toggle-btn.active {
-  background: var(--primary);
-  color: var(--primary-foreground);
-}
-
-.view-toggle-btn+.view-toggle-btn {
-  border-left: 1px solid var(--border);
-}
-
 
 /* ---- Content ---- */
 .events-content {
