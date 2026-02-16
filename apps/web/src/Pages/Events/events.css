@@ -212,7 +212,7 @@
   color: var(--muted-foreground);
 }
 
-/* More button */
+/* More button — always visible, toggles slide on desktop */
 .event-row-more {
   display: inline-flex;
   align-items: center;
@@ -221,19 +221,76 @@
   height: 1.75rem;
   border-radius: calc(var(--radius) - 2px);
   color: var(--muted-foreground);
-  opacity: 0;
   transition: all 0.15s ease;
   flex-shrink: 0;
-}
-
-.event-row:hover .event-row-more {
-  opacity: 1;
 }
 
 .event-row-more:hover {
   background: var(--border);
   color: var(--foreground);
 }
+
+
+/* ================================================================
+   SWIPEABLE ROW  — mobile swipe-to-reveal actions (Gmail-style)
+   ================================================================ */
+
+.swipeable-row {
+  position: relative;
+  overflow: hidden;
+  border-radius: 0.5rem;
+}
+
+/* Action panel sits behind the sliding content */
+.swipeable-actions {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 140px;
+  display: flex;
+  align-items: stretch;
+}
+
+/* Individual action button */
+.swipe-action {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  flex: 1;
+  border: none;
+  cursor: pointer;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.swipe-action-edit {
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+
+.swipe-action-delete {
+  background: hsl(0 84% 60%);          /* red-500 */
+  color: white;
+}
+
+.swipe-action:active {
+  filter: brightness(0.85);
+}
+
+/* The content layer that slides left */
+.swipeable-content {
+  position: relative;
+  z-index: 1;
+  background: var(--background);
+  transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  will-change: transform;
+  touch-action: pan-y;
+}
+
 
 /* ================================================================
    RESPONSIVE
@@ -244,7 +301,6 @@
     gap: 0.75rem;
   }
 
-
   .event-row {
     padding: 0.625rem 0.5rem;
   }
@@ -252,4 +308,5 @@
   .event-row-meta {
     gap: 0.5rem;
   }
+
 }

@@ -1,6 +1,6 @@
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { MapPin, Users, MoreHorizontal, Clock, ClockCheck, FileClock, CalendarClock, ClockAlert } from 'lucide-react';
+import { MapPin, Users, MoreVertical, Clock, ClockCheck, FileClock, CalendarClock, ClockAlert, Pencil, Trash2 } from 'lucide-react';
 import { Badge } from '@credopass/ui/components/badge';
 import {
     Avatar,
@@ -13,6 +13,9 @@ import type { EventType, Organization as OrganizationType } from '@credopass/lib
 import EmptyState from '../../components/empty-state';
 import { getGroupedEventsData, groupEventsByStatus } from '../../lib/utils/events';
 import { Separator } from '@credopass/ui';
+import { useIsMobile } from '../../hooks/use-mobile';
+
+export type EventWithOrg = EventType & { orgCollection: OrganizationType };
 
 export const STATUS_MAPPING: Record<EventType['status'], {
     icon?: React.JSX.Element;
@@ -46,6 +49,93 @@ export const STATUS_MAPPING: Record<EventType['status'], {
     },
 }
 
+/* ----------------------------------------------------------------
+   Swipe-to-reveal hook — left-swipe only, reveals action buttons
+   ---------------------------------------------------------------- */
+const SWIPE_THRESHOLD = 60;
+const ACTION_WIDTH = 140; // total width of the revealed action panel
+
+function useSwipeToReveal() {
+    const [offsetX, setOffsetX] = useState(0);
+    const [isSwiped, setIsSwiped] = useState(false);
+    const startX = useRef(0);
+    const startY = useRef(0);
+    const currentX = useRef(0);
+    const swiping = useRef(false);
+    const isHorizontal = useRef<boolean | null>(null);
+
+    const reset = useCallback(() => {
+        setOffsetX(0);
+        setIsSwiped(false);
+    }, []);
+
+    /** Toggle open/closed — used by the desktop more button */
+    const toggle = useCallback(() => {
+        if (isSwiped) {
+            setOffsetX(0);
+            setIsSwiped(false);
+        } else {
+            setOffsetX(-ACTION_WIDTH);
+            setIsSwiped(true);
+        }
+    }, [isSwiped]);
+
+    const onTouchStart = useCallback((e: React.TouchEvent) => {
+        const touch = e.touches[0];
+        startX.current = touch.clientX;
+        startY.current = touch.clientY;
+        currentX.current = touch.clientX;
+        swiping.current = true;
+        isHorizontal.current = null;
+    }, []);
+
+    const onTouchMove = useCallback((e: React.TouchEvent) => {
+        if (!swiping.current) return;
+        const touch = e.touches[0];
+        const diffX = touch.clientX - startX.current;
+        const diffY = touch.clientY - startY.current;
+
+        // Lock direction on first significant movement
+        if (isHorizontal.current === null && (Math.abs(diffX) > 5 || Math.abs(diffY) > 5)) {
+            isHorizontal.current = Math.abs(diffX) > Math.abs(diffY);
+        }
+
+        // If vertical scroll, bail out
+        if (isHorizontal.current === false) {
+            swiping.current = false;
+            return;
+        }
+
+        currentX.current = touch.clientX;
+
+        if (isSwiped) {
+            // Already open — allow dragging back to the right to close
+            const newOffset = Math.min(0, Math.max(-ACTION_WIDTH, -ACTION_WIDTH + diffX));
+            setOffsetX(newOffset);
+        } else {
+            // Closed — only allow left swipe (negative diff)
+            const clampedOffset = Math.min(0, Math.max(-ACTION_WIDTH, diffX));
+            setOffsetX(clampedOffset);
+        }
+    }, [isSwiped]);
+
+    const onTouchEnd = useCallback(() => {
+        swiping.current = false;
+        isHorizontal.current = null;
+
+        if (Math.abs(offsetX) >= SWIPE_THRESHOLD) {
+            setOffsetX(-ACTION_WIDTH);
+            setIsSwiped(true);
+        } else {
+            setOffsetX(0);
+            setIsSwiped(false);
+        }
+    }, [offsetX]);
+
+    return { offsetX, isSwiped, reset, toggle, onTouchStart, onTouchMove, onTouchEnd };
+}
+
+
 /** Luma-style date icon: month abbreviation on top, day number below */
 const DateIcon: React.FC<Partial<{ date: Date, url: string, hour12: boolean }>> = ({ date, url, hour12 = true }) => {
     if (url || !date) {
@@ -64,19 +154,17 @@ const DateIcon: React.FC<Partial<{ date: Date, url: string, hour12: boolean }>> 
 };
 
 
-
-
-
-
-/** Single event row -- inspired by Luma desktop event management (Screenshot 7) */
+/** Single event row -- inspired by Luma desktop event management */
 const EventRow: React.FC<{
-    event: EventType & {
-        orgCollection: OrganizationType
-    };
+    event: EventWithOrg;
     onNavigate: (eventId: string) => void;
-}> = ({ event, onNavigate }) => {
+    onEdit: (event: EventWithOrg) => void;
+    onDelete: (eventId: string) => void;
+    isMobile: boolean;
+}> = ({ event, onNavigate, onEdit, onDelete, isMobile }) => {
     const startDate = event.startTime ? new Date(event.startTime) : null;
     const endDate = event.endTime ? new Date(event.endTime) : null;
+    const { offsetX, isSwiped, reset, toggle, onTouchStart, onTouchMove, onTouchEnd } = useSwipeToReveal();
 
     const timeString = startDate
         ? startDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
@@ -87,31 +175,38 @@ const EventRow: React.FC<{
         : '';
 
     const handleClick = () => {
+        // Don't navigate if the row is swiped open
+        if (isSwiped) { reset(); return; }
         onNavigate(event.id);
     };
 
-    const orgData = useMemo(() => (event?.orgCollection || {}), [event])
+    const handleEdit = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        reset();
+        onEdit(event);
+    };
 
-    return (
-        <button
-            type="button"
-            className="event-row"
-            onClick={handleClick}
-        >
-            {/* Date icon render */}
+    const handleDelete = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        reset();
+        onDelete(event.id);
+    };
+
+    const orgData = event?.orgCollection;
+
+    const rowContent = (
+        <>
             {startDate && <DateIcon date={startDate} />}
 
-            {/* Event details */}
             <div className="event-row-details">
                 <div className='event-row-top'>
                     <div className='flex items-center gap-1'>
                         <AvatarGroup>
                             <Avatar size='sm'>
                                 <AvatarImage src="/icons/zap.png" className={"bg-primary"} />
-                                <AvatarFallback>{orgData?.name.slice(0, 2)}</AvatarFallback>
+                                <AvatarFallback>{orgData?.name?.slice(0, 2)}</AvatarFallback>
                             </Avatar>
                             <Avatar size='sm'>
-                                {/* <AvatarImage src="/icons/qr-code.png" className={'grayscale'} /> */}
                                 <AvatarFallback>{orgData?.plan}</AvatarFallback>
                             </Avatar>
                         </AvatarGroup>
@@ -119,7 +214,7 @@ const EventRow: React.FC<{
                     </div>
                     <Badge
                         variant="outline"
-                        className={`event-row-badge ${STATUS_MAPPING[event.status].style || ''}`}
+                        className={`event-row-badge ${STATUS_MAPPING[event.status]?.style || ''}`}
                     >
                         {event.status}
                     </Badge>
@@ -148,34 +243,84 @@ const EventRow: React.FC<{
                     </span>
                 </div>
             </div>
+        </>
+    );
 
-            {/* More button */}
-            <div className="event-row-more">
-                <MoreHorizontal size={16} />
+    const handleMoreClick = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        toggle();
+    };
+
+    return (
+        <div className="swipeable-row">
+            {/* Action buttons revealed behind the row */}
+            <div className="swipeable-actions">
+                <button type="button" className="swipe-action swipe-action-edit" onClick={handleEdit}>
+                    <Pencil size={18} />
+                    <span>Edit</span>
+                </button>
+                <button type="button" className="swipe-action swipe-action-delete" onClick={handleDelete}>
+                    <Trash2 size={18} />
+                    <span>Delete</span>
+                </button>
             </div>
-        </button>
+
+            {/* Sliding content */}
+            <button
+                type="button"
+                className="event-row swipeable-content"
+                onClick={handleClick}
+                onTouchStart={isMobile ? onTouchStart : undefined}
+                onTouchMove={isMobile ? onTouchMove : undefined}
+                onTouchEnd={isMobile ? onTouchEnd : undefined}
+                style={{ transform: `translateX(${offsetX}px)` }}
+            >
+                {rowContent}
+
+                {/* More button — desktop click trigger, hidden on mobile */}
+                {!isMobile && (
+                    <div
+                        className="event-row-more"
+                        role="button"
+                        tabIndex={0}
+                        onClick={handleMoreClick}
+                        onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); toggle(); } }}
+                    >
+                        <MoreVertical size={16} className='text-muted-foreground/50'/>
+                    </div>
+                )}
+            </button>
+        </div>
     );
 };
 
 
-
 interface EventListViewProps {
     events: EventType[];
-    selectedStatus: EventType['status'][]
+    selectedStatus: EventType['status'][];
     onCreateEvent: () => void;
+    onEditEvent: (event: EventWithOrg) => void;
+    onDeleteEvent: (eventId: string) => void;
 }
 
 
-const EventListView: React.FC<EventListViewProps> = ({ events, onCreateEvent, selectedStatus = [] }) => {
+const EventListView: React.FC<EventListViewProps> = ({
+    events,
+    onCreateEvent,
+    selectedStatus = [],
+    onEditEvent,
+    onDeleteEvent,
+}) => {
     const navigate = useNavigate();
+    const isMobile = useIsMobile();
 
-    const grouped = useMemo(() => getGroupedEventsData<EventType & {
-        orgCollection: OrganizationType
-    }>(groupEventsByStatus(events), selectedStatus), [events, selectedStatus]);
+    const grouped = useMemo(() => getGroupedEventsData<EventWithOrg>(
+        groupEventsByStatus(events), selectedStatus
+    ), [events, selectedStatus]);
 
-    const handleNavigateToEvent = (eventId: string) => {
+    const handleNavigateToEvent = useCallback((eventId: string) => {
         navigate({ to: '/events/$eventId', params: { eventId } });
-    };
+    }, [navigate]);
 
     if (events.length === 0) {
         return (
@@ -200,15 +345,20 @@ const EventListView: React.FC<EventListViewProps> = ({ events, onCreateEvent, se
                     </div>
                     <div className="event-list-items">
                         {eventsData.map((event, idx) => (
-                            <>
-                                {idx !== 0 && <Separator className={'bg-gradient-to-r from-transparent via-muted to-transparent'} />}
-                                <EventRow key={event.id} event={event} onNavigate={handleNavigateToEvent} />
-                            </>
+                            <React.Fragment key={event.id}>
+                                {idx !== 0 && <Separator className={'bg-linear-to-r from-transparent via-muted to-transparent'} />}
+                                <EventRow
+                                    event={event}
+                                    onNavigate={handleNavigateToEvent}
+                                    onEdit={onEditEvent}
+                                    onDelete={onDeleteEvent}
+                                    isMobile={isMobile}
+                                />
+                            </React.Fragment>
                         ))}
                     </div>
                 </div>
-            )
-            )}
+            ))}
         </div>
     );
 };

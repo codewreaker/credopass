@@ -6,7 +6,8 @@ import { useEventSessionStore, useLauncher } from '../../stores/store';
 import { useAppStore } from '../../stores/store';
 import { launchEventForm } from '../../containers/EventForm/index';
 import EventListView, { STATUS_MAPPING } from './EventListView';
-import { Calendar, CalendarPlus, CalendarsIcon, Filter } from 'lucide-react';
+import type { EventWithOrg } from './EventListView';
+import { CalendarPlus, CalendarsIcon, Filter } from 'lucide-react';
 import { useToolbarContext } from '../../hooks/use-toolbar-context';
 import { Button } from "@credopass/ui/components/button"
 import { ButtonGroup } from '@credopass/ui/components/button-group'
@@ -107,6 +108,31 @@ const EventsPage = () => {
         launchEventForm({ isEditing: false }, openLauncher);
     }, [openLauncher]);
 
+    const handleEditEvent = useCallback((event: EventWithOrg) => {
+        launchEventForm({
+            isEditing: true,
+            initialData: {
+                id: event.id,
+                name: event.name,
+                description: event.description || '',
+                status: event.status,
+                dateTimeRange: {
+                    from: event.startTime ? new Date(event.startTime) : undefined,
+                    to: event.endTime ? new Date(event.endTime) : undefined,
+                },
+                location: event.location || '',
+                capacity: event.capacity?.toString() || '',
+                organizationId: event.organizationId,
+            },
+        }, openLauncher);
+    }, [openLauncher]);
+
+    const handleDeleteEvent = useCallback((eventId: string) => {
+        if (!confirm('Are you sure you want to delete this event?')) return;
+        const { events: eventCol } = getCollections();
+        eventCol.delete(eventId);
+    }, []);
+
     // Register toolbar context: secondary "Create Event" button + search
     useToolbarContext({
         action: { icon: CalendarPlus, label: 'Create Event', onClick: handleCreateEvent },
@@ -159,6 +185,8 @@ const EventsPage = () => {
                 <EventListView
                     events={filteredEvents}
                     onCreateEvent={handleCreateEvent}
+                    onEditEvent={handleEditEvent}
+                    onDeleteEvent={handleDeleteEvent}
                     selectedStatus={selStatus}
                 />
             </div>
