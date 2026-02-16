@@ -3,8 +3,8 @@ import { eq, useLiveQuery } from '@tanstack/react-db';
 import { getCollections } from '../../lib/tanstack-db';
 import type { EventType } from '@credopass/lib/schemas';
 import { useEventSessionStore, useLauncher } from '../../stores/store';
-import { launchEventForm, type EventFormProps } from '../../containers/EventForm/index';
-import CalendarPage from './Calendar/index';
+import { launchEventForm } from '../../containers/EventForm/index';
+import { EventCalendar } from '../../components/event-calendar';
 import EventListView, { STATUS_MAPPING } from './EventListView';
 import { Calendar, CalendarPlus, Filter, List } from 'lucide-react';
 import { useToolbarContext } from '../../hooks/use-toolbar-context';
@@ -99,13 +99,6 @@ const EventsPage = () => {
     );
 
 
-    const launch = useCallback(
-        (args?: Omit<EventFormProps, 'collection'>) => {
-            launchEventForm(args, openLauncher);
-        },
-        [openLauncher],
-    );
-
     const handleCreateEvent = useCallback(() => {
         launchEventForm({ isEditing: false }, openLauncher);
     }, [openLauncher]);
@@ -171,7 +164,7 @@ const EventsPage = () => {
 
             <div className="events-content">
                 {viewMode === 'calendar' ? (
-                    <CalendarPage events={filteredEvents} launch={launch} />
+                        <EventCalendar events={filteredEvents} variant="full" />
                 ) : (
                     <EventListView
                         events={filteredEvents}

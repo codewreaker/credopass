@@ -86,6 +86,12 @@
   min-height: 0;
 }
 
+/* @media (min-width: 768px) {
+  .events-content {
+    max-width: 900px;
+  }
+} */
+
 /* ================================================================
    EVENT LIST VIEW -- Luma-style grouped rows
    ================================================================ */

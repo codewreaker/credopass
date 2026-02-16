@@ -1,0 +1,200 @@
+/* ================================================================
+   EVENT CALENDAR – shared styles for compact & full variants
+   ================================================================ */
+
+.event-calendar {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  height: 100%;
+}
+
+/* Let the calendar grid fill its container naturally */
+.event-calendar-grid {
+  width: 100%;
+}
+
+/* Slightly tighter selection circle radius */
+.ec-calendar {
+  --cell-radius: var(--radius-lg);
+}
+
+/* ---- Dot indicators inside day cells ---- */
+
+.event-calendar-dots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  margin-top: 1px;
+}
+
+.event-calendar-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ---- Month event list panel ---- */
+
+.event-calendar-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  overflow-y: auto;
+}
+
+.event-calendar-detail-title {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.event-calendar-count {
+  font-size: 0.6875rem;
+  font-weight: 400;
+  color: var(--muted-foreground);
+}
+
+.event-calendar-empty {
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+}
+
+.event-calendar-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+/* ---- Event row ---- */
+
+.event-calendar-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.5rem 0.625rem;
+  background: var(--muted);
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  transition: border-color 0.15s ease, transform 0.15s ease, background 0.15s ease;
+}
+
+.event-calendar-item:hover {
+  border-color: var(--border);
+  transform: translateX(2px);
+}
+
+/* Highlighted when its date is selected on the calendar */
+.event-calendar-item--active {
+  border-color: var(--primary);
+  background: color-mix(in oklch, var(--primary) 8%, var(--muted));
+}
+
+.event-calendar-item-header {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.event-calendar-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.event-calendar-item-title {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--foreground);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.event-calendar-item-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  flex-wrap: wrap;
+}
+
+.event-calendar-item-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.6875rem;
+  color: var(--muted-foreground);
+}
+
+/* ================================================================
+   COMPACT VARIANT (sidebar)
+   ================================================================ */
+
+.event-calendar--compact {
+  gap: 0.75rem;
+}
+
+.event-calendar--compact .event-calendar-grid {
+  max-width: none;
+}
+
+.event-calendar--compact .event-calendar-dots {
+  gap: 1px;
+}
+
+.event-calendar--compact .event-calendar-dot {
+  width: 3px;
+  height: 3px;
+}
+
+.event-calendar--compact .event-calendar-detail-title {
+  font-size: 0.75rem;
+}
+
+.event-calendar--compact .event-calendar-item {
+  padding: 0.375rem 0.5rem;
+}
+
+.event-calendar--compact .event-calendar-item-title {
+  font-size: 0.75rem;
+}
+
+/* ================================================================
+   FULL VARIANT (events page)
+   ================================================================ */
+
+@media (min-width: 768px) {
+  .event-calendar:not(.event-calendar--compact) {
+    flex-direction: row;
+    
+    align-items: flex-start;
+  }
+
+  .event-calendar:not(.event-calendar--compact) .event-calendar-grid {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .event-calendar:not(.event-calendar--compact) .event-calendar-detail {
+    flex: 1;
+    min-width: 0;
+    max-height: calc(100vh - 200px);
+  }
+}
+
+.event-calendar:not(.event-calendar--compact) .event-calendar-detail {
+  padding: 0 0.25rem;
+}
+
+.event-calendar:not(.event-calendar--compact) .event-calendar-detail-title {
+  font-size: 0.9375rem;
+}
