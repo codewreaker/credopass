@@ -3,7 +3,6 @@ import { eq, useLiveQuery } from '@tanstack/react-db';
 import { getCollections } from '../../lib/tanstack-db';
 import type { EventType } from '@credopass/lib/schemas';
 import { useEventSessionStore, useLauncher } from '../../stores/store';
-import { useAppStore } from '../../stores/store';
 import { launchEventForm } from '../../containers/EventForm/index';
 import EventListView, { STATUS_MAPPING } from './EventListView';
 import type { EventWithOrg } from './EventListView';
@@ -23,6 +22,7 @@ import {
 } from "@credopass/ui/components/dropdown-menu"
 
 import './events.css';
+import { RightSidebarTrigger } from '../../containers/RightSidebar';
 
 /**
  * EventCalendar is a full blown calendar that can be accessed in the sidebar
@@ -45,7 +45,6 @@ const StatusFilterMenu: React.FC<{
                     <DropdownMenuLabel>Show More Statuses</DropdownMenuLabel>
                     {Object.entries(STATUS_MAPPING).map(([status, entry]) => (
                         <DropdownMenuCheckboxItem
-                            key={status}
                             checked={menuItems[status as EventType['status']]}
                             onCheckedChange={(checked) =>
                                 clickHandler({ ...menuItems, [status]: checked === true })
@@ -166,16 +165,7 @@ const EventsPage = () => {
 
                 <div className="events-header-right">
                     <ButtonGroup>
-                        <Button
-                            variant='outline'
-                            size={'icon-sm'}
-                            onClick={() => {
-                                useAppStore.getState().setViewedItem({ id: 'calendar', content: null });
-                                useAppStore.getState().toggleSidebar('right', true);
-                            }}
-                        >
-                            <CalendarsIcon />
-                        </Button>
+                        <RightSidebarTrigger icon={<CalendarsIcon/>}/>
                         <StatusFilterMenu menuItems={statusMenu} clickHandler={setStatusMenuItems} />
                     </ButtonGroup>
                 </div>

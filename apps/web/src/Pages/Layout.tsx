@@ -3,7 +3,7 @@ import { Outlet } from "@tanstack/react-router";
 import { TopNavBar } from "../containers/TopNavBar/index";
 import LeftSidebar, { SidebarInset, SidebarTrigger, OrgSelector } from "../containers/LeftSidebar";
 
-import { RightSidebar, RightSidebarTrigger } from "../containers/RightSidebar";
+import { RightSidebar } from "../containers/RightSidebar";
 
 import ModalPortal from "../components/launcher";
 import {
@@ -52,7 +52,6 @@ export function RootLayout() {
                   <Separator orientation="vertical" className="h-4 hidden md:block" />
                 </div>
                 <TopNavBar />
-                <RightSidebarTrigger />
               </header>
               <div className="page-content page-transition">
                 <Suspense fallback={
