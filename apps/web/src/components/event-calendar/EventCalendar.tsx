@@ -8,6 +8,8 @@ import type { EventType } from '@credopass/lib/schemas';
 import { cn } from '@credopass/ui/lib/utils';
 
 import './event-calendar.css';
+import { EventRow } from '../event-row';
+import { useIsMobile } from '../../hooks/use-mobile';
 
 // ---- Status colour mapping (dot indicator) ----
 const STATUS_DOT_COLORS: Record<EventType['status'], string> = {
@@ -60,6 +62,51 @@ export interface EventCalendarProps {
   variant?: 'compact' | 'full';
   className?: string;
 }
+
+interface MonthEventsProps {
+  event: EventType;
+  isEventActive: (ev: EventType) => boolean;
+  handleEventRowClick: (ev: EventType) => void;
+  handleEventNavigate: (eventId: string) => void;
+}
+
+const MonthEvents = ({ event: ev, isEventActive, handleEventRowClick, handleEventNavigate }: MonthEventsProps) => (<button
+  type="button"
+  className={cn(
+    'event-calendar-item',
+    isEventActive(ev) && 'event-calendar-item--active',
+  )}
+  onClick={() => handleEventRowClick(ev)}
+  onDoubleClick={() => handleEventNavigate(ev.id)}
+>
+  <div className="event-calendar-item-header">
+    <span
+      className={cn(
+        'event-calendar-status-dot',
+        STATUS_DOT_COLORS[ev.status],
+      )}
+    />
+    <span className="event-calendar-item-title">{ev.name}</span>
+    <Badge variant="outline" className="ml-auto text-[10px] capitalize">
+      {ev.status}
+    </Badge>
+  </div>
+  <div className="event-calendar-item-meta">
+    <span className="event-calendar-item-meta-item">
+      <Clock size={11} />
+      {formatShortDate(new Date(ev.startTime))} · {formatTime(new Date(ev.startTime))} – {formatTime(new Date(ev.endTime))}
+    </span>
+    {ev.location && (
+      <>
+        <Separator orientation="vertical" className="h-3" />
+        <span className="event-calendar-item-meta-item">
+          <MapPin size={11} />
+          {ev.location}
+        </span>
+      </>
+    )}
+  </div>
+</button>)
 
 // ---- Component ----
 export default function EventCalendar({
@@ -200,44 +247,13 @@ export default function EventCalendar({
         ) : (
           <div className="event-calendar-list">
             {monthEvents.map((ev) => (
-              <button
+              <MonthEvents 
                 key={ev.id}
-                type="button"
-                className={cn(
-                  'event-calendar-item',
-                  isEventActive(ev) && 'event-calendar-item--active',
-                )}
-                onClick={() => handleEventRowClick(ev)}
-                onDoubleClick={() => handleEventNavigate(ev.id)}
-              >
-                <div className="event-calendar-item-header">
-                  <span
-                    className={cn(
-                      'event-calendar-status-dot',
-                      STATUS_DOT_COLORS[ev.status],
-                    )}
-                  />
-                  <span className="event-calendar-item-title">{ev.name}</span>
-                  <Badge variant="outline" className="ml-auto text-[10px] capitalize">
-                    {ev.status}
-                  </Badge>
-                </div>
-                <div className="event-calendar-item-meta">
-                  <span className="event-calendar-item-meta-item">
-                    <Clock size={11} />
-                    {formatShortDate(new Date(ev.startTime))} · {formatTime(new Date(ev.startTime))} – {formatTime(new Date(ev.endTime))}
-                  </span>
-                  {ev.location && (
-                    <>
-                      <Separator orientation="vertical" className="h-3" />
-                      <span className="event-calendar-item-meta-item">
-                        <MapPin size={11} />
-                        {ev.location}
-                      </span>
-                    </>
-                  )}
-                </div>
-              </button>
+                event={ev}
+                isEventActive={isEventActive}
+                handleEventRowClick={handleEventRowClick}
+                handleEventNavigate={handleEventNavigate}
+              />
             ))}
           </div>
         )}

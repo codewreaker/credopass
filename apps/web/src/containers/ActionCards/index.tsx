@@ -1,5 +1,5 @@
 
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import {
     Plus,
     UserPlus,
@@ -9,7 +9,7 @@ import { launchEventForm } from '../../containers/EventForm/index';
 import { useLauncher } from '../../stores/store';
 import { launchUserForm } from '../UserForm';
 import { useSidebarTrigger } from '../../hooks/use-sidebar-trigger';
-import './index.css'
+import { useIsMobile } from '../../hooks/use-mobile';
 
 /** Luma-style action cards (like Invite Guests / Send a Blast / Share Event) */
 const ACTION_CARDS = [
@@ -33,12 +33,13 @@ const ACTION_CARDS = [
         label: 'Calendar View',
         description: 'View your events in calendar view',
         action: 'show-calendar' as const,
-    },
+    }
 ] as const;
 
 export default function ActionCards() {
     const { onToggleCollapse } = useSidebarTrigger();
     const { openLauncher } = useLauncher();
+    const isMobile = useIsMobile();
 
     const handleAction = useCallback(
         (action: string) => {
@@ -56,25 +57,28 @@ export default function ActionCards() {
         },
         [openLauncher, onToggleCollapse],
     );
+
+    const actionCards = useMemo(() => (isMobile ? ACTION_CARDS:ACTION_CARDS.filter(({ key }) => (key !== 'calendar'))),[isMobile])
+
     {/* Luma-style action cards row */ }
     return (
-        <div className="home-actions">
+        <div className="grid gap-3 md:grid-cols-[repeat(auto-fit,minmax(200px,1fr))]">
             {
-                ACTION_CARDS.map((card) => {
+                actionCards.map((card) => {
                     const Icon = card.icon;
                     return (
                         <button
                             key={card.key}
                             type="button"
-                            className="home-action-card"
+                            className="flex items-center gap-3 py-3.5 px-4 border border-border rounded-[0.625rem] bg-card cursor-pointer text-left transition-all duration-150 ease text-foreground hover:border-primary hover:bg-primary/5 active:scale-[0.98]"
                             onClick={() => handleAction(card.action)}
                         >
-                            <div className="home-action-icon">
+                            <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-primary text-primary-foreground shrink-0">
                                 <Icon size={18} />
                             </div>
-                            <div className="home-action-text">
-                                <span className="home-action-label">{card.label}</span>
-                                <span className="home-action-desc">{card.description}</span>
+                            <div className="flex flex-col gap-0.5 min-w-0">
+                                <span className="text-[0.8125rem] font-semibold text-foreground">{card.label}</span>
+                                <span className="text-[0.6875rem] text-muted-foreground hidden sm:inline">{card.description}</span>
                             </div>
                         </button>
                     );

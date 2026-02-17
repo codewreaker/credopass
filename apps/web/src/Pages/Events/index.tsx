@@ -4,13 +4,14 @@ import { getCollections } from '../../lib/tanstack-db';
 import type { EventType } from '@credopass/lib/schemas';
 import { useEventSessionStore, useLauncher } from '../../stores/store';
 import { launchEventForm } from '../../containers/EventForm/index';
-import EventListView, { STATUS_MAPPING } from './EventListView';
-import type { EventWithOrg } from './EventListView';
+import EventListView from './EventListView';
+import { STATUS_MAPPING, type EventWithOrg } from '../../components/event-row';
 import { CalendarPlus, CalendarsIcon, Filter } from 'lucide-react';
 import { useToolbarContext } from '../../hooks/use-toolbar-context';
 import { Button } from "@credopass/ui/components/button"
 import { ButtonGroup } from '@credopass/ui/components/button-group'
 import { getGreeting, handleCollectionDeleteById } from '../../lib/utils';
+import { EventCalendar } from '../../components/event-calendar';
 
 import {
     DropdownMenu,
@@ -25,6 +26,7 @@ import './events.css';
 import { RightSidebarTrigger } from '../../containers/RightSidebar';
 import ActionCards from '../../containers/ActionCards';
 import { Separator } from '@credopass/ui';
+import { useIsMobile } from '@credopass/ui/hooks/use-mobile';
 
 /**
  * EventCalendar is a full blown calendar that can be accessed in the sidebar
@@ -65,12 +67,13 @@ const StatusFilterMenu: React.FC<{
 const EventsPage = () => {
     const { openLauncher } = useLauncher();
     const { events: eventCollection, organizations: orgCollection } = getCollections();
+    const isMobile = useIsMobile();
     const [searchQuery, setSearchQuery] = useState<string>('');
     const [statusMenu, setStatusMenuItems] = useState<Record<EventType['status'], boolean>>({
         draft: false,
         scheduled: true,
         ongoing: true,
-        completed: true,
+        completed: false,
         cancelled: false,
     });
 
@@ -171,13 +174,22 @@ const EventsPage = () => {
             <div className="events-content">
                 <ActionCards />
                 <Separator className={'my-5 bg-gradient-to-r from-transparent via-muted to-transparent'} />
-                <EventListView
-                    events={filteredEvents}
-                    onCreateEvent={handleCreateEvent}
-                    onEditEvent={handleEditEvent}
-                    onDeleteEvent={handleDeleteEvent}
-                    selectedStatus={selStatus}
-                />
+                <div className='flex gap-4'>
+                    <div className='w-full md:w-2/3 md:border-r'>
+                        <EventListView
+                            events={filteredEvents}
+                            onCreateEvent={handleCreateEvent}
+                            onEditEvent={handleEditEvent}
+                            onDeleteEvent={handleDeleteEvent}
+                            selectedStatus={selStatus}
+                        />
+                    </div>
+                    {!isMobile && (
+                        <div className='w-1/3'>
+                            <EventCalendar events={filteredEvents} />
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );
