@@ -42,10 +42,6 @@ export default defineConfig({
             return 'ag-grid-react'
           }
 
-          // FullCalendar
-          if (id.includes('node_modules/@fullcalendar')) {
-            return 'fullcalendar-vendor'
-          }
 
           // Recharts
           if (id.includes('node_modules/recharts')) {

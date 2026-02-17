@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useForm } from '@tanstack/react-form';
 import { toast } from 'sonner';
 import * as z from 'zod';
@@ -30,6 +30,7 @@ import {
   DialogHeader,
   DialogTitle
 } from '@credopass/ui';
+import { handleCollectionDeleteById } from '../../lib/utils';
 import './style.css';
 import type { LauncherState } from '../../stores/store';
 
@@ -145,21 +146,9 @@ const OrganizationForm = ({ initialData = {}, isEditing = false, onClose }: Orga
     },
   });
 
-  const handleDelete = async () => {
-    if (initialData.id && confirm('Are you sure you want to delete this organization? This cannot be undone.')) {
-      setIsMutating(true);
-      try {
-        organizationCollection?.delete(initialData.id);
-        toast.success('Organization deleted');
-        onClose?.();
-      } catch (error) {
-        console.error('Failed to delete organization:', error);
-        toast.error('Failed to delete organization');
-      } finally {
-        setIsMutating(false);
-      }
-    }
-  };
+  const handleDelete = useCallback(() => {
+    handleCollectionDeleteById('organizations', initialData.id, onClose)
+  }, [initialData.id, onClose]);
 
   return (
     <>

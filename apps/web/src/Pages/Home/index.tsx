@@ -4,13 +4,9 @@ import { getCollections } from '../../lib/tanstack-db';
 import type { EventType } from '@credopass/lib/schemas';
 import Analytics from '../Analytics/index';
 import Tables from '../Tables';
-import { useEventSessionStore, useLauncher } from '../../stores/store';
-import { launchEventForm } from '../../containers/EventForm/index';
+import { useEventSessionStore } from '../../stores/store';
 import {
   Calendar,
-  Users,
-  QrCode,
-  Plus,
   MapPin,
   Clock,
   ArrowRight,
@@ -20,33 +16,9 @@ import { useNavigate } from '@tanstack/react-router';
 import { useToolbarContext } from '../../hooks/use-toolbar-context';
 import './home.css';
 import { getGreeting } from '../../lib/utils';
+import ActionCards from '../../containers/ActionCards';
 
 
-
-/** Luma-style action cards (like Invite Guests / Send a Blast / Share Event) */
-const ACTION_CARDS = [
-  {
-    key: 'create',
-    icon: Plus,
-    label: 'Create Event',
-    description: 'Set up a new event',
-    action: 'create-event' as const,
-  },
-  {
-    key: 'checkin',
-    icon: QrCode,
-    label: 'Check-In',
-    description: 'Scan guests at the door',
-    action: 'navigate-checkin' as const,
-  },
-  {
-    key: 'members',
-    icon: Users,
-    label: 'Members',
-    description: 'View your community',
-    action: 'navigate-members' as const,
-  },
-] as const;
 
 /** Upcoming event card -- mini version of Luma's event card */
 function UpcomingEventCard({ event }: { event: EventType }) {
@@ -88,7 +60,6 @@ export default function HomePage() {
   const firstName = useMemo(() => userName?.split(' ')[0] || 'there', [userName]);
   const greeting = useMemo(() => getGreeting(), []);
   const navigate = useNavigate();
-  const { openLauncher } = useLauncher();
 
   // Dashboard: settings button, no search
   const handleOpenSettings = useCallback(() => {
@@ -113,22 +84,7 @@ export default function HomePage() {
       .slice(0, 3);
   }, [events]);
 
-  const handleAction = useCallback(
-    (action: string) => {
-      switch (action) {
-        case 'create-event':
-          launchEventForm({ isEditing: false }, openLauncher);
-          break;
-        case 'navigate-checkin':
-          navigate({ to: '/checkin' });
-          break;
-        case 'navigate-members':
-          navigate({ to: '/members' });
-          break;
-      }
-    },
-    [openLauncher, navigate],
-  );
+
 
   return (
     <div className="home-page">
@@ -142,28 +98,7 @@ export default function HomePage() {
         </p>
       </div>
 
-      {/* Luma-style action cards row */}
-      <div className="home-actions">
-        {ACTION_CARDS.map((card) => {
-          const Icon = card.icon;
-          return (
-            <button
-              key={card.key}
-              type="button"
-              className="home-action-card"
-              onClick={() => handleAction(card.action)}
-            >
-              <div className="home-action-icon">
-                <Icon size={18} />
-              </div>
-              <div className="home-action-text">
-                <span className="home-action-label">{card.label}</span>
-                <span className="home-action-desc">{card.description}</span>
-              </div>
-            </button>
-          );
-        })}
-      </div>
+     <ActionCards/>
 
       {/* Upcoming events -- Luma "When & Where" section style */}
       {upcomingEvents.length > 0 && (

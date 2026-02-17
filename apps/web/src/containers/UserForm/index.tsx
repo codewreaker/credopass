@@ -1,5 +1,5 @@
 /* eslint-disable no-useless-escape */
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useForm } from '@tanstack/react-form';
 import * as z from 'zod';
 import {
@@ -15,6 +15,7 @@ import { Button, Input, Field, FieldDescription, FieldError, FieldGroup, FieldLa
 import type { LauncherState } from '../../stores/store';
 
 import './style.css';
+import { handleCollectionDeleteById } from '../../lib/utils';
 
 
 // Modal form data type - exported for type safety
@@ -121,19 +122,10 @@ const UserForm = ({ initialData = {}, isEditing = false, onClose }: UserFormProp
     },
   });
 
-  const handleDelete = async () => {
-    if (initialData.id && confirm('Are you sure you want to delete this user?')) {
-      setIsMutating(true);
-      try {
-        userCollection?.delete(initialData.id);
-        onClose?.();
-      } catch (error) {
-        console.error(`Failed to delete user: ${(error as Error).message}`);
-      } finally {
-        setIsMutating(false);
-      }
-    }
-  };
+
+    const handleDelete = useCallback(() => {
+      handleCollectionDeleteById('users', initialData.id, onClose)
+    }, [initialData.id, onClose]);
 
   return (
     <>

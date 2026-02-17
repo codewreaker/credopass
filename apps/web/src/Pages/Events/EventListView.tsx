@@ -269,7 +269,7 @@ const EventListView: React.FC<EventListViewProps> = ({
                     <div className="event-list-items">
                         {eventsData.map((event, idx) => (
                             <React.Fragment key={event.id}>
-                                {idx !== 0 && <Separator className={'bg-linear-to-r from-transparent via-muted to-transparent'} />}
+                                {idx !== 0 && <Separator className={'bg-gradient-to-r from-transparent via-muted to-transparent'} />}
                                 <EventRow
                                     event={event}
                                     onNavigate={handleNavigateToEvent}

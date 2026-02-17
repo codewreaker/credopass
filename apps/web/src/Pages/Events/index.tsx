@@ -10,7 +10,7 @@ import { CalendarPlus, CalendarsIcon, Filter } from 'lucide-react';
 import { useToolbarContext } from '../../hooks/use-toolbar-context';
 import { Button } from "@credopass/ui/components/button"
 import { ButtonGroup } from '@credopass/ui/components/button-group'
-import { getGreeting } from '../../lib/utils';
+import { getGreeting, handleCollectionDeleteById } from '../../lib/utils';
 
 import {
     DropdownMenu,
@@ -23,6 +23,8 @@ import {
 
 import './events.css';
 import { RightSidebarTrigger } from '../../containers/RightSidebar';
+import ActionCards from '../../containers/ActionCards';
+import { Separator } from '@credopass/ui';
 
 /**
  * EventCalendar is a full blown calendar that can be accessed in the sidebar
@@ -30,8 +32,9 @@ import { RightSidebarTrigger } from '../../containers/RightSidebar';
  * import { EventCalendar } from '../../components/event-calendar';
  */
 
-//type ViewMode = 'calendar' | 'list';
 
+
+const handleDeleteEvent = (eventId: string) => handleCollectionDeleteById('events', eventId);
 
 const StatusFilterMenu: React.FC<{
     menuItems: Record<EventType['status'], boolean>;
@@ -126,12 +129,6 @@ const EventsPage = () => {
         }, openLauncher);
     }, [openLauncher]);
 
-    const handleDeleteEvent = useCallback((eventId: string) => {
-        if (!confirm('Are you sure you want to delete this event?')) return;
-        const { events: eventCol } = getCollections();
-        eventCol.delete(eventId);
-    }, []);
-
     // Register toolbar context: secondary "Create Event" button + search
     useToolbarContext({
         action: { icon: CalendarPlus, label: 'Create Event', onClick: handleCreateEvent },
@@ -165,13 +162,15 @@ const EventsPage = () => {
 
                 <div className="events-header-right">
                     <ButtonGroup>
-                        <RightSidebarTrigger icon={<CalendarsIcon/>}/>
+                        <RightSidebarTrigger icon={<CalendarsIcon />} />
                         <StatusFilterMenu menuItems={statusMenu} clickHandler={setStatusMenuItems} />
                     </ButtonGroup>
                 </div>
             </div>
 
             <div className="events-content">
+                <ActionCards />
+                <Separator className={'my-5 bg-gradient-to-r from-transparent via-muted to-transparent'} />
                 <EventListView
                     events={filteredEvents}
                     onCreateEvent={handleCreateEvent}

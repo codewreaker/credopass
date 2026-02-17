@@ -27,65 +27,6 @@
   color: var(--muted-foreground);
 }
 
-/* ---- Action Cards Row -- Luma-style 3-column CTAs ---- */
-.home-actions {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 0.75rem;
-}
-
-.home-action-card {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.875rem 1rem;
-  border: 1px solid var(--border);
-  border-radius: 0.625rem;
-  background: var(--card);
-  cursor: pointer;
-  text-align: left;
-  transition: all 0.15s ease;
-  color: var(--foreground);
-}
-
-.home-action-card:hover {
-  border-color: var(--primary);
-  background: oklch(93.604% 0.22511 121.257 / 4%);
-}
-
-.home-action-card:active {
-  transform: scale(0.98);
-}
-
-.home-action-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.25rem;
-  height: 2.25rem;
-  border-radius: 0.5rem;
-  background: var(--primary);
-  color: var(--primary-foreground);
-  flex-shrink: 0;
-}
-
-.home-action-text {
-  display: flex;
-  flex-direction: column;
-  gap: 0.0625rem;
-  min-width: 0;
-}
-
-.home-action-label {
-  font-size: 0.8125rem;
-  font-weight: 600;
-  color: var(--foreground);
-}
-
-.home-action-desc {
-  font-size: 0.6875rem;
-  color: var(--muted-foreground);
-}
 
 /* ---- Section headers ---- */
 .home-section-header {
@@ -191,17 +132,4 @@
 
 .upcoming-event-card:hover .upcoming-event-arrow {
   opacity: 1;
-}
-
-/* ---- Responsive ---- */
-@media (max-width: 768px) {
-  .home-actions {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 640px) {
-  .home-action-desc {
-    display: none;
-  }
 }

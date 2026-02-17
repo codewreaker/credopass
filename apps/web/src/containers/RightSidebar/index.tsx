@@ -1,6 +1,7 @@
 import React from 'react';
 import { LucidePanelRightOpen } from 'lucide-react';
 import { useAppStore } from '../../stores/store';
+import { useSidebarTrigger } from '../../hooks/use-sidebar-trigger';
 import ProfileView from './ProfileView';
 import OverviewView from './OverviewView';
 
@@ -21,13 +22,7 @@ import './style.css';
 export const RightSidebarTrigger: React.FC<{ icon?: React.JSX.Element }> = ({
   icon = <LucidePanelRightOpen size={12} className='text-muted-foreground hover:text-foreground hover:bg-muted transition-colors'/>
 }) => {
-  const toggleSidebar = useAppStore(({ toggleSidebar }) => toggleSidebar);
-  const setViewedItem = useAppStore(state => state.setViewedItem);
-
-  const onToggleCollapse = () => {
-    setViewedItem(null);
-    toggleSidebar('right');
-  }
+  const { onToggleCollapse } = useSidebarTrigger();
 
   return (
     <Button
