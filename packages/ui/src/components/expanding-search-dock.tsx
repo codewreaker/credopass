@@ -74,7 +74,7 @@ export function ExpandingSearchDock({
             <Search className={`h-5 w-5 ${disabled ? "text-muted-foreground" : ""}`} />
           </motion.button>
         ) : (
-          <motion.form
+          <motion.div
             key="input"
             initial={{ width: 48, opacity: 0 }}
             animate={{ width: expandedWidth, opacity: 1 }}
@@ -115,7 +115,7 @@ export function ExpandingSearchDock({
                 <X className="h-4 w-4" />
               </motion.button>
             </motion.div>
-          </motion.form>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>

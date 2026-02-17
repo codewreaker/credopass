@@ -167,34 +167,3 @@
 .event-calendar--compact .event-calendar-item-title {
   font-size: 0.75rem;
 }
-
-/* ================================================================
-   FULL VARIANT (events page)
-   ================================================================ */
-
-@media (min-width: 768px) {
-  .event-calendar:not(.event-calendar--compact) {
-    flex-direction: row;
-    
-    align-items: flex-start;
-  }
-
-  .event-calendar:not(.event-calendar--compact) .event-calendar-grid {
-    flex: 1;
-    min-width: 0;
-  }
-
-  .event-calendar:not(.event-calendar--compact) .event-calendar-detail {
-    flex: 1;
-    min-width: 0;
-    max-height: calc(100vh - 200px);
-  }
-}
-
-.event-calendar:not(.event-calendar--compact) .event-calendar-detail {
-  padding: 0 0.25rem;
-}
-
-.event-calendar:not(.event-calendar--compact) .event-calendar-detail-title {
-  font-size: 0.9375rem;
-}

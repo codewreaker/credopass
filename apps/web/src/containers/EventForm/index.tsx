@@ -7,7 +7,6 @@ import {
   MapPin,
   Users,
   FileText,
-  Trash2,
   Building2,
   AlertCircle
 } from 'lucide-react';
@@ -186,19 +185,8 @@ const EventForm = ({ initialData = {}, isEditing = false, onClose }: EventFormPr
     },
   });
 
-  const handleDelete = async () => {
-    if (initialData.id && confirm('Are you sure you want to delete this event?')) {
-      setIsMutating(true);
-      try {
-        eventCollection?.delete(initialData.id);
-        onClose?.();
-      } catch (error) {
-        console.error('Failed to delete event:', error);
-      } finally {
-        setIsMutating(false);
-      }
-    }
-  };
+
+
 
   return (
     <>
@@ -419,16 +407,6 @@ const EventForm = ({ initialData = {}, isEditing = false, onClose }: EventFormPr
           </FieldGroup>
 
           <DialogFooter>
-            {isEditing && (
-              <Button
-                type="button"
-                variant="destructive"
-                onClick={handleDelete}
-                disabled={isMutating}
-              >
-                <Trash2 size={14} />
-              </Button>
-            )}
             <DialogClose>
               <Button
                 type="button"
