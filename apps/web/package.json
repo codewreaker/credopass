@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "dependencies": {
+    "@credopass/api-client": "workspace:*",
     "@credopass/lib": "workspace:*",
     "@credopass/ui": "workspace:*",
     "@fontsource-variable/inter": "^5.2.8",

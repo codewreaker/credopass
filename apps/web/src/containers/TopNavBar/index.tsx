@@ -6,7 +6,7 @@ import { launchSignInForm } from '../SignInModal/index';
 import { launchUserForm } from '../UserForm/index';
 
 import './style.css';
-import { useLauncher } from '../../stores/store';
+import { useLauncher } from '@credopass/lib/stores';
 import { launchEventForm } from '../EventForm/index';
 import CommandPalette from './Command';
 import SecondaryActionButton from './SecondaryAction';
@@ -51,10 +51,6 @@ export const TopNavBar: React.FC = () => {
           case 'n':
             e.preventDefault();
             launchUserForm({ isEditing: false }, openLauncher);
-            break;
-          case 'h':
-            e.preventDefault();
-            navigate({ to: '/dashboard' });
             break;
           case 'm':
             e.preventDefault();

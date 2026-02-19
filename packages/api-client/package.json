@@ -1,0 +1,22 @@
+{
+  "name": "@credopass/api-client",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "./src/client.ts",
+  "types": "./src/client.ts",
+  "exports": {
+    ".": "./src/client.ts",
+    "./collections": "./src/collections/index.ts",
+    "./types": "./src/types/index.ts"
+  },
+  "dependencies": {
+    "@credopass/lib": "*",
+    "@tanstack/db": "^0.5.17",
+    "@tanstack/query-core": "^5.90.16",
+    "@tanstack/query-db-collection": "^1.0.6"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0"
+  }
+}

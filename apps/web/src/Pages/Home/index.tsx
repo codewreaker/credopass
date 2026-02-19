@@ -1,59 +1,20 @@
 import { useMemo, useCallback } from 'react';
 import { useLiveQuery } from '@tanstack/react-db';
-import { getCollections } from '../../lib/tanstack-db';
+import { getCollections } from '@credopass/api-client/collections';
 import type { EventType } from '@credopass/lib/schemas';
 import Analytics from '../Analytics/index';
 import Tables from '../Tables';
-import { useEventSessionStore } from '../../stores/store';
+import { useEventSessionStore } from '@credopass/lib/stores';
 import {
   Calendar,
-  MapPin,
-  Clock,
-  ArrowRight,
   Settings,
 } from 'lucide-react';
 import { useNavigate } from '@tanstack/react-router';
 import { useToolbarContext } from '../../hooks/use-toolbar-context';
+import { getGreeting } from '@credopass/lib/utils';
 import './home.css';
-import { getGreeting } from '../../lib/utils';
 import ActionCards from '../../containers/ActionCards';
-
-
-
-/** Upcoming event card -- mini version of Luma's event card */
-function UpcomingEventCard({ event }: { event: EventType }) {
-  const startDate = event.startTime ? new Date(event.startTime) : null;
-  const month = startDate?.toLocaleDateString('en-US', { month: 'short' }).toUpperCase() || '';
-  const day = startDate?.getDate() || '';
-  const timeStr = startDate?.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) || '';
-
-  return (
-    <div className="upcoming-event-card">
-      <div className="upcoming-event-date">
-        <span className="upcoming-event-month">{month}</span>
-        <span className="upcoming-event-day">{day}</span>
-      </div>
-      <div className="upcoming-event-info">
-        <span className="upcoming-event-name">{event.name}</span>
-        <div className="upcoming-event-meta">
-          {timeStr && (
-            <span className="upcoming-event-meta-item">
-              <Clock size={11} />
-              {timeStr}
-            </span>
-          )}
-          {event.location && (
-            <span className="upcoming-event-meta-item">
-              <MapPin size={11} />
-              {event.location}
-            </span>
-          )}
-        </div>
-      </div>
-      <ArrowRight size={14} className="upcoming-event-arrow" />
-    </div>
-  );
-}
+import { EventRow } from '../../components/event-row';
 
 export default function HomePage() {
   const userName = useEventSessionStore((s) => s.session.currentUserName);
@@ -107,9 +68,9 @@ export default function HomePage() {
             <Calendar size={14} className="text-muted-foreground" />
             <h2 className="home-section-title">Upcoming Events</h2>
           </div>
-          <div className="home-upcoming-list">
+          <div>
             {upcomingEvents.map((event) => (
-              <UpcomingEventCard key={event.id} event={event} />
+              <EventRow key={event.id} event={event} isMobile compact/>
             ))}
           </div>
         </div>

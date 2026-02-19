@@ -11,11 +11,12 @@ import {
 } from "@credopass/ui/components/avatar"
 import { Badge } from '@credopass/ui/components/badge';
 
-import type { EventType, Organization as OrganizationType } from '@credopass/lib/schemas';
+import type { EventType, Organization } from '@credopass/lib/schemas';
 
-export type EventWithOrg = EventType & { orgCollection: OrganizationType };
+export type EventWithOrg = EventType & { orgCollection?: Organization };
 
 import { useSwipeToReveal } from '../../hooks/use-swipe-to-reveal';
+import './index.css'
 export const STATUS_MAPPING: Record<EventType['status'], {
     icon?: React.JSX.Element;
     label: string;
@@ -50,18 +51,18 @@ export const STATUS_MAPPING: Record<EventType['status'], {
 
 
 /** Luma-style date icon: month abbreviation on top, day number below */
-const DateIcon: React.FC<Partial<{ date: Date, url: string, hour12: boolean }>> = ({ date, url, hour12 = true }) => {
+const DateIcon: React.FC<Partial<{ date: Date, url: string, hour12: boolean, compact: boolean }>> = ({ date, url, hour12 = true, compact = false }) => {
     if (url || !date) {
-        return (<div className="event-date-icon"><img src={url} /></div>)
+        return (<div className="event-date-icon w-16 h-16 group-data-[compact]:w-14 group-data-[compact]:h-12"><img src={url} /></div>)
     }
     const month = date.toLocaleDateString('en-US', { month: 'short' }).toUpperCase();
     const day = date.getDate();
     const time = date.toLocaleTimeString('en-US', { hour: 'numeric', hour12, minute: '2-digit' });
     return (
-        <div className="event-date-icon">
-            <span className="event-date-month">{month}</span>
-            <span className="event-date-day">{day}</span>
-            <span className="event-date-time">{time}</span>
+        <div className="event-date-icon w-16 h-16 group-data-compact:w-10 group-data-compact:h-10 group-data-compact:px-1.5 group-data-compact:py-1">
+            <span className="event-date-month text-[0.7rem] group-data-compact:text-[0.5rem]">{month}</span>
+            <span className="event-date-day text-[1.3rem] group-data-compact:text-[0.9375rem]">{day}</span>
+            {!compact && <span className="event-date-time">{time}</span>}
         </div>
     );
 };
@@ -70,11 +71,12 @@ const DateIcon: React.FC<Partial<{ date: Date, url: string, hour12: boolean }>> 
 /** Single event row -- inspired by Luma desktop event management */
 export const EventRow: React.FC<{
     event: EventWithOrg;
-    onNavigate: (eventId: string) => void;
-    onEdit: (event: EventWithOrg) => void;
-    onDelete: (eventId: string) => void;
-    isMobile: boolean;
-}> = ({ event, onNavigate, onEdit, onDelete, isMobile }) => {
+    onNavigate?: (eventId: string) => void;
+    onEdit?: (event: EventWithOrg) => void;
+    onDelete?: (eventId: string) => void;
+    isMobile?: boolean;
+    compact?: boolean;
+}> = ({ event, onNavigate, onEdit, onDelete, isMobile = false, compact = false }) => {
     const startDate = event.startTime ? new Date(event.startTime) : null;
     const endDate = event.endTime ? new Date(event.endTime) : null;
     const {
@@ -92,30 +94,30 @@ export const EventRow: React.FC<{
     const handleClick = () => {
         // Don't navigate if the row is swiped open
         if (isSwiped) { reset(); return; }
-        onNavigate(event.id);
+        onNavigate?.(event.id);
     };
 
     const handleEdit = (e: React.MouseEvent) => {
         e.stopPropagation();
         reset();
-        onEdit(event);
+        onEdit?.(event);
     };
 
     const handleDelete = (e: React.MouseEvent) => {
         e.stopPropagation();
         reset();
-        onDelete(event.id);
+        onDelete?.(event.id);
     };
 
     const orgData = event?.orgCollection;
 
     const rowContent = (
         <>
-            {startDate && <DateIcon date={startDate} />}
+            {startDate && <DateIcon date={startDate} compact={compact} />}
 
-            <div className="event-row-details">
-                <div className='event-row-top'>
-                    <div className='flex items-center gap-1'>
+            <div className="event-row-details group-data-compact:gap-0.2">
+                {<div className='event-row-top group-data-compact:absolute group-data-compact:right-5'>
+                    {!compact && <div className='flex items-center gap-1'>
                         <AvatarGroup>
                             <Avatar size='sm'>
                                 <AvatarImage src="/icons/zap.png" className={"bg-primary"} />
@@ -126,36 +128,38 @@ export const EventRow: React.FC<{
                             </Avatar>
                         </AvatarGroup>
                         <p className='text-muted-foreground text-xs'>{orgData?.name}</p>
-                    </div>
+                    </div>}
                     <Badge
                         variant="outline"
-                        className={`event-row-badge ${STATUS_MAPPING[event.status]?.style || ''}`}
+                        className={`event-row-badge  ${STATUS_MAPPING[event.status]?.style || ''}`}
                     >
                         {event.status}
                     </Badge>
-                </div>
+                </div>}
                 <div className="event-row-title">
-                    <span className="event-row-name">{event.name}</span>
+                    <span className="event-row-name group-data-compact:text-[0.8125rem] group-data-compact:font-medium">{event.name}</span>
                 </div>
 
-                <div className="event-row-meta">
+                <div className="event-row-meta group-data-compact:gap-2">
                     {timeString && (
-                        <span className="event-row-meta-item">
+                        <span className="event-row-meta-item group-data-compact:text-[0.6875rem]">
                             <Clock size={12} />
                             {timeString}
-                            {endTimeString ? ` - ${endTimeString}` : ''}
+                            {!compact && (endTimeString ? ` - ${endTimeString}` : '')}
                         </span>
                     )}
                     {event.location && (
-                        <span className="event-row-meta-item">
+                        <span className="event-row-meta-item group-data-compact:text-[0.6875rem]">
                             <MapPin size={12} />
                             {event.location}
                         </span>
                     )}
-                    <span className="event-row-meta-item">
-                        <Users size={12} />
-                        {event.capacity ? `${event.capacity} spots` : 'Unlimited'}
-                    </span>
+                    {!compact && (
+                        <span className="event-row-meta-item">
+                            <Users size={12} />
+                            {event.capacity ? `${event.capacity}` : 'Unlimited'}
+                        </span>
+                    )}
                 </div>
             </div>
         </>
@@ -167,7 +171,7 @@ export const EventRow: React.FC<{
     };
 
     return (
-        <div className="swipeable-row">
+        <div className="swipeable-row group" data-compact={compact ? "true" : undefined}>
             {/* Action buttons revealed behind the row — only mount when swiping */}
             {offsetX !== 0 && (
                 <div className="swipeable-actions">
@@ -185,7 +189,7 @@ export const EventRow: React.FC<{
             {/* Sliding content */}
             <button
                 type="button"
-                className="event-row swipeable-content"
+                className="event-row swipeable-content group-data-[compact]:gap-2.5 group-data-[compact]:px-2.5 group-data-[compact]:py-2"
                 onClick={handleClick}
                 onTouchStart={isMobile ? onTouchStart : undefined}
                 onTouchMove={isMobile ? onTouchMove : undefined}

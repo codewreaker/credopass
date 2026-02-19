@@ -1,0 +1,17 @@
+{
+  "name": "@credopass/ui-mobile",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "./src/components/index.ts",
+  "types": "./src/components/index.ts",
+  "exports": {
+    ".": "./src/components/index.ts",
+    "./theme": "./src/theme/index.ts",
+    "./components/*": "./src/components/*/index.tsx"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "react-native": "*"
+  }
+}

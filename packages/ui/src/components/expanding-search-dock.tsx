@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { Search, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { cn } from "@credopass/ui/lib/utils";
-import { useIsMobile } from "../hooks/use-mobile";
+import { useIsMobile } from "@credopass/ui/hooks/use-mobile";
 
 type ExpandingSearchDockProps = {
   onSearch?: (query: string) => void;

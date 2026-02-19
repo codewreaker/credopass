@@ -1,5 +1,5 @@
 import React, { useLayoutEffect, useRef, useState } from 'react';
-import { useToolbarStore } from '../../stores/toolbar-store';
+import { useToolbarStore } from '@credopass/lib/stores';
 import { cn } from '@credopass/ui/lib/utils';
 
 /**

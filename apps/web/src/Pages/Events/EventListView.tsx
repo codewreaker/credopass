@@ -5,10 +5,10 @@ import { Badge } from '@credopass/ui/components/badge';
 
 import type { EventType } from '@credopass/lib/schemas';
 import EmptyState from '../../components/empty-state';
-import { getGroupedEventsData, groupEventsByStatus } from '../../lib/utils/events';
+import { getGroupedEventsData, groupEventsByStatus, sortEventsByClosestToToday } from '@credopass/lib/utils';
 import { Separator } from '@credopass/ui';
-import { useIsMobile } from '../../hooks/use-mobile';
-import { EventRow, STATUS_MAPPING,type EventWithOrg } from '../../components/event-row';
+import { useIsMobile } from '@credopass/ui/hooks/use-mobile';
+import { EventRow, STATUS_MAPPING, type EventWithOrg } from '../../components/event-row';
 
 
 interface EventListViewProps {
@@ -29,10 +29,12 @@ const EventListView: React.FC<EventListViewProps> = ({
 }) => {
     const navigate = useNavigate();
     const isMobile = useIsMobile();
-
-    const grouped = useMemo(() => getGroupedEventsData<EventWithOrg>(
-        groupEventsByStatus(events), selectedStatus
-    ), [events, selectedStatus]);
+    //sort upcoming/scheduled event closest to todays date instead of just desc
+    const grouped = useMemo(() => {
+        const groupedMap = groupEventsByStatus(events);
+        groupedMap.set('scheduled', sortEventsByClosestToToday(groupedMap.get('scheduled') || []));
+        return getGroupedEventsData<EventWithOrg>(groupedMap, selectedStatus);
+    }, [events, selectedStatus]);
 
     const handleNavigateToEvent = useCallback((eventId: string) => {
         navigate({ to: '/events/$eventId', params: { eventId } });
@@ -51,8 +53,8 @@ const EventListView: React.FC<EventListViewProps> = ({
     }
 
     return (
-        <div className="event-list">
-            {grouped.map(([statusLabel, eventsData]) => (
+        <div className="event-list h-full overflow-auto">
+            {grouped.map(([statusLabel, eventsData]: [EventType['status'], EventWithOrg[]]) => (
                 <div key={statusLabel} className="event-list-group">
                     <div className="event-list-date-heading">
                         {STATUS_MAPPING[statusLabel].icon}
@@ -60,7 +62,7 @@ const EventListView: React.FC<EventListViewProps> = ({
                         <Badge variant={'secondary'} className='size-4'>{eventsData.length}</Badge>
                     </div>
                     <div className="event-list-items">
-                        {eventsData.map((event, idx) => (
+                        {eventsData.map((event: EventWithOrg, idx: number) => (
                             <React.Fragment key={event.id}>
                                 {idx !== 0 && <Separator className={'bg-gradient-to-r from-transparent via-muted to-transparent'} />}
                                 <EventRow

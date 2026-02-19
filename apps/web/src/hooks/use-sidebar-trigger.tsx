@@ -1,4 +1,4 @@
-import { useAppStore } from '../stores/store';
+import { useAppStore } from '@credopass/lib/stores';
 
 export const useSidebarTrigger = () => {
   const toggleSidebar = useAppStore(({ toggleSidebar }) => toggleSidebar);

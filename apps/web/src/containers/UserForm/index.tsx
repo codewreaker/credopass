@@ -10,12 +10,12 @@ import {
   Trash2,
   Sparkles
 } from 'lucide-react';
-import { getCollections } from '../../lib/tanstack-db';
+import { getCollections } from '@credopass/api-client/collections';
 import { Button, Input, Field, FieldDescription, FieldError, FieldGroup, FieldLabel, DialogFooter, DialogClose, DialogDescription, DialogHeader, DialogTitle } from '@credopass/ui';
-import type { LauncherState } from '../../stores/store';
+import type { LauncherState } from '@credopass/lib/stores';
+import { handleCollectionDeleteById } from '@credopass/lib/utils';
 
 import './style.css';
-import { handleCollectionDeleteById } from '../../lib/utils';
 
 
 // Modal form data type - exported for type safety
@@ -124,7 +124,9 @@ const UserForm = ({ initialData = {}, isEditing = false, onClose }: UserFormProp
 
 
     const handleDelete = useCallback(() => {
-      handleCollectionDeleteById('users', initialData.id, onClose)
+      if (initialData.id) {
+        handleCollectionDeleteById('users', initialData.id, onClose)
+      }
     }, [initialData.id, onClose]);
 
   return (

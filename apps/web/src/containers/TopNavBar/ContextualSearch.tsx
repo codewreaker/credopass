@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef } from 'react';
-import { useToolbarStore } from '../../stores/toolbar-store';
+import { useToolbarStore } from '@credopass/lib/stores';
 import { ExpandingSearchDock } from '@credopass/ui/components/expanding-search-dock';
 
 const DEBOUNCE_MS = 50; //because its local-first, increase for server requests

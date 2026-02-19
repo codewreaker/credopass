@@ -6,10 +6,10 @@ import {
     CalendarsIcon
 } from 'lucide-react';
 import { launchEventForm } from '../../containers/EventForm/index';
-import { useLauncher } from '../../stores/store';
+import { useLauncher } from '@credopass/lib/stores';
 import { launchUserForm } from '../UserForm';
 import { useSidebarTrigger } from '../../hooks/use-sidebar-trigger';
-import { useIsMobile } from '../../hooks/use-mobile';
+import { useIsMobile } from '@credopass/ui/hooks/use-mobile';
 
 /** Luma-style action cards (like Invite Guests / Send a Blast / Share Event) */
 const ACTION_CARDS = [

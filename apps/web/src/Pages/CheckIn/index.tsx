@@ -1,15 +1,15 @@
 import React, { useMemo, useState, useCallback, useEffect } from 'react';
 import { useLiveQuery } from '@tanstack/react-db';
 import { useParams, useNavigate } from '@tanstack/react-router';
-import { useEventSessionStore, useLauncher } from '../../stores/store';
+import { useEventSessionStore } from '@credopass/lib/stores';
 import { useToolbarContext } from '../../hooks/use-toolbar-context';
 import type { User, EventType } from '@credopass/lib/schemas';
-import { getCollections } from '../../lib/tanstack-db';
-import { launchEventForm } from '../../containers/EventForm';
+import { getCollections } from '@credopass/api-client/collections';
 import SuccessCheckInScreen from './SuccessCheckInScreen';
-import { generateSignInParams, generateSignInUrl } from './utils/qrCodeUtils';
+import { generateSignInParams, generateSignInUrl } from '@credopass/lib/utils';
+import { API_BASE_URL } from '../../config';
 import { useIsMobile } from '@credopass/ui/hooks/use-mobile';
-import { Plus, RefreshCcw, QrCodeIcon, ArrowLeft } from 'lucide-react';
+import { QrCodeIcon, ArrowLeft } from 'lucide-react';
 
 import './style.css';
 
@@ -18,7 +18,6 @@ import CheckInHeader from './components/CheckInHeader';
 import QRCodeDisplay from './components/QRCodeDisplay';
 import ManualSignInForm from './ManualSignInForm';
 import EmptyState from '../../components/empty-state';
-import { toast } from 'sonner';
 
 
 const LoadingState: React.FC = () => {
@@ -36,7 +35,6 @@ const CheckInPage: React.FC = () => {
   const { eventId } = useParams({ from: '/checkin/$eventId' });
   const navigate = useNavigate();
   const { events: eventCollection } = getCollections();
-  const { openLauncher } = useLauncher();
   const isMobile = useIsMobile();
 
   // Check-in page: no search, no secondary action
@@ -61,11 +59,6 @@ const CheckInPage: React.FC = () => {
   const [checkInCount, setCheckInCount] = useState(0);
   const [showManualCheckIn, setShowManualCheckIn] = useState(false);
   const [sessionInitialized, setSessionInitialized] = useState(false);
-
-
-  const isError = eventCollection.utils.isError;
-  const errorDetails = eventCollection.utils.lastError;
-  const clearError = eventCollection.utils.refetch;
 
   const mockStaffUser: Partial<User> = React.useMemo(
     () => ({
@@ -119,16 +112,6 @@ const CheckInPage: React.FC = () => {
     }, 3000);
   };
 
-  const handleCreateEvent = () => {
-    launchEventForm(
-      {
-        initialData: {},
-        isEditing: false,
-      },
-      openLauncher
-    );
-  };
-
   const handleRefreshQR = () => {
     if (eventId) {
       setSessionInitialized(false);
@@ -140,6 +123,8 @@ const CheckInPage: React.FC = () => {
     try {
       const params = generateSignInParams(session);
       if (!params) return null;
+      // Set API endpoint from config
+      params.apiEndpoint = API_BASE_URL;
       return generateSignInUrl(params);
     } catch (error) {
       console.error('Failed to generate QR code data:', error);

@@ -7,7 +7,6 @@ import { RightSidebar } from "../containers/RightSidebar";
 
 import ModalPortal from "../components/launcher";
 import {
-  LayoutDashboard,
   Users,
   ChartNoAxesCombined,
   Database,
@@ -21,7 +20,6 @@ import { Separator } from "@credopass/ui/components/separator";
 
 const NAV_ITEMS = [
   { url: "/events", icon: QrCode, label: "Events", isActive: true },
-  { url: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
   { url: "/members", icon: Users, label: "Members" },
   { url: "/analytics", icon: ChartNoAxesCombined, label: "Analytics" },
   { url: "/organizations", icon: Building2, label: "Organizations" },

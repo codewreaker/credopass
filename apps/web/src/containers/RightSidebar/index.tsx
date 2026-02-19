@@ -1,6 +1,6 @@
 import React from 'react';
 import { LucidePanelRightOpen } from 'lucide-react';
-import { useAppStore } from '../../stores/store';
+import { useAppStore } from '@credopass/lib/stores';
 import { useSidebarTrigger } from '../../hooks/use-sidebar-trigger';
 import ProfileView from './ProfileView';
 import OverviewView from './OverviewView';
@@ -89,7 +89,7 @@ export const RightSidebar: React.FC = () => {
   const getSidebarFooter = () => {
     if (!viewedItem) {
       return (
-        <SheetClose asChild>
+        <SheetClose>
           <Button variant="outline" size="sm">Close</Button>
         </SheetClose>
       );
@@ -102,14 +102,14 @@ export const RightSidebar: React.FC = () => {
             <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90">
               Save changes
             </Button>
-            <SheetClose asChild>
+            <SheetClose>
               <Button variant="outline" size="sm">Close</Button>
             </SheetClose>
           </div>
         );
       default:
         return (
-          <SheetClose asChild>
+          <SheetClose>
             <Button variant="outline" size="sm">Close</Button>
           </SheetClose>
         );

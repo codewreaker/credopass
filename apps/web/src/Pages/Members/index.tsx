@@ -1,13 +1,13 @@
 import React, { useCallback, useState } from "react";
 import { useLiveQuery } from '@tanstack/react-db'
 import { type UserType, type AttendanceType, type LoyaltyType, User } from '@credopass/lib/schemas'
-import { getCollections } from '../../lib/tanstack-db'
+import { getCollections } from '@credopass/api-client/collections';
 import type { ColDef, IOverlayParams, RowClickedEvent } from 'ag-grid-community'
 
 import GridTable, { type MenuItem } from "../../components/grid-table/index";
 
 import { PlusCircle, Filter, UserPlus } from "lucide-react";
-import { useLauncher } from '../../stores/store';
+import { useLauncher } from '@credopass/lib/stores';
 import { launchUserForm } from '../../containers/UserForm/index';
 import EmptyState from '../../components/empty-state';
 import Loader from '../../components/loader';

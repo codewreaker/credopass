@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { useParams, useNavigate } from '@tanstack/react-router';
 import { useLiveQuery } from '@tanstack/react-db';
-import { getCollections } from '../../lib/tanstack-db';
+import { getCollections } from '@credopass/api-client/collections';
 import type { EventType } from '@credopass/lib/schemas';
 import { Badge } from '@credopass/ui';
 import {
@@ -15,7 +15,7 @@ import {
     Edit,
     Settings,
 } from 'lucide-react';
-import { useLauncher } from '../../stores/store';
+import { useLauncher } from '@credopass/lib/stores';
 import { launchEventForm } from '../../containers/EventForm/index';
 import { useToolbarContext } from '../../hooks/use-toolbar-context';
 import './event-detail.css';
