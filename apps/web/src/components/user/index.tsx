@@ -15,8 +15,6 @@ import {
 
 import { ChevronsUpDownIcon, type LucideIcon } from "lucide-react"
 
-import type { SidebarProps } from "../../containers/LeftSidebar"
-
 // ============================================================================
 // Menu Configuration Types
 // ============================================================================
@@ -96,7 +94,12 @@ export interface MenuGroupConfig {
 }
 
 export interface UserMenuProps {
-    user: SidebarProps['user']
+    user?: {
+        name?: string
+        email?: string
+        avatar?: string
+        icon?: LucideIcon
+    }
     menuGroups: MenuGroupConfig[]
     contentAlign?: 'start' | 'center' | 'end'
     contentClassName?: string

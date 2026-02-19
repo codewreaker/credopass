@@ -87,10 +87,6 @@ export const EventRow: React.FC<{
         ? startDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
         : '';
 
-    const endTimeString = endDate
-        ? endDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
-        : '';
-
     const handleClick = () => {
         // Don't navigate if the row is swiped open
         if (isSwiped) { reset(); return; }

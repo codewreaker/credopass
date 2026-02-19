@@ -12,9 +12,6 @@ import { Toaster } from "@credopass/ui/components/sonner";
 import { Separator } from "@credopass/ui/components/separator";
 import { NAV_ITEMS } from "@credopass/lib/constants";
 import { useCommandPallete } from "../hooks";
-import { SidebarMenuButton, SidebarMenuItem } from "@credopass/ui/components/sidebar";
-import { Button } from "@credopass/ui/components/button";
-import { CirclePlus, Mail } from "lucide-react";
 
 
 export function RootLayout() {

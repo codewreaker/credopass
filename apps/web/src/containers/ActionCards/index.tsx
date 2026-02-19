@@ -1,5 +1,5 @@
 
-import { useCallback, useMemo, type JSX } from 'react';
+import { useCallback, useMemo } from 'react';
 import {
     Plus,
     UserPlus,
@@ -11,6 +11,7 @@ import { launchUserForm } from '../UserForm';
 import { useSidebarTrigger } from '../../../../../packages/lib/src/hooks/use-sidebar-trigger';
 import { useIsMobile } from '@credopass/ui/hooks/use-mobile';
 import { NAV_ITEMS } from '@credopass/lib/constants';
+import { useNavigate } from '@tanstack/react-router';
 
 const orgNavItem = NAV_ITEMS.find(({ id }) => (id === 'organizations'));
 
@@ -38,7 +39,7 @@ const ACTION_CARDS = [
         action: 'show-calendar' as const,
     },
     {
-        key: 'organisation',
+        key: 'organization',
         icon: orgNavItem?.icon,
         label: `View ${orgNavItem?.label}`,
         description: `View and Manage ${orgNavItem?.label}`,
@@ -50,6 +51,7 @@ export default function ActionCards() {
     const { onToggleCollapse } = useSidebarTrigger();
     const { openLauncher } = useLauncher();
     const isMobile = useIsMobile();
+    const navigate = useNavigate();
 
     const handleAction = useCallback(
         (action: string) => {
@@ -63,9 +65,12 @@ export default function ActionCards() {
                 case 'show-calendar':
                     onToggleCollapse();
                     break
+                case 'manage-org':
+                    navigate({ to: '/organizations' });
+                    break
             }
         },
-        [openLauncher, onToggleCollapse],
+        [openLauncher, onToggleCollapse, navigate],
     );
 
     const actionCards = useMemo(() => (isMobile ? ACTION_CARDS : ACTION_CARDS.filter(({ key }) => (key !== 'calendar'))), [isMobile])
