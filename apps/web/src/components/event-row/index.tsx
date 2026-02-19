@@ -78,7 +78,6 @@ export const EventRow: React.FC<{
     compact?: boolean;
 }> = ({ event, onNavigate, onEdit, onDelete, isMobile = false, compact = false }) => {
     const startDate = event.startTime ? new Date(event.startTime) : null;
-    const endDate = event.endTime ? new Date(event.endTime) : null;
     const {
         offsetX, isSwiped, reset, toggle, onTouchStart, onTouchMove, onTouchEnd
     } = useSwipeToReveal();
