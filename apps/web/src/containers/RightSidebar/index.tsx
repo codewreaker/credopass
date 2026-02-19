@@ -1,6 +1,6 @@
 import React from 'react';
 import { LucidePanelRightOpen } from 'lucide-react';
-import { useAppStore } from '../../stores/store';
+import { useAppStore } from '@credopass/lib/stores';
 import { useSidebarTrigger } from '../../hooks/use-sidebar-trigger';
 import ProfileView from './ProfileView';
 import OverviewView from './OverviewView';

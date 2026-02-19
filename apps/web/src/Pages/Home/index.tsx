@@ -1,10 +1,10 @@
 import { useMemo, useCallback } from 'react';
 import { useLiveQuery } from '@tanstack/react-db';
-import { getCollections } from '../../lib/tanstack-db';
+import { getCollections } from '@credopass/api-client/collections';
 import type { EventType } from '@credopass/lib/schemas';
 import Analytics from '../Analytics/index';
 import Tables from '../Tables';
-import { useEventSessionStore } from '../../stores/store';
+import { useEventSessionStore } from '@credopass/lib/stores';
 import {
   Calendar,
   MapPin,

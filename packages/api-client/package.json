@@ -12,9 +12,9 @@
   },
   "dependencies": {
     "@credopass/lib": "*",
-    "@tanstack/db": "^0.1.8",
-    "@tanstack/query-core": "^6.13.3",
-    "@tanstack/query-db-collection": "^0.1.8"
+    "@tanstack/db": "^0.5.17",
+    "@tanstack/query-core": "^5.90.16",
+    "@tanstack/query-db-collection": "^1.0.6"
   },
   "peerDependencies": {
     "react": "^19.0.0"

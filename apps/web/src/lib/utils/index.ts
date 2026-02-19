@@ -1,4 +1,4 @@
-import { getCollections, type CredoPassCollections } from "../tanstack-db";
+import { getCollections, type CredoPassCollections } from '@credopass/api-client/collections';
 import { toast } from 'sonner';
 
 export function getGreeting(): string {

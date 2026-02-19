@@ -12,7 +12,7 @@
  *   });
  */
 import { useEffect, useRef } from 'react';
-import { useToolbarStore, type ToolbarContext } from '../stores/toolbar-store';
+import { useToolbarStore, type ToolbarContext } from '@credopass/lib/stores';
 
 export function useToolbarContext(config: Partial<ToolbarContext>) {
   const setContext = useToolbarStore((s) => s.setContext);

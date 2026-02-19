@@ -10,9 +10,9 @@ import {
   Trash2,
   Sparkles
 } from 'lucide-react';
-import { getCollections } from '../../lib/tanstack-db';
+import { getCollections } from '@credopass/api-client/collections';
 import { Button, Input, Field, FieldDescription, FieldError, FieldGroup, FieldLabel, DialogFooter, DialogClose, DialogDescription, DialogHeader, DialogTitle } from '@credopass/ui';
-import type { LauncherState } from '../../stores/store';
+import type { LauncherState } from '@credopass/lib/stores';
 
 import './style.css';
 import { handleCollectionDeleteById } from '../../lib/utils';

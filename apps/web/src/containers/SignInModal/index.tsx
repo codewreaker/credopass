@@ -11,7 +11,7 @@ import {
   FieldGroup,
   FieldLabel
 } from '@credopass/ui';
-import type { LauncherState } from '../../stores/store';
+import type { LauncherState } from '@credopass/lib/stores';
 import './style.css';
 
 interface SignInFormProps {

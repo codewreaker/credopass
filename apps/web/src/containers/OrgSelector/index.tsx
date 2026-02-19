@@ -21,12 +21,12 @@ import {
     LogOut,
     HelpCircle,
 } from "lucide-react";
-import { useLauncher, useOrganizationStore } from "../../stores/store";
+import { useLauncher, useOrganizationStore } from '@credopass/lib/stores';
 import { launchOrganizationForm } from "../OrganizationForm";
 import { launchSignInForm } from "../SignInModal/index";
 import CredoPassLogoIcon from "../LeftSidebar/brand-icon";
 import { useLiveQuery } from '@tanstack/react-db';
-import { getCollections } from "../../lib/tanstack-db";
+import { getCollections } from '@credopass/api-client/collections';
 import { useNavigate } from "@tanstack/react-router";
 import { Avatar, AvatarFallback, AvatarImage } from "@credopass/ui/components/avatar";
 

@@ -10,7 +10,7 @@ import {
   Building2,
   AlertCircle
 } from 'lucide-react';
-import { getCollections } from '../../lib/tanstack-db';
+import { getCollections } from '@credopass/api-client/collections';
 import type { EventStatus } from '@credopass/lib/schemas';
 import {
   Button,
@@ -38,8 +38,8 @@ import {
   DateTimeRangePicker
 } from '@credopass/ui';
 import './style.css';
-import type { LauncherState } from '../../stores/store';
-import { useOrganizationStore } from '../../stores/store';
+import type { LauncherState } from '@credopass/lib/stores';
+import { useOrganizationStore } from '@credopass/lib/stores';
 
 // Modal form data type - exported for type safety
 export interface EventFormData {

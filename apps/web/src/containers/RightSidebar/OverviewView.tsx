@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { useLiveQuery } from '@tanstack/react-db';
-import { getCollections } from '../../lib/tanstack-db';
+import { getCollections } from '@credopass/api-client/collections';
 import { EventCalendar } from '../../components/event-calendar';
 import type { EventType } from '@credopass/lib/schemas';
 

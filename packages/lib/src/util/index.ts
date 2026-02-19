@@ -8,3 +8,9 @@ export function calculateTier(totalPoints: number): Tier {
     if (totalPoints >= 2000) return rewardTiers.SILVER;
     return rewardTiers.BRONZE;
 }
+
+// Re-export utils from the new utils directory
+export * from '../utils/qr-code';
+export * from '../utils/events';
+export * from '../utils/date';
+export * from '../utils/formatting';

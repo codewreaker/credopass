@@ -1,8 +1,8 @@
 import { useCallback, useMemo, useState } from 'react';
 import { eq, useLiveQuery } from '@tanstack/react-db';
-import { getCollections } from '../../lib/tanstack-db';
+import { getCollections } from '@credopass/api-client/collections';
 import type { EventType } from '@credopass/lib/schemas';
-import { useEventSessionStore, useLauncher } from '../../stores/store';
+import { useEventSessionStore, useLauncher } from '@credopass/lib/stores';
 import { launchEventForm } from '../../containers/EventForm/index';
 import EventListView from './EventListView';
 import { STATUS_MAPPING, type EventWithOrg } from '../../components/event-row';

@@ -6,7 +6,7 @@ import {
     CalendarsIcon
 } from 'lucide-react';
 import { launchEventForm } from '../../containers/EventForm/index';
-import { useLauncher } from '../../stores/store';
+import { useLauncher } from '@credopass/lib/stores';
 import { launchUserForm } from '../UserForm';
 import { useSidebarTrigger } from '../../hooks/use-sidebar-trigger';
 import { useIsMobile } from '../../hooks/use-mobile';

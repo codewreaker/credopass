@@ -8,7 +8,7 @@ import {
   Crown,
   Trash2
 } from 'lucide-react';
-import { getCollections } from '../../lib/tanstack-db';
+import { getCollections } from '@credopass/api-client/collections';
 import type { OrgPlan } from '@credopass/lib/schemas';
 import {
   Button,
@@ -32,7 +32,7 @@ import {
 } from '@credopass/ui';
 import { handleCollectionDeleteById } from '../../lib/utils';
 import './style.css';
-import type { LauncherState } from '../../stores/store';
+import type { LauncherState } from '@credopass/lib/stores';
 
 // Modal form data type
 export interface OrganizationFormData {

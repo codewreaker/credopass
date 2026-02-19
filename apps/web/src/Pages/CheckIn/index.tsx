@@ -1,13 +1,14 @@
 import React, { useMemo, useState, useCallback, useEffect } from 'react';
 import { useLiveQuery } from '@tanstack/react-db';
 import { useParams, useNavigate } from '@tanstack/react-router';
-import { useEventSessionStore, useLauncher } from '../../stores/store';
+import { useEventSessionStore, useLauncher } from '@credopass/lib/stores';
 import { useToolbarContext } from '../../hooks/use-toolbar-context';
 import type { User, EventType } from '@credopass/lib/schemas';
-import { getCollections } from '../../lib/tanstack-db';
+import { getCollections } from '@credopass/api-client/collections';
 import { launchEventForm } from '../../containers/EventForm';
 import SuccessCheckInScreen from './SuccessCheckInScreen';
-import { generateSignInParams, generateSignInUrl } from './utils/qrCodeUtils';
+import { generateSignInParams, generateSignInUrl } from '@credopass/lib/utils';
+import { API_BASE_URL } from '../../config';
 import { useIsMobile } from '@credopass/ui/hooks/use-mobile';
 import { Plus, RefreshCcw, QrCodeIcon, ArrowLeft } from 'lucide-react';
 
@@ -140,6 +141,8 @@ const CheckInPage: React.FC = () => {
     try {
       const params = generateSignInParams(session);
       if (!params) return null;
+      // Set API endpoint from config
+      params.apiEndpoint = API_BASE_URL;
       return generateSignInUrl(params);
     } catch (error) {
       console.error('Failed to generate QR code data:', error);
