@@ -11,6 +11,6 @@
     "noEmit": true,
     "jsx": "react-jsx"
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "../ui/src/hooks/use-previous.ts"],
   "exclude": ["node_modules", "dist"]
 }

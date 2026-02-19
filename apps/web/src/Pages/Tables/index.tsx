@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import type { ColDef } from 'ag-grid-community';
 import Loader from '../../components/loader';
-import { useToolbarContext } from '../../hooks/use-toolbar-context';
+import { useToolbarContext } from '@credopass/lib/hooks';
 import './style.css';
 
 import {

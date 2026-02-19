@@ -34,3 +34,4 @@ export * from './date-time-range-picker';
 export * from './tabs';
 export * from './expanding-search-dock';
 export * from './button-group'
+export * from './kbd'

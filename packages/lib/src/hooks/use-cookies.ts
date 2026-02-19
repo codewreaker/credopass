@@ -2,7 +2,7 @@ import { useCallback, useMemo } from 'react'
 import Cookies from 'js-cookie'
 
 
-const useCookies = (cookieName: string ) => {
+export const useCookies = (cookieName: string ) => {
 
     const cookies = useMemo(() => (Cookies.get()), []);
     const value = useMemo(() => (Cookies.get(cookieName)), [cookieName]);
@@ -23,5 +23,3 @@ const useCookies = (cookieName: string ) => {
         cookies
     ];
 }
-
-export default useCookies;

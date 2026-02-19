@@ -2,7 +2,7 @@ import React, { useMemo, useState, useCallback, useEffect } from 'react';
 import { useLiveQuery } from '@tanstack/react-db';
 import { useParams, useNavigate } from '@tanstack/react-router';
 import { useEventSessionStore } from '@credopass/lib/stores';
-import { useToolbarContext } from '../../hooks/use-toolbar-context';
+import { useToolbarContext } from '@credopass/lib/hooks';
 import type { User, EventType } from '@credopass/lib/schemas';
 import { getCollections } from '@credopass/api-client/collections';
 import SuccessCheckInScreen from './SuccessCheckInScreen';

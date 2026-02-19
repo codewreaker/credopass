@@ -16,6 +16,6 @@
       "@credopass/ui/*": ["./src/*"]
     }
   },
-  "include": ["."],
+  "include": [".", "../lib/src/hooks/use-toolbar-context.ts", "../lib/src/hooks/use-sidebar-trigger.tsx"],
   "exclude": ["node_modules", "dist"]
 }

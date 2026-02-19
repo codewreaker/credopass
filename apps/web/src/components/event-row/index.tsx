@@ -15,7 +15,7 @@ import type { EventType, Organization } from '@credopass/lib/schemas';
 
 export type EventWithOrg = EventType & { orgCollection?: Organization };
 
-import { useSwipeToReveal } from '../../hooks/use-swipe-to-reveal';
+import { useSwipeToReveal } from '../../../../../packages/ui/src/hooks/use-swipe-to-reveal';
 import './index.css'
 export const STATUS_MAPPING: Record<EventType['status'], {
     icon?: React.JSX.Element;
@@ -78,17 +78,12 @@ export const EventRow: React.FC<{
     compact?: boolean;
 }> = ({ event, onNavigate, onEdit, onDelete, isMobile = false, compact = false }) => {
     const startDate = event.startTime ? new Date(event.startTime) : null;
-    const endDate = event.endTime ? new Date(event.endTime) : null;
     const {
         offsetX, isSwiped, reset, toggle, onTouchStart, onTouchMove, onTouchEnd
     } = useSwipeToReveal();
 
     const timeString = startDate
         ? startDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
-        : '';
-
-    const endTimeString = endDate
-        ? endDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
         : '';
 
     const handleClick = () => {
@@ -119,11 +114,11 @@ export const EventRow: React.FC<{
                 {<div className='event-row-top group-data-compact:absolute group-data-compact:right-5'>
                     {!compact && <div className='flex items-center gap-1'>
                         <AvatarGroup>
-                            <Avatar size='sm'>
+                            <Avatar size='xs'>
                                 <AvatarImage src="/icons/zap.png" className={"bg-primary"} />
                                 <AvatarFallback>{orgData?.name?.slice(0, 2)}</AvatarFallback>
                             </Avatar>
-                            <Avatar size='sm'>
+                            <Avatar size='xs'>
                                 <AvatarFallback>{orgData?.plan}</AvatarFallback>
                             </Avatar>
                         </AvatarGroup>
@@ -145,7 +140,6 @@ export const EventRow: React.FC<{
                         <span className="event-row-meta-item group-data-compact:text-[0.6875rem]">
                             <Clock size={12} />
                             {timeString}
-                            {!compact && (endTimeString ? ` - ${endTimeString}` : '')}
                         </span>
                     )}
                     {event.location && (

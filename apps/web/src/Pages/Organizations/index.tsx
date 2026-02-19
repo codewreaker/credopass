@@ -18,7 +18,7 @@ import {
 import { getCollections } from '@credopass/api-client/collections';
 import { useOrganizationStore, useLauncher } from '@credopass/lib/stores';
 import type { Organization, OrgPlan } from '@credopass/lib/schemas';
-import { useToolbarContext } from '../../hooks/use-toolbar-context';
+import { useToolbarContext } from '@credopass/lib/hooks';
 import {
   Card,
   CardContent,

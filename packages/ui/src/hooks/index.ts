@@ -4,3 +4,5 @@
 // ============================================================================
 
 export * from './use-mobile';
+export * from './use-previous';
+export * from './use-swipe-to-reveal';

@@ -23,6 +23,6 @@
       "vite/client"
     ],
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "vite.config.ts"],
+  "include": ["src/**/*.ts", "src/**/*.tsx", "vite.config.ts", "../../packages/lib/src/hooks/use-sidebar-trigger.tsx", "../../packages/ui/src/hooks/use-swipe-to-reveal.tsx", "../../packages/lib/src/hooks/use-toolbar-context.ts"],
   "exclude": ["node_modules", "dist"]
 }

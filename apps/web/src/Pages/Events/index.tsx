@@ -7,7 +7,7 @@ import { launchEventForm } from '../../containers/EventForm/index';
 import EventListView from './EventListView';
 import { STATUS_MAPPING } from '../../components/event-row';
 import { CalendarPlus, CalendarsIcon, ListFilterPlus } from 'lucide-react';
-import { useToolbarContext } from '../../hooks/use-toolbar-context';
+import { useToolbarContext } from '@credopass/lib/hooks';
 import { Button } from "@credopass/ui/components/button"
 import { ButtonGroup } from '@credopass/ui/components/button-group'
 import { getGreeting, handleCollectionDeleteById } from '@credopass/lib/utils';
@@ -28,6 +28,7 @@ import ActionCards from '../../containers/ActionCards';
 import { Separator } from '@credopass/ui';
 import { useIsMobile } from '@credopass/ui/hooks/use-mobile';
 
+
 /**
  * EventCalendar is a full blown calendar that can be accessed in the sidebar
  * should we want to make it available in the event view just import it here
@@ -38,17 +39,37 @@ import { useIsMobile } from '@credopass/ui/hooks/use-mobile';
 
 const handleDeleteEvent = (eventId: string) => handleCollectionDeleteById('events', eventId);
 
+const menuItemsDefault = Object.keys(STATUS_MAPPING).reduce((acc, status) => {
+    acc[status as EventType['status']] = true;
+    return acc;
+}, {} as Record<EventType['status'], boolean>);
+
 const StatusFilterMenu: React.FC<{
     menuItems: Record<EventType['status'], boolean>;
     clickHandler: (update: Record<EventType['status'], boolean>) => void;
 }> = ({ menuItems, clickHandler }) => {
+    const statusEntries = useMemo(() => Object.entries(STATUS_MAPPING), []);
+
+
+    const filterStateChanged = useMemo(() => {
+        if (menuItemsDefault && JSON.stringify(menuItems) !== JSON.stringify(menuItemsDefault)) {
+            return true;
+        }
+        return false
+    }, [menuItems]);
+
     return (
         <DropdownMenu>
-            <DropdownMenuTrigger render={<Button variant='outline' size={'icon-sm'}><ListFilterPlus /></Button>} />
+            <DropdownMenuTrigger render={
+                <Button variant='outline' className={'relative'} size={'icon-sm'}>
+                    {filterStateChanged && <span className="absolute bottom-4 left-4 size-2 rounded-full bg-primary" />}
+                    <ListFilterPlus />
+                </Button>
+            } />
             <DropdownMenuContent className="w-48">
                 <DropdownMenuGroup>
                     <DropdownMenuLabel>Show More Statuses</DropdownMenuLabel>
-                    {Object.entries(STATUS_MAPPING).map(([status, entry]) => (
+                    {statusEntries.map(([status, entry]) => (
                         <DropdownMenuCheckboxItem
                             checked={menuItems[status as EventType['status']]}
                             onCheckedChange={(checked) =>
@@ -73,7 +94,7 @@ const EventsPage = () => {
         draft: false,
         scheduled: true,
         ongoing: true,
-        completed: false,
+        completed: true,
         cancelled: false,
     });
 
