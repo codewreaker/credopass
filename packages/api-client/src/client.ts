@@ -23,7 +23,7 @@ export function getAPIBaseURL(): string {
 
 export async function handleAPIErrors(response: Response) {
   if (!response.ok) {
-    const { error: { cause } } = await response.json();
+    const { error: { cause } } = (await response.json()) as any;
     console.error('======API Error======');
     console.error(cause?.stack);
     console.error('======API Error======');

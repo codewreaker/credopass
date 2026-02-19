@@ -5,11 +5,11 @@ import { ThemeProvider } from '@credopass/lib/theme'
 import { Analytics } from '@vercel/analytics/react'
 import { SpeedInsights } from '@vercel/speed-insights/react'
 import { configureAPIClient } from '@credopass/api-client'
-import { API_BASE_URL } from './config'
+//import { API_BASE_URL } from './config'
 import './index.css'
 
 // Configure the API client with environment-specific settings
-configureAPIClient({ baseURL: API_BASE_URL });
+configureAPIClient({ baseURL: import.meta.env.VITE_API_URL || '/api/core' });
 
 // Import explicit route configuration
 import { routeTree } from './routes'

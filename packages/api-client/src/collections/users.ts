@@ -19,8 +19,8 @@ export function createUserCollection(queryClient: QueryClient) {
       queryFn: async (): Promise<User[]> => {
         const response = await fetch(`${getAPIBaseURL()}/users`);
         if (!response.ok) throw new Error('Failed to fetch users');
-        const data = await response.json();
-        return data.map((user: User) => ({
+        const data = await response.json() as User[];
+        return data.map((user) => ({
           ...user,
           createdAt: new Date(user.createdAt),
           updatedAt: new Date(user.updatedAt),

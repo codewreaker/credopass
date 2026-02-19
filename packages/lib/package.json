@@ -9,6 +9,7 @@
     ".": "./src/index.ts",
     "./theme": "./src/theme/index.tsx",
     "./layout": "./src/layout/index.tsx",
+    "./schemas/*": "./src/schemas/*/*.schema.ts",
     "./*": "./src/*/index.ts"
   },
   "dependencies": {

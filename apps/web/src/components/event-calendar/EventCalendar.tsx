@@ -8,8 +8,6 @@ import type { EventType } from '@credopass/lib/schemas';
 import { cn } from '@credopass/ui/lib/utils';
 
 import './event-calendar.css';
-import { EventRow } from '../event-row';
-import { useIsMobile } from '../../hooks/use-mobile';
 
 // ---- Status colour mapping (dot indicator) ----
 const STATUS_DOT_COLORS: Record<EventType['status'], string> = {

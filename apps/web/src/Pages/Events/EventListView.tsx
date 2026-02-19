@@ -7,7 +7,7 @@ import type { EventType } from '@credopass/lib/schemas';
 import EmptyState from '../../components/empty-state';
 import { getGroupedEventsData, groupEventsByStatus } from '@credopass/lib/utils/events';
 import { Separator } from '@credopass/ui';
-import { useIsMobile } from '../../hooks/use-mobile';
+import { useIsMobile } from '@credopass/ui/hooks/use-mobile';
 import { EventRow, STATUS_MAPPING,type EventWithOrg } from '../../components/event-row';
 
 

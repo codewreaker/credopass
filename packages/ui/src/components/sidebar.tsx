@@ -22,7 +22,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from './tooltip'
-import { useIsMobile } from '../hooks/use-mobile'
+import { useIsMobile } from '@credopass/ui/hooks/use-mobile'
 import { PanelLeftIcon } from "lucide-react"
 import { BottomNav, type BottomNavItem, type NavigateFn } from "./bottom-nav"
 

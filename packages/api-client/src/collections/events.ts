@@ -19,9 +19,9 @@ export function createEventCollection(queryClient: QueryClient) {
       queryFn: async (): Promise<Event[]> => {
         try {
           const response = await fetch(`${getAPIBaseURL()}/events`);
-          const data = await response.json();
+          const data = await response.json() as Event[];
           // Transform dates from the API response
-          return data.map((event: Event) => ({
+          return data.map((event) => ({
             ...event,
             startTime: new Date(event.startTime),
             endTime: new Date(event.endTime),
