@@ -3,7 +3,10 @@
  * Shared functions for working with TanStack DB collections
  */
 
-import { getCollections } from '@credopass/api-client/collections';
+import { getCollections, type CredoPassCollections } from '@credopass/api-client/collections';
+
+// Type helper to get only collection names (excluding queryClient)
+type CollectionName = Exclude<keyof CredoPassCollections, 'queryClient'>;
 
 /**
  * Delete an item from a collection by ID
@@ -12,18 +15,18 @@ import { getCollections } from '@credopass/api-client/collections';
  * @param onClose - Optional callback to call after deletion
  */
 export async function handleCollectionDeleteById(
-  collectionName: string,
+  collectionName: CollectionName,
   id: string,
   onClose?: () => void
 ) {
   const collections = getCollections();
-  const collection = collections[collectionName as keyof typeof collections];
+  const collection = collections[collectionName];
   
   if (!collection) {
     throw new Error(`Collection "${collectionName}" not found`);
   }
 
-  await collection.deleteById(id);
+  await collection.delete(id);
   
   if (onClose) {
     onClose();

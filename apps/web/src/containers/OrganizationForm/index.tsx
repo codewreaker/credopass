@@ -147,7 +147,9 @@ const OrganizationForm = ({ initialData = {}, isEditing = false, onClose }: Orga
   });
 
   const handleDelete = useCallback(() => {
-    handleCollectionDeleteById('organizations', initialData.id, onClose)
+    if (initialData.id) {
+      handleCollectionDeleteById('organizations', initialData.id, onClose)
+    }
   }, [initialData.id, onClose]);
 
   return (

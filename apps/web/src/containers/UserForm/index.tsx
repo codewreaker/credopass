@@ -124,7 +124,9 @@ const UserForm = ({ initialData = {}, isEditing = false, onClose }: UserFormProp
 
 
     const handleDelete = useCallback(() => {
-      handleCollectionDeleteById('users', initialData.id, onClose)
+      if (initialData.id) {
+        handleCollectionDeleteById('users', initialData.id, onClose)
+      }
     }, [initialData.id, onClose]);
 
   return (

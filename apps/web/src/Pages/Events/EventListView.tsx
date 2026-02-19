@@ -5,7 +5,7 @@ import { Badge } from '@credopass/ui/components/badge';
 
 import type { EventType } from '@credopass/lib/schemas';
 import EmptyState from '../../components/empty-state';
-import { getGroupedEventsData, groupEventsByStatus } from '@credopass/lib/utils/events';
+import { getGroupedEventsData, groupEventsByStatus } from '@credopass/lib/utils';
 import { Separator } from '@credopass/ui';
 import { useIsMobile } from '@credopass/ui/hooks/use-mobile';
 import { EventRow, STATUS_MAPPING,type EventWithOrg } from '../../components/event-row';
@@ -52,7 +52,7 @@ const EventListView: React.FC<EventListViewProps> = ({
 
     return (
         <div className="event-list">
-            {grouped.map(([statusLabel, eventsData]) => (
+            {grouped.map(([statusLabel, eventsData]: [EventType['status'], EventWithOrg[]]) => (
                 <div key={statusLabel} className="event-list-group">
                     <div className="event-list-date-heading">
                         {STATUS_MAPPING[statusLabel].icon}
@@ -60,7 +60,7 @@ const EventListView: React.FC<EventListViewProps> = ({
                         <Badge variant={'secondary'} className='size-4'>{eventsData.length}</Badge>
                     </div>
                     <div className="event-list-items">
-                        {eventsData.map((event, idx) => (
+                        {eventsData.map((event: EventWithOrg, idx: number) => (
                             <React.Fragment key={event.id}>
                                 {idx !== 0 && <Separator className={'bg-gradient-to-r from-transparent via-muted to-transparent'} />}
                                 <EventRow

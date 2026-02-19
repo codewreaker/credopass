@@ -1,5 +1,4 @@
 // Zustand Based Store to handle App State
-import type { DialogRootActions } from '@credopass/ui/components/dialog'
 import { create, ExtractState } from 'zustand'
 import { combine, devtools } from 'zustand/middleware'
 import type { EventType, EventStatus, User, Organization } from '../schemas'
@@ -44,7 +43,7 @@ export interface LauncherState {
     content: React.ReactElement | null;
     onClose?: () => void;
     onOpen?: () => void;
-    launcherRef?: React.RefObject<DialogRootActions> | unknown;
+    launcherRef?: unknown;
 }
 export const useLauncherStore = create(
     devtools(
