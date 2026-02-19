@@ -6,8 +6,6 @@ export * from './hooks';
 export * from './schemas';
 export * from './theme';
 export * from './stores';
-export * from './models';
-export * from './services';
 
 export type { 
   ResponsiveGridLayoutProps, 
