@@ -7,7 +7,7 @@ import { createCollection } from '@tanstack/db';
 import { QueryClient } from '@tanstack/query-core';
 import { queryCollectionOptions } from '@tanstack/query-db-collection';
 import type { Organization } from '@credopass/lib/schemas';
-import { API_BASE_URL, handleAPIErrors } from '../client';
+import { getAPIBaseURL, handleAPIErrors } from '../client';
 
 /**
  * Create organization collection with a specific QueryClient
@@ -17,7 +17,7 @@ export function createOrganizationCollection(queryClient: QueryClient) {
     queryCollectionOptions({
       queryKey: ['organizations'],
       queryFn: async (): Promise<Array<Organization>> => {
-        const response = await fetch(`${API_BASE_URL}/organizations`);
+        const response = await fetch(`${getAPIBaseURL()}/organizations`);
         if (!response.ok) throw new Error('Failed to fetch organizations');
         const data = await response.json();
         return data.map((org: Organization) => ({
@@ -35,7 +35,7 @@ export function createOrganizationCollection(queryClient: QueryClient) {
         const mutation = transaction.mutations[0];
         if (!mutation) return;
         const { modified: newOrg } = mutation;
-        const response = await fetch(`${API_BASE_URL}/organizations`, {
+        const response = await fetch(`${getAPIBaseURL()}/organizations`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(newOrg),
@@ -49,7 +49,7 @@ export function createOrganizationCollection(queryClient: QueryClient) {
         const mutation = transaction.mutations[0];
         if (!mutation) return;
         const { original, modified } = mutation;
-        const response = await fetch(`${API_BASE_URL}/organizations/${original.id}`, {
+        const response = await fetch(`${getAPIBaseURL()}/organizations/${original.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(modified),
@@ -62,7 +62,7 @@ export function createOrganizationCollection(queryClient: QueryClient) {
         const mutation = transaction.mutations[0];
         if (!mutation) return;
         const { original } = mutation;
-        const response = await fetch(`${API_BASE_URL}/organizations/${original.id}`, {
+        const response = await fetch(`${getAPIBaseURL()}/organizations/${original.id}`, {
           method: 'DELETE',
         });
         if (!response.ok) throw new Error('Failed to delete organization');

@@ -7,7 +7,7 @@ import { createCollection } from '@tanstack/db';
 import { QueryClient } from '@tanstack/query-core';
 import { queryCollectionOptions } from '@tanstack/query-db-collection';
 import type { EventMember } from '@credopass/lib/schemas';
-import { API_BASE_URL, handleAPIErrors } from '../client';
+import { getAPIBaseURL, handleAPIErrors } from '../client';
 
 /**
  * Create event members collection with a specific QueryClient
@@ -18,7 +18,7 @@ export function createEventMemberCollection(queryClient: QueryClient) {
       queryKey: ['event-members'],
       queryFn: async (): Promise<EventMember[]> => {
         try {
-          const response = await fetch(`${API_BASE_URL}/event-members`);
+          const response = await fetch(`${getAPIBaseURL()}/event-members`);
           const data = await response.json();
           // Transform dates from the API response
           return data.map((record: EventMember) => ({
@@ -38,7 +38,7 @@ export function createEventMemberCollection(queryClient: QueryClient) {
         const mutation = transaction.mutations[0];
         if (!mutation) return;
         const { modified: newRecord } = mutation;
-        const response = await fetch(`${API_BASE_URL}/event-members`, {
+        const response = await fetch(`${getAPIBaseURL()}/event-members`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(newRecord),
@@ -52,7 +52,7 @@ export function createEventMemberCollection(queryClient: QueryClient) {
         const mutation = transaction.mutations[0];
         if (!mutation) return;
         const { original, modified } = mutation;
-        const response = await fetch(`${API_BASE_URL}/event-members/${original.id}`, {
+        const response = await fetch(`${getAPIBaseURL()}/event-members/${original.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(modified),
@@ -65,7 +65,7 @@ export function createEventMemberCollection(queryClient: QueryClient) {
         const mutation = transaction.mutations[0];
         if (!mutation) return;
         const { original } = mutation;
-        const response = await fetch(`${API_BASE_URL}/event-members/${original.id}`, {
+        const response = await fetch(`${getAPIBaseURL()}/event-members/${original.id}`, {
           method: 'DELETE',
         });
         if (!response.ok) throw new Error('Failed to delete event member');

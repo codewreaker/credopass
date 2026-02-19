@@ -7,7 +7,7 @@ import { createCollection } from '@tanstack/db';
 import { QueryClient } from '@tanstack/query-core';
 import { queryCollectionOptions } from '@tanstack/query-db-collection';
 import type { Loyalty } from '@credopass/lib/schemas';
-import { API_BASE_URL, handleAPIErrors } from '../client';
+import { getAPIBaseURL, handleAPIErrors } from '../client';
 
 /**
  * Create loyalty collection with a specific QueryClient
@@ -18,7 +18,7 @@ export function createLoyaltyCollection(queryClient: QueryClient) {
       queryKey: ['loyalty'],
       queryFn: async (): Promise<Loyalty[]> => {
         try {
-          const response = await fetch(`${API_BASE_URL}/loyalty`);
+          const response = await fetch(`${getAPIBaseURL()}/loyalty`);
           const data = await response.json();
           // Transform dates from the API response
           return data.map((record: Loyalty) => ({
@@ -38,7 +38,7 @@ export function createLoyaltyCollection(queryClient: QueryClient) {
         const mutation = transaction.mutations[0];
         if (!mutation) return;
         const { modified: newRecord } = mutation;
-        const response = await fetch(`${API_BASE_URL}/loyalty`, {
+        const response = await fetch(`${getAPIBaseURL()}/loyalty`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(newRecord),
@@ -52,7 +52,7 @@ export function createLoyaltyCollection(queryClient: QueryClient) {
         const mutation = transaction.mutations[0];
         if (!mutation) return;
         const { original, modified } = mutation;
-        const response = await fetch(`${API_BASE_URL}/loyalty/${original.id}`, {
+        const response = await fetch(`${getAPIBaseURL()}/loyalty/${original.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(modified),
@@ -65,7 +65,7 @@ export function createLoyaltyCollection(queryClient: QueryClient) {
         const mutation = transaction.mutations[0];
         if (!mutation) return;
         const { original } = mutation;
-        const response = await fetch(`${API_BASE_URL}/loyalty/${original.id}`, {
+        const response = await fetch(`${getAPIBaseURL()}/loyalty/${original.id}`, {
           method: 'DELETE',
         });
         if (!response.ok) throw new Error('Failed to delete loyalty record');

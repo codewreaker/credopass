@@ -75,6 +75,7 @@
         "@nx/expo": "*",
         "@testing-library/react-native": "*",
         "expo": "*",
+        "expo-constants": "*",
         "expo-splash-screen": "*",
         "expo-status-bar": "*",
         "expo-system-ui": "*",
