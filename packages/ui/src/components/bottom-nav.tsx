@@ -11,6 +11,13 @@ export interface BottomNavItem {
     icon: React.ElementType
 }
 
+export interface CenterButton {
+    label?: string
+    icon: React.ElementType
+    onClick?: () => void
+    url?: string
+}
+
 export type NavigateFn = (url: string) => void
 
 interface BottomNavMenuButtonProps {
@@ -30,6 +37,11 @@ interface BottomNavProps {
      * @example navigate={useNavigate()} // TanStack Router
      */
     navigate?: NavigateFn
+    /**
+     * Optional prominent center button that can trigger an action or navigate.
+     * When provided, navigation items will be split into left and right sections.
+     */
+    centerButton?: CenterButton
 }
 
 const defaultNavigate: NavigateFn = (url: string) => {
@@ -67,7 +79,8 @@ export function BottomNav({
     items,
     maxVisibleItems = 5,
     currentPathname,
-    navigate = defaultNavigate
+    navigate = defaultNavigate,
+    centerButton
 }: BottomNavProps) {
     const [open, setOpen] = React.useState(false)
 
@@ -76,9 +89,23 @@ export function BottomNav({
         return currentPathname ?? (typeof window !== 'undefined' ? window.location.pathname : '/')
     }, [currentPathname])
 
-    const visibleItems = items.slice(0, maxVisibleItems)
-    const hiddenItems = items.slice(maxVisibleItems)
+    // When center button exists, adjust visible items to accommodate it
+    const maxItems = centerButton ? maxVisibleItems - 1 : maxVisibleItems
+    const visibleItems = items.slice(0, maxItems)
+    const hiddenItems = items.slice(maxItems)
     const shouldShowMore = hiddenItems.length > 0
+    
+    // Split items for center button layout
+    const leftItems = centerButton ? visibleItems.slice(0, Math.ceil(visibleItems.length / 2)) : []
+    const rightItems = centerButton ? visibleItems.slice(Math.ceil(visibleItems.length / 2)) : []
+    
+    const handleCenterButtonClick = () => {
+        if (centerButton?.onClick) {
+            centerButton.onClick()
+        } else if (centerButton?.url) {
+            navigate(centerButton.url)
+        }
+    }
 
     return (
         <nav className="fixed bottom-0 left-0 right-0 z-2000 sm:hidden">
@@ -88,18 +115,68 @@ export function BottomNav({
             {/* Main nav container */}
             <div className="bg-background/95 backdrop-blur-lg border-t border-border/50 shadow-[0_-4px_20px_-4px_rgba(0,0,0,0.1)]">
                 <div className="flex h-1/2 items-center justify-around py-1 pb-safe">
-                    {visibleItems.map((item) => {
-                        const isActive = pathname === item.url;
+                    {centerButton ? (
+                        // Layout with center button
+                        <>
+                            {/* Left side items */}
+                            <div className="flex items-center justify-around flex-1">
+                                {leftItems.map((item) => {
+                                    const isActive = pathname === item.url;
+                                    return (
+                                        <BottomNavMenuButton
+                                            key={item.label}
+                                            item={item}
+                                            isActive={isActive}
+                                            navigate={navigate}
+                                        />
+                                    )
+                                })}
+                            </div>
 
-                        return (
-                            <BottomNavMenuButton
-                                key={item.label}
-                                item={item}
-                                isActive={isActive}
-                                navigate={navigate}
-                            />
-                        )
-                    })}
+                            {/* Prominent center button */}
+                            <div className="flex items-center justify-center px-4">
+                                <button
+                                    onClick={handleCenterButtonClick}
+                                    className="flex flex-col items-center justify-center gap-1 bg-primary text-primary-foreground rounded-full h-12 w-12 shadow-lg hover:shadow-xl transition-all duration-200 active:scale-95 hover:scale-105 -mt-3"
+                                >
+                                    <centerButton.icon className="h-6 w-6 stroke-[2.5]" />
+                                    {centerButton.label && (
+                                        <span className="text-[9px] font-semibold mt-0.5">
+                                            {centerButton.label}
+                                        </span>
+                                    )}
+                                </button>
+                            </div>
+
+                            {/* Right side items */}
+                            <div className="flex items-center justify-around flex-1">
+                                {rightItems.map((item) => {
+                                    const isActive = pathname === item.url;
+                                    return (
+                                        <BottomNavMenuButton
+                                            key={item.label}
+                                            item={item}
+                                            isActive={isActive}
+                                            navigate={navigate}
+                                        />
+                                    )
+                                })}
+                            </div>
+                        </>
+                    ) : (
+                        // Default layout without center button
+                        visibleItems.map((item) => {
+                            const isActive = pathname === item.url;
+                            return (
+                                <BottomNavMenuButton
+                                    key={item.label}
+                                    item={item}
+                                    isActive={isActive}
+                                    navigate={navigate}
+                                />
+                            )
+                        })
+                    )}
 
                     {/* More menu for additional items */}
                     {shouldShowMore && (

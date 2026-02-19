@@ -11,24 +11,24 @@ import { useIsMobile } from "@credopass/ui/hooks/use-mobile";
 import { Toaster } from "@credopass/ui/components/sonner";
 import { Separator } from "@credopass/ui/components/separator";
 import { NAV_ITEMS } from "@credopass/lib/constants";
+import { useCommandPallete } from "../hooks";
+import { SidebarMenuButton, SidebarMenuItem } from "@credopass/ui/components/sidebar";
+import { Button } from "@credopass/ui/components/button";
+import { CirclePlus, Mail } from "lucide-react";
 
-const USER_DATA = {
-  name: 'Israel',
-  email: 'israel.agyeman.prempeh@gmail.com',
-  avatar: "/avatars/shadcn.jpg",
-} as const;
 
 export function RootLayout() {
   const isMobile = useIsMobile();
   //Exclude Organisations from menu
-  const main = useMemo(()=>(NAV_ITEMS.filter(({id})=>(id !== 'organizations'))),[]);
+  const main = useMemo(() => (NAV_ITEMS.filter(({ id }) => (id !== 'organizations'))), []);
+  const { openCommandPalette } = useCommandPallete();
   return (
     <>
       <div className="app-container">
         <div className="app-layout">
           <LeftSidebar
-            user={USER_DATA}
-            nav={{ main}}
+            nav={{ main }}
+            onCenterClick={openCommandPalette}
           >
             <SidebarInset className="main-content">
               <header className="app-header">

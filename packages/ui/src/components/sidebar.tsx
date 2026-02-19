@@ -23,7 +23,7 @@ import {
   TooltipTrigger,
 } from './tooltip'
 import { useIsMobile } from '@credopass/ui/hooks/use-mobile'
-import { PanelLeftIcon } from "lucide-react"
+import { PanelLeftIcon, PlusIcon } from "lucide-react"
 import { BottomNav, type BottomNavItem, type NavigateFn } from "./bottom-nav"
 
 export const SIDEBAR_COOKIE_NAME = "sidebar_state"
@@ -159,18 +159,20 @@ function Sidebar({
   navItems,
   navigate,
   currentPathname,
+  onCenterClick,
   ...props
 }: React.ComponentProps<"div"> & {
   side?: "left" | "right"
   variant?: "sidebar" | "floating" | "inset"
   collapsible?: "offcanvas" | "icon" | "none"
   navItems?: BottomNavItem[]
+  onCenterClick?: ()=>void; 
   /** Navigation function for mobile bottom nav - pass your router's navigate function */
   navigate?: NavigateFn
   /** Current pathname for mobile bottom nav - pass your router's pathname to track active state */
   currentPathname?: string
 }) {
-  const { isMobile, state, openMobile, setOpenMobile } = useSidebar()
+  const { isMobile, state, openMobile, setOpenMobile } = useSidebar();
 
   if (collapsible === "none") {
     return (
@@ -212,7 +214,15 @@ function Sidebar({
         </Sheet>
       )
     }
-    return navItems ? <BottomNav items={navItems} navigate={navigate} currentPathname={currentPathname} /> : null
+    return navItems ? <BottomNav
+      items={navItems}
+      navigate={navigate}
+      currentPathname={currentPathname}
+      centerButton={{
+        icon: PlusIcon,
+        onClick: onCenterClick
+      }}
+    /> : null
   }
 
 

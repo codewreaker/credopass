@@ -7,7 +7,6 @@ import {
 import {
     Sidebar,
     SidebarContent,
-    SidebarFooter,
     SidebarGroup,
     SidebarGroupLabel,
     SidebarHeader,
@@ -21,13 +20,14 @@ import {
     SidebarProvider,
     SidebarRail,
     SidebarTrigger,
-    SIDEBAR_COOKIE_NAME
+    SIDEBAR_COOKIE_NAME,
 } from "@credopass/ui/components/sidebar"
+
+import { Kbd, KbdGroup } from '@credopass/ui/components/kbd'
 import { type BottomNavItem } from "@credopass/ui/components/bottom-nav"
 
-import { ChevronRightIcon } from "lucide-react"
+import { ChevronRightIcon, CirclePlus } from "lucide-react"
 import { useLocation, useNavigate } from "@tanstack/react-router"
-import { useDefaultUserMenu } from "../../components/user/default-menu"
 import { cn } from "@credopass/ui/lib/utils"
 import { useCookies } from "@credopass/lib/hooks";
 import CredoPassLogoIcon from "./brand-icon";
@@ -42,16 +42,9 @@ interface SidebarMenuItemType {
     secondary?: boolean
 }
 
-interface User {
-    name: string
-    email: string
-    avatar: string
-    icon?: React.ElementType
-}
-
 export interface SidebarProps {
-    user?: User;
     nav?: SidebarMenuProps;
+    onCenterClick?: () => void;
     children?: React.ReactNode;
 }
 
@@ -60,20 +53,14 @@ interface SidebarMenuProps {
     [label: string]: Array<SidebarMenuItemType> | undefined;
 }
 
-const DEFAULT_USER: User = {
-    name: "israel",
-    email: "iz@credopass.com",
-    avatar: "/avatars/shadcn.jpg",
-};
-
 const MainSidebar: React.FC<SidebarProps> = ({
     nav,
-    user = DEFAULT_USER,
+    onCenterClick,
     children
 }) => {
     const navigate = useNavigate();
     const location = useLocation();
-    const userMenuGroups = useDefaultUserMenu();
+
 
     const [sidebarCookie] = useCookies(SIDEBAR_COOKIE_NAME);
     const isOpen = Boolean(sidebarCookie === 'true');
@@ -117,6 +104,7 @@ const MainSidebar: React.FC<SidebarProps> = ({
                 navItems={bottomNavItems}
                 navigate={handleNavigate}
                 currentPathname={location.pathname}
+                onCenterClick={onCenterClick}
             >
                 <SidebarHeader>
                     <SidebarMenu>
@@ -127,6 +115,24 @@ const MainSidebar: React.FC<SidebarProps> = ({
                 </SidebarHeader>
 
                 <SidebarContent>
+                    <SidebarGroup>
+                        <SidebarGroupLabel className="text-[0.625rem] uppercase tracking-widest text-muted-foreground/60 font-medium">
+                            Quick Commands
+                        </SidebarGroupLabel>
+                        <SidebarMenuItem className="flex items-center gap-2">
+                            <SidebarMenuButton
+                                tooltip="Quick Create"
+                                onClick={onCenterClick}
+                                className="bg-secondary text-secondary-foreground hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground min-w-8 duration-200 ease-linear"
+                            >
+                                <CirclePlus className="text-primary" />
+                                <span>Command</span>
+                                <KbdGroup>
+                                    <Kbd>⌘ + K</Kbd>
+                                </KbdGroup>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                    </SidebarGroup>
                     <SidebarGroup>
                         <SidebarGroupLabel className="text-[0.625rem] uppercase tracking-widest text-muted-foreground/60 font-medium">
                             Main
