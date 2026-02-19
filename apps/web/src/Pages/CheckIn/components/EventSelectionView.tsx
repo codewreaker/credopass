@@ -68,7 +68,7 @@ const EventCard: React.FC<EventCardProps> = ({ event, onSelect, statusColors }) 
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Users className="w-3.5 h-3.5 shrink-0" />
-              <span>{event.capacity ? `${event.capacity} spots` : 'Unlimited'}</span>
+              <span>{event.capacity ? `${event.capacity}` : 'Unlimited'}</span>
             </div>
             <ArrowRight className="w-3.5 h-3.5 text-primary opacity-0 group-hover:opacity-100 transition-opacity" />
           </div>

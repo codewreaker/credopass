@@ -71,6 +71,7 @@ const EventListView: React.FC<EventListViewProps> = ({
                                     onEdit={onEditEvent}
                                     onDelete={onDeleteEvent}
                                     isMobile={isMobile}
+                                    compact
                                 />
                             </React.Fragment>
                         ))}

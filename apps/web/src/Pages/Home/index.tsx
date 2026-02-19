@@ -17,6 +17,7 @@ import { useToolbarContext } from '../../hooks/use-toolbar-context';
 import { getGreeting } from '@credopass/lib/utils';
 import './home.css';
 import ActionCards from '../../containers/ActionCards';
+import { EventRow } from '../../components/event-row';
 
 
 
@@ -107,9 +108,9 @@ export default function HomePage() {
             <Calendar size={14} className="text-muted-foreground" />
             <h2 className="home-section-title">Upcoming Events</h2>
           </div>
-          <div className="home-upcoming-list">
+          <div>
             {upcomingEvents.map((event) => (
-              <UpcomingEventCard key={event.id} event={event} />
+              <EventRow key={event.id} event={event} isMobile compact/>
             ))}
           </div>
         </div>
