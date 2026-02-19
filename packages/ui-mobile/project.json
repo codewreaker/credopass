@@ -1,0 +1,8 @@
+{
+  "name": "ui-mobile",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/ui-mobile/src",
+  "projectType": "library",
+  "tags": ["type:package", "scope:mobile"],
+  "targets": {}
+}

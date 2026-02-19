@@ -1,0 +1,14 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "module": "esnext",
+    "lib": ["ES2023"],
+    "jsx": "react-native",
+    "declaration": true,
+    "declarationMap": true,
+    "outDir": "../../dist/packages/ui-mobile",
+    "rootDir": "src"
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules"]
+}
