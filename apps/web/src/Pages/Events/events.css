@@ -90,6 +90,6 @@
   .event-list-items {
     display: flex;
     flex-direction: column;
-    gap: 0.125rem;
+    gap: 0.3rem;
   }
 }

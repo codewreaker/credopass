@@ -1,12 +1,12 @@
 import { useCallback, useMemo, useState } from 'react';
 import { eq, useLiveQuery } from '@tanstack/react-db';
 import { getCollections } from '@credopass/api-client/collections';
-import type { EventType } from '@credopass/lib/schemas';
+import type { EventType, OrgMembership } from '@credopass/lib/schemas';
 import { useEventSessionStore, useLauncher } from '@credopass/lib/stores';
 import { launchEventForm } from '../../containers/EventForm/index';
 import EventListView from './EventListView';
-import { STATUS_MAPPING, type EventWithOrg } from '../../components/event-row';
-import { CalendarPlus, CalendarsIcon, Filter } from 'lucide-react';
+import { STATUS_MAPPING } from '../../components/event-row';
+import { CalendarPlus, CalendarsIcon, ListFilterPlus } from 'lucide-react';
 import { useToolbarContext } from '../../hooks/use-toolbar-context';
 import { Button } from "@credopass/ui/components/button"
 import { ButtonGroup } from '@credopass/ui/components/button-group'
@@ -44,7 +44,7 @@ const StatusFilterMenu: React.FC<{
 }> = ({ menuItems, clickHandler }) => {
     return (
         <DropdownMenu>
-            <DropdownMenuTrigger render={<Button variant='outline' size={'icon-sm'}><Filter /></Button>} />
+            <DropdownMenuTrigger render={<Button variant='outline' size={'icon-sm'}><ListFilterPlus /></Button>} />
             <DropdownMenuContent className="w-48">
                 <DropdownMenuGroup>
                     <DropdownMenuLabel>Show More Statuses</DropdownMenuLabel>
@@ -70,11 +70,11 @@ const EventsPage = () => {
     const isMobile = useIsMobile();
     const [searchQuery, setSearchQuery] = useState<string>('');
     const [statusMenu, setStatusMenuItems] = useState<Record<EventType['status'], boolean>>({
-        draft: false,
+        draft: true,
         scheduled: true,
         ongoing: true,
-        completed: false,
-        cancelled: false,
+        completed: true,
+        cancelled: true,
     });
 
     const userName = useEventSessionStore((s) => s.session.currentUserName);
@@ -113,7 +113,7 @@ const EventsPage = () => {
         launchEventForm({ isEditing: false }, openLauncher);
     }, [openLauncher]);
 
-    const handleEditEvent = useCallback((event: EventWithOrg) => {
+    const handleEditEvent = useCallback((event: EventType & { orgCollection?: OrgMembership }) => {
         launchEventForm({
             isEditing: true,
             initialData: {
@@ -174,7 +174,7 @@ const EventsPage = () => {
             <div className="events-content">
                 <ActionCards />
                 <Separator className={'my-5 bg-gradient-to-r from-transparent via-muted to-transparent'} />
-                <div className='flex gap-4'>
+                <div className='flex gap-4 md:h-[calc(100vh-274px)]'>
                     <div className='w-full md:w-2/3 md:border-r'>
                         <EventListView
                             events={filteredEvents}

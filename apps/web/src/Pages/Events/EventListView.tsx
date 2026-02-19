@@ -53,7 +53,7 @@ const EventListView: React.FC<EventListViewProps> = ({
     }
 
     return (
-        <div className="event-list">
+        <div className="event-list h-full overflow-auto">
             {grouped.map(([statusLabel, eventsData]: [EventType['status'], EventWithOrg[]]) => (
                 <div key={statusLabel} className="event-list-group">
                     <div className="event-list-date-heading">
@@ -71,7 +71,6 @@ const EventListView: React.FC<EventListViewProps> = ({
                                     onEdit={onEditEvent}
                                     onDelete={onDeleteEvent}
                                     isMobile={isMobile}
-                                    compact
                                 />
                             </React.Fragment>
                         ))}

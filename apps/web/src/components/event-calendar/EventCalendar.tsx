@@ -1,13 +1,11 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { Calendar, CalendarDayButton } from '@credopass/ui/components/calendar';
-import { Badge } from '@credopass/ui/components/badge';
-import { Separator } from '@credopass/ui/components/separator';
-import { MapPin, Clock } from 'lucide-react';
 import type { EventType } from '@credopass/lib/schemas';
 import { cn } from '@credopass/ui/lib/utils';
 
 import './event-calendar.css';
+import { EventRow } from '../event-row';
 
 // ---- Status colour mapping (dot indicator) ----
 const STATUS_DOT_COLORS: Record<EventType['status'], string> = {
@@ -45,14 +43,6 @@ function buildEventMap(events: EventType[]): Map<string, EventType[]> {
   return map;
 }
 
-function formatTime(date: Date): string {
-  return date.toLocaleTimeString('default', { hour: 'numeric', minute: '2-digit', hour12: true });
-}
-
-function formatShortDate(date: Date): string {
-  return date.toLocaleDateString('default', { month: 'short', day: 'numeric' });
-}
-
 // ---- Component Props ----
 export interface EventCalendarProps {
   events: EventType[];
@@ -68,43 +58,16 @@ interface MonthEventsProps {
   handleEventNavigate: (eventId: string) => void;
 }
 
-const MonthEvents = ({ event: ev, isEventActive, handleEventRowClick, handleEventNavigate }: MonthEventsProps) => (<button
-  type="button"
+const MonthEvents = ({ event: ev, isEventActive, handleEventRowClick, handleEventNavigate }: MonthEventsProps) => (
+<div
   className={cn(
     'event-calendar-item',
     isEventActive(ev) && 'event-calendar-item--active',
   )}
-  onClick={() => handleEventRowClick(ev)}
   onDoubleClick={() => handleEventNavigate(ev.id)}
 >
-  <div className="event-calendar-item-header">
-    <span
-      className={cn(
-        'event-calendar-status-dot',
-        STATUS_DOT_COLORS[ev.status],
-      )}
-    />
-    <span className="event-calendar-item-title">{ev.name}</span>
-    <Badge variant="outline" className="ml-auto text-[10px] capitalize">
-      {ev.status}
-    </Badge>
-  </div>
-  <div className="event-calendar-item-meta">
-    <span className="event-calendar-item-meta-item">
-      <Clock size={11} />
-      {formatShortDate(new Date(ev.startTime))} · {formatTime(new Date(ev.startTime))} – {formatTime(new Date(ev.endTime))}
-    </span>
-    {ev.location && (
-      <>
-        <Separator orientation="vertical" className="h-3" />
-        <span className="event-calendar-item-meta-item">
-          <MapPin size={11} />
-          {ev.location}
-        </span>
-      </>
-    )}
-  </div>
-</button>)
+  <EventRow event={ev} onNavigate={() => handleEventRowClick(ev)} compact isMobile />
+</div>)
 
 // ---- Component ----
 export default function EventCalendar({
