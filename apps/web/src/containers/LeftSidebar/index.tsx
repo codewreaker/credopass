@@ -27,7 +27,6 @@ import { type BottomNavItem } from "@credopass/ui/components/bottom-nav"
 
 import { ChevronRightIcon } from "lucide-react"
 import { useLocation, useNavigate } from "@tanstack/react-router"
-import UserComponent from "../../components/user"
 import { useDefaultUserMenu } from "../../components/user/default-menu"
 import { cn } from "@credopass/ui/lib/utils"
 import { useCookies } from "@credopass/lib/hooks";
@@ -213,14 +212,6 @@ const MainSidebar: React.FC<SidebarProps> = ({
                         </SidebarGroup>
                     ))}
                 </SidebarContent>
-
-                <SidebarFooter>
-                    <SidebarMenu>
-                        <SidebarMenuItem>
-                            <UserComponent user={user} menuGroups={userMenuGroups} />
-                        </SidebarMenuItem>
-                    </SidebarMenu>
-                </SidebarFooter>
                 <SidebarRail />
             </Sidebar>
             {children}

@@ -3,10 +3,10 @@ import { useNavigate } from '@tanstack/react-router';
 import { Calendar, CalendarDayButton } from '@credopass/ui/components/calendar';
 import type { EventType } from '@credopass/lib/schemas';
 import { cn } from '@credopass/ui/lib/utils';
+import { EventRow } from '../event-row';
+import { getMonthEvents, toDateKey } from '@credopass/lib/utils';
 
 import './event-calendar.css';
-import { EventRow } from '../event-row';
-
 // ---- Status colour mapping (dot indicator) ----
 const STATUS_DOT_COLORS: Record<EventType['status'], string> = {
   draft: 'bg-muted-foreground',
@@ -18,9 +18,6 @@ const STATUS_DOT_COLORS: Record<EventType['status'], string> = {
 
 // ---- Helpers ----
 
-function toDateKey(d: Date): string {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-}
 
 /** Build a map of ISO-date-string → EventType[] for quick day lookups */
 function buildEventMap(events: EventType[]): Map<string, EventType[]> {
@@ -59,15 +56,15 @@ interface MonthEventsProps {
 }
 
 const MonthEvents = ({ event: ev, isEventActive, handleEventRowClick, handleEventNavigate }: MonthEventsProps) => (
-<div
-  className={cn(
-    'event-calendar-item',
-    isEventActive(ev) && 'event-calendar-item--active',
-  )}
-  onDoubleClick={() => handleEventNavigate(ev.id)}
->
-  <EventRow event={ev} onNavigate={() => handleEventRowClick(ev)} compact isMobile />
-</div>)
+  <div
+    className={cn(
+      'event-calendar-item',
+      isEventActive(ev) && 'event-calendar-item--active',
+    )}
+    onDoubleClick={() => handleEventNavigate(ev.id)}
+  >
+    <EventRow event={ev} onNavigate={() => handleEventRowClick(ev)} compact isMobile />
+  </div>)
 
 // ---- Component ----
 export default function EventCalendar({
@@ -83,15 +80,9 @@ export default function EventCalendar({
 
   /** Events whose start falls in the currently viewed month */
   const monthEvents = useMemo<EventType[]>(() => {
-    const y = month.getFullYear();
-    const m = month.getMonth();
-    return events
-      .filter((ev) => {
-        const s = new Date(ev.startTime);
-        return s.getFullYear() === y && s.getMonth() === m;
-      })
-      .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
-  }, [events, month]);
+    if (selectedDate) return events.filter(({ startTime }) => (toDateKey(startTime) === toDateKey(selectedDate))) || getMonthEvents(month, events);
+    return getMonthEvents(month, events)
+  }, [events, month, selectedDate]);
 
   /** All dates that have at least one event → used for modifiers */
   const eventDates = useMemo(() => {
@@ -203,12 +194,12 @@ export default function EventCalendar({
           <span className="event-calendar-count">{monthEvents.length} event{monthEvents.length !== 1 ? 's' : ''}</span>
         </h4>
 
-        {monthEvents.length === 0 ? (
+        {(monthEvents.length === 0 && !selectedDate) ? (
           <p className="event-calendar-empty">No events this month</p>
         ) : (
           <div className="event-calendar-list">
             {monthEvents.map((ev) => (
-              <MonthEvents 
+              <MonthEvents
                 key={ev.id}
                 event={ev}
                 isEventActive={isEventActive}

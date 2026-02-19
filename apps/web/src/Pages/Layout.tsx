@@ -1,4 +1,4 @@
-import { Suspense } from "react";
+import { Suspense, useMemo } from "react";
 import { Outlet } from "@tanstack/react-router";
 import { TopNavBar } from "../containers/TopNavBar/index";
 import LeftSidebar, { SidebarInset, SidebarTrigger, OrgSelector } from "../containers/LeftSidebar";
@@ -20,14 +20,15 @@ const USER_DATA = {
 
 export function RootLayout() {
   const isMobile = useIsMobile();
-
+  //Exclude Organisations from menu
+  const main = useMemo(()=>(NAV_ITEMS.filter(({id})=>(id !== 'organizations'))),[]);
   return (
     <>
       <div className="app-container">
         <div className="app-layout">
           <LeftSidebar
             user={USER_DATA}
-            nav={{ main: [...NAV_ITEMS] }}
+            nav={{ main}}
           >
             <SidebarInset className="main-content">
               <header className="app-header">

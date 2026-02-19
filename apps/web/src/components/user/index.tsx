@@ -186,7 +186,7 @@ const renderMenuGroup = (group: MenuGroupConfig): React.ReactNode => {
 }
 
 // ============================================================================
-// User Component
+// User Component a component like a profile with menus similar to profile button
 // ============================================================================
 
 const UserComponent: React.FC<UserMenuProps> = ({ 

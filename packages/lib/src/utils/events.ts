@@ -48,3 +48,19 @@ export function sortEventsByClosestToToday(events: EventType[]): EventType[] {
     return absA - absB;
   });
 };
+
+export function getMonthEvents(month: Date, events: EventType[]): EventType[] {
+  const y = month.getFullYear();
+  const m = month.getMonth();
+  return events
+    .filter((ev) => {
+      const s = new Date(ev.startTime);
+      return s.getFullYear() === y && s.getMonth() === m;
+    })
+    .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
+}
+
+// useful for calendar day cells: given a date, return a string key like "2024-09-08" for direct comparison and map lookups 
+export function toDateKey(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}

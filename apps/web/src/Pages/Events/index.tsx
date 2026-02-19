@@ -12,7 +12,6 @@ import { Button } from "@credopass/ui/components/button"
 import { ButtonGroup } from '@credopass/ui/components/button-group'
 import { getGreeting, handleCollectionDeleteById } from '@credopass/lib/utils';
 import { EventCalendar } from '../../components/event-calendar';
-import isEqual from 'lodash/isEqual';
 
 import {
     DropdownMenu,
@@ -40,35 +39,30 @@ import { useIsMobile } from '@credopass/ui/hooks/use-mobile';
 
 const handleDeleteEvent = (eventId: string) => handleCollectionDeleteById('events', eventId);
 
+const menuItemsDefault = Object.keys(STATUS_MAPPING).reduce((acc, status) => {
+    acc[status as EventType['status']] = true;
+    return acc;
+}, {} as Record<EventType['status'], boolean>);
+
 const StatusFilterMenu: React.FC<{
     menuItems: Record<EventType['status'], boolean>;
     clickHandler: (update: Record<EventType['status'], boolean>) => void;
 }> = ({ menuItems, clickHandler }) => {
     const statusEntries = useMemo(() => Object.entries(STATUS_MAPPING), []);
-    const prevMenuItemsRef = useRef<typeof menuItems | null>(null);
 
-    useEffect(()=>{prevMenuItemsRef.current = menuItems},[]);
-
-    const prevMenuItems = prevMenuItemsRef.current;
-    console.log(prevMenuItems)
 
     const filterStateChanged = useMemo(() => {
-        if (prevMenuItems && JSON.stringify(menuItems) !== JSON.stringify(prevMenuItems)) {
+        if (menuItemsDefault && JSON.stringify(menuItems) !== JSON.stringify(menuItemsDefault)) {
             return true;
         }
         return false
-    }, [menuItems, prevMenuItems]);
+    }, [menuItems]);
 
-
-    const filterStateChanged2 = useMemo(() => isEqual(menuItems, prevMenuItems), [menuItems, prevMenuItems]);
-
-    console.log('filterState changed', filterStateChanged);
-    console.log('filterState changed 2', filterStateChanged);
     return (
         <DropdownMenu>
             <DropdownMenuTrigger render={
                 <Button variant='outline' className={'relative'} size={'icon-sm'}>
-                    <span className="absolute bottom-4 left-4 size-2 rounded-full bg-primary" />
+                    {filterStateChanged && <span className="absolute bottom-4 left-4 size-2 rounded-full bg-primary" />}
                     <ListFilterPlus />
                 </Button>
             } />
