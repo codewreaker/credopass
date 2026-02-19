@@ -11,7 +11,9 @@ import {
 } from "@credopass/ui/components/avatar"
 import { Badge } from '@credopass/ui/components/badge';
 
-import type { EventType, Organization as OrganizationType } from '@credopass/lib/schemas';
+import type { EventType, Organization } from '@credopass/lib/schemas';
+
+export type EventWithOrg = EventType & { orgCollection?: Organization };
 
 import { useSwipeToReveal } from '../../hooks/use-swipe-to-reveal';
 import './index.css'
@@ -68,9 +70,9 @@ const DateIcon: React.FC<Partial<{ date: Date, url: string, hour12: boolean, com
 
 /** Single event row -- inspired by Luma desktop event management */
 export const EventRow: React.FC<{
-    event: EventType & { orgCollection?: OrganizationType };
+    event: EventWithOrg;
     onNavigate?: (eventId: string) => void;
-    onEdit?: (event: EventType & { orgCollection?: OrganizationType }) => void;
+    onEdit?: (event: EventWithOrg) => void;
     onDelete?: (eventId: string) => void;
     isMobile?: boolean;
     compact?: boolean;

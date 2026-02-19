@@ -3,7 +3,6 @@ import { createRootRoute, createRoute, redirect } from '@tanstack/react-router'
 import { RootLayout } from './Pages/Layout'
 
 // --- Lazy-loaded page components (code-split per route) ---
-const HomePage = lazy(() => import('./Pages/Home/index'))
 const MembersPage = lazy(() => import('./Pages/Members/index'))
 const EventsPage = lazy(() => import('./Pages/Events/index'))
 const EventDetailPage = lazy(() => import('./Pages/Events/EventDetailPage'))
@@ -27,13 +26,6 @@ const indexRoute = createRoute({
   beforeLoad: () => {
     throw redirect({ to: DEFAULT_REDIRECT_PATH })
   },
-})
-
-// Dashboard route - Dashboard with HeroPanel and AttendanceTable
-const dashboardRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/dashboard',
-  component: HomePage,
 })
 
 // Members route - Members management page
@@ -87,7 +79,6 @@ const organizationsRoute = createRoute({
 // Route tree - explicitly defines the structure
 export const routeTree = rootRoute.addChildren([
   indexRoute,
-  dashboardRoute,
   membersRoute,
   eventsRoute,
   eventDetailRoute,
@@ -100,7 +91,6 @@ export const routeTree = rootRoute.addChildren([
 // Export individual routes for type safety and easy access
 export const routes = {
   root: rootRoute,
-  dashboard: dashboardRoute,
   members: membersRoute,
   checkIn: checkInRoute,
   events: eventsRoute,

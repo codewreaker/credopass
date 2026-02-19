@@ -52,10 +52,6 @@ export const TopNavBar: React.FC = () => {
             e.preventDefault();
             launchUserForm({ isEditing: false }, openLauncher);
             break;
-          case 'h':
-            e.preventDefault();
-            navigate({ to: '/dashboard' });
-            break;
           case 'm':
             e.preventDefault();
             navigate({ to: '/members' });

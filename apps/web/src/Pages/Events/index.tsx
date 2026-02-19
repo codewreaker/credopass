@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { eq, useLiveQuery } from '@tanstack/react-db';
 import { getCollections } from '@credopass/api-client/collections';
-import type { EventType, OrgMembership } from '@credopass/lib/schemas';
+import type { EventType, Organization } from '@credopass/lib/schemas';
 import { useEventSessionStore, useLauncher } from '@credopass/lib/stores';
 import { launchEventForm } from '../../containers/EventForm/index';
 import EventListView from './EventListView';
@@ -70,11 +70,11 @@ const EventsPage = () => {
     const isMobile = useIsMobile();
     const [searchQuery, setSearchQuery] = useState<string>('');
     const [statusMenu, setStatusMenuItems] = useState<Record<EventType['status'], boolean>>({
-        draft: true,
+        draft: false,
         scheduled: true,
         ongoing: true,
-        completed: true,
-        cancelled: true,
+        completed: false,
+        cancelled: false,
     });
 
     const userName = useEventSessionStore((s) => s.session.currentUserName);
@@ -113,7 +113,7 @@ const EventsPage = () => {
         launchEventForm({ isEditing: false }, openLauncher);
     }, [openLauncher]);
 
-    const handleEditEvent = useCallback((event: EventType & { orgCollection?: OrgMembership }) => {
+    const handleEditEvent = useCallback((event: EventType & { orgCollection?: Organization }) => {
         launchEventForm({
             isEditing: true,
             initialData: {

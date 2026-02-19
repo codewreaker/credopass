@@ -4,7 +4,6 @@ import {
   User,
   Settings,
   UserPlus,
-  LayoutDashboard,
   Users,
   ChartNoAxesCombined,
   Database,
@@ -103,11 +102,6 @@ const CommandPalette: React.FC<{
         <CommandSeparator />
 
         <CommandGroup heading="Navigation">
-          <CommandItem onSelect={() => handleNavigate('/dashboard')} className="command-palette-item">
-            <LayoutDashboard className="command-palette-item-icon" />
-            <span>Dashboard</span>
-            <CommandShortcut>{'⌘H'}</CommandShortcut>
-          </CommandItem>
           <CommandItem onSelect={() => handleNavigate('/checkin')} className="command-palette-item">
             <QrCode className="command-palette-item-icon" />
             <span>Check-In</span>
