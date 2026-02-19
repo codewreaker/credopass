@@ -170,7 +170,7 @@ const MainSidebar: React.FC<SidebarProps> = ({
                                                 isActive(item.url) && [
                                                     "bg-primary/10 text-primary font-medium",
                                                     "before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2",
-                                                    "before:h-5 before:w-[2px] before:rounded-full before:bg-primary",
+                                                    "before:h-5 before:w-0.5 before:rounded-full before:bg-primary",
                                                     "before:shadow-[0_0_8px_var(--glow-primary)]",
                                                 ]
                                             )}

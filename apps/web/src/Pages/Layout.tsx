@@ -6,25 +6,11 @@ import LeftSidebar, { SidebarInset, SidebarTrigger, OrgSelector } from "../conta
 import { RightSidebar } from "../containers/RightSidebar";
 
 import ModalPortal from "../components/launcher";
-import {
-  Users,
-  ChartNoAxesCombined,
-  Database,
-  QrCode,
-  Building2,
-} from "lucide-react";
 import "./layout.css";
 import { useIsMobile } from "@credopass/ui/hooks/use-mobile";
 import { Toaster } from "@credopass/ui/components/sonner";
 import { Separator } from "@credopass/ui/components/separator";
-
-const NAV_ITEMS = [
-  { url: "/events", icon: QrCode, label: "Events", isActive: true },
-  { url: "/members", icon: Users, label: "Members" },
-  { url: "/analytics", icon: ChartNoAxesCombined, label: "Analytics" },
-  { url: "/organizations", icon: Building2, label: "Organizations" },
-  { url: "/database", icon: Database, label: "Tables" },
-] as const;
+import { NAV_ITEMS } from "@credopass/lib/constants";
 
 const USER_DATA = {
   name: 'Israel',

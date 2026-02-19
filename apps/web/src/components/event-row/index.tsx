@@ -145,7 +145,6 @@ export const EventRow: React.FC<{
                         <span className="event-row-meta-item group-data-compact:text-[0.6875rem]">
                             <Clock size={12} />
                             {timeString}
-                            {!compact && (endTimeString ? ` - ${endTimeString}` : '')}
                         </span>
                     )}
                     {event.location && (
