@@ -30,7 +30,7 @@ import {
   DialogHeader,
   DialogTitle
 } from '@credopass/ui';
-import { handleCollectionDeleteById } from '../../lib/utils';
+import { handleCollectionDeleteById } from '@credopass/lib/utils';
 import './style.css';
 import type { LauncherState } from '@credopass/lib/stores';
 

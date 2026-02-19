@@ -3,7 +3,7 @@ import { AgGridReact, type AgGridReactProps } from 'ag-grid-react';
 import { ModuleRegistry, AllCommunityModule, themeMaterial, type SelectionChangedEvent, GridApi, type ICellRendererParams, GridReadyEvent } from 'ag-grid-community';
 import { Eye } from 'lucide-react';
 import Header, { type BulkActionItem } from './Header';
-import { useAppStore } from '../../stores/store';
+import { useAppStore } from '@credopass/lib/stores';
 import './style.css';
 import { cn } from '@credopass/ui/lib/utils';
 import { useIsMobile } from '@credopass/ui/hooks/use-mobile';

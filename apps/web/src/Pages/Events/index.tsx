@@ -10,7 +10,7 @@ import { CalendarPlus, CalendarsIcon, Filter } from 'lucide-react';
 import { useToolbarContext } from '../../hooks/use-toolbar-context';
 import { Button } from "@credopass/ui/components/button"
 import { ButtonGroup } from '@credopass/ui/components/button-group'
-import { getGreeting, handleCollectionDeleteById } from '../../lib/utils';
+import { getGreeting, handleCollectionDeleteById } from '@credopass/lib/utils';
 import { EventCalendar } from '../../components/event-calendar';
 
 import {

@@ -9,8 +9,7 @@ import {
   DialogTitle,
 } from "@credopass/ui/components/dialog"
 import { useEffect, useCallback } from 'react';
-
-import { useLauncher } from '../../stores/store';
+import { useLauncher } from '@credopass/lib/stores';
 
 import './launcher.css';
 

@@ -13,9 +13,9 @@ import {
 import { getCollections } from '@credopass/api-client/collections';
 import { Button, Input, Field, FieldDescription, FieldError, FieldGroup, FieldLabel, DialogFooter, DialogClose, DialogDescription, DialogHeader, DialogTitle } from '@credopass/ui';
 import type { LauncherState } from '@credopass/lib/stores';
+import { handleCollectionDeleteById } from '@credopass/lib/utils';
 
 import './style.css';
-import { handleCollectionDeleteById } from '../../lib/utils';
 
 
 // Modal form data type - exported for type safety

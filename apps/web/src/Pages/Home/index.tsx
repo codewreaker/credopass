@@ -14,8 +14,8 @@ import {
 } from 'lucide-react';
 import { useNavigate } from '@tanstack/react-router';
 import { useToolbarContext } from '../../hooks/use-toolbar-context';
+import { getGreeting } from '@credopass/lib/utils';
 import './home.css';
-import { getGreeting } from '../../lib/utils';
 import ActionCards from '../../containers/ActionCards';
 
 
