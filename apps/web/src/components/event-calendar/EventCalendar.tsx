@@ -142,7 +142,6 @@ export default function EventCalendar({
           numberOfMonths={1}
           captionLayout="dropdown"
           className={cn(
-            'ec-calendar',
             'rounded-2xl',
             isCompact
               ? '[--cell-size:--spacing(7)]'
