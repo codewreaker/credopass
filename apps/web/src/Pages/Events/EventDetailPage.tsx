@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { useLauncher } from '@credopass/lib/stores';
 import { launchEventForm } from '../../containers/EventForm/index';
-import { useToolbarContext } from '../../hooks/use-toolbar-context';
+import { useToolbarContext } from '@credopass/ui/hooks/use-toolbar-context';
 import './event-detail.css';
 
 const STATUS_STYLES: Record<string, string> = {

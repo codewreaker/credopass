@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { eq, useLiveQuery } from '@tanstack/react-db';
 import { getCollections } from '@credopass/api-client/collections';
 import type { EventType, Organization } from '@credopass/lib/schemas';
@@ -7,11 +7,12 @@ import { launchEventForm } from '../../containers/EventForm/index';
 import EventListView from './EventListView';
 import { STATUS_MAPPING } from '../../components/event-row';
 import { CalendarPlus, CalendarsIcon, ListFilterPlus } from 'lucide-react';
-import { useToolbarContext } from '../../hooks/use-toolbar-context';
+import { useToolbarContext } from '@credopass/lib/hooks';
 import { Button } from "@credopass/ui/components/button"
 import { ButtonGroup } from '@credopass/ui/components/button-group'
 import { getGreeting, handleCollectionDeleteById } from '@credopass/lib/utils';
 import { EventCalendar } from '../../components/event-calendar';
+import isEqual from 'lodash/isEqual';
 
 import {
     DropdownMenu,
@@ -28,6 +29,7 @@ import ActionCards from '../../containers/ActionCards';
 import { Separator } from '@credopass/ui';
 import { useIsMobile } from '@credopass/ui/hooks/use-mobile';
 
+
 /**
  * EventCalendar is a full blown calendar that can be accessed in the sidebar
  * should we want to make it available in the event view just import it here
@@ -42,13 +44,38 @@ const StatusFilterMenu: React.FC<{
     menuItems: Record<EventType['status'], boolean>;
     clickHandler: (update: Record<EventType['status'], boolean>) => void;
 }> = ({ menuItems, clickHandler }) => {
+    const statusEntries = useMemo(() => Object.entries(STATUS_MAPPING), []);
+    const prevMenuItemsRef = useRef<typeof menuItems | null>(null);
+
+    useEffect(()=>{prevMenuItemsRef.current = menuItems},[]);
+
+    const prevMenuItems = prevMenuItemsRef.current;
+    console.log(prevMenuItems)
+
+    const filterStateChanged = useMemo(() => {
+        if (prevMenuItems && JSON.stringify(menuItems) !== JSON.stringify(prevMenuItems)) {
+            return true;
+        }
+        return false
+    }, [menuItems, prevMenuItems]);
+
+
+    const filterStateChanged2 = useMemo(() => isEqual(menuItems, prevMenuItems), [menuItems, prevMenuItems]);
+
+    console.log('filterState changed', filterStateChanged);
+    console.log('filterState changed 2', filterStateChanged);
     return (
         <DropdownMenu>
-            <DropdownMenuTrigger render={<Button variant='outline' size={'icon-sm'}><ListFilterPlus /></Button>} />
+            <DropdownMenuTrigger render={
+                <Button variant='outline' className={'relative'} size={'icon-sm'}>
+                    <span className="absolute bottom-4 left-4 size-2 rounded-full bg-primary" />
+                    <ListFilterPlus />
+                </Button>
+            } />
             <DropdownMenuContent className="w-48">
                 <DropdownMenuGroup>
                     <DropdownMenuLabel>Show More Statuses</DropdownMenuLabel>
-                    {Object.entries(STATUS_MAPPING).map(([status, entry]) => (
+                    {statusEntries.map(([status, entry]) => (
                         <DropdownMenuCheckboxItem
                             checked={menuItems[status as EventType['status']]}
                             onCheckedChange={(checked) =>

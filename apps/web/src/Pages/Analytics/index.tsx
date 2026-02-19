@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
 import { Users, Calendar, TrendingUp, Award } from "lucide-react";
-import { useToolbarContext } from '../../hooks/use-toolbar-context';
+import { useToolbarContext } from '@credopass/ui/hooks/use-toolbar-context';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, PieChart, Pie } from "recharts";
 import type { ChartConfig } from "@credopass/ui";
 import {

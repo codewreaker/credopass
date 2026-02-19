@@ -1,5 +1,5 @@
 
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, type JSX } from 'react';
 import {
     Plus,
     UserPlus,
@@ -8,7 +8,7 @@ import {
 import { launchEventForm } from '../../containers/EventForm/index';
 import { useLauncher } from '@credopass/lib/stores';
 import { launchUserForm } from '../UserForm';
-import { useSidebarTrigger } from '../../hooks/use-sidebar-trigger';
+import { useSidebarTrigger } from '../../../../../packages/lib/src/hooks/use-sidebar-trigger';
 import { useIsMobile } from '@credopass/ui/hooks/use-mobile';
 import { NAV_ITEMS } from '@credopass/lib/constants';
 
@@ -80,14 +80,14 @@ export default function ActionCards() {
                         <button
                             key={card.key}
                             type="button"
-                            className="flex items-center gap-2 md:gap-3 py-1.5 px-2 border border-border rounded-[0.625rem] bg-card cursor-pointer text-left transition-all duration-150 ease text-foreground hover:border-primary hover:bg-primary/5 active:scale-[0.98]"
+                            className="flex items-center gap-3 py-1.5  px-2 border border-border rounded-[0.625rem] bg-card cursor-pointer text-left transition-all duration-150 ease text-foreground hover:border-primary hover:bg-primary/5 active:scale-[0.98]"
                             onClick={() => handleAction(card.action)}
                         >
-                            <div className="flex items-center justify-center w-6 md:w-8 h-6 md:h-8 rounded-lg bg-primary text-primary-foreground shrink-0">
-                                <Icon size={16} />
+                            <div className="flex items-center justify-center w-6 h-6 md:w-8 md:h-8 rounded-lg bg-primary text-primary-foreground shrink-0">
+                                {Icon && <Icon size={16} />}
                             </div>
                             <div className="flex flex-col gap-0.5 min-w-0">
-                                <span className="text-[0.8125rem] font-semibold text-foreground">{card.label}</span>
+                                <span className="text-[0.8125rem] font-semibold text-foreground truncate">{card.label}</span>
                                 <span className="text-[0.6875rem] text-muted-foreground hidden sm:inline">{card.description}</span>
                             </div>
                         </button>

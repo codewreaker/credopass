@@ -15,7 +15,7 @@ import type { EventType, Organization } from '@credopass/lib/schemas';
 
 export type EventWithOrg = EventType & { orgCollection?: Organization };
 
-import { useSwipeToReveal } from '../../hooks/use-swipe-to-reveal';
+import { useSwipeToReveal } from '../../../../../packages/ui/src/hooks/use-swipe-to-reveal';
 import './index.css'
 export const STATUS_MAPPING: Record<EventType['status'], {
     icon?: React.JSX.Element;
@@ -119,11 +119,11 @@ export const EventRow: React.FC<{
                 {<div className='event-row-top group-data-compact:absolute group-data-compact:right-5'>
                     {!compact && <div className='flex items-center gap-1'>
                         <AvatarGroup>
-                            <Avatar size='sm'>
+                            <Avatar size='xs'>
                                 <AvatarImage src="/icons/zap.png" className={"bg-primary"} />
                                 <AvatarFallback>{orgData?.name?.slice(0, 2)}</AvatarFallback>
                             </Avatar>
-                            <Avatar size='sm'>
+                            <Avatar size='xs'>
                                 <AvatarFallback>{orgData?.plan}</AvatarFallback>
                             </Avatar>
                         </AvatarGroup>

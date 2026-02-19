@@ -11,7 +11,7 @@ import { useLauncher } from '@credopass/lib/stores';
 import { launchUserForm } from '../../containers/UserForm/index';
 import EmptyState from '../../components/empty-state';
 import Loader from '../../components/loader';
-import { useToolbarContext } from '../../hooks/use-toolbar-context';
+import { useToolbarContext } from '@credopass/ui/hooks/use-toolbar-context';
 
 
 const columnDefs: ColDef<UserType & LoyaltyType & AttendanceType>[] = [
