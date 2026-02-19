@@ -3,7 +3,7 @@ import { eq, and, gte, or, isNull } from 'drizzle-orm';
 import { getDatabase } from '../db/client';
 import { loyalty, CreateLoyaltySchema, UpdateLoyaltySchema } from '@credopass/lib/schemas';
 import { createCrudRoute } from '../util/crud-factory';
-import { calculateTier } from '@credopass/lib/util';
+import { calculateTier } from '@credopass/lib/utils';
 
 const loyaltyRouter = new Hono();
 
