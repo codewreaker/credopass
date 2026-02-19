@@ -32,3 +32,19 @@ export function getGroupedEventsData<T extends EventType>(
   });
   return result;
 }
+
+
+export function sortEventsByClosestToToday(events: EventType[]): EventType[] {
+  const now = new Date();
+
+  return [...events].sort((a, b) => {
+    const diffA = a.startTime.getTime() - now.getTime();
+    const diffB = b.startTime.getTime() - now.getTime();
+
+    // Prioritize future/ongoing events over past events
+    const absA = diffA >= 0 ? diffA : Math.abs(diffA) + Number.MAX_SAFE_INTEGER / 2;
+    const absB = diffB >= 0 ? diffB : Math.abs(diffB) + Number.MAX_SAFE_INTEGER / 2;
+
+    return absA - absB;
+  });
+};

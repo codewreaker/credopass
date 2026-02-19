@@ -52,13 +52,13 @@ export const STATUS_MAPPING: Record<EventType['status'], {
 /** Luma-style date icon: month abbreviation on top, day number below */
 const DateIcon: React.FC<Partial<{ date: Date, url: string, hour12: boolean }>> = ({ date, url, hour12 = true }) => {
     if (url || !date) {
-        return (<div className="event-date-icon"><img src={url} /></div>)
+        return (<div className="event-date-icon w-16 h-16"><img src={url} /></div>)
     }
     const month = date.toLocaleDateString('en-US', { month: 'short' }).toUpperCase();
     const day = date.getDate();
     const time = date.toLocaleTimeString('en-US', { hour: 'numeric', hour12, minute: '2-digit' });
     return (
-        <div className="event-date-icon">
+        <div className="event-date-icon w-16 h-16">
             <span className="event-date-month">{month}</span>
             <span className="event-date-day">{day}</span>
             <span className="event-date-time">{time}</span>

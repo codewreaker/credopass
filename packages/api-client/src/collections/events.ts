@@ -9,6 +9,12 @@ import { queryCollectionOptions } from '@tanstack/query-db-collection';
 import type { Event } from '@credopass/lib/schemas';
 import { getAPIBaseURL, handleAPIErrors } from '../client';
 
+const getStatus = (start: Date, status: Event['status']): Event['status'] => {
+  if (status == 'cancelled' || status === 'draft') return status;
+  const now = new Date();
+  return (start < now) ? 'completed' : 'scheduled';
+}
+
 /**
  * Create event collection with a specific QueryClient
  */
@@ -27,6 +33,7 @@ export function createEventCollection(queryClient: QueryClient) {
             endTime: new Date(event.endTime),
             createdAt: new Date(event.createdAt),
             updatedAt: new Date(event.updatedAt),
+            status: getStatus(new Date(event.startTime), event.status)
           }));
         } catch (error) {
           throw `An error occurred while fetching events: ${String(error)}. Please ensure the API server is running and accessible.`;
