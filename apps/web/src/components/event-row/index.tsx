@@ -131,9 +131,9 @@ export const EventRow: React.FC<{
                     </div>}
                     <Badge
                         variant="outline"
-                        className={`event-row-badge  ${STATUS_MAPPING[event.status]?.style || ''}`}
+                        className={`event-row-badge group-data-compact:h-3.5  ${STATUS_MAPPING[event.status]?.style || ''}`}
                     >
-                        {event.status}
+                        {!compact && event.status}
                     </Badge>
                 </div>}
                 <div className="event-row-title">
