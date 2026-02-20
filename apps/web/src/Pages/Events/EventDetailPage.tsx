@@ -3,7 +3,13 @@ import { useParams, useNavigate } from '@tanstack/react-router';
 import { eq, useLiveQuery } from '@tanstack/react-db';
 import { getCollections } from '@credopass/api-client/collections';
 import type { EventType } from '@credopass/lib/schemas';
-import { Badge, Button, Card, Textarea, Input, Label, DateTimeRangePicker, CardAction, CardDescription, CardFooter, CardHeader, CardTitle, CardContent } from '@credopass/ui';
+import {
+    Badge, Button, Card, Textarea, Input, Label,
+    DateTimeRangePicker, CardAction, CardDescription,
+    CardFooter, CardHeader, CardTitle, CardContent,
+    InputGroup, InputGroupAddon, InputGroupButton,
+    InputGroupInput, ButtonGroup
+} from '@credopass/ui';
 import {
     ArrowLeft,
     CalendarPlus,
@@ -11,16 +17,50 @@ import {
     ScanQrCodeIcon,
     X as CloseIcon,
     Check as CheckIcon,
-    UserPlus
+    UserPlus,
+    MapPin,
+    MinusIcon,
+    PlusIcon,
+    TicketCheck
 } from 'lucide-react';
 import { useToolbarContext } from '@credopass/lib/hooks';
 import './event-detail.css';
-import { EventTicket, mapStatusToBadgeVariant } from './EventTicket';
+import { EventTicket } from './EventTicket';
 import { MapWithMarker } from '../../components/map-with-marker';
 
 const handleRegister = () => {
     // TODO: Implement registration logic
     console.log('Register clicked for event:', eventId);
+};
+
+const handleAddToCalendar = (event:EventType) => {
+    if (!event) return;
+    // startTime and endTime are already Date objects
+    const startDate = event.startTime instanceof Date ? event.startTime : new Date();
+    const endDate = event.endTime instanceof Date ? event.endTime : new Date();
+
+    const icsContent = [
+        'BEGIN:VCALENDAR',
+        'VERSION:2.0',
+        'BEGIN:VEVENT',
+        `DTSTART:${startDate.toISOString().replace(/[-:]/g, '').split('.')[0]}Z`,
+        `DTEND:${endDate.toISOString().replace(/[-:]/g, '').split('.')[0]}Z`,
+        `SUMMARY:${event.name}`,
+        `DESCRIPTION:${event.description || ''}`,
+        `LOCATION:${event.location || ''}`,
+        'END:VEVENT',
+        'END:VCALENDAR',
+    ].join('\n');
+
+    const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${event.name.replace(/\s+/g, '_')}.ics`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
 };
 
 function EventDetailPage() {
@@ -88,36 +128,6 @@ function EventDetailPage() {
             showToast("Error saving event");
             console.error(error);
         }
-    };
-
-    const handleAddToCalendar = () => {
-        if (!event) return;
-        // startTime and endTime are already Date objects
-        const startDate = event.startTime instanceof Date ? event.startTime : new Date();
-        const endDate = event.endTime instanceof Date ? event.endTime : new Date();
-
-        const icsContent = [
-            'BEGIN:VCALENDAR',
-            'VERSION:2.0',
-            'BEGIN:VEVENT',
-            `DTSTART:${startDate.toISOString().replace(/[-:]/g, '').split('.')[0]}Z`,
-            `DTEND:${endDate.toISOString().replace(/[-:]/g, '').split('.')[0]}Z`,
-            `SUMMARY:${event.name}`,
-            `DESCRIPTION:${event.description || ''}`,
-            `LOCATION:${event.location || ''}`,
-            'END:VEVENT',
-            'END:VCALENDAR',
-        ].join('\n');
-
-        const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `${event.name.replace(/\s+/g, '_')}.ics`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
     };
 
     const showToast = (msg: string) => {
@@ -241,20 +251,24 @@ function EventDetailPage() {
                         ) : (
                             /* ──── EDIT VIEW ──── */
                             <Card className="p-5">
-                            <CardTitle>Edit Event</CardTitle>
+                                <CardTitle>Edit Event</CardTitle>
                                 <div className="space-y-5">
                                     {/* Event Name */}
                                     <div className="space-y-2">
-                                        <Label htmlFor="event-name" className="text-xs text-zinc-400 uppercase tracking-wider">
-                                            Event Name
-                                        </Label>
-                                        <Input
-                                            id="event-name"
-                                            value={draftData.name || ''}
-                                            onChange={(e) => updateField('name', e.target.value)}
-                                            placeholder="Enter event name"
-                                            className="bg-zinc-900/50"
-                                        />
+                                        <InputGroup className="[--radius:9999px]">
+                                            <InputGroupAddon>
+                                                <InputGroupButton variant="secondary" size="icon-xs">
+                                                    <TicketCheck />
+                                                </InputGroupButton>
+                                            </InputGroupAddon>
+                                            <InputGroupAddon className="text-muted-foreground pl-1.5">
+                                                Event Name:
+                                            </InputGroupAddon>
+                                            <InputGroupInput
+                                                id="event-name"
+                                                value={draftData.name || ''}
+                                                onChange={(e) => updateField('name', e.target.value)} />
+                                        </InputGroup>
                                     </div>
 
                                     {/* Description */}
@@ -290,31 +304,54 @@ function EventDetailPage() {
 
                                     {/* Location */}
                                     <div className="space-y-2">
-                                        <Label htmlFor="event-location" className="text-xs text-zinc-400 uppercase tracking-wider">
-                                            Location
-                                        </Label>
-                                        <Input
-                                            id="event-location"
-                                            value={draftData.location || ''}
-                                            onChange={(e) => updateField('location', e.target.value)}
-                                            placeholder="Enter event location"
-                                            className="bg-zinc-900/50"
-                                        />
+                                        <InputGroup className="[--radius:9999px]">
+                                            <InputGroupAddon>
+                                                <InputGroupButton variant="secondary" size="icon-xs">
+                                                    <MapPin />
+                                                </InputGroupButton>
+                                            </InputGroupAddon>
+                                            <InputGroupAddon className="text-muted-foreground pl-1.5">
+                                                Event Name:
+                                            </InputGroupAddon>
+                                            <InputGroupInput
+                                                id="event-location"
+                                                value={draftData.location || ''}
+                                                onChange={(e) => updateField('location', e.target.value)}
+                                            />
+                                        </InputGroup>
                                     </div>
 
                                     {/* Capacity */}
                                     <div className="space-y-2">
-                                        <Label htmlFor="event-capacity" className="text-xs text-zinc-400 uppercase tracking-wider">
-                                            Capacity
-                                        </Label>
-                                        <Input
-                                            id="event-capacity"
-                                            type="number"
-                                            value={draftData.capacity || ''}
-                                            onChange={(e) => updateField('capacity', parseInt(e.target.value) || undefined)}
-                                            placeholder="Enter max capacity"
-                                            className="bg-zinc-900/50"
-                                        />
+                                        <ButtonGroup>
+                                            <Input
+                                                id="event-capacity"
+                                                value={draftData.capacity || ''}
+                                                onChange={(e) => updateField('capacity', parseInt(e.target.value) || undefined)}
+                                                placeholder="Enter max capacity"
+                                                className="bg-zinc-900/50"
+                                            />
+                                            <Button
+                                                variant="outline"
+                                                onClick={() => {
+                                                    const current = draftData.capacity || 0;
+                                                    updateField('capacity', Math.max(0, current - 1));
+                                                }}
+                                                aria-label="Decrease capacity"
+                                            >
+                                                <MinusIcon />
+                                            </Button>
+                                            <Button
+                                                variant="outline"
+                                                onClick={() => {
+                                                    const current = draftData.capacity || 0;
+                                                    updateField('capacity', current + 1);
+                                                }}
+                                                aria-label="Increase capacity"
+                                            >
+                                                <PlusIcon />
+                                            </Button>
+                                        </ButtonGroup>
                                     </div>
                                 </div>
                             </Card>
@@ -352,7 +389,7 @@ function EventDetailPage() {
 
                             <Button
                                 variant={'outline'}
-                                onClick={handleAddToCalendar}
+                                onClick={()=>handleAddToCalendar(event)}
                                 disabled={isCancelled}
                             >
                                 <CalendarPlus size={18} />
