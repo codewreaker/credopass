@@ -108,7 +108,6 @@ export const EventTicket: FC<{ ticketEvent: EventType }> = ({ ticketEvent }) => 
                     <div className="bg-white rounded-2xl p-3 shrink-0 shadow-lg shadow-black/40 flex items-center justify-center">
                         <QRCodeIcon size={70} className="text-black" />
                     </div>
-
                     {/* Ticket info */}
                     <div className="flex-1 min-w-0">
                         <p className="text-[9px] text-zinc-600 uppercase tracking-[0.15em] mb-1">Event Status</p>

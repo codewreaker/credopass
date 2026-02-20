@@ -3,19 +3,25 @@ import { useParams, useNavigate } from '@tanstack/react-router';
 import { eq, useLiveQuery } from '@tanstack/react-db';
 import { getCollections } from '@credopass/api-client/collections';
 import type { EventType } from '@credopass/lib/schemas';
-import { Badge, Button, Card, Textarea, Input, Label, DateTimeRangePicker } from '@credopass/ui';
+import { Badge, Button, Card, Textarea, Input, Label, DateTimeRangePicker, CardAction, CardDescription, CardFooter, CardHeader, CardTitle, CardContent } from '@credopass/ui';
 import {
     ArrowLeft,
-    CalendarPlus as CalIcon,
+    CalendarPlus,
+    QrCodeIcon,
     ScanQrCodeIcon,
     X as CloseIcon,
-    Check as CheckIcon
+    Check as CheckIcon,
+    UserPlus
 } from 'lucide-react';
 import { useToolbarContext } from '@credopass/lib/hooks';
 import './event-detail.css';
 import { EventTicket, mapStatusToBadgeVariant } from './EventTicket';
+import { MapWithMarker } from '../../components/map-with-marker';
 
-
+const handleRegister = () => {
+    // TODO: Implement registration logic
+    console.log('Register clicked for event:', eventId);
+};
 
 function EventDetailPage() {
     const [draftData, setDraftData] = useState<Partial<EventType>>({});
@@ -37,16 +43,19 @@ function EventDetailPage() {
             .findOne()
     );
 
-
     const handleBack = () => {
         navigate({ to: '/events' });
+    };
+
+    const handleCheckin = () => {
+        navigate({ to: '/checkin/$eventId', params: { eventId } });
     };
 
     const handleEdit = () => {
         if (!event) return;
         const startDate = event.startTime instanceof Date ? event.startTime : undefined;
         const endDate = event.endTime instanceof Date ? event.endTime : undefined;
-        
+
         setDraftData({
             id: event.id,
             name: event.name,
@@ -68,11 +77,11 @@ function EventDetailPage() {
 
     const handleSave = async () => {
         if (!event || !draftData) return;
-        
+
         try {
             // TODO: Update event in database
             // await eventCollection.update(event.id, draftData);
-            
+
             showToast("Event updated ✓");
             setIsEditing(false);
         } catch (error) {
@@ -154,11 +163,13 @@ function EventDetailPage() {
         );
     }
 
+    // Determine button states based on event status
+    const isCancelled = event.status === 'cancelled';
+    const isCompleted = event.status === 'completed';
+
     // startTime and endTime are already Date objects from the database
     const displayEvent = isEditing ? { ...event, ...draftData } : event;
 
-
-    const isAddToCalendarDisabled = event.status === 'cancelled';
 
     return (
         <div className="min-h-screen bg-[#0a0a0a] text-zinc-200 flex flex-col w-full mx-auto relative" style={{ fontFamily: "'DM Sans', 'Helvetica Neue', sans-serif" }}>
@@ -206,7 +217,7 @@ function EventDetailPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
 
                     {/* LEFT: TICKET */}
-                    <EventTicket ticketEvent={displayEvent}/>
+                    <EventTicket ticketEvent={displayEvent} />
 
                     {/* RIGHT: Info & Form */}
                     <div className="space-y-4">
@@ -214,169 +225,149 @@ function EventDetailPage() {
                             /* ──── READONLY VIEW ──── */
                             <>
                                 {/* Event Description */}
-                                <Card className="p-5">
-                                    <div>
-                                        <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-semibold mb-3">About Event</p>
-                                        <p className="text-zinc-300 text-sm leading-relaxed whitespace-pre-wrap">
-                                            {displayEvent.description || 'No description provided.'}
-                                        </p>
-                                    </div>
+                                <Card className="p-2" size='sm'>
+                                    <MapWithMarker className="relative z-20 aspect-video w-full h-[35vh]" />
+                                    <CardHeader>
+                                        <CardAction>
+                                            <Badge variant="secondary">location</Badge>
+                                        </CardAction>
+                                        <CardTitle>{displayEvent.location}</CardTitle>
+                                    </CardHeader>
+                                    <CardFooter>
+                                        <Button className="w-full">Navigate</Button>
+                                    </CardFooter>
                                 </Card>
-
-                                {/* Event Details */}
-                                <Card className="p-5">
-                                    <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-semibold mb-4">Event Information</p>
-                                    <div className="space-y-4">
-                                        <div>
-                                            <p className="text-[10px] text-zinc-600 uppercase tracking-wider mb-1">Event Name</p>
-                                            <p className="text-white font-semibold">{displayEvent.name}</p>
-                                        </div>
-                                        <div>
-                                            <p className="text-[10px] text-zinc-600 uppercase tracking-wider mb-1">Location</p>
-                                            <p className="text-white font-semibold">{displayEvent.location || 'Not specified'}</p>
-                                        </div>
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div>
-                                                <p className="text-[10px] text-zinc-600 uppercase tracking-wider mb-1">Capacity</p>
-                                                <p className="text-white font-semibold">{displayEvent.capacity || 'Unlimited'}</p>
-                                            </div>
-                                            <div>
-                                                <p className="text-[10px] text-zinc-600 uppercase tracking-wider mb-1">Status</p>
-                                                <Badge variant={mapStatusToBadgeVariant(displayEvent.status)} className="capitalize">
-                                                    {displayEvent.status}
-                                                </Badge>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </Card>
-
-                                {/* Action Buttons */}
-                                <div className="grid grid-cols-2 gap-3">
-                                    <Button
-                                        variant="outline"
-                                        size="lg"
-                                        className="w-full"
-                                        onClick={handleAddToCalendar}
-                                        disabled={isAddToCalendarDisabled}
-                                    >
-                                        <CalIcon size={16} className="mr-2" />
-                                        Add to Calendar
-                                    </Button>
-                                    <Button
-                                        variant="default"
-                                        size="lg"
-                                        className="w-full"
-                                        onClick={handleEdit}
-                                    >
-                                        Edit Details
-                                    </Button>
-                                </div>
                             </>
                         ) : (
                             /* ──── EDIT VIEW ──── */
-                            <>
-                                <Card className="p-5">
-                                    <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-semibold mb-4">Edit Event</p>
-                                    <div className="space-y-5">
-                                        {/* Event Name */}
-                                        <div className="space-y-2">
-                                            <Label htmlFor="event-name" className="text-xs text-zinc-400 uppercase tracking-wider">
-                                                Event Name
-                                            </Label>
-                                            <Input
-                                                id="event-name"
-                                                value={draftData.name || ''}
-                                                onChange={(e) => updateField('name', e.target.value)}
-                                                placeholder="Enter event name"
-                                                className="bg-zinc-900/50"
-                                            />
-                                        </div>
-
-                                        {/* Description */}
-                                        <div className="space-y-2">
-                                            <Label htmlFor="event-description" className="text-xs text-zinc-400 uppercase tracking-wider">
-                                                Description
-                                            </Label>
-                                            <Textarea
-                                                id="event-description"
-                                                value={draftData.description || ''}
-                                                onChange={(e) => updateField('description', e.target.value)}
-                                                placeholder="Enter event description"
-                                                rows={6}
-                                                className="bg-zinc-900/50"
-                                            />
-                                        </div>
-
-                                        {/* Date & Time */}
-                                        <div className="space-y-2">
-                                            <Label htmlFor="event-datetime" className="text-xs text-zinc-400 uppercase tracking-wider">
-                                                Date & Time
-                                            </Label>
-                                            <DateTimeRangePicker
-                                                id="event-datetime"
-                                                value={{
-                                                    from: draftData.startTime,
-                                                    to: draftData.endTime,
-                                                }}
-                                                onChange={updateDateTimeRange}
-                                                className="bg-zinc-900/50"
-                                            />
-                                        </div>
-
-                                        {/* Location */}
-                                        <div className="space-y-2">
-                                            <Label htmlFor="event-location" className="text-xs text-zinc-400 uppercase tracking-wider">
-                                                Location
-                                            </Label>
-                                            <Input
-                                                id="event-location"
-                                                value={draftData.location || ''}
-                                                onChange={(e) => updateField('location', e.target.value)}
-                                                placeholder="Enter event location"
-                                                className="bg-zinc-900/50"
-                                            />
-                                        </div>
-
-                                        {/* Capacity */}
-                                        <div className="space-y-2">
-                                            <Label htmlFor="event-capacity" className="text-xs text-zinc-400 uppercase tracking-wider">
-                                                Capacity
-                                            </Label>
-                                            <Input
-                                                id="event-capacity"
-                                                type="number"
-                                                value={draftData.capacity || ''}
-                                                onChange={(e) => updateField('capacity', parseInt(e.target.value) || undefined)}
-                                                placeholder="Enter max capacity"
-                                                className="bg-zinc-900/50"
-                                            />
-                                        </div>
+                            <Card className="p-5">
+                            <CardTitle>Edit Event</CardTitle>
+                                <div className="space-y-5">
+                                    {/* Event Name */}
+                                    <div className="space-y-2">
+                                        <Label htmlFor="event-name" className="text-xs text-zinc-400 uppercase tracking-wider">
+                                            Event Name
+                                        </Label>
+                                        <Input
+                                            id="event-name"
+                                            value={draftData.name || ''}
+                                            onChange={(e) => updateField('name', e.target.value)}
+                                            placeholder="Enter event name"
+                                            className="bg-zinc-900/50"
+                                        />
                                     </div>
-                                </Card>
 
-                                {/* Save/Cancel Buttons */}
-                                <div className="grid grid-cols-2 gap-3">
-                                    <Button
-                                        variant="outline"
-                                        size="lg"
-                                        className="w-full"
-                                        onClick={handleCancel}
-                                    >
-                                        <CloseIcon size={16} className="mr-2" />
-                                        Cancel
-                                    </Button>
-                                    <Button
-                                        variant="default"
-                                        size="lg"
-                                        className="w-full"
-                                        onClick={handleSave}
-                                    >
-                                        <CheckIcon size={16} className="mr-2" />
-                                        Save Changes
-                                    </Button>
+                                    {/* Description */}
+                                    <div className="space-y-2">
+                                        <Label htmlFor="event-description" className="text-xs text-zinc-400 uppercase tracking-wider">
+                                            Description
+                                        </Label>
+                                        <Textarea
+                                            id="event-description"
+                                            value={draftData.description || ''}
+                                            onChange={(e) => updateField('description', e.target.value)}
+                                            placeholder="Enter event description"
+                                            rows={6}
+                                            className="bg-zinc-900/50"
+                                        />
+                                    </div>
+
+                                    {/* Date & Time */}
+                                    <div className="space-y-2">
+                                        <Label htmlFor="event-datetime" className="text-xs text-zinc-400 uppercase tracking-wider">
+                                            Date & Time
+                                        </Label>
+                                        <DateTimeRangePicker
+                                            id="event-datetime"
+                                            value={{
+                                                from: draftData.startTime,
+                                                to: draftData.endTime,
+                                            }}
+                                            onChange={updateDateTimeRange}
+                                            className="bg-zinc-900/50"
+                                        />
+                                    </div>
+
+                                    {/* Location */}
+                                    <div className="space-y-2">
+                                        <Label htmlFor="event-location" className="text-xs text-zinc-400 uppercase tracking-wider">
+                                            Location
+                                        </Label>
+                                        <Input
+                                            id="event-location"
+                                            value={draftData.location || ''}
+                                            onChange={(e) => updateField('location', e.target.value)}
+                                            placeholder="Enter event location"
+                                            className="bg-zinc-900/50"
+                                        />
+                                    </div>
+
+                                    {/* Capacity */}
+                                    <div className="space-y-2">
+                                        <Label htmlFor="event-capacity" className="text-xs text-zinc-400 uppercase tracking-wider">
+                                            Capacity
+                                        </Label>
+                                        <Input
+                                            id="event-capacity"
+                                            type="number"
+                                            value={draftData.capacity || ''}
+                                            onChange={(e) => updateField('capacity', parseInt(e.target.value) || undefined)}
+                                            placeholder="Enter max capacity"
+                                            className="bg-zinc-900/50"
+                                        />
+                                    </div>
                                 </div>
-                            </>
+                            </Card>
                         )}
+                        {/* Save/Cancel Buttons */}
+                        {isEditing && <div className="grid grid-cols-2 gap-3">
+                            <Button
+                                variant="outline"
+                                className="w-full"
+                                onClick={handleCancel}
+                            >
+                                <CloseIcon size={16} className="mr-2" />
+                                Cancel
+                            </Button>
+                            <Button
+                                variant="default"
+                                className="w-full"
+                                onClick={handleSave}
+                            >
+                                <CheckIcon size={16} className="mr-2" />
+                                Save Changes
+                            </Button>
+                        </div>}
+
+                        {/* Action Buttons */}
+                        {!isEditing && <div className="grid grid-cols-3 gap-3">
+                            <Button
+                                variant={'default'}
+                                onClick={handleRegister}
+                                disabled={isCompleted || isCancelled}
+                            >
+                                <UserPlus size={18} />
+                                <span>Register</span>
+                            </Button>
+
+                            <Button
+                                variant={'outline'}
+                                onClick={handleAddToCalendar}
+                                disabled={isCancelled}
+                            >
+                                <CalendarPlus size={18} />
+                                <span className='truncate'>Add to Calendar</span>
+                            </Button>
+
+                            <Button
+                                variant={'secondary'}
+                                onClick={handleCheckin}
+                                disabled={isCompleted || isCancelled}
+                            >
+                                <QrCodeIcon size={18} />
+                                <span>Check In</span>
+                            </Button>
+                        </div>}
                     </div>
                 </div>
             </div>

@@ -13,8 +13,11 @@
   "aliases": {
     "components": "@credopass/ui/components",
     "utils": "@credopass/ui/lib/utils",
-    "hooks": "@credopass/ui/hooks",
+    "ui": "@credopass/ui/components",
     "lib": "@credopass/ui/lib",
-    "ui": "@credopass/ui/components"
+    "hooks": "@credopass/ui/hooks"
+  },
+  "registries": {
+    "@mapcn": "https://mapcn.dev/r/{name}.json"
   }
 }
