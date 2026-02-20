@@ -3,37 +3,20 @@ import { useParams, useNavigate } from '@tanstack/react-router';
 import { eq, useLiveQuery } from '@tanstack/react-db';
 import { getCollections } from '@credopass/api-client/collections';
 import type { EventType } from '@credopass/lib/schemas';
-import {
-    Badge, Button, Card, Textarea, Input, Label,
-    DateTimeRangePicker, CardAction, CardDescription,
-    CardFooter, CardHeader, CardTitle, CardContent,
-    InputGroup, InputGroupAddon, InputGroupButton,
-    InputGroupInput, ButtonGroup
-} from '@credopass/ui';
+import { Button } from '@credopass/ui';
 import {
     ArrowLeft,
-    CalendarPlus,
-    QrCodeIcon,
     ScanQrCodeIcon,
     X as CloseIcon,
-    Check as CheckIcon,
-    UserPlus,
-    MapPin,
-    MinusIcon,
-    PlusIcon,
-    TicketCheck
+    Check as CheckIcon
 } from 'lucide-react';
 import { useToolbarContext } from '@credopass/lib/hooks';
 import './event-detail.css';
 import { EventTicket } from './EventTicket';
-import { MapWithMarker } from '../../components/map-with-marker';
+import { EventDetailsReadonly, EventDetailsEdit } from './EventDetails';
+import { EventActionsReadonly, EventActionsEdit } from './EventActions';
 
-const handleRegister = () => {
-    // TODO: Implement registration logic
-    console.log('Register clicked for event:', eventId);
-};
-
-const handleAddToCalendar = (event:EventType) => {
+const handleAddToCalendar = (event: EventType) => {
     if (!event) return;
     // startTime and endTime are already Date objects
     const startDate = event.startTime instanceof Date ? event.startTime : new Date();
@@ -89,6 +72,11 @@ function EventDetailPage() {
 
     const handleCheckin = () => {
         navigate({ to: '/checkin/$eventId', params: { eventId } });
+    };
+
+    const handleRegister = () => {
+        // TODO: Implement registration logic
+        console.log('Register clicked for event:', eventId);
     };
 
     const handleEdit = () => {
@@ -173,10 +161,6 @@ function EventDetailPage() {
         );
     }
 
-    // Determine button states based on event status
-    const isCancelled = event.status === 'cancelled';
-    const isCompleted = event.status === 'completed';
-
     // startTime and endTime are already Date objects from the database
     const displayEvent = isEditing ? { ...event, ...draftData } : event;
 
@@ -232,179 +216,29 @@ function EventDetailPage() {
                     {/* RIGHT: Info & Form */}
                     <div className="space-y-4">
                         {!isEditing ? (
-                            /* ──── READONLY VIEW ──── */
-                            <>
-                                {/* Event Description */}
-                                <Card className="p-2" size='sm'>
-                                    <MapWithMarker className="relative z-20 aspect-video w-full h-[35vh]" />
-                                    <CardHeader>
-                                        <CardAction>
-                                            <Badge variant="secondary">location</Badge>
-                                        </CardAction>
-                                        <CardTitle>{displayEvent.location}</CardTitle>
-                                    </CardHeader>
-                                    <CardFooter>
-                                        <Button className="w-full">Navigate</Button>
-                                    </CardFooter>
-                                </Card>
-                            </>
+                            <EventDetailsReadonly event={displayEvent} />
                         ) : (
-                            /* ──── EDIT VIEW ──── */
-                            <Card className="p-5">
-                                <CardTitle>Edit Event</CardTitle>
-                                <div className="space-y-5">
-                                    {/* Event Name */}
-                                    <div className="space-y-2">
-                                        <InputGroup className="[--radius:9999px]">
-                                            <InputGroupAddon>
-                                                <InputGroupButton variant="secondary" size="icon-xs">
-                                                    <TicketCheck />
-                                                </InputGroupButton>
-                                            </InputGroupAddon>
-                                            <InputGroupAddon className="text-muted-foreground pl-1.5">
-                                                Event Name:
-                                            </InputGroupAddon>
-                                            <InputGroupInput
-                                                id="event-name"
-                                                value={draftData.name || ''}
-                                                onChange={(e) => updateField('name', e.target.value)} />
-                                        </InputGroup>
-                                    </div>
-
-                                    {/* Description */}
-                                    <div className="space-y-2">
-                                        <Label htmlFor="event-description" className="text-xs text-zinc-400 uppercase tracking-wider">
-                                            Description
-                                        </Label>
-                                        <Textarea
-                                            id="event-description"
-                                            value={draftData.description || ''}
-                                            onChange={(e) => updateField('description', e.target.value)}
-                                            placeholder="Enter event description"
-                                            rows={6}
-                                            className="bg-zinc-900/50"
-                                        />
-                                    </div>
-
-                                    {/* Date & Time */}
-                                    <div className="space-y-2">
-                                        <Label htmlFor="event-datetime" className="text-xs text-zinc-400 uppercase tracking-wider">
-                                            Date & Time
-                                        </Label>
-                                        <DateTimeRangePicker
-                                            id="event-datetime"
-                                            value={{
-                                                from: draftData.startTime,
-                                                to: draftData.endTime,
-                                            }}
-                                            onChange={updateDateTimeRange}
-                                            className="bg-zinc-900/50"
-                                        />
-                                    </div>
-
-                                    {/* Location */}
-                                    <div className="space-y-2">
-                                        <InputGroup className="[--radius:9999px]">
-                                            <InputGroupAddon>
-                                                <InputGroupButton variant="secondary" size="icon-xs">
-                                                    <MapPin />
-                                                </InputGroupButton>
-                                            </InputGroupAddon>
-                                            <InputGroupAddon className="text-muted-foreground pl-1.5">
-                                                Event Name:
-                                            </InputGroupAddon>
-                                            <InputGroupInput
-                                                id="event-location"
-                                                value={draftData.location || ''}
-                                                onChange={(e) => updateField('location', e.target.value)}
-                                            />
-                                        </InputGroup>
-                                    </div>
-
-                                    {/* Capacity */}
-                                    <div className="space-y-2">
-                                        <ButtonGroup>
-                                            <Input
-                                                id="event-capacity"
-                                                value={draftData.capacity || ''}
-                                                onChange={(e) => updateField('capacity', parseInt(e.target.value) || undefined)}
-                                                placeholder="Enter max capacity"
-                                                className="bg-zinc-900/50"
-                                            />
-                                            <Button
-                                                variant="outline"
-                                                onClick={() => {
-                                                    const current = draftData.capacity || 0;
-                                                    updateField('capacity', Math.max(0, current - 1));
-                                                }}
-                                                aria-label="Decrease capacity"
-                                            >
-                                                <MinusIcon />
-                                            </Button>
-                                            <Button
-                                                variant="outline"
-                                                onClick={() => {
-                                                    const current = draftData.capacity || 0;
-                                                    updateField('capacity', current + 1);
-                                                }}
-                                                aria-label="Increase capacity"
-                                            >
-                                                <PlusIcon />
-                                            </Button>
-                                        </ButtonGroup>
-                                    </div>
-                                </div>
-                            </Card>
+                            <EventDetailsEdit
+                                draftData={draftData}
+                                onFieldUpdate={updateField}
+                                onDateTimeRangeUpdate={updateDateTimeRange}
+                            />
                         )}
-                        {/* Save/Cancel Buttons */}
-                        {isEditing && <div className="grid grid-cols-2 gap-3">
-                            <Button
-                                variant="outline"
-                                className="w-full"
-                                onClick={handleCancel}
-                            >
-                                <CloseIcon size={16} className="mr-2" />
-                                Cancel
-                            </Button>
-                            <Button
-                                variant="default"
-                                className="w-full"
-                                onClick={handleSave}
-                            >
-                                <CheckIcon size={16} className="mr-2" />
-                                Save Changes
-                            </Button>
-                        </div>}
 
                         {/* Action Buttons */}
-                        {!isEditing && <div className="grid grid-cols-3 gap-3">
-                            <Button
-                                variant={'default'}
-                                onClick={handleRegister}
-                                disabled={isCompleted || isCancelled}
-                            >
-                                <UserPlus size={18} />
-                                <span>Register</span>
-                            </Button>
-
-                            <Button
-                                variant={'outline'}
-                                onClick={()=>handleAddToCalendar(event)}
-                                disabled={isCancelled}
-                            >
-                                <CalendarPlus size={18} />
-                                <span className='truncate'>Add to Calendar</span>
-                            </Button>
-
-                            <Button
-                                variant={'secondary'}
-                                onClick={handleCheckin}
-                                disabled={isCompleted || isCancelled}
-                            >
-                                <QrCodeIcon size={18} />
-                                <span>Check In</span>
-                            </Button>
-                        </div>}
+                        {isEditing ? (
+                            <EventActionsEdit
+                                onCancel={handleCancel}
+                                onSave={handleSave}
+                            />
+                        ) : (
+                            <EventActionsReadonly
+                                event={event}
+                                onRegister={handleRegister}
+                                onAddToCalendar={handleAddToCalendar}
+                                onCheckin={handleCheckin}
+                            />
+                        )}
                     </div>
                 </div>
             </div>
