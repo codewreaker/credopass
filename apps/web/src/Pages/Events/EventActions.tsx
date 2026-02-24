@@ -1,6 +1,6 @@
 import { FC } from 'react';
 import type { EventType } from '@credopass/lib/schemas';
-import { Button } from '@credopass/ui';
+import { Button } from '@credopass/ui/components/button';
 import {
     CalendarPlus,
     QrCodeIcon,

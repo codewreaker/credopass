@@ -5,17 +5,17 @@ import type { EventType, Organization } from '@credopass/lib/schemas';
 import { useEventSessionStore, useLauncher } from '@credopass/lib/stores';
 import { launchEventForm } from '../../containers/EventForm/index';
 import EventListView from './EventListView';
-import { STATUS_MAPPING, EventCalendar } from '@credopass/ui';
+import EventCalendar from '@credopass/ui/components/event-calendar';
 import { CalendarPlus, CalendarsIcon } from 'lucide-react';
 import { useToolbarContext } from '@credopass/lib/hooks';
-import { ButtonGroup } from '@credopass/ui';
+import { ButtonGroup } from '@credopass/ui/components/button-group';
 import { getGreeting, handleCollectionDeleteById } from '@credopass/lib/utils';
-import { ChipFilter, type ChipFilterOption } from '@credopass/ui';
+import { ChipFilter, type ChipFilterOption } from '@credopass/ui/components/chip-filter';
 
 import './events.css';
 import { RightSidebarTrigger } from '../../containers/RightSidebar';
 import ActionCards from '../../containers/ActionCards';
-import { Separator } from '@credopass/ui';
+import { Separator } from '@credopass/ui/components/separator';
 import { useIsMobile } from '@credopass/ui/hooks/use-mobile';
 
 

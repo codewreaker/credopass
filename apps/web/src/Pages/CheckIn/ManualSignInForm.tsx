@@ -1,6 +1,8 @@
 import { useForm } from '@tanstack/react-form';
 import * as z from 'zod';
-import { Button, Input, FieldError, FieldLabel, Field } from '@credopass/ui';
+import { Button } from '@credopass/ui/components/button';
+import { Input } from '@credopass/ui/components/input';
+import { Field, FieldError, FieldLabel } from '@credopass/ui/components/field';
 import { UserPlus, Mail, User as UserIcon } from 'lucide-react';
 import type { User } from '@credopass/lib/schemas';
 

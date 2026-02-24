@@ -2,21 +2,21 @@ import React, { useMemo } from "react";
 import { Users, Calendar, TrendingUp, Award } from "lucide-react";
 import { useToolbarContext } from '@credopass/lib/hooks';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, PieChart, Pie } from "recharts";
-import type { ChartConfig } from "@credopass/ui";
+import type { ChartConfig } from "@credopass/ui/components/chart";
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
   ChartLegend,
   ChartLegendContent
-} from "@credopass/ui";
+} from "@credopass/ui/components/chart";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@credopass/ui";
+} from "@credopass/ui/components/card";
 import GridLayout from "@credopass/lib/layout";
 import "./style.css";
 

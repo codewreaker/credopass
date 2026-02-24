@@ -6,7 +6,8 @@
 import { useState, useMemo, useCallback } from 'react';
 import { useLiveQuery } from '@tanstack/react-db';
 import { getCollections } from '@credopass/api-client/collections';
-import GridTable, { type MenuItem, Loader } from '@credopass/ui';
+import GridTable, { type MenuItem } from '@credopass/ui/components/grid-table';
+import { Loader } from '@credopass/ui/components/loader';
 import {
   RefreshCw, DatabaseBackup, AppWindowIcon, BuildingIcon, Building2,
   TicketCheck, Users, UserPlus

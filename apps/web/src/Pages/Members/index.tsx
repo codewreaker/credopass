@@ -4,12 +4,13 @@ import { type UserType, type AttendanceType, type LoyaltyType, User } from '@cre
 import { getCollections } from '@credopass/api-client/collections';
 import type { ColDef, IOverlayParams, RowClickedEvent } from 'ag-grid-community'
 
-import GridTable, { type MenuItem } from "@credopass/ui";
+import GridTable, { type MenuItem } from "@credopass/ui/components/grid-table";
 
 import { PlusCircle, Filter, UserPlus } from "lucide-react";
 import { useLauncher } from '@credopass/lib/stores';
 import { launchUserForm } from '../../containers/UserForm/index';
-import { EmptyState, Loader } from '@credopass/ui';
+import { EmptyState } from '@credopass/ui/components/empty-state';
+import { Loader } from '@credopass/ui/components/loader';
 import { useToolbarContext } from '@credopass/lib/hooks';
 
 
