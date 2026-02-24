@@ -1,14 +1,14 @@
 import React, { useCallback, useMemo } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { Badge } from '@credopass/ui/components/badge';
+import { Badge } from '@credopass/ui';
 
 
 import type { EventType } from '@credopass/lib/schemas';
-import EmptyState from '../../components/empty-state';
+import { EmptyState } from '@credopass/ui';
 import { getGroupedEventsData, groupEventsByStatus, sortEventsByClosestToToday } from '@credopass/lib/utils';
 import { Separator } from '@credopass/ui';
 import { useIsMobile } from '@credopass/ui/hooks/use-mobile';
-import { EventRow, STATUS_MAPPING, type EventWithOrg } from '../../components/event-row';
+import { EventRow, STATUS_MAPPING, type EventWithOrg } from '@credopass/ui';
 
 
 interface EventListViewProps {

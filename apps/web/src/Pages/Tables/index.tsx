@@ -6,13 +6,12 @@
 import { useState, useMemo, useCallback } from 'react';
 import { useLiveQuery } from '@tanstack/react-db';
 import { getCollections } from '@credopass/api-client/collections';
-import GridTable, { type MenuItem } from '../../components/grid-table/index';
+import GridTable, { type MenuItem, Loader } from '@credopass/ui';
 import {
   RefreshCw, DatabaseBackup, AppWindowIcon, BuildingIcon, Building2,
   TicketCheck, Users, UserPlus
 } from 'lucide-react';
 import type { ColDef } from 'ag-grid-community';
-import Loader from '../../components/loader';
 import { useToolbarContext } from '@credopass/lib/hooks';
 import './style.css';
 

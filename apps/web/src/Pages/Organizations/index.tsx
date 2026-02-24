@@ -28,7 +28,7 @@ import {
   Button,
   Badge,
 } from '@credopass/ui';
-import EmptyState from '../../components/empty-state';
+import { EmptyState } from '@credopass/ui';
 import { launchOrganizationForm } from '../../containers/OrganizationForm';
 import './style.css';
 

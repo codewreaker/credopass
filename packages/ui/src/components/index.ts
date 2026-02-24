@@ -35,3 +35,15 @@ export * from './tabs';
 export * from './expanding-search-dock';
 export * from './button-group'
 export * from './kbd'
+export * from './chip-filter'
+export * from './sonner'
+
+// Web components (migrated from apps/web)
+export * from './empty-state';
+export * from './event-calendar';
+export * from './event-row';
+export * from './grid-table';
+export * from './launcher';
+export * from './loader';
+export * from './map-with-marker';
+export * from './user';

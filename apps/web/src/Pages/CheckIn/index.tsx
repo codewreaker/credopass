@@ -17,7 +17,7 @@ import './style.css';
 import CheckInHeader from './components/CheckInHeader';
 import QRCodeDisplay from './components/QRCodeDisplay';
 import ManualSignInForm from './ManualSignInForm';
-import EmptyState from '../../components/empty-state';
+import { EmptyState } from '@credopass/ui';
 
 
 const LoadingState: React.FC = () => {

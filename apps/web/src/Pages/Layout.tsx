@@ -5,11 +5,9 @@ import LeftSidebar, { SidebarInset, SidebarTrigger, OrgSelector } from "../conta
 
 import { RightSidebar } from "../containers/RightSidebar";
 
-import ModalPortal from "../components/launcher";
 import "./layout.css";
 import { useIsMobile } from "@credopass/ui/hooks/use-mobile";
-import { Toaster } from "@credopass/ui/components/sonner";
-import { Separator } from "@credopass/ui/components/separator";
+import { Toaster, Separator, ModalPortal } from "@credopass/ui";
 import { NAV_ITEMS } from "@credopass/lib/constants";
 import { useCommandPallete } from "../hooks";
 

@@ -24,7 +24,7 @@ import {
     PlusIcon,
     TicketCheck
 } from 'lucide-react';
-import { MapWithMarker } from '../../components/map-with-marker';
+import { MapWithMarker } from '@credopass/ui';
 
 interface EventDetailsReadonlyProps {
     event: EventType;

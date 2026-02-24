@@ -230,4 +230,5 @@ const UserComponent: React.FC<UserMenuProps> = ({
     )
 }
 
+export { UserComponent }
 export default UserComponent

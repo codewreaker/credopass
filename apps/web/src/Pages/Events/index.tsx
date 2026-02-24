@@ -5,22 +5,12 @@ import type { EventType, Organization } from '@credopass/lib/schemas';
 import { useEventSessionStore, useLauncher } from '@credopass/lib/stores';
 import { launchEventForm } from '../../containers/EventForm/index';
 import EventListView from './EventListView';
-import { STATUS_MAPPING } from '../../components/event-row';
-import { CalendarPlus, CalendarsIcon, ListFilterPlus } from 'lucide-react';
+import { STATUS_MAPPING, EventCalendar } from '@credopass/ui';
+import { CalendarPlus, CalendarsIcon } from 'lucide-react';
 import { useToolbarContext } from '@credopass/lib/hooks';
-import { Button } from "@credopass/ui/components/button"
-import { ButtonGroup } from '@credopass/ui/components/button-group'
+import { ButtonGroup } from '@credopass/ui';
 import { getGreeting, handleCollectionDeleteById } from '@credopass/lib/utils';
-import { EventCalendar } from '../../components/event-calendar';
-
-import {
-    DropdownMenu,
-    DropdownMenuCheckboxItem,
-    DropdownMenuContent,
-    DropdownMenuGroup,
-    DropdownMenuLabel,
-    DropdownMenuTrigger,
-} from "@credopass/ui/components/dropdown-menu"
+import { ChipFilter, type ChipFilterOption } from '@credopass/ui';
 
 import './events.css';
 import { RightSidebarTrigger } from '../../containers/RightSidebar';
@@ -39,78 +29,51 @@ import { useIsMobile } from '@credopass/ui/hooks/use-mobile';
 
 const handleDeleteEvent = (eventId: string) => handleCollectionDeleteById('events', eventId);
 
-const menuItemsDefault = Object.keys(STATUS_MAPPING).reduce((acc, status) => {
-    acc[status as EventType['status']] = true;
-    return acc;
-}, {} as Record<EventType['status'], boolean>);
-
-const StatusFilterMenu: React.FC<{
-    menuItems: Record<EventType['status'], boolean>;
-    clickHandler: (update: Record<EventType['status'], boolean>) => void;
-}> = ({ menuItems, clickHandler }) => {
-    const statusEntries = useMemo(() => Object.entries(STATUS_MAPPING), []);
-
-
-    const filterStateChanged = useMemo(() => {
-        if (menuItemsDefault && JSON.stringify(menuItems) !== JSON.stringify(menuItemsDefault)) {
-            return true;
-        }
-        return false
-    }, [menuItems]);
-
-    return (
-        <DropdownMenu>
-            <DropdownMenuTrigger render={
-                <Button variant='outline' className={'relative'} size={'icon-sm'}>
-                    {filterStateChanged && <span className="absolute bottom-4 left-4 size-2 rounded-full bg-primary" />}
-                    <ListFilterPlus />
-                </Button>
-            } />
-            <DropdownMenuContent className="w-48">
-                <DropdownMenuGroup>
-                    <DropdownMenuLabel>Show More Statuses</DropdownMenuLabel>
-                    {statusEntries.map(([status, entry]) => (
-                        <DropdownMenuCheckboxItem
-                            checked={menuItems[status as EventType['status']]}
-                            onCheckedChange={(checked) =>
-                                clickHandler({ ...menuItems, [status]: checked === true })
-                            }>
-                            {entry.icon}
-                            {status}
-                        </DropdownMenuCheckboxItem>
-                    ))}
-                </DropdownMenuGroup>
-            </DropdownMenuContent>
-        </DropdownMenu >
-    )
-}
-
 const EventsPage = () => {
     const { openLauncher } = useLauncher();
     const { events: eventCollection, organizations: orgCollection } = getCollections();
     const isMobile = useIsMobile();
     const [searchQuery, setSearchQuery] = useState<string>('');
-    const [statusMenu, setStatusMenuItems] = useState<Record<EventType['status'], boolean>>({
-        draft: false,
-        scheduled: true,
-        ongoing: true,
-        completed: true,
-        cancelled: false,
-    });
+    const [selectedStatuses, setSelectedStatuses] = useState<EventType['status'][]>([
+        'scheduled',
+        'ongoing',
+        'completed',
+    ]);
 
     const userName = useEventSessionStore((s) => s.session.currentUserName);
     const firstName = useMemo(() => userName?.split(' ')[0] || 'there', [userName]);
     const greeting = useMemo(() => getGreeting(), []);
 
-    const selStatus = useMemo(() => {
-        const selArr = [];
-        for (const k in statusMenu) {
-            if (statusMenu[k as EventType['status']]) {
-                selArr.push(k);
-            }
+    // Create chip filter options from STATUS_MAPPING
+    const statusFilterOptions = useMemo<ChipFilterOption<EventType['status']>[]>(() => {
+        const allOption: ChipFilterOption<EventType['status']> = {
+            value: 'all' as EventType['status'],
+            label: 'All',
+        };
+        const statusOptions = Object.entries(STATUS_MAPPING).map(([status, config]) => ({
+            value: status as EventType['status'],
+            label: config.label,
+            icon: config.icon,
+        }));
+        return [allOption, ...statusOptions];
+    }, []);
+
+    // Handle "All" selection
+    const handleStatusChange = useCallback((value: EventType['status'] | EventType['status'][]) => {
+        const values = Array.isArray(value) ? value : [value];
+        if (values.includes('all' as EventType['status'])) {
+            // If "All" is selected, show all statuses
+            setSelectedStatuses(Object.keys(STATUS_MAPPING) as EventType['status'][]);
+        } else {
+            setSelectedStatuses(values);
         }
-        return selArr as EventType['status'][];
-    }, [statusMenu])
+    }, []);
+
+    const displayedFilterValue = useMemo(() => {
+        const allStatuses = Object.keys(STATUS_MAPPING) as EventType['status'][];
+        const allSelected = allStatuses.every(status => selectedStatuses.includes(status));
+        return allSelected ? ['all' as EventType['status']] : selectedStatuses;
+    }, [selectedStatuses]);
 
     const { data: eventsData } = useLiveQuery((q) => q
         .from({ eventCollection })
@@ -187,7 +150,6 @@ const EventsPage = () => {
                 <div className="events-header-right">
                     <ButtonGroup>
                         <RightSidebarTrigger icon={<CalendarsIcon />} />
-                        <StatusFilterMenu menuItems={statusMenu} clickHandler={setStatusMenuItems} />
                     </ButtonGroup>
                 </div>
             </div>
@@ -195,6 +157,17 @@ const EventsPage = () => {
             <div className="events-content">
                 <ActionCards />
                 <Separator className={'my-5 bg-gradient-to-r from-transparent via-muted to-transparent'} />
+                
+                {/* Chip Filter for Status */}
+                <div className="mb-4">
+                    <ChipFilter
+                        options={statusFilterOptions}
+                        value={displayedFilterValue}
+                        onValueChange={handleStatusChange}
+                        mode="multiple"
+                    />
+                </div>
+
                 <div className='flex gap-4 md:h-[calc(100vh-274px)]'>
                     <div className='w-full md:w-2/3 md:border-r'>
                         <EventListView
@@ -202,7 +175,7 @@ const EventsPage = () => {
                             onCreateEvent={handleCreateEvent}
                             onEditEvent={handleEditEvent}
                             onDeleteEvent={handleDeleteEvent}
-                            selectedStatus={selStatus}
+                            selectedStatus={selectedStatuses}
                         />
                     </div>
                     {!isMobile && (
