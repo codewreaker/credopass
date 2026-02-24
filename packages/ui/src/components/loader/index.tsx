@@ -1,4 +1,5 @@
-import { Spinner, Button } from '@credopass/ui';
+import { Spinner } from '@credopass/ui/components/spinner';
+import { Button } from '@credopass/ui/components/button';
 
 export function Loader({message = "Please wait"}: {message?: string}) {
     return (

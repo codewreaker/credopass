@@ -22,7 +22,7 @@ import {
   CommandList,
   CommandSeparator,
   CommandShortcut,
-} from '@credopass/ui';
+} from '@credopass/ui/components/command';
 
 import { launchEventForm } from '../EventForm/index';
 import { launchSignInForm } from '../SignInModal/index';

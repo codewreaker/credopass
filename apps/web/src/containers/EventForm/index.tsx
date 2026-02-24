@@ -12,31 +12,14 @@ import {
 } from 'lucide-react';
 import { getCollections } from '@credopass/api-client/collections';
 import type { EventStatus } from '@credopass/lib/schemas';
-import {
-  Button,
-  Input,
-  Field,
-  FieldDescription,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-  Textarea,
-  DialogClose,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  Alert,
-  AlertDescription,
-  AlertTitle,
-  DateTimeRangePicker
-} from '@credopass/ui';
+import { Button } from '@credopass/ui/components/button';
+import { Input } from '@credopass/ui/components/input';
+import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@credopass/ui/components/field';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@credopass/ui/components/select';
+import { Textarea } from '@credopass/ui/components/textarea';
+import { DialogClose, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@credopass/ui/components/dialog';
+import { Alert, AlertDescription, AlertTitle } from '@credopass/ui/components/alert';
+import { DateTimeRangePicker } from '@credopass/ui/components/date-time-range-picker';
 import './style.css';
 import type { LauncherState } from '@credopass/lib/stores';
 import { useOrganizationStore } from '@credopass/lib/stores';

@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { useLiveQuery } from '@tanstack/react-db';
 import { getCollections } from '@credopass/api-client/collections';
-import { EventCalendar } from '@credopass/ui';
+import { EventCalendar } from '@credopass/ui/components/event-calendar';
 import type { EventType } from '@credopass/lib/schemas';
 
 const OverviewView: React.FC = () => {

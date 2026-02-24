@@ -10,26 +10,11 @@ import {
 } from 'lucide-react';
 import { getCollections } from '@credopass/api-client/collections';
 import type { OrgPlan } from '@credopass/lib/schemas';
-import {
-  Button,
-  Input,
-  Field,
-  FieldDescription,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-  DialogClose,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle
-} from '@credopass/ui';
+import { Button } from '@credopass/ui/components/button';
+import { Input } from '@credopass/ui/components/input';
+import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@credopass/ui/components/field';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@credopass/ui/components/select';
+import { DialogClose, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@credopass/ui/components/dialog';
 import { handleCollectionDeleteById } from '@credopass/lib/utils';
 import './style.css';
 import type { LauncherState } from '@credopass/lib/stores';

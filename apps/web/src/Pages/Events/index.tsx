@@ -6,11 +6,13 @@ import { useEventSessionStore, useLauncher } from '@credopass/lib/stores';
 import { launchEventForm } from '../../containers/EventForm/index';
 import EventListView from './EventListView';
 import EventCalendar from '@credopass/ui/components/event-calendar';
+import {STATUS_MAPPING} from '@credopass/ui/components/event-row';
 import { CalendarPlus, CalendarsIcon } from 'lucide-react';
 import { useToolbarContext } from '@credopass/lib/hooks';
 import { ButtonGroup } from '@credopass/ui/components/button-group';
 import { getGreeting, handleCollectionDeleteById } from '@credopass/lib/utils';
 import { ChipFilter, type ChipFilterOption } from '@credopass/ui/components/chip-filter';
+
 
 import './events.css';
 import { RightSidebarTrigger } from '../../containers/RightSidebar';

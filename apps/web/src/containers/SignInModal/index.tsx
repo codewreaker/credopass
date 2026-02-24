@@ -2,15 +2,15 @@ import React, { useState } from 'react';
 import { useForm } from '@tanstack/react-form';
 import * as z from 'zod';
 import { Mail, Lock, User, Eye, EyeOff } from 'lucide-react';
-import { 
-  Button, 
-  Input, 
+import { Button } from '@credopass/ui/components/button';
+import { Input } from '@credopass/ui/components/input';
+import {
   Field,
   FieldDescription,
   FieldError,
   FieldGroup,
   FieldLabel
-} from '@credopass/ui';
+} from '@credopass/ui/components/field';
 import type { LauncherState } from '@credopass/lib/stores';
 import './style.css';
 
