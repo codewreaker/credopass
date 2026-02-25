@@ -17,6 +17,7 @@ export type EventWithOrg = EventType & { orgCollection?: Organization };
 
 import { useSwipeToReveal } from '../../../../../packages/ui/src/hooks/use-swipe-to-reveal';
 import './index.css'
+import { getTimeZone } from '@credopass/lib/utils';
 export const STATUS_MAPPING: Record<EventType['status'], {
     icon?: React.JSX.Element;
     label: string;
@@ -49,7 +50,7 @@ export const STATUS_MAPPING: Record<EventType['status'], {
     },
 }
 
-
+const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 /** Luma-style date icon: month abbreviation on top, day number below */
 const DateIcon: React.FC<Partial<{ date: Date, url: string, hour12: boolean, compact: boolean }>> = ({ date, url, hour12 = true, compact = false }) => {
     if (url || !date) {
@@ -76,15 +77,13 @@ export const EventRow: React.FC<{
     onDelete?: (eventId: string) => void;
     isMobile?: boolean;
     compact?: boolean;
-}> = ({ event, onNavigate, onEdit, onDelete, isMobile = false, compact = false }) => {
+    timezone?: boolean;
+}> = ({ event, onNavigate, onEdit, onDelete, timezone, isMobile = false, compact = false }) => {
     const startDate = event.startTime ? new Date(event.startTime) : null;
     const {
         offsetX, isSwiped, reset, toggle, onTouchStart, onTouchMove, onTouchEnd
     } = useSwipeToReveal();
 
-    const timeString = startDate
-        ? startDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
-        : '';
 
     const handleClick = () => {
         // Don't navigate if the row is swiped open
@@ -105,6 +104,13 @@ export const EventRow: React.FC<{
     };
 
     const orgData = event?.orgCollection;
+    
+    const timeString = startDate
+        ? startDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+        : '';
+
+    const timeZoneString = getTimeZone(userTimeZone);
+
 
     const rowContent = (
         <>
@@ -140,6 +146,7 @@ export const EventRow: React.FC<{
                         <span className="event-row-meta-item group-data-compact:text-[0.6875rem]">
                             <Clock size={12} />
                             {timeString}
+                            {timezone && <span className="text-lime-400 text-xs">{timeZoneString}</span>}
                         </span>
                     )}
                     {event.location && (

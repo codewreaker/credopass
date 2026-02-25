@@ -1,6 +1,7 @@
 import React from 'react';
 import { ArrowLeft, MapPin, Users } from 'lucide-react';
-import { Button, Badge } from '@credopass/ui';
+import { Button } from '@credopass/ui/components/button';
+import { Badge } from '@credopass/ui/components/badge';
 
 interface CheckInHeaderProps {
   eventName: string;

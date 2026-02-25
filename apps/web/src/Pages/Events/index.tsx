@@ -5,112 +5,83 @@ import type { EventType, Organization } from '@credopass/lib/schemas';
 import { useEventSessionStore, useLauncher } from '@credopass/lib/stores';
 import { launchEventForm } from '../../containers/EventForm/index';
 import EventListView from './EventListView';
-import { STATUS_MAPPING } from '../../components/event-row';
-import { CalendarPlus, CalendarsIcon, ListFilterPlus } from 'lucide-react';
-import { useToolbarContext } from '@credopass/lib/hooks';
-import { Button } from "@credopass/ui/components/button"
-import { ButtonGroup } from '@credopass/ui/components/button-group'
-import { getGreeting, handleCollectionDeleteById } from '@credopass/lib/utils';
-import { EventCalendar } from '../../components/event-calendar';
+import EventCalendar from '@credopass/ui/components/event-calendar';
+import { STATUS_MAPPING } from '@credopass/ui/components/event-row';
+import { CalendarPlus, CalendarsIcon, ListFilterPlus, TimerIcon, FastForward } from 'lucide-react';
+import { useStatusFilter, useToolbarContext } from '@credopass/lib/hooks';
+import type { EventTypeFilters } from '@credopass/lib/hooks';
+export { EVENTS_FILTER_COOKIE_NAME, EVENTS_FILTER_ENABLED_COOKIE_NAME } from '@credopass/lib/hooks';
+import { ButtonGroup } from '@credopass/ui/components/button-group';
+import { getGreeting } from '@credopass/lib/utils';
+import { handleCollectionDeleteById } from '@credopass/api-client/collections';
+import { ChipFilter, divider, type ChipFilterOption } from '@credopass/ui/components/chip-filter';
 
-import {
-    DropdownMenu,
-    DropdownMenuCheckboxItem,
-    DropdownMenuContent,
-    DropdownMenuGroup,
-    DropdownMenuLabel,
-    DropdownMenuTrigger,
-} from "@credopass/ui/components/dropdown-menu"
 
 import './events.css';
 import { RightSidebarTrigger } from '../../containers/RightSidebar';
 import ActionCards from '../../containers/ActionCards';
-import { Separator } from '@credopass/ui';
+import { Separator } from '@credopass/ui/components/separator';
 import { useIsMobile } from '@credopass/ui/hooks/use-mobile';
+import { Button } from '@credopass/ui/components/button';
 
 
+const handleDeleteEvent = (eventId: string) => handleCollectionDeleteById('events', eventId);
+
+// Create chip filter options from STATUS_MAPPING
+const statusFilterOptions = (() => {
+    const allOption: ChipFilterOption<'all'> = {
+        value: 'all',
+        label: 'All',
+    };
+    const statusOptions = Object.entries(STATUS_MAPPING).map(([status, config]) => ({
+        value: status as EventTypeFilters,
+        label: config.label,
+        icon: config.icon
+    }));
+
+    const actionOption: ChipFilterOption<string>[] = [{
+        label: 'Timezone',
+        value: 'timezone',
+        icon: <TimerIcon />
+    },
+        divider,
+    {
+        label: 'actions',
+        value: 'actions',
+        icon: <FastForward />
+    }]
+
+
+    const allFilters = [
+        ...statusOptions,
+        divider,
+        ...actionOption
+    ]
+
+    return [allOption, ...allFilters];
+})() as ChipFilterOption<EventTypeFilters>[];
+
+const allFilters = Object.keys(STATUS_MAPPING).concat(['actions', 'timezone']) as Array<EventTypeFilters>;
 /**
  * EventCalendar is a full blown calendar that can be accessed in the sidebar
  * should we want to make it available in the event view just import it here
  * import { EventCalendar } from '../../components/event-calendar';
  */
-
-
-
-const handleDeleteEvent = (eventId: string) => handleCollectionDeleteById('events', eventId);
-
-const menuItemsDefault = Object.keys(STATUS_MAPPING).reduce((acc, status) => {
-    acc[status as EventType['status']] = true;
-    return acc;
-}, {} as Record<EventType['status'], boolean>);
-
-const StatusFilterMenu: React.FC<{
-    menuItems: Record<EventType['status'], boolean>;
-    clickHandler: (update: Record<EventType['status'], boolean>) => void;
-}> = ({ menuItems, clickHandler }) => {
-    const statusEntries = useMemo(() => Object.entries(STATUS_MAPPING), []);
-
-
-    const filterStateChanged = useMemo(() => {
-        if (menuItemsDefault && JSON.stringify(menuItems) !== JSON.stringify(menuItemsDefault)) {
-            return true;
-        }
-        return false
-    }, [menuItems]);
-
-    return (
-        <DropdownMenu>
-            <DropdownMenuTrigger render={
-                <Button variant='outline' className={'relative'} size={'icon-sm'}>
-                    {filterStateChanged && <span className="absolute bottom-4 left-4 size-2 rounded-full bg-primary" />}
-                    <ListFilterPlus />
-                </Button>
-            } />
-            <DropdownMenuContent className="w-48">
-                <DropdownMenuGroup>
-                    <DropdownMenuLabel>Show More Statuses</DropdownMenuLabel>
-                    {statusEntries.map(([status, entry]) => (
-                        <DropdownMenuCheckboxItem
-                            checked={menuItems[status as EventType['status']]}
-                            onCheckedChange={(checked) =>
-                                clickHandler({ ...menuItems, [status]: checked === true })
-                            }>
-                            {entry.icon}
-                            {status}
-                        </DropdownMenuCheckboxItem>
-                    ))}
-                </DropdownMenuGroup>
-            </DropdownMenuContent>
-        </DropdownMenu >
-    )
-}
-
 const EventsPage = () => {
     const { openLauncher } = useLauncher();
     const { events: eventCollection, organizations: orgCollection } = getCollections();
     const isMobile = useIsMobile();
     const [searchQuery, setSearchQuery] = useState<string>('');
-    const [statusMenu, setStatusMenuItems] = useState<Record<EventType['status'], boolean>>({
-        draft: false,
-        scheduled: true,
-        ongoing: true,
-        completed: true,
-        cancelled: false,
-    });
+
+    const {
+        filterEnabled, setFilterEnabled,
+        handleFilterChange, displayedFilterValue,
+        selectedStatuses, enableActions, enableTimezone,
+    } = useStatusFilter(allFilters);
 
     const userName = useEventSessionStore((s) => s.session.currentUserName);
     const firstName = useMemo(() => userName?.split(' ')[0] || 'there', [userName]);
     const greeting = useMemo(() => getGreeting(), []);
-
-    const selStatus = useMemo(() => {
-        const selArr = [];
-        for (const k in statusMenu) {
-            if (statusMenu[k as EventType['status']]) {
-                selArr.push(k);
-            }
-        }
-        return selArr as EventType['status'][];
-    }, [statusMenu])
 
     const { data: eventsData } = useLiveQuery((q) => q
         .from({ eventCollection })
@@ -171,6 +142,7 @@ const EventsPage = () => {
         );
     }, [events, searchQuery]);
 
+
     return (
         <div className="events-page">
             <div className="events-header">
@@ -186,15 +158,27 @@ const EventsPage = () => {
 
                 <div className="events-header-right">
                     <ButtonGroup>
+                        <Button variant='outline' className={'relative'} size={'icon-sm'} onClick={() => setFilterEnabled(prev => !prev)}>
+                            {filterEnabled && <span className="absolute bottom-4 left-4 size-2 rounded-full bg-primary" />}
+                            <ListFilterPlus />
+                        </Button>
                         <RightSidebarTrigger icon={<CalendarsIcon />} />
-                        <StatusFilterMenu menuItems={statusMenu} clickHandler={setStatusMenuItems} />
                     </ButtonGroup>
                 </div>
             </div>
 
             <div className="events-content">
-                <ActionCards />
+                {/* Chip Filter for Status */}
+                {filterEnabled && <ChipFilter
+                    options={statusFilterOptions}
+                    value={displayedFilterValue as EventTypeFilters[]}
+                    onValueChange={handleFilterChange}
+                    mode="multiple"
+                    className='overflow-x-auto w-100vw py-6'
+                />}
+                {enableActions && <ActionCards />}
                 <Separator className={'my-5 bg-gradient-to-r from-transparent via-muted to-transparent'} />
+
                 <div className='flex gap-4 md:h-[calc(100vh-274px)]'>
                     <div className='w-full md:w-2/3 md:border-r'>
                         <EventListView
@@ -202,7 +186,8 @@ const EventsPage = () => {
                             onCreateEvent={handleCreateEvent}
                             onEditEvent={handleEditEvent}
                             onDeleteEvent={handleDeleteEvent}
-                            selectedStatus={selStatus}
+                            selectedStatus={selectedStatuses}
+                            timezone={enableTimezone}
                         />
                     </div>
                     {!isMobile && (

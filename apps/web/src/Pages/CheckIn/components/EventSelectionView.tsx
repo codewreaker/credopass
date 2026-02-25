@@ -6,8 +6,8 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-  Badge,
-} from '@credopass/ui';
+} from '@credopass/ui/components/card';
+import { Badge } from '@credopass/ui/components/badge';
 import type { EventType } from '@credopass/lib/schemas';
 import QuickSelectDropdown from './QuickSelectDropdown';
 

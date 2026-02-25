@@ -1,7 +1,7 @@
 import React from 'react';
 import { QrCodeIcon, Clock, RefreshCw, UserPlus } from 'lucide-react';
 import { QRCodeSVG as QRCode } from 'qrcode.react';
-import { Button } from '@credopass/ui';
+import { Button } from '@credopass/ui/components/button';
 
 interface QRCodeDisplayProps {
     qrCodeData: string | null;

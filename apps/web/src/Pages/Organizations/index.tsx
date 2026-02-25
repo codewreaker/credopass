@@ -25,10 +25,10 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-  Button,
-  Badge,
-} from '@credopass/ui';
-import EmptyState from '../../components/empty-state';
+} from '@credopass/ui/components/card';
+import { Button } from '@credopass/ui/components/button';
+import { Badge } from '@credopass/ui/components/badge';
+import { EmptyState } from '@credopass/ui/components/empty-state';
 import { launchOrganizationForm } from '../../containers/OrganizationForm';
 import './style.css';
 

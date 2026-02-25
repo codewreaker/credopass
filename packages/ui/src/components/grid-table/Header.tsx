@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button } from '@credopass/ui';
+import { Button } from '@credopass/ui/components/button';
 import type { MenuItem } from './index';
 
 export interface BulkActionItem {

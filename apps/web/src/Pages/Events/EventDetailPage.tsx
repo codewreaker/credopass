@@ -3,7 +3,7 @@ import { useParams, useNavigate } from '@tanstack/react-router';
 import { eq, useLiveQuery } from '@tanstack/react-db';
 import { getCollections } from '@credopass/api-client/collections';
 import type { EventType } from '@credopass/lib/schemas';
-import { Button } from '@credopass/ui';
+import { Button } from '@credopass/ui/components/button';
 import {
     ArrowLeft,
     ScanQrCodeIcon,

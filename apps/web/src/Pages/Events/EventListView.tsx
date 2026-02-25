@@ -4,11 +4,11 @@ import { Badge } from '@credopass/ui/components/badge';
 
 
 import type { EventType } from '@credopass/lib/schemas';
-import EmptyState from '../../components/empty-state';
+import { EmptyState } from '@credopass/ui/components/empty-state';
 import { getGroupedEventsData, groupEventsByStatus, sortEventsByClosestToToday } from '@credopass/lib/utils';
-import { Separator } from '@credopass/ui';
+import { Separator } from '@credopass/ui/components/separator';
 import { useIsMobile } from '@credopass/ui/hooks/use-mobile';
-import { EventRow, STATUS_MAPPING, type EventWithOrg } from '../../components/event-row';
+import { EventRow, STATUS_MAPPING, type EventWithOrg } from '@credopass/ui/components/event-row';
 
 
 interface EventListViewProps {
@@ -17,6 +17,7 @@ interface EventListViewProps {
     onCreateEvent: () => void;
     onEditEvent: (event: EventWithOrg) => void;
     onDeleteEvent: (eventId: string) => void;
+    timezone?: boolean
 }
 
 
@@ -26,6 +27,7 @@ const EventListView: React.FC<EventListViewProps> = ({
     selectedStatus = [],
     onEditEvent,
     onDeleteEvent,
+    timezone = false
 }) => {
     const navigate = useNavigate();
     const isMobile = useIsMobile();
@@ -71,6 +73,7 @@ const EventListView: React.FC<EventListViewProps> = ({
                                     onEdit={onEditEvent}
                                     onDelete={onDeleteEvent}
                                     isMobile={isMobile}
+                                    timezone={timezone}
                                 />
                             </React.Fragment>
                         ))}

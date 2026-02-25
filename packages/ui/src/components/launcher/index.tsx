@@ -43,7 +43,7 @@ const DefaultModal = () => (
  * to avoid base-ui Dialog's fixed positioning conflicts.
  * For everything else: uses the Dialog component.
  */
-export default function ModalPortal() {
+export function ModalPortal() {
   const { launcher, closeLauncher } = useLauncher();
 
   const handleClose = useCallback(() => {

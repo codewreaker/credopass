@@ -178,4 +178,5 @@ const GridTable: React.FC<GridTableProps> = ({
   );
 };
 
+export { GridTable };
 export default GridTable;

@@ -1,30 +1,21 @@
 import { FC } from 'react';
 import type { EventType } from '@credopass/lib/schemas';
-import {
-    Badge,
-    Button,
-    Card,
-    Textarea,
-    Input,
-    Label,
-    DateTimeRangePicker,
-    CardAction,
-    CardFooter,
-    CardHeader,
-    CardTitle,
-    InputGroup,
-    InputGroupAddon,
-    InputGroupButton,
-    InputGroupInput,
-    ButtonGroup
-} from '@credopass/ui';
+import { Badge } from '@credopass/ui/components/badge';
+import { Button } from '@credopass/ui/components/button';
+import { Card, CardAction, CardFooter, CardHeader, CardTitle } from '@credopass/ui/components/card';
+import { Textarea } from '@credopass/ui/components/textarea';
+import { Input } from '@credopass/ui/components/input';
+import { Label } from '@credopass/ui/components/label';
+import { DateTimeRangePicker } from '@credopass/ui/components/date-time-range-picker';
+import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from '@credopass/ui/components/input-group';
+import { ButtonGroup } from '@credopass/ui/components/button-group';
 import {
     MapPin,
     MinusIcon,
     PlusIcon,
     TicketCheck
 } from 'lucide-react';
-import { MapWithMarker } from '../../components/map-with-marker';
+import { MapWithMarker } from '@credopass/ui/components/map-with-marker';
 
 interface EventDetailsReadonlyProps {
     event: EventType;

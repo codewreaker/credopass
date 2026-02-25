@@ -66,4 +66,5 @@ const EmptyState: React.FC<{
         )
     }
 
+export { EmptyState };
 export default EmptyState;

@@ -1,4 +1,4 @@
-import { useEffect, useMemo} from "react";
+import { useEffect, useMemo } from "react";
 import { Organization } from "@credopass/lib/schemas";
 import { SidebarMenuButton } from "@credopass/ui/components/sidebar";
 import {
@@ -32,11 +32,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@credopass/ui/components/av
 
 
 const OrgSelector: React.FC<{
-     onClick?: (org: Organization) => void
-     compact?: boolean
+    onClick?: (org: Organization) => void
+    compact?: boolean
 }> = ({
-     onClick,
-     compact = false
+    onClick,
+    compact = false
 }) => {
 
 
@@ -72,7 +72,7 @@ const OrgSelector: React.FC<{
 
         return (
             <DropdownMenu>
-                <DropdownMenuTrigger>
+                <DropdownMenuTrigger render={() => (
                     <SidebarMenuButton
                         size={compact ? "default" : "lg"}
                         className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
@@ -92,7 +92,7 @@ const OrgSelector: React.FC<{
                             </>
                         )}
                     </SidebarMenuButton>
-                </DropdownMenuTrigger>
+                )} />
                 <DropdownMenuContent
                     className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
                     align="start"

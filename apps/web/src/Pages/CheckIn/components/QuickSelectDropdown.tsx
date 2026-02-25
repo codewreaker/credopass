@@ -1,20 +1,9 @@
 import React from 'react';
 import { Calendar, Plus } from 'lucide-react';
-import {
-  Button,
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-  Badge,
-} from '@credopass/ui';
+import { Button } from '@credopass/ui/components/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@credopass/ui/components/card';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@credopass/ui/components/select';
+import { Badge } from '@credopass/ui/components/badge';
 import type { EventType } from '@credopass/lib/schemas';
 
 interface QuickSelectDropdownProps {
