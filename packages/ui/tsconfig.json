@@ -19,6 +19,10 @@
       "@credopass/api-client/*": ["../api-client/src/*"]
     }
   },
-  "include": [".", "../lib/src/hooks/use-toolbar-context.ts", "../lib/src/hooks/use-sidebar-trigger.tsx"],
+  "include": [
+    ".", 
+    "../lib/src/hooks/use-toolbar-context.ts", 
+    "../lib/src/hooks/use-sidebar-trigger.tsx"
+  ],
   "exclude": ["node_modules", "dist"]
 }
