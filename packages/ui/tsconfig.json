@@ -9,15 +9,7 @@
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "noEmit": true,
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["./src/*"],
-      "@credopass/ui/*": ["./src/*"],
-      "@credopass/lib/*": ["../lib/src/*"],
-      "@credopass/api-client": ["../api-client/src/client.ts"],
-      "@credopass/api-client/*": ["../api-client/src/*"]
-    }
+    "noEmit": true
   },
   "include": [
     ".", 
