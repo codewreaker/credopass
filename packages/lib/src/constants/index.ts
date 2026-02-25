@@ -22,3 +22,5 @@ export const NAV_ITEMS = [
   { id: 'organizations', url: "/organizations", icon: Building2, label: "Organisations" },
   { id: 'database', url: "/database", icon: Database, label: "Tables" },
 ] as const;
+
+export const tzList = Intl.supportedValuesOf('timeZone');

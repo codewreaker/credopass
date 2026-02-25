@@ -3,6 +3,7 @@
  * Helper functions for event operations
  */
 
+import { tzList } from '../constants';
 import type { EventType } from '../schemas';
 
 /** Group events by status */
@@ -64,3 +65,18 @@ export function getMonthEvents(month: Date, events: EventType[]): EventType[] {
 export function toDateKey(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
+
+
+// ...existing code...
+
+// Derive a union type from your tzList constant
+type TimeZone = typeof tzList[number];
+
+export const getTimeZone = (userTimeZone: TimeZone, startDate?: Date): string => {
+  return new Intl.DateTimeFormat('en-US', {
+    timeZone: userTimeZone,
+    timeZoneName: 'shortOffset'
+  })
+    .formatToParts(startDate ?? new Date())
+    .find(part => part.type === 'timeZoneName')?.value ?? '';
+};

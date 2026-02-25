@@ -13,7 +13,10 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
-      "@credopass/ui/*": ["./src/*"]
+      "@credopass/ui/*": ["./src/*"],
+      "@credopass/lib/*": ["../lib/src/*"],
+      "@credopass/api-client": ["../api-client/src/client.ts"],
+      "@credopass/api-client/*": ["../api-client/src/*"]
     }
   },
   "include": [".", "../lib/src/hooks/use-toolbar-context.ts", "../lib/src/hooks/use-sidebar-trigger.tsx"],

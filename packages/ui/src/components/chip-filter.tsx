@@ -1,9 +1,10 @@
 import * as React from 'react';
 import { cn } from '../lib/utils';
+import { Badge } from './badge';
 
-export interface ChipFilterOption<T extends string = string> {
+export interface ChipFilterOption<T extends string | boolean = string> {
   value: T;
-  label: string;
+  label?: string;
   icon?: React.ReactNode;
   badge?: number | string;
 }
@@ -18,6 +19,11 @@ export interface ChipFilterProps<T extends string = string> {
   chipClassName?: string;
   activeChipClassName?: string;
 }
+
+export const divider: ChipFilterOption<'divider'> = {
+  value: 'divider'
+};
+
 
 function ChipFilterBase<T extends string = string>(
   {
@@ -72,37 +78,33 @@ function ChipFilterBase<T extends string = string>(
   return (
     <div
       ref={ref}
-      className={cn('flex flex-wrap items-center gap-2', className)}
+      className={cn('flex flex-nowrap items-center gap-2', className)}
       role="radiogroup"
       aria-orientation="horizontal"
     >
-      {options.map((option) => {
+      {options.map((option, idx) => {
         const selected = isSelected(option.value);
-        return (
-          <button
-            key={option.value}
-            type="button"
+        return option.value === 'divider' ? <div
+          key={`divider-${idx}`}
+          className="h-6 w-px bg-border"
+          role="separator"
+          aria-orientation="vertical"
+        /> : (
+          <Badge
+            key={`${option.value}-${option.label ?? React.useId}`}
+            render={<button type="button" />}
+            variant={selected ? 'default' : 'secondary'}
             role={mode === 'multiple' ? 'checkbox' : 'radio'}
             aria-checked={selected}
             onClick={() => handleClick(option.value)}
             className={cn(
-              'inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium transition-all',
-              'hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-              'disabled:pointer-events-none disabled:opacity-50',
+              'h-auto cursor-pointer bg-secondary text-forground px-1.5 md:px-2.5 py-1.5',
               selected
-                ? cn(
-                    'bg-foreground text-background shadow-sm',
-                    activeChipClassName
-                  )
-                : cn(
-                    'bg-secondary text-secondary-foreground hover:bg-secondary/80',
-                    chipClassName
-                  )
+                ? cn('border-primary bg-primary/15', activeChipClassName)
+                : chipClassName
             )}
           >
-            {option.icon && (
-              <span className="inline-flex shrink-0">{option.icon}</span>
-            )}
+            {option.icon && option.icon}
             <span>{option.label}</span>
             {option.badge !== undefined && (
               <span
@@ -116,7 +118,7 @@ function ChipFilterBase<T extends string = string>(
                 {option.badge}
               </span>
             )}
-          </button>
+          </Badge>
         );
       })}
     </div>
