@@ -15,7 +15,7 @@ import { Input } from '@credopass/ui/components/input';
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@credopass/ui/components/field';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@credopass/ui/components/select';
 import { DialogClose, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@credopass/ui/components/dialog';
-import { handleCollectionDeleteById } from '@credopass/lib/utils';
+import { handleCollectionDeleteById } from '@credopass/api-client/collections';
 import './style.css';
 import type { LauncherState } from '@credopass/lib/stores';
 

@@ -8,9 +8,12 @@ import EventListView from './EventListView';
 import EventCalendar from '@credopass/ui/components/event-calendar';
 import { STATUS_MAPPING } from '@credopass/ui/components/event-row';
 import { CalendarPlus, CalendarsIcon, ListFilterPlus, TimerIcon, FastForward } from 'lucide-react';
-import { useToolbarContext } from '@credopass/lib/hooks';
+import { useStatusFilter, useToolbarContext } from '@credopass/lib/hooks';
+import type { EventTypeFilters } from '@credopass/lib/hooks';
+export { EVENTS_FILTER_COOKIE_NAME, EVENTS_FILTER_ENABLED_COOKIE_NAME } from '@credopass/lib/hooks';
 import { ButtonGroup } from '@credopass/ui/components/button-group';
-import { getGreeting, handleCollectionDeleteById } from '@credopass/lib/utils';
+import { getGreeting } from '@credopass/lib/utils';
+import { handleCollectionDeleteById } from '@credopass/api-client/collections';
 import { ChipFilter, divider, type ChipFilterOption } from '@credopass/ui/components/chip-filter';
 
 
@@ -23,8 +26,6 @@ import { Button } from '@credopass/ui/components/button';
 
 
 const handleDeleteEvent = (eventId: string) => handleCollectionDeleteById('events', eventId);
-
-type EventTypeFilters = EventType['status'] | 'actions' | 'timezone';
 
 // Create chip filter options from STATUS_MAPPING
 const statusFilterOptions = (() => {
@@ -71,40 +72,16 @@ const EventsPage = () => {
     const { events: eventCollection, organizations: orgCollection } = getCollections();
     const isMobile = useIsMobile();
     const [searchQuery, setSearchQuery] = useState<string>('');
-    const [filterEnabled, setFilterEnabled] = useState<boolean>(true);
-    const [selectedFilters, setSelectedFilters] = useState<Array<EventType['status'] | 'timezone' | 'actions'>>([
-        'scheduled',
-        'ongoing',
-        'actions'
-    ]);
 
-    const selectedStatuses = useMemo(() => (
-        selectedFilters.filter((filt) => (!['actions', 'timezone'].includes(filt))) as Array<EventType['status']>
-    ), [selectedFilters]);
-
-    const enableActions = useMemo<boolean>(() => selectedFilters.includes('actions'), [selectedFilters]);
+    const {
+        filterEnabled, setFilterEnabled,
+        handleFilterChange, displayedFilterValue,
+        selectedStatuses, enableActions, enableTimezone,
+    } = useStatusFilter(allFilters);
 
     const userName = useEventSessionStore((s) => s.session.currentUserName);
     const firstName = useMemo(() => userName?.split(' ')[0] || 'there', [userName]);
     const greeting = useMemo(() => getGreeting(), []);
-
-
-
-    // Handle "All" selection
-    const handleStatusChange = useCallback((value: EventTypeFilters | EventTypeFilters[]) => {
-        const values = Array.isArray(value) ? value : [value];
-        if (values.includes('all' as EventType['status'])) {
-            // If "All" is selected, show all statuses
-            setSelectedFilters(allFilters);
-        } else {
-            setSelectedFilters(values);
-        }
-    }, []);
-
-    const displayedFilterValue = useMemo(() => {
-        const allSelected = allFilters.every(status => selectedFilters.includes(status));
-        return allSelected ? ['all' as EventTypeFilters] : selectedFilters;
-    }, [selectedFilters]);
 
     const { data: eventsData } = useLiveQuery((q) => q
         .from({ eventCollection })
@@ -165,7 +142,6 @@ const EventsPage = () => {
         );
     }, [events, searchQuery]);
 
-        const enableTimezone = useMemo<boolean>(() => selectedFilters.includes('timezone'), [selectedFilters]);
 
     return (
         <div className="events-page">
@@ -195,8 +171,8 @@ const EventsPage = () => {
                 {/* Chip Filter for Status */}
                 {filterEnabled && <ChipFilter
                     options={statusFilterOptions}
-                    value={displayedFilterValue}
-                    onValueChange={handleStatusChange}
+                    value={displayedFilterValue as EventTypeFilters[]}
+                    onValueChange={handleFilterChange}
                     mode="multiple"
                     className='overflow-x-auto w-100vw py-6'
                 />}

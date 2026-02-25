@@ -9,7 +9,6 @@ export * from './qr-code';
 export * from './events';
 export * from './date';
 export * from './formatting';
-export * from './collections';
 
 
 export function calculateTier(totalPoints: number): Tier {
