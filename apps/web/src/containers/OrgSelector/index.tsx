@@ -52,13 +52,13 @@ const OrgSelector: React.FC<{
             (orgsQuery.data ?? []) as Organization[]
             , [orgsQuery.data]);
 
-        const { activeOrganizationId, activeOrganization, setActiveOrganization } = useOrganizationStore();
+        const { activeOrganizationId, activeOrganization, setActiveOrganization, switchOrganization } = useOrganizationStore();
         const navigate = useNavigate();
         const { openLauncher } = useLauncher();
 
 
 
-        // Auto-select first organization if none selected
+        // Auto-select first organization if none selected (without reload)
         useEffect(() => {
             if (!activeOrganizationId && organizations.length > 0) {
                 setActiveOrganization(organizations[0].id, organizations[0]);
@@ -66,7 +66,12 @@ const OrgSelector: React.FC<{
         }, [activeOrganizationId, organizations, setActiveOrganization]);
 
         const handleSelectOrganization = (org: Organization) => {
-            setActiveOrganization(org.id, org);
+            // If switching to a different org, use switchOrganization which reloads the app
+            if (activeOrganizationId && activeOrganizationId !== org.id) {
+                switchOrganization(org.id, org);
+            } else {
+                setActiveOrganization(org.id, org);
+            }
             onClick?.(org);
         };
 

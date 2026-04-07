@@ -1,6 +1,6 @@
 // Zustand Based Store to handle App State
 import { create, ExtractState } from 'zustand'
-import { combine, devtools } from 'zustand/middleware'
+import { combine, devtools, persist } from 'zustand/middleware'
 import type { EventType, EventStatus, User, Organization } from '../schemas'
 
 type ActionEvents = 'add' | 'delete' | 'update'
@@ -222,27 +222,79 @@ export const useEventSessionStore = create(
 /**
  * Organization Store
  * Manages the active organization context for multi-tenant operations
+ * Persisted to localStorage and triggers app reload on change
  */
 export interface OrganizationState {
     activeOrganizationId: string | null;
     activeOrganization: Organization | null;
 }
 
+const ORGANIZATION_STORAGE_KEY = 'credopass-active-organization';
+
 export const useOrganizationStore = create(
     devtools(
-        combine({
-            activeOrganizationId: null as string | null,
-            activeOrganization: null as Organization | null,
-        }, (set) => ({
-            setActiveOrganization: (organizationId: string, organization?: Organization) => set({
-                activeOrganizationId: organizationId,
-                activeOrganization: organization ?? null,
-            }),
-            clearActiveOrganization: () => set({
-                activeOrganizationId: null,
-                activeOrganization: null,
-            }),
-        })),
+        persist(
+            combine({
+                activeOrganizationId: null as string | null,
+                activeOrganization: null as Organization | null,
+            }, (set, get) => ({
+                /**
+                 * Sets the active organization and reloads the app
+                 * This ensures all queries are re-fetched with the new org context
+                 */
+                setActiveOrganization: (organizationId: string, organization?: Organization) => {
+                    const currentOrgId = get().activeOrganizationId;
+                    
+                    // Update store
+                    set({
+                        activeOrganizationId: organizationId,
+                        activeOrganization: organization ?? null,
+                    });
+                    
+                    // Only reload if organization actually changed
+                    if (currentOrgId !== null && currentOrgId !== organizationId) {
+                        // Small delay to allow state to persist before reload
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 100);
+                    }
+                },
+                
+                /**
+                 * Switches to a different organization (always reloads)
+                 */
+                switchOrganization: (organizationId: string, organization?: Organization) => {
+                    set({
+                        activeOrganizationId: organizationId,
+                        activeOrganization: organization ?? null,
+                    });
+                    
+                    // Always reload when explicitly switching
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 100);
+                },
+                
+                clearActiveOrganization: () => set({
+                    activeOrganizationId: null,
+                    activeOrganization: null,
+                }),
+                
+                /**
+                 * Check if an organization is currently active
+                 */
+                hasActiveOrganization: () => {
+                    return get().activeOrganizationId !== null;
+                },
+            })),
+            {
+                name: ORGANIZATION_STORAGE_KEY,
+                partialize: (state) => ({
+                    activeOrganizationId: state.activeOrganizationId,
+                    activeOrganization: state.activeOrganization,
+                }),
+            }
+        ),
         { name: 'OrganizationStore' }
     )
 );

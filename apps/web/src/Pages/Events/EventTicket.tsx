@@ -1,15 +1,23 @@
-import { FC, useState } from 'react'
+import { FC, useState, useRef, useCallback } from 'react'
 import { EventType } from '@credopass/lib/schemas';
+import { toPng } from 'html-to-image';
 import {
     MapPin,
     ClockIcon,
     CalendarPlus as CalIcon,
     UserPlus as PeopleIcon,
-    Hand
+    Hand,
+    Download,
+    ChevronDown,
+    ChevronUp,
+    X
 } from 'lucide-react';
 import { Badge } from '@credopass/ui/components/badge';
+import { Button } from '@credopass/ui/components/button';
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@credopass/ui/components/dialog';
 import { QRCodeSVG as QRCode } from 'qrcode.react';
 import { cn } from '@credopass/ui/lib/utils';
+import './EventTicket.css';
 
 // Helper: Map event status to Badge variant
 export const mapStatusToBadgeVariant = (status: EventType['status']): 'default' | 'secondary' | 'outline' | 'destructive' => {
@@ -75,62 +83,150 @@ const ImagePlaceholder: FC<{ className?: string }> = ({ className }) => (
     </div>
 );
 
-// Glowing QR Code component
+// Expandable Description Component
+const ExpandableDescription: FC<{ 
+    description: string; 
+    maxLines?: number;
+    className?: string;
+}> = ({ description, maxLines = 2, className }) => {
+    const [isExpanded, setIsExpanded] = useState(false);
+    const shouldTruncate = description.length > 120 || description.split('\n').length > maxLines;
+
+    if (!description) return null;
+
+    return (
+        <div className={cn("space-y-1", className)}>
+            <p className={cn(
+                "text-zinc-500 text-sm transition-all duration-300",
+                !isExpanded && shouldTruncate && "line-clamp-2"
+            )}>
+                {description}
+            </p>
+            {shouldTruncate && (
+                <button
+                    type="button"
+                    onClick={() => setIsExpanded(!isExpanded)}
+                    className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors font-medium"
+                >
+                    {isExpanded ? (
+                        <>
+                            <ChevronUp className="size-3" />
+                            Show less
+                        </>
+                    ) : (
+                        <>
+                            <ChevronDown className="size-3" />
+                            See more
+                        </>
+                    )}
+                </button>
+            )}
+        </div>
+    );
+};
+
+// Glowing QR Code component with animated border
 const GlowingQRCode: FC<{ 
     value: string; 
     size?: number;
-    isExpanded?: boolean;
     onClick?: () => void;
-}> = ({ value, size = 70, isExpanded = false, onClick }) => {
+}> = ({ value, size = 70, onClick }) => {
     return (
         <button 
             type="button"
             onClick={onClick}
-            className={cn(
-                "group relative cursor-pointer transition-all duration-300",
-                isExpanded && "scale-110"
-            )}
+            className="group relative cursor-pointer"
+            style={{ width: size + 20, height: size + 20 }}
+            aria-label="Tap to view fullscreen QR code"
         >
-            {/* Outer glow ring with animation */}
-            <div className={cn(
-                "absolute inset-0 rounded-2xl transition-all duration-300",
-                "bg-[#c6f135]/20 blur-xl",
-                "animate-[pulse_2s_ease-in-out_infinite]",
-                isExpanded && "blur-2xl bg-[#c6f135]/30"
-            )} />
-            
-            {/* Inner glow */}
-            <div className={cn(
-                "absolute inset-1 rounded-xl transition-all duration-300",
-                "bg-[#c6f135]/10 blur-md",
-                isExpanded && "bg-[#c6f135]/20"
-            )} />
-            
+            {/* Glow effect layer */}
+            <div 
+                className="animated-border-box-glow" 
+                style={{ width: size + 20, height: size + 20 }}
+            />
+            {/* Border animation layer */}
+            <div 
+                className="animated-border-box" 
+                style={{ width: size + 20, height: size + 20 }}
+            />
             {/* QR Code container */}
-            <div className={cn(
-                "relative bg-white rounded-2xl p-3 shadow-lg transition-all duration-300",
-                "shadow-[0_0_20px_rgba(198,241,53,0.3)]",
-                "group-hover:shadow-[0_0_30px_rgba(198,241,53,0.5)]",
-                isExpanded && "shadow-[0_0_40px_rgba(198,241,53,0.6)] p-4"
-            )}>
-                <QRCode
-                    value={value}
-                    size={isExpanded ? size * 2.5 : size}
-                    level="H"
-                    bgColor="#ffffff"
-                    fgColor="#000000"
-                />
-            </div>
-            
-            {/* Shimmer effect on hover */}
-            <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none">
-                <div className={cn(
-                    "absolute inset-0 -translate-x-full",
-                    "bg-gradient-to-r from-transparent via-white/10 to-transparent",
-                    "group-hover:translate-x-full transition-transform duration-1000"
-                )} />
+            <div 
+                className="absolute inset-0 flex items-center justify-center z-10"
+            >
+                <div className="bg-white rounded-xl p-2 transition-transform group-hover:scale-[1.02]">
+                    <QRCode
+                        value={value}
+                        size={size}
+                        level="H"
+                        bgColor="#ffffff"
+                        fgColor="#000000"
+                    />
+                </div>
             </div>
         </button>
+    );
+};
+
+// Fullscreen QR Modal (Ledger-style)
+const FullscreenQRModal: FC<{
+    isOpen: boolean;
+    onClose: () => void;
+    value: string;
+    eventName: string;
+}> = ({ isOpen, onClose, value, eventName }) => {
+    const qrSize = typeof window !== 'undefined' ? Math.min(280, window.innerWidth - 100) : 280;
+    
+    return (
+        <Dialog open={isOpen} onOpenChange={onClose}>
+            <DialogContent 
+                className="sm:max-w-md bg-zinc-950 border-zinc-800 flex flex-col items-center justify-center p-8 gap-6"
+                showCloseButton={false}
+            >
+                <DialogTitle className="sr-only">QR Code for {eventName}</DialogTitle>
+                <DialogDescription className="sr-only">Scan this QR code to check in to the event</DialogDescription>
+                
+                {/* Close button */}
+                <button
+                    type="button"
+                    onClick={onClose}
+                    className="absolute top-4 right-4 p-2 rounded-full hover:bg-zinc-800 transition-colors"
+                    aria-label="Close"
+                >
+                    <X className="size-5 text-zinc-400" />
+                </button>
+                
+                {/* Large QR Code with glow */}
+                <div className="qr-fullscreen-enter relative">
+                    <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full" />
+                    <div className="relative bg-white rounded-2xl p-4 shadow-2xl shadow-primary/20">
+                        <QRCode
+                            value={value}
+                            size={qrSize}
+                            level="H"
+                            bgColor="#ffffff"
+                            fgColor="#000000"
+                        />
+                    </div>
+                </div>
+                
+                {/* Instructions */}
+                <div className="text-center space-y-2">
+                    <h3 className="text-lg font-semibold text-white">Scan to check in</h3>
+                    <p className="text-sm text-zinc-400 max-w-xs">
+                        Present this QR code at the event entrance for quick check-in
+                    </p>
+                </div>
+                
+                {/* Close button */}
+                <Button
+                    variant="secondary"
+                    className="w-full max-w-xs"
+                    onClick={onClose}
+                >
+                    Got it
+                </Button>
+            </DialogContent>
+        </Dialog>
     );
 };
 
@@ -145,6 +241,8 @@ const TicketDivider = () => (
 
 export const EventTicket: FC<{ ticketEvent: EventType; eventImage?: string }> = ({ ticketEvent, eventImage }) => {
     const [showQR, setShowQR] = useState(false);
+    const [isDownloading, setIsDownloading] = useState(false);
+    const ticketRef = useRef<HTMLDivElement>(null);
     
     const startDate = ticketEvent.startTime instanceof Date ? ticketEvent.startTime : null;
     const endDate = ticketEvent.endTime instanceof Date ? ticketEvent.endTime : null;
@@ -172,11 +270,52 @@ export const EventTicket: FC<{ ticketEvent: EventType; eventImage?: string }> = 
         timestamp: Date.now()
     });
 
-    const handleQRClick = () => setShowQR(!showQR);
+    const handleQRClick = () => setShowQR(true);
+
+    // Download ticket as PNG
+    const handleDownload = useCallback(async () => {
+        if (!ticketRef.current || isDownloading) return;
+        
+        setIsDownloading(true);
+        try {
+            const dataUrl = await toPng(ticketRef.current, {
+                quality: 1,
+                pixelRatio: 2,
+                backgroundColor: '#0a0a0a',
+            });
+
+            const link = document.createElement('a');
+            link.download = `${ticketEvent.name.replace(/\s+/g, '-').toLowerCase()}-ticket.png`;
+            link.href = dataUrl;
+            link.click();
+        } catch (error) {
+            console.error('Failed to download ticket:', error);
+        } finally {
+            setIsDownloading(false);
+        }
+    }, [ticketEvent.name, isDownloading]);
 
     return (
         <div className="lg:sticky lg:top-6 lg:self-start">
-            <div className="rounded-3xl overflow-visible border border-zinc-800 shadow-2xl shadow-black/70 relative">
+            <div 
+                ref={ticketRef}
+                className="rounded-3xl overflow-visible border border-zinc-800 shadow-2xl shadow-black/70 relative"
+            >
+                {/* Download button */}
+                <button
+                    type="button"
+                    onClick={handleDownload}
+                    disabled={isDownloading}
+                    className={cn(
+                        "ticket-download-btn absolute top-4 right-4 z-20 p-2.5 rounded-full",
+                        "bg-zinc-800/80 hover:bg-zinc-700 backdrop-blur-sm",
+                        "transition-all duration-200",
+                        isDownloading && "opacity-50 cursor-not-allowed"
+                    )}
+                    aria-label="Download ticket as image"
+                >
+                    <Download className={cn("size-4 text-zinc-300", isDownloading && "animate-pulse")} />
+                </button>
 
                 {/* Hero Section - Ticket and Status at top */}
                 <div className="relative bg-linear-to-br from-[#141414] via-zinc-900 to-[#0d1a04] px-6 pt-6 pb-8 rounded-t-3xl overflow-hidden">
@@ -185,7 +324,7 @@ export const EventTicket: FC<{ ticketEvent: EventType; eventImage?: string }> = 
                     <div className="absolute -bottom-6 -left-6 w-40 h-40 bg-[#c6f135]/4 rounded-full blur-2xl pointer-events-none" />
 
                     {/* Header row - Ticket ID and Status at TOP */}
-                    <div className="flex justify-between items-start mb-4 relative z-10">
+                    <div className="flex justify-between items-start mb-4 relative z-10 pr-10">
                         <div className="flex items-center gap-2">
                             <span className="text-[10px] text-zinc-500 font-mono tracking-widest">TICKET</span>
                             <span className="text-[10px] text-zinc-600 font-mono tracking-widest">#{ticketEvent.id?.slice(0, 8).toUpperCase()}</span>
@@ -224,12 +363,15 @@ export const EventTicket: FC<{ ticketEvent: EventType; eventImage?: string }> = 
                         ))}
                     </div>
 
-                    {/* Title moved to BOTTOM of hero section */}
+                    {/* Title and expandable description at BOTTOM of hero section */}
                     <div className="relative z-10 border-t border-zinc-800 pt-4">
                         <h1 className="text-[1.75rem] font-black text-white leading-[0.95] tracking-tight mb-2">
                             {ticketEvent.name}
                         </h1>
-                        <p className="text-zinc-500 text-sm line-clamp-2">{ticketEvent.description}</p>
+                        <ExpandableDescription 
+                            description={ticketEvent.description || ''} 
+                            maxLines={2}
+                        />
                     </div>
                 </div>
 
@@ -240,25 +382,6 @@ export const EventTicket: FC<{ ticketEvent: EventType; eventImage?: string }> = 
 
                 {/* Ticket stub bottom - QR Code section */}
                 <div className="bg-[#111111] px-6 py-5 rounded-b-3xl">
-                    {/* Expanded QR overlay */}
-                    {showQR && (
-                        <div 
-                            className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center"
-                            onClick={handleQRClick}
-                        >
-                            <div className="text-center" onClick={(e) => e.stopPropagation()}>
-                                <p className="text-zinc-400 text-sm mb-4">Scan to check in</p>
-                                <GlowingQRCode 
-                                    value={qrData} 
-                                    size={70} 
-                                    isExpanded={true}
-                                    onClick={handleQRClick}
-                                />
-                                <p className="text-zinc-500 text-xs mt-4">Tap anywhere to close</p>
-                            </div>
-                        </div>
-                    )}
-                    
                     <div className="flex items-center gap-5">
                         {/* Glowing QR Code - tap to expand */}
                         <GlowingQRCode 
@@ -277,12 +400,20 @@ export const EventTicket: FC<{ ticketEvent: EventType; eventImage?: string }> = 
                             {/* Instructions */}
                             <div className="flex items-center gap-2 text-zinc-500">
                                 <Hand size={12} className="animate-bounce" />
-                                <p className="text-[10px]">Tap QR code to view check-in code for guests</p>
+                                <p className="text-[10px]">Tap QR code to expand</p>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+
+            {/* Fullscreen QR Modal */}
+            <FullscreenQRModal
+                isOpen={showQR}
+                onClose={() => setShowQR(false)}
+                value={qrData}
+                eventName={ticketEvent.name}
+            />
         </div>
     )
 }

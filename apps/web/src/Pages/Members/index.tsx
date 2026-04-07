@@ -3,7 +3,24 @@ import { useLiveQuery } from '@tanstack/react-db'
 import { type UserType, User } from '@credopass/lib/schemas'
 import { getCollections } from '@credopass/api-client/collections';
 
-import { UserPlus, Search, MoreVertical, Mail, Calendar, Star, Trophy, ChevronRight } from "lucide-react";
+import { 
+  UserPlus, 
+  Search, 
+  Mail, 
+  Calendar, 
+  Star, 
+  Trophy, 
+  ChevronRight, 
+  Filter,
+  MoreHorizontal,
+  Trash2,
+  Edit,
+  Eye,
+  ArrowUpDown,
+  CheckCircle,
+  XCircle,
+  Clock
+} from "lucide-react";
 import { useLauncher } from '@credopass/lib/stores';
 import { launchUserForm } from '../../containers/UserForm/index';
 import { EmptyState } from '@credopass/ui/components/empty-state';
@@ -14,25 +31,103 @@ import { Badge } from '@credopass/ui/components/badge';
 import { Button } from '@credopass/ui/components/button';
 import { Input } from '@credopass/ui/components/input';
 import { Card } from '@credopass/ui/components/card';
-import { Separator } from '@credopass/ui/components/separator';
+import { Checkbox } from '@credopass/ui/components/checkbox';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@credopass/ui/components/tooltip';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@credopass/ui/components/dropdown-menu';
 import { cn } from '@credopass/ui/lib/utils';
 
 // Tier configuration with colors
-const TIER_CONFIG: Record<string, { color: string; bgColor: string; icon: typeof Star }> = {
-  bronze: { color: 'text-amber-600', bgColor: 'bg-amber-500/10', icon: Star },
-  silver: { color: 'text-slate-400', bgColor: 'bg-slate-400/10', icon: Star },
-  gold: { color: 'text-yellow-500', bgColor: 'bg-yellow-500/10', icon: Trophy },
-  platinum: { color: 'text-cyan-400', bgColor: 'bg-cyan-400/10', icon: Trophy },
+const TIER_CONFIG: Record<string, { color: string; bgColor: string; borderColor: string; icon: typeof Star; label: string }> = {
+  bronze: { color: 'text-amber-600', bgColor: 'bg-amber-500/10', borderColor: 'border-amber-500/30', icon: Star, label: 'Bronze' },
+  silver: { color: 'text-slate-400', bgColor: 'bg-slate-400/10', borderColor: 'border-slate-400/30', icon: Star, label: 'Silver' },
+  gold: { color: 'text-yellow-500', bgColor: 'bg-yellow-500/10', borderColor: 'border-yellow-500/30', icon: Trophy, label: 'Gold' },
+  platinum: { color: 'text-cyan-400', bgColor: 'bg-cyan-400/10', borderColor: 'border-cyan-400/30', icon: Trophy, label: 'Platinum' },
 };
 
-// Member Row Component
-interface MemberRowProps {
+// Event attendance badge styles
+const EVENT_STATUS_CONFIG: Record<string, { color: string; bgColor: string; icon: typeof CheckCircle }> = {
+  attended: { color: 'text-green-500', bgColor: 'bg-green-500/10', icon: CheckCircle },
+  missed: { color: 'text-red-500', bgColor: 'bg-red-500/10', icon: XCircle },
+  upcoming: { color: 'text-blue-500', bgColor: 'bg-blue-500/10', icon: Clock },
+};
+
+// Mock event data for demo
+const MOCK_EVENTS = [
+  { id: '1', name: 'Tech Summit 2024', status: 'attended' },
+  { id: '2', name: 'Hackathon', status: 'attended' },
+  { id: '3', name: 'Workshop', status: 'missed' },
+  { id: '4', name: 'Meetup', status: 'upcoming' },
+];
+
+// Event Badge Component
+const EventBadge: React.FC<{ name: string; status: string }> = ({ name, status }) => {
+  const config = EVENT_STATUS_CONFIG[status] || EVENT_STATUS_CONFIG.upcoming;
+  const StatusIcon = config.icon;
+  
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div className={cn(
+            "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border",
+            config.bgColor,
+            config.color,
+            "border-current/20"
+          )}>
+            <StatusIcon size={10} />
+            <span className="truncate max-w-[60px]">{name}</span>
+          </div>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>{name} - {status.charAt(0).toUpperCase() + status.slice(1)}</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+};
+
+// Table Header Cell
+const TableHeaderCell: React.FC<{ 
+  children: React.ReactNode; 
+  sortable?: boolean;
+  className?: string;
+}> = ({ children, sortable, className }) => (
+  <div className={cn(
+    "flex items-center gap-1.5 text-[11px] text-muted-foreground uppercase tracking-wider font-semibold",
+    sortable && "cursor-pointer hover:text-foreground transition-colors group",
+    className
+  )}>
+    {children}
+    {sortable && (
+      <ArrowUpDown size={12} className="opacity-0 group-hover:opacity-100 transition-opacity" />
+    )}
+  </div>
+);
+
+// Member Table Row Component
+interface MemberTableRowProps {
   member: UserType;
+  isSelected: boolean;
+  onSelect: (checked: boolean) => void;
   onEdit: (member: UserType) => void;
   onDelete: (member: UserType) => void;
+  onView: (member: UserType) => void;
 }
 
-const MemberRow: React.FC<MemberRowProps> = ({ member, onEdit }) => {
+const MemberTableRow: React.FC<MemberTableRowProps> = ({ 
+  member, 
+  isSelected, 
+  onSelect, 
+  onEdit, 
+  onDelete,
+  onView
+}) => {
   const tier = (member as any).tier || 'bronze';
   const points = (member as any).points || 0;
   const totalEvents = (member as any).totalEvents || 0;
@@ -41,55 +136,137 @@ const MemberRow: React.FC<MemberRowProps> = ({ member, onEdit }) => {
 
   const initials = `${member.firstName?.charAt(0) || ''}${member.lastName?.charAt(0) || ''}`.toUpperCase() || 'U';
   const fullName = `${member.firstName || ''} ${member.lastName || ''}`.trim() || 'Unknown User';
+  
+  // Mock events for this member (in real app, this would come from member data)
+  const memberEvents = MOCK_EVENTS.slice(0, Math.min(totalEvents || 2, 3));
 
   return (
-    <button
-      type="button"
-      onClick={() => onEdit(member)}
-      className="group w-full flex items-center gap-4 p-4 hover:bg-muted/50 transition-all duration-200 rounded-xl"
-    >
-      {/* Avatar with tier ring */}
-      <div className="relative">
-        <Avatar size="lg" className={cn("ring-2 ring-offset-2 ring-offset-background", tierConfig.color.replace('text-', 'ring-'))}>
-          <AvatarImage src={(member as any).avatarUrl} alt={fullName} />
-          <AvatarFallback className="text-sm font-semibold">{initials}</AvatarFallback>
-        </Avatar>
-        {/* Tier badge */}
-        <div className={cn("absolute -bottom-1 -right-1 p-1 rounded-full", tierConfig.bgColor)}>
-          <TierIcon size={10} className={tierConfig.color} />
-        </div>
-      </div>
+    <tr className={cn(
+      "group border-b border-border/50 hover:bg-muted/30 transition-colors",
+      isSelected && "bg-primary/5"
+    )}>
+      {/* Checkbox */}
+      <td className="w-12 px-4 py-3">
+        <Checkbox 
+          checked={isSelected} 
+          onCheckedChange={onSelect}
+          className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+        />
+      </td>
 
       {/* Member Info */}
-      <div className="flex-1 min-w-0 text-left">
-        <div className="flex items-center gap-2 mb-0.5">
-          <h3 className="text-sm font-semibold text-foreground truncate">{fullName}</h3>
-          <Badge variant="outline" className={cn("text-[10px] capitalize h-5", tierConfig.bgColor, tierConfig.color)}>
-            {tier}
-          </Badge>
+      <td className="px-4 py-3">
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <Avatar size="md" className={cn(
+              "ring-2 ring-offset-1 ring-offset-background",
+              tierConfig.color.replace('text-', 'ring-')
+            )}>
+              <AvatarImage src={(member as any).avatarUrl} alt={fullName} />
+              <AvatarFallback className="text-xs font-semibold">{initials}</AvatarFallback>
+            </Avatar>
+            <div className={cn(
+              "absolute -bottom-0.5 -right-0.5 p-0.5 rounded-full",
+              tierConfig.bgColor
+            )}>
+              <TierIcon size={8} className={tierConfig.color} />
+            </div>
+          </div>
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-foreground truncate">{fullName}</p>
+            <p className="text-xs text-muted-foreground truncate flex items-center gap-1">
+              <Mail size={10} />
+              {member.email || 'No email'}
+            </p>
+          </div>
         </div>
-        <p className="text-xs text-muted-foreground truncate flex items-center gap-1.5">
-          <Mail size={10} />
-          {member.email || 'No email'}
-        </p>
-      </div>
+      </td>
 
-      {/* Stats */}
-      <div className="hidden md:flex items-center gap-6 text-center">
-        <div>
-          <p className="text-lg font-bold text-foreground">{points.toLocaleString()}</p>
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Points</p>
-        </div>
-        <Separator orientation="vertical" className="h-8" />
-        <div>
-          <p className="text-lg font-bold text-foreground">{totalEvents}</p>
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Events</p>
-        </div>
-      </div>
+      {/* Tier */}
+      <td className="px-4 py-3">
+        <Badge 
+          variant="outline" 
+          className={cn(
+            "text-[10px] capitalize",
+            tierConfig.bgColor,
+            tierConfig.color,
+            tierConfig.borderColor
+          )}
+        >
+          <TierIcon size={10} className="mr-1" />
+          {tierConfig.label}
+        </Badge>
+      </td>
 
-      {/* Action */}
-      <ChevronRight size={16} className="text-muted-foreground/50 group-hover:text-foreground group-hover:translate-x-1 transition-all" />
-    </button>
+      {/* Points */}
+      <td className="px-4 py-3 text-center">
+        <div className="flex items-center justify-center gap-1">
+          <Star size={12} className="text-primary" />
+          <span className="text-sm font-semibold">{points.toLocaleString()}</span>
+        </div>
+      </td>
+
+      {/* Events with Badges */}
+      <td className="px-4 py-3">
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {memberEvents.length > 0 ? (
+            <>
+              {memberEvents.slice(0, 2).map((event) => (
+                <EventBadge key={event.id} name={event.name} status={event.status} />
+              ))}
+              {memberEvents.length > 2 && (
+                <Badge variant="secondary" className="text-[10px]">
+                  +{memberEvents.length - 2}
+                </Badge>
+              )}
+            </>
+          ) : (
+            <span className="text-xs text-muted-foreground">No events</span>
+          )}
+        </div>
+      </td>
+
+      {/* Total Events */}
+      <td className="px-4 py-3 text-center hidden lg:table-cell">
+        <div className="flex items-center justify-center gap-1">
+          <Calendar size={12} className="text-muted-foreground" />
+          <span className="text-sm font-medium">{totalEvents}</span>
+        </div>
+      </td>
+
+      {/* Actions */}
+      <td className="px-4 py-3 w-12">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button 
+              variant="ghost" 
+              size="icon-xs"
+              className="opacity-0 group-hover:opacity-100 transition-opacity"
+            >
+              <MoreHorizontal size={14} />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-40">
+            <DropdownMenuItem onClick={() => onView(member)} className="gap-2">
+              <Eye size={14} />
+              View Profile
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onEdit(member)} className="gap-2">
+              <Edit size={14} />
+              Edit
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem 
+              onClick={() => onDelete(member)} 
+              className="gap-2 text-destructive focus:text-destructive"
+            >
+              <Trash2 size={14} />
+              Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </td>
+    </tr>
   );
 };
 
@@ -116,12 +293,12 @@ const StatsCard: React.FC<{ label: string; value: string | number; icon: React.R
 export default function MembersPage() {
   const { users: userCollection } = getCollections();
   const { data, isLoading } = useLiveQuery((q) => q.from({ userCollection }));
-  const [searchQuery, setSearchQuery] = useState<string>('')
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [tierFilter, setTierFilter] = useState<string | null>(null);
 
-  // Use collection's error tracking utilities
   const isError = userCollection.utils.isError;
-
-  const rowData: UserType[] = Array.isArray(data) ? data : []
+  const rowData: UserType[] = Array.isArray(data) ? data : [];
   const { openLauncher } = useLauncher();
 
   const handleCreateUser = useCallback(() => {
@@ -132,7 +309,11 @@ export default function MembersPage() {
     launchUserForm({ isEditing: true, initialData: user }, openLauncher);
   }, [openLauncher]);
 
-  // Register toolbar context: secondary "Add Person" button + search
+  const handleViewUser = useCallback((user: UserType) => {
+    // TODO: Implement view user profile
+    console.log('View user:', user);
+  }, []);
+
   useToolbarContext({
     action: { icon: UserPlus, label: 'Add Person', onClick: handleCreateUser },
     search: { enabled: true, placeholder: 'Search members...', onSearch: setSearchQuery },
@@ -140,19 +321,33 @@ export default function MembersPage() {
 
   const deleteUser = useCallback((user: User) => {
     userCollection.delete(user.id);
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      next.delete(user.id);
+      return next;
+    });
   }, [userCollection]);
 
-  // Filter members by search query
+  // Filter members by search query and tier
   const filteredMembers = useMemo(() => {
-    if (!searchQuery.trim()) return rowData;
-    const q = searchQuery.toLowerCase();
-    return rowData.filter(
-      (m) =>
-        m.firstName?.toLowerCase().includes(q) ||
-        m.lastName?.toLowerCase().includes(q) ||
-        m.email?.toLowerCase().includes(q)
-    );
-  }, [rowData, searchQuery]);
+    let result = rowData;
+    
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(
+        (m) =>
+          m.firstName?.toLowerCase().includes(q) ||
+          m.lastName?.toLowerCase().includes(q) ||
+          m.email?.toLowerCase().includes(q)
+      );
+    }
+    
+    if (tierFilter) {
+      result = result.filter(m => (m as any).tier === tierFilter);
+    }
+    
+    return result;
+  }, [rowData, searchQuery, tierFilter]);
 
   // Calculate stats
   const stats = useMemo(() => {
@@ -164,6 +359,30 @@ export default function MembersPage() {
       : 0;
     return { totalMembers, totalPoints, activeMembers, avgAttendance };
   }, [rowData]);
+
+  // Selection handlers
+  const handleSelectAll = useCallback((checked: boolean) => {
+    if (checked) {
+      setSelectedIds(new Set(filteredMembers.map(m => m.id)));
+    } else {
+      setSelectedIds(new Set());
+    }
+  }, [filteredMembers]);
+
+  const handleSelectOne = useCallback((id: string, checked: boolean) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (checked) {
+        next.add(id);
+      } else {
+        next.delete(id);
+      }
+      return next;
+    });
+  }, []);
+
+  const allSelected = filteredMembers.length > 0 && filteredMembers.every(m => selectedIds.has(m.id));
+  const someSelected = selectedIds.size > 0 && !allSelected;
 
   if (isLoading) return <Loader />
 
@@ -222,8 +441,8 @@ export default function MembersPage() {
       </div>
 
       {/* Search & Filters */}
-      <div className="px-6 py-4 border-b border-border flex items-center gap-4">
-        <div className="relative flex-1 max-w-md">
+      <div className="px-6 py-4 border-b border-border flex flex-wrap items-center gap-4">
+        <div className="relative flex-1 min-w-[200px] max-w-md">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <Input 
             placeholder="Search by name or email..." 
@@ -232,54 +451,116 @@ export default function MembersPage() {
             className="pl-9"
           />
         </div>
+        
         <div className="flex items-center gap-2">
-          <Badge variant="outline" className="cursor-pointer hover:bg-muted">All</Badge>
-          <Badge variant="outline" className="cursor-pointer hover:bg-muted text-yellow-500">Gold</Badge>
-          <Badge variant="outline" className="cursor-pointer hover:bg-muted text-slate-400">Silver</Badge>
-          <Badge variant="outline" className="cursor-pointer hover:bg-muted text-amber-600">Bronze</Badge>
+          <Filter size={14} className="text-muted-foreground" />
+          <Button
+            variant={tierFilter === null ? "default" : "outline"}
+            size="sm"
+            onClick={() => setTierFilter(null)}
+            className="h-7 text-xs"
+          >
+            All
+          </Button>
+          {Object.entries(TIER_CONFIG).map(([key, config]) => (
+            <Button
+              key={key}
+              variant={tierFilter === key ? "default" : "outline"}
+              size="sm"
+              onClick={() => setTierFilter(tierFilter === key ? null : key)}
+              className={cn(
+                "h-7 text-xs gap-1",
+                tierFilter !== key && config.color
+              )}
+            >
+              <config.icon size={10} />
+              {config.label}
+            </Button>
+          ))}
         </div>
+
+        {selectedIds.size > 0 && (
+          <div className="flex items-center gap-2 ml-auto">
+            <Badge variant="secondary">{selectedIds.size} selected</Badge>
+            <Button 
+              variant="destructive" 
+              size="sm" 
+              className="h-7 text-xs gap-1"
+              onClick={() => {
+                selectedIds.forEach(id => {
+                  const user = rowData.find(m => m.id === id);
+                  if (user) userCollection.delete(user.id);
+                });
+                setSelectedIds(new Set());
+              }}
+            >
+              <Trash2 size={12} />
+              Delete
+            </Button>
+          </div>
+        )}
       </div>
 
-      {/* Member List */}
-      <div className="flex-1 overflow-auto px-6 py-4">
+      {/* Member Table */}
+      <div className="flex-1 overflow-auto">
         {filteredMembers.length === 0 ? (
           <div className="flex items-center justify-center h-full">
             <EmptyState
-              title={searchQuery ? "No members found" : "No members yet"}
-              description={searchQuery 
-                ? "Try adjusting your search terms" 
+              title={searchQuery || tierFilter ? "No members found" : "No members yet"}
+              description={searchQuery || tierFilter
+                ? "Try adjusting your search or filters" 
                 : "Add your first member to start building your community."
               }
-              action={!searchQuery ? { label: "Add Member", onClick: handleCreateUser } : undefined}
+              action={!searchQuery && !tierFilter ? { label: "Add Member", onClick: handleCreateUser } : undefined}
             />
           </div>
         ) : (
-          <div className="space-y-1">
-            {/* Table Header */}
-            <div className="hidden md:flex items-center gap-4 px-4 py-2 text-[10px] text-muted-foreground uppercase tracking-wider">
-              <div className="w-12" /> {/* Avatar space */}
-              <div className="flex-1">Member</div>
-              <div className="w-20 text-center">Points</div>
-              <div className="w-16" /> {/* Separator space */}
-              <div className="w-20 text-center">Events</div>
-              <div className="w-8" /> {/* Action space */}
-            </div>
-            <Separator className="bg-gradient-to-r from-transparent via-muted to-transparent" />
-            
-            {/* Member Rows */}
-            {filteredMembers.map((member, idx) => (
-              <React.Fragment key={member.id}>
-                <MemberRow 
-                  member={member} 
+          <table className="w-full">
+            <thead className="sticky top-0 bg-background/95 backdrop-blur-sm border-b border-border z-10">
+              <tr>
+                <th className="w-12 px-4 py-3 text-left">
+                  <Checkbox 
+                    checked={allSelected}
+                    onCheckedChange={handleSelectAll}
+                    className={cn(
+                      "data-[state=checked]:bg-primary data-[state=checked]:border-primary",
+                      someSelected && "data-[state=indeterminate]:bg-primary/50"
+                    )}
+                    {...(someSelected ? { "data-state": "indeterminate" } : {})}
+                  />
+                </th>
+                <th className="px-4 py-3 text-left">
+                  <TableHeaderCell sortable>Member</TableHeaderCell>
+                </th>
+                <th className="px-4 py-3 text-left">
+                  <TableHeaderCell sortable>Tier</TableHeaderCell>
+                </th>
+                <th className="px-4 py-3 text-center">
+                  <TableHeaderCell sortable className="justify-center">Points</TableHeaderCell>
+                </th>
+                <th className="px-4 py-3 text-left">
+                  <TableHeaderCell>Events</TableHeaderCell>
+                </th>
+                <th className="px-4 py-3 text-center hidden lg:table-cell">
+                  <TableHeaderCell sortable className="justify-center">Total</TableHeaderCell>
+                </th>
+                <th className="w-12 px-4 py-3" />
+              </tr>
+            </thead>
+            <tbody>
+              {filteredMembers.map((member) => (
+                <MemberTableRow
+                  key={member.id}
+                  member={member}
+                  isSelected={selectedIds.has(member.id)}
+                  onSelect={(checked) => handleSelectOne(member.id, checked)}
                   onEdit={handleEditUser}
                   onDelete={deleteUser}
+                  onView={handleViewUser}
                 />
-                {idx < filteredMembers.length - 1 && (
-                  <Separator className="bg-gradient-to-r from-transparent via-muted/50 to-transparent ml-16" />
-                )}
-              </React.Fragment>
-            ))}
-          </div>
+              ))}
+            </tbody>
+          </table>
         )}
       </div>
     </div>

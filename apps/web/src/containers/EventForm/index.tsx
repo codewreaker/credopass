@@ -320,7 +320,7 @@ const EventForm = ({ initialData = {}, isEditing = false, onClose }: EventFormPr
                       <CalendarIcon size={14} />
                       Date & Time
                     </FieldLabel>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="flex flex-col gap-3">
                       <DateTimePicker
                         label="Start"
                         value={currentValue.from}

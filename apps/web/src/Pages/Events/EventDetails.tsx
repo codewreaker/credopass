@@ -1,4 +1,4 @@
-import { FC, useState, useEffect, useRef } from 'react';
+import { FC, useState, useEffect, useRef, useCallback } from 'react';
 import type { EventType } from '@credopass/lib/schemas';
 import { Badge } from '@credopass/ui/components/badge';
 import { Button } from '@credopass/ui/components/button';
@@ -9,6 +9,7 @@ import { Label } from '@credopass/ui/components/label';
 import { DateTimeRangePicker } from '@credopass/ui/components/date-time-range-picker';
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from '@credopass/ui/components/input-group';
 import { ButtonGroup } from '@credopass/ui/components/button-group';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@credopass/ui/components/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@credopass/ui/components/popover';
 import {
     MapPin,
@@ -16,7 +17,10 @@ import {
     PlusIcon,
     TicketCheck,
     Search,
-    Navigation
+    Navigation,
+    Loader2,
+    History,
+    X
 } from 'lucide-react';
 import { MapWithMarker } from '@credopass/ui/components/map-with-marker';
 
@@ -41,119 +45,212 @@ export const EventDetailsReadonly: FC<EventDetailsReadonlyProps> = ({ event }) =
     );
 };
 
-// Address Picker Component with Google Places-like functionality
+// Address suggestion type
+interface AddressSuggestion {
+    id: string;
+    mainText: string;
+    secondaryText: string;
+    fullAddress: string;
+}
+
+// Deliveroo-style Address Picker Component
 interface AddressPickerProps {
     value: string;
     onChange: (address: string) => void;
+    placeholder?: string;
 }
 
-const AddressPicker: FC<AddressPickerProps> = ({ value, onChange }) => {
-    const [isOpen, setIsOpen] = useState(false);
-    const [searchQuery, setSearchQuery] = useState(value);
-    const [suggestions, setSuggestions] = useState<Array<{ id: string; name: string; address: string }>>([]);
+const AddressPicker: FC<AddressPickerProps> = ({ value, onChange, placeholder = "Enter your address" }) => {
+    const [open, setOpen] = useState(false);
+    const [inputValue, setInputValue] = useState(value);
+    const [suggestions, setSuggestions] = useState<AddressSuggestion[]>([]);
     const [isSearching, setIsSearching] = useState(false);
-    const inputRef = useRef<HTMLInputElement>(null);
+    const [recentAddresses] = useState<AddressSuggestion[]>([
+        { id: 'recent-1', mainText: 'Home', secondaryText: '123 Main Street, London SW1A 1AA', fullAddress: 'Home, 123 Main Street, London SW1A 1AA' },
+        { id: 'recent-2', mainText: 'Work', secondaryText: '456 Business Park, London EC2A 1AB', fullAddress: 'Work, 456 Business Park, London EC2A 1AB' },
+    ]);
+    const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
-    // Simulate address search (replace with actual Google Places API)
+    // Sync external value changes
     useEffect(() => {
-        if (!searchQuery || searchQuery.length < 3) {
+        setInputValue(value);
+    }, [value]);
+
+    // Simulated address search (replace with Google Places API in production)
+    const searchAddresses = useCallback(async (query: string) => {
+        if (!query || query.length < 3) {
             setSuggestions([]);
             return;
         }
 
         setIsSearching(true);
-        // Debounce search
-        const timer = setTimeout(() => {
-            // Mock suggestions - replace with Google Places API
-            const mockSuggestions = [
-                { id: '1', name: 'London Eye', address: 'Riverside Building, County Hall, London SE1 7PB, UK' },
-                { id: '2', name: 'Tower of London', address: 'St Katharine\'s & Wapping, London EC3N 4AB, UK' },
-                { id: '3', name: 'Buckingham Palace', address: 'Westminster, London SW1A 1AA, UK' },
-                { id: '4', name: 'Big Ben', address: 'Westminster, London SW1A 0AA, UK' },
-                { id: '5', name: 'Hyde Park', address: 'Hyde Park, London W2 2UH, UK' },
-            ].filter(s => 
-                s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                s.address.toLowerCase().includes(searchQuery.toLowerCase())
-            );
-            setSuggestions(mockSuggestions);
-            setIsSearching(false);
+        
+        // Simulate API delay
+        await new Promise(resolve => setTimeout(resolve, 300));
+
+        // Mock suggestions based on query
+        const mockResults: AddressSuggestion[] = [
+            { id: '1', mainText: 'London Eye', secondaryText: 'Riverside Building, County Hall, London SE1 7PB', fullAddress: 'London Eye, Riverside Building, County Hall, London SE1 7PB' },
+            { id: '2', mainText: 'Tower of London', secondaryText: "St Katharine's & Wapping, London EC3N 4AB", fullAddress: "Tower of London, St Katharine's & Wapping, London EC3N 4AB" },
+            { id: '3', mainText: 'Buckingham Palace', secondaryText: 'Westminster, London SW1A 1AA', fullAddress: 'Buckingham Palace, Westminster, London SW1A 1AA' },
+            { id: '4', mainText: 'The Shard', secondaryText: '32 London Bridge St, London SE1 9SG', fullAddress: 'The Shard, 32 London Bridge St, London SE1 9SG' },
+            { id: '5', mainText: 'British Museum', secondaryText: 'Great Russell St, London WC1B 3DG', fullAddress: 'British Museum, Great Russell St, London WC1B 3DG' },
+            { id: '6', mainText: 'Hyde Park', secondaryText: 'Hyde Park, London W2 2UH', fullAddress: 'Hyde Park, London W2 2UH' },
+            { id: '7', mainText: 'Trafalgar Square', secondaryText: 'Trafalgar Square, London WC2N 5DN', fullAddress: 'Trafalgar Square, London WC2N 5DN' },
+            { id: '8', mainText: 'Westminster Abbey', secondaryText: '20 Deans Yd, London SW1P 3PA', fullAddress: 'Westminster Abbey, 20 Deans Yd, London SW1P 3PA' },
+        ].filter(s => 
+            s.mainText.toLowerCase().includes(query.toLowerCase()) ||
+            s.secondaryText.toLowerCase().includes(query.toLowerCase())
+        );
+
+        setSuggestions(mockResults);
+        setIsSearching(false);
+    }, []);
+
+    // Debounced search
+    const handleInputChange = (newValue: string) => {
+        setInputValue(newValue);
+        
+        if (debounceRef.current) {
+            clearTimeout(debounceRef.current);
+        }
+
+        debounceRef.current = setTimeout(() => {
+            searchAddresses(newValue);
         }, 300);
+    };
 
-        return () => clearTimeout(timer);
-    }, [searchQuery]);
+    const handleSelect = (suggestion: AddressSuggestion) => {
+        onChange(suggestion.fullAddress);
+        setInputValue(suggestion.fullAddress);
+        setOpen(false);
+        setSuggestions([]);
+    };
 
-    const handleSelect = (suggestion: { name: string; address: string }) => {
-        const fullAddress = `${suggestion.name}, ${suggestion.address}`;
-        onChange(fullAddress);
-        setSearchQuery(fullAddress);
-        setIsOpen(false);
+    const handleClear = () => {
+        setInputValue('');
+        onChange('');
+        setSuggestions([]);
     };
 
     return (
-        <Popover open={isOpen} onOpenChange={setIsOpen}>
-            <PopoverTrigger render={
+        <Popover open={open} onOpenChange={setOpen}>
+            <PopoverTrigger asChild>
                 <div className="relative">
-                    <InputGroup className="[--radius:9999px]">
-                        <InputGroupAddon>
-                            <InputGroupButton variant="secondary" size="icon-xs">
-                                <MapPin />
-                            </InputGroupButton>
-                        </InputGroupAddon>
-                        <InputGroupAddon className="text-muted-foreground pl-1.5">
-                            Location:
-                        </InputGroupAddon>
-                        <InputGroupInput
-                            ref={inputRef}
-                            value={searchQuery}
+                    <div className="flex items-center gap-2 w-full rounded-4xl border border-input bg-transparent px-4 py-3 text-sm shadow-xs transition-all focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/50 hover:border-ring/50">
+                        <MapPin className="size-5 text-primary shrink-0" />
+                        <input
+                            type="text"
+                            value={inputValue}
                             onChange={(e) => {
-                                setSearchQuery(e.target.value);
-                                setIsOpen(true);
+                                handleInputChange(e.target.value);
+                                if (!open) setOpen(true);
                             }}
-                            onFocus={() => setIsOpen(true)}
-                            placeholder="Search for an address..."
+                            onFocus={() => setOpen(true)}
+                            placeholder={placeholder}
+                            className="flex-1 bg-transparent outline-none placeholder:text-muted-foreground"
                         />
-                        <InputGroupAddon>
-                            <Search size={14} className="text-muted-foreground" />
-                        </InputGroupAddon>
-                    </InputGroup>
+                        {isSearching && (
+                            <Loader2 className="size-4 text-muted-foreground animate-spin" />
+                        )}
+                        {inputValue && !isSearching && (
+                            <button
+                                type="button"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleClear();
+                                }}
+                                className="p-1 hover:bg-muted rounded-full transition-colors"
+                            >
+                                <X className="size-4 text-muted-foreground" />
+                            </button>
+                        )}
+                    </div>
                 </div>
-            } />
-            <PopoverContent className="w-[400px] p-0" align="start">
+            </PopoverTrigger>
+            <PopoverContent 
+                className="w-[var(--radix-popover-trigger-width)] p-0" 
+                align="start"
+                sideOffset={4}
+            >
                 <div className="max-h-[300px] overflow-auto">
-                    {isSearching ? (
-                        <div className="p-4 text-center text-sm text-muted-foreground">
-                            Searching...
-                        </div>
-                    ) : suggestions.length > 0 ? (
-                        <div className="py-2">
-                            {suggestions.map((suggestion) => (
+                    {/* Recent Addresses */}
+                    {!inputValue && recentAddresses.length > 0 && (
+                        <div className="p-2">
+                            <div className="flex items-center gap-2 px-2 py-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                                <History className="size-3" />
+                                Recent
+                            </div>
+                            {recentAddresses.map((address) => (
                                 <button
-                                    key={suggestion.id}
+                                    key={address.id}
                                     type="button"
-                                    className="w-full px-4 py-3 text-left hover:bg-muted transition-colors"
-                                    onClick={() => handleSelect(suggestion)}
+                                    onClick={() => handleSelect(address)}
+                                    className="w-full flex items-start gap-3 px-2 py-3 rounded-lg hover:bg-muted transition-colors text-left"
                                 >
-                                    <div className="flex items-start gap-3">
-                                        <MapPin size={16} className="text-primary mt-0.5 shrink-0" />
-                                        <div>
-                                            <p className="text-sm font-medium">{suggestion.name}</p>
-                                            <p className="text-xs text-muted-foreground">{suggestion.address}</p>
-                                        </div>
+                                    <div className="size-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                                        <MapPin className="size-5 text-primary" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="font-medium text-sm truncate">{address.mainText}</p>
+                                        <p className="text-xs text-muted-foreground truncate">{address.secondaryText}</p>
                                     </div>
                                 </button>
                             ))}
                         </div>
-                    ) : searchQuery.length >= 3 ? (
-                        <div className="p-4 text-center">
-                            <MapPin size={24} className="mx-auto text-muted-foreground/50 mb-2" />
-                            <p className="text-sm text-muted-foreground">No addresses found</p>
-                            <p className="text-xs text-muted-foreground/60 mt-1">Try a different search term</p>
+                    )}
+
+                    {/* Search Results */}
+                    {inputValue && inputValue.length >= 3 && (
+                        <div className="p-2">
+                            {isSearching ? (
+                                <div className="flex items-center justify-center gap-2 py-8 text-muted-foreground">
+                                    <Loader2 className="size-5 animate-spin" />
+                                    <span className="text-sm">Searching addresses...</span>
+                                </div>
+                            ) : suggestions.length > 0 ? (
+                                <>
+                                    <div className="flex items-center gap-2 px-2 py-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                                        <Search className="size-3" />
+                                        Results
+                                    </div>
+                                    {suggestions.map((suggestion) => (
+                                        <button
+                                            key={suggestion.id}
+                                            type="button"
+                                            onClick={() => handleSelect(suggestion)}
+                                            className="w-full flex items-start gap-3 px-2 py-3 rounded-lg hover:bg-muted transition-colors text-left"
+                                        >
+                                            <div className="size-10 rounded-full bg-muted flex items-center justify-center shrink-0">
+                                                <MapPin className="size-5 text-muted-foreground" />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="font-medium text-sm truncate">{suggestion.mainText}</p>
+                                                <p className="text-xs text-muted-foreground truncate">{suggestion.secondaryText}</p>
+                                            </div>
+                                        </button>
+                                    ))}
+                                </>
+                            ) : (
+                                <div className="flex flex-col items-center justify-center py-8 text-center">
+                                    <div className="size-12 rounded-full bg-muted flex items-center justify-center mb-3">
+                                        <Navigation className="size-6 text-muted-foreground" />
+                                    </div>
+                                    <p className="text-sm font-medium">No addresses found</p>
+                                    <p className="text-xs text-muted-foreground mt-1">Try a different search term</p>
+                                </div>
+                            )}
                         </div>
-                    ) : (
-                        <div className="p-4 text-center">
-                            <Navigation size={24} className="mx-auto text-muted-foreground/50 mb-2" />
-                            <p className="text-sm text-muted-foreground">Start typing to search</p>
-                            <p className="text-xs text-muted-foreground/60 mt-1">Enter at least 3 characters</p>
+                    )}
+
+                    {/* Minimum characters hint */}
+                    {inputValue && inputValue.length < 3 && (
+                        <div className="flex flex-col items-center justify-center py-8 text-center">
+                            <div className="size-12 rounded-full bg-muted flex items-center justify-center mb-3">
+                                <Search className="size-6 text-muted-foreground" />
+                            </div>
+                            <p className="text-sm font-medium">Keep typing...</p>
+                            <p className="text-xs text-muted-foreground mt-1">Enter at least 3 characters to search</p>
                         </div>
                     )}
                 </div>
@@ -227,7 +324,7 @@ export const EventDetailsEdit: FC<EventDetailsEditProps> = ({
                     />
                 </div>
 
-                {/* Location with Address Picker */}
+                {/* Location with Deliveroo-style Address Picker */}
                 <div className="space-y-2">
                     <Label className="text-xs text-zinc-400 uppercase tracking-wider">
                         Location
@@ -235,6 +332,7 @@ export const EventDetailsEdit: FC<EventDetailsEditProps> = ({
                     <AddressPicker
                         value={draftData.location || ''}
                         onChange={(address) => onFieldUpdate('location', address)}
+                        placeholder="Search for a venue or address..."
                     />
                 </div>
 
