@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useParams, useNavigate } from '@tanstack/react-router';
 import { eq, useLiveQuery } from '@tanstack/react-db';
 import { getCollections } from '@credopass/api-client/collections';
@@ -7,14 +6,13 @@ import { Button } from '@credopass/ui/components/button';
 import {
     ArrowLeft,
     ScanQrCodeIcon,
-    X as CloseIcon,
-    Check as CheckIcon
+    Edit2,
 } from 'lucide-react';
-import { useToolbarContext } from '@credopass/lib/hooks';
+import { useToolbarContext, useLauncher } from '@credopass/lib/hooks';
 import './event-detail.css';
 import { EventTicket } from './EventTicket';
-import { EventDetailsReadonly, EventDetailsEdit } from './EventDetails';
-import { EventActionsEdit } from './EventActions';
+import { EventDetailsReadonly } from './EventDetails';
+import { launchEventForm } from '../../containers/EventForm';
 
 const handleAddToCalendar = (event: EventType) => {
     if (!event) return;
@@ -47,11 +45,9 @@ const handleAddToCalendar = (event: EventType) => {
 };
 
 function EventDetailPage() {
-    const [draftData, setDraftData] = useState<Partial<EventType>>({});
-    const [isEditing, setIsEditing] = useState(false);
-    const [toast, setToast] = useState<string | null>(null);
     const { eventId } = useParams({ from: '/events/$eventId' });
     const navigate = useNavigate();
+    const { openLauncher } = useLauncher();
 
     // Event detail page: no search, no secondary action
     useToolbarContext({
@@ -74,61 +70,25 @@ function EventDetailPage() {
         navigate({ to: '/checkin/$eventId', params: { eventId } });
     };
 
-
     const handleEdit = () => {
         if (!event) return;
         const startDate = event.startTime instanceof Date ? event.startTime : undefined;
         const endDate = event.endTime instanceof Date ? event.endTime : undefined;
 
-        setDraftData({
-            id: event.id,
-            name: event.name,
-            description: event.description || '',
-            status: event.status,
-            startTime: startDate,
-            endTime: endDate,
-            location: event.location || '',
-            capacity: event.capacity,
-            organizationId: event.organizationId || '',
-        });
-        setIsEditing(true);
-    };
-
-    const handleCancel = () => {
-        setIsEditing(false);
-        setDraftData({});
-    };
-
-    const handleSave = async () => {
-        if (!event || !draftData) return;
-
-        try {
-            // TODO: Update event in database
-            // await eventCollection.update(event.id, draftData);
-
-            showToast("Event updated");
-            setIsEditing(false);
-        } catch (error) {
-            showToast("Error saving event");
-            console.error(error);
-        }
-    };
-
-    const showToast = (msg: string) => {
-        setToast(msg);
-        setTimeout(() => setToast(null), 2200);
-    };
-
-    const updateField = (field: keyof EventType, value: any) => {
-        setDraftData(prev => ({ ...prev, [field]: value }));
-    };
-
-    const updateDateTimeRange = (range: { from?: Date; to?: Date } | undefined) => {
-        setDraftData(prev => ({
-            ...prev,
-            startTime: range?.from,
-            endTime: range?.to,
-        }));
+        // Launch the shared EventForm via command launcher
+        launchEventForm({
+            initialData: {
+                id: event.id,
+                name: event.name,
+                description: event.description || '',
+                status: event.status,
+                dateTimeRange: { from: startDate, to: endDate },
+                location: event.location || '',
+                capacity: event.capacity?.toString() || '',
+                organizationId: event.organizationId || '',
+            },
+            isEditing: true,
+        }, openLauncher);
     };
 
     if (isLoading) {
@@ -157,20 +117,8 @@ function EventDetailPage() {
         );
     }
 
-    // startTime and endTime are already Date objects from the database
-    const displayEvent = isEditing ? { ...event, ...draftData } : event;
-
-
     return (
         <div className="min-h-screen bg-[#0a0a0a] text-zinc-200 flex flex-col w-full mx-auto relative" style={{ fontFamily: "'DM Sans', 'Helvetica Neue', sans-serif" }}>
-
-            {/* Toast */}
-            {toast && (
-                <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-[#c6f135] text-black text-xs font-black px-6 py-2.5 rounded-full shadow-xl shadow-[#c6f135]/25">
-                    {toast}
-                </div>
-            )}
-
             {/* Simplified Top Nav - just back button */}
             <div className="flex items-center gap-3 px-4 lg:px-8 pt-6 pb-4 max-w-7xl mx-auto w-full">
                 <Button variant="ghost" size="sm" onClick={handleBack} className="gap-2">
@@ -180,26 +128,10 @@ function EventDetailPage() {
 
                 <div className="flex-1" />
 
-                {!isEditing ? (
-                    <Button variant="outline" size="sm" onClick={handleEdit}>
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                        </svg>
-                        Edit
-                    </Button>
-                ) : (
-                    <div className="flex items-center gap-2">
-                        <Button variant="ghost" size="sm" onClick={handleCancel}>
-                            <CloseIcon size={14} />
-                            Cancel
-                        </Button>
-                        <Button variant="default" size="sm" onClick={handleSave}>
-                            <CheckIcon size={14} />
-                            Save
-                        </Button>
-                    </div>
-                )}
+                <Button variant="outline" size="sm" onClick={handleEdit} className="gap-2">
+                    <Edit2 size={14} />
+                    Edit
+                </Button>
             </div>
 
             {/* Main Content Grid */}
@@ -208,30 +140,14 @@ function EventDetailPage() {
 
                     {/* LEFT: TICKET */}
                     <EventTicket
-                        ticketEvent={displayEvent}
+                        ticketEvent={event}
                         onTicketDownload={handleAddToCalendar}
                         onCheckin={handleCheckin}
                     />
 
-                    {/* RIGHT: Info & Form */}
+                    {/* RIGHT: Info */}
                     <div className="space-y-4">
-                        {!isEditing ? (
-                            <EventDetailsReadonly event={displayEvent} />
-                        ) : (
-                            <EventDetailsEdit
-                                draftData={draftData}
-                                onFieldUpdate={updateField}
-                                onDateTimeRangeUpdate={updateDateTimeRange}
-                            />
-                        )}
-
-                        {/* Action Buttons */}
-                        {isEditing ? (
-                            <EventActionsEdit
-                                onCancel={handleCancel}
-                                onSave={handleSave}
-                            />
-                        ) : (<></>)}
+                        <EventDetailsReadonly event={event} />
                     </div>
                 </div>
             </div>

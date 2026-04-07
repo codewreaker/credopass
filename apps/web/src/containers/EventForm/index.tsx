@@ -27,6 +27,7 @@ import './style.css';
 import type { LauncherState } from '@credopass/lib/stores';
 import { useOrganizationStore } from '@credopass/lib/stores';
 import { cn } from '@credopass/ui/lib/utils';
+import { AddressPicker } from '../../components/AddressPicker';
 
 // Modal form data type - exported for type safety
 export interface EventFormData {
@@ -343,27 +344,23 @@ const EventForm = ({ initialData = {}, isEditing = false, onClose }: EventFormPr
 
             {/* Location & Capacity Row */}
             <div className="form-row">
-              {/* Location */}
+              {/* Location - Address Picker */}
               <form.Field
                 name="location"
                 children={(field) => {
                   const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
                   return (
-                    <Field data-invalid={isInvalid} className="form-group">
+                    <Field data-invalid={isInvalid} className="form-group full-width">
                       <FieldLabel htmlFor={field.name} className="form-label">
                         <MapPin size={14} />
                         Location
                       </FieldLabel>
-                      <Input
-                        id={field.name}
-                        name={field.name}
-                        type="text"
-                        placeholder="Enter location"
+                      <AddressPicker
                         value={field.state.value}
-                        onBlur={field.handleBlur}
-                        onChange={(e) => field.handleChange(e.target.value)}
-                        aria-invalid={isInvalid}
+                        onChange={(value) => field.handleChange(value)}
+                        placeholder="Search for an address..."
                       />
+                      <FieldDescription>Start typing to search for an address</FieldDescription>
                       {isInvalid && <FieldError errors={field.state.meta.errors} />}
                     </Field>
                   );
