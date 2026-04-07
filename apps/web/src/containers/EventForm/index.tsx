@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useForm } from '@tanstack/react-form';
 import { toast } from 'sonner';
 import * as z from 'zod';
-import { format } from 'date-fns';
+import { format } from 'date-fns/format';
 import {
   Calendar as CalendarIcon,
   MapPin,

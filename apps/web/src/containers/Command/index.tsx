@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef } from 'react';
-import { useHotkeys } from '@tanstack/react-hotkeys';
+import { useHotkey } from '@tanstack/react-hotkeys';
 import {
   Calendar,
   User,
@@ -71,53 +71,50 @@ const CommandPalette: React.FC<{
   );
 
   // Register keyboard shortcuts using TanStack Hotkeys
-  useHotkeys([
-    {
-      hotkey: 'Mod+E',
-      callback: (e) => { e.preventDefault(); handleNewEvent(); },
-      meta: { name: 'New Event', description: 'Create a new event' },
-    },
-    {
-      hotkey: 'Mod+N',
-      callback: (e) => { e.preventDefault(); handleNewMember(); },
-      meta: { name: 'New Member', description: 'Register a new member' },
-    },
-    {
-      hotkey: 'Mod+I',
-      callback: (e) => { e.preventDefault(); handleNavigate('/checkin'); },
-      meta: { name: 'Check-In', description: 'Go to check-in page' },
-    },
-    {
-      hotkey: 'Mod+M',
-      callback: (e) => { e.preventDefault(); handleNavigate('/members'); },
-      meta: { name: 'Members', description: 'Go to members page' },
-    },
-    {
-      hotkey: 'Mod+V',
-      callback: (e) => { e.preventDefault(); handleNavigate('/events'); },
-      meta: { name: 'Events', description: 'Go to events page' },
-    },
-    {
-      hotkey: 'Mod+A',
-      callback: (e) => { e.preventDefault(); handleNavigate('/analytics'); },
-      meta: { name: 'Analytics', description: 'Go to analytics page' },
-    },
-    {
-      hotkey: 'Mod+T',
-      callback: (e) => { e.preventDefault(); handleNavigate('/database'); },
-      meta: { name: 'Tables', description: 'Go to database tables' },
-    },
-    {
-      hotkey: 'Mod+P',
-      callback: (e) => { e.preventDefault(); handleSignIn(); },
-      meta: { name: 'Profile', description: 'Open profile' },
-    },
-    {
-      hotkey: 'Mod+S',
-      callback: (e) => { e.preventDefault(); /* Settings */ },
-      meta: { name: 'Settings', description: 'Open settings' },
-    },
-  ]);
+  useHotkey('Mod+E', (event) => {
+    event.preventDefault();
+    handleNewEvent();
+  });
+
+  useHotkey('Mod+N', (event) => {
+    event.preventDefault();
+    handleNewMember();
+  });
+
+  useHotkey('Mod+I', (event) => {
+    event.preventDefault();
+    handleNavigate('/checkin');
+  });
+
+  useHotkey('Mod+M', (event) => {
+    event.preventDefault();
+    handleNavigate('/members');
+  });
+
+  useHotkey('Mod+V', (event) => {
+    event.preventDefault();
+    handleNavigate('/events');
+  });
+
+  useHotkey('Mod+A', (event) => {
+    event.preventDefault();
+    handleNavigate('/analytics');
+  });
+
+  useHotkey('Mod+T', (event) => {
+    event.preventDefault();
+    handleNavigate('/database');
+  });
+
+  useHotkey('Mod+P', (event) => {
+    event.preventDefault();
+    handleSignIn();
+  });
+
+  useHotkey('Mod+S', (event) => {
+    event.preventDefault();
+    // Settings behavior not implemented yet
+  });
 
   return (
     <Command className="command-palette" label="Command Palette">
