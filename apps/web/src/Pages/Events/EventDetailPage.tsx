@@ -14,7 +14,7 @@ import { useToolbarContext } from '@credopass/lib/hooks';
 import './event-detail.css';
 import { EventTicket } from './EventTicket';
 import { EventDetailsReadonly, EventDetailsEdit } from './EventDetails';
-import { EventActionsReadonly, EventActionsEdit } from './EventActions';
+import { EventActionsEdit } from './EventActions';
 
 const handleAddToCalendar = (event: EventType) => {
     if (!event) return;
@@ -74,10 +74,6 @@ function EventDetailPage() {
         navigate({ to: '/checkin/$eventId', params: { eventId } });
     };
 
-    const handleRegister = () => {
-        // TODO: Implement registration logic
-        console.log('Register clicked for event:', eventId);
-    };
 
     const handleEdit = () => {
         if (!event) return;
@@ -181,9 +177,9 @@ function EventDetailPage() {
                     <ArrowLeft size={16} />
                     <span>Back to Events</span>
                 </Button>
-                
+
                 <div className="flex-1" />
-                
+
                 {!isEditing ? (
                     <Button variant="outline" size="sm" onClick={handleEdit}>
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -211,7 +207,11 @@ function EventDetailPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
 
                     {/* LEFT: TICKET */}
-                    <EventTicket ticketEvent={displayEvent} />
+                    <EventTicket
+                        ticketEvent={displayEvent}
+                        onTicketDownload={handleAddToCalendar}
+                        onCheckin={handleCheckin}
+                    />
 
                     {/* RIGHT: Info & Form */}
                     <div className="space-y-4">
@@ -231,14 +231,7 @@ function EventDetailPage() {
                                 onCancel={handleCancel}
                                 onSave={handleSave}
                             />
-                        ) : (
-                            <EventActionsReadonly
-                                event={event}
-                                onRegister={handleRegister}
-                                onAddToCalendar={handleAddToCalendar}
-                                onCheckin={handleCheckin}
-                            />
-                        )}
+                        ) : (<></>)}
                     </div>
                 </div>
             </div>

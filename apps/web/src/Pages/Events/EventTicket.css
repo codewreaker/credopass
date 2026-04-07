@@ -3,8 +3,7 @@
    Premium animated border effect for QR codes
    ================================================================ */
 
-.animated-border-box,
-.animated-border-box-glow {
+.animated-border-box {
   height: 100%;
   width: 100%;
   position: absolute;
@@ -16,14 +15,7 @@
   transform: translate(-50%, -50%);
 }
 
-.animated-border-box-glow {
-  overflow: hidden;
-  /* Glow Blur */
-  filter: blur(20px);
-}
-
-.animated-border-box::before,
-.animated-border-box-glow::before {
+.animated-border-box::before {
   content: '';
   z-index: -2;
   text-align: center;

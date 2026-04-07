@@ -21,22 +21,16 @@ import {
   XAxis, 
   YAxis, 
   PieChart, 
-  Pie, 
-  Cell,
-  Line,
-  LineChart,
+  Pie,
   Area,
   AreaChart,
-  ResponsiveContainer,
-  Legend
+  ResponsiveContainer
 } from "recharts";
 import type { ChartConfig } from "@credopass/ui/components/chart";
 import {
   ChartContainer,
   ChartTooltip,
-  ChartTooltipContent,
-  ChartLegend,
-  ChartLegendContent
+  ChartTooltipContent
 } from "@credopass/ui/components/chart";
 import {
   Card,
@@ -47,7 +41,7 @@ import {
 } from "@credopass/ui/components/card";
 import { Badge } from "@credopass/ui/components/badge";
 import { Button } from "@credopass/ui/components/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@credopass/ui/components/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@credopass/ui/components/tabs";
 import { useIsMobile } from '@credopass/ui/hooks/use-mobile';
 import { cn } from '@credopass/ui/lib/utils';
 import "./style.css";
