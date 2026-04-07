@@ -110,7 +110,7 @@ function EventDetailPage() {
             // TODO: Update event in database
             // await eventCollection.update(event.id, draftData);
 
-            showToast("Event updated ✓");
+            showToast("Event updated");
             setIsEditing(false);
         } catch (error) {
             showToast("Error saving event");
@@ -151,11 +151,11 @@ function EventDetailPage() {
             <div className="event-detail-page not-found">
                 <div className="not-found-content">
                     <h2>Event Not Found</h2>
-                    <p>The event you're looking for doesn't exist or has been removed.</p>
-                    <button type="button" className="back-button" onClick={handleBack}>
+                    <p>The event you&apos;re looking for doesn&apos;t exist or has been removed.</p>
+                    <Button variant="outline" onClick={handleBack}>
                         <ArrowLeft size={16} />
                         Back to Events
-                    </button>
+                    </Button>
                 </div>
             </div>
         );
@@ -175,15 +175,15 @@ function EventDetailPage() {
                 </div>
             )}
 
-            {/* ── Top Nav ── */}
+            {/* Simplified Top Nav - just back button */}
             <div className="flex items-center gap-3 px-4 lg:px-8 pt-6 pb-4 max-w-7xl mx-auto w-full">
-                <Button variant="ghost" size="icon" onClick={handleBack}>
+                <Button variant="ghost" size="sm" onClick={handleBack} className="gap-2">
                     <ArrowLeft size={16} />
+                    <span>Back to Events</span>
                 </Button>
-                <div className="flex-1 min-w-0">
-                    <p className="text-[10px] text-zinc-500 uppercase tracking-widest">Event Details</p>
-                    <p className="text-base font-black text-white truncate leading-tight">{displayEvent.name}</p>
-                </div>
+                
+                <div className="flex-1" />
+                
                 {!isEditing ? (
                     <Button variant="outline" size="sm" onClick={handleEdit}>
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -206,7 +206,7 @@ function EventDetailPage() {
                 )}
             </div>
 
-            {/* ── Main Content Grid ── */}
+            {/* Main Content Grid */}
             <div className="flex-1 px-4 lg:px-8 pb-10 max-w-7xl mx-auto w-full">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
 

@@ -1,4 +1,4 @@
-import { FC } from 'react';
+import { FC, useState, useEffect, useRef } from 'react';
 import type { EventType } from '@credopass/lib/schemas';
 import { Badge } from '@credopass/ui/components/badge';
 import { Button } from '@credopass/ui/components/button';
@@ -9,11 +9,14 @@ import { Label } from '@credopass/ui/components/label';
 import { DateTimeRangePicker } from '@credopass/ui/components/date-time-range-picker';
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from '@credopass/ui/components/input-group';
 import { ButtonGroup } from '@credopass/ui/components/button-group';
+import { Popover, PopoverContent, PopoverTrigger } from '@credopass/ui/components/popover';
 import {
     MapPin,
     MinusIcon,
     PlusIcon,
-    TicketCheck
+    TicketCheck,
+    Search,
+    Navigation
 } from 'lucide-react';
 import { MapWithMarker } from '@credopass/ui/components/map-with-marker';
 
@@ -35,6 +38,127 @@ export const EventDetailsReadonly: FC<EventDetailsReadonlyProps> = ({ event }) =
                 <Button className="w-full">Navigate</Button>
             </CardFooter>
         </Card>
+    );
+};
+
+// Address Picker Component with Google Places-like functionality
+interface AddressPickerProps {
+    value: string;
+    onChange: (address: string) => void;
+}
+
+const AddressPicker: FC<AddressPickerProps> = ({ value, onChange }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const [searchQuery, setSearchQuery] = useState(value);
+    const [suggestions, setSuggestions] = useState<Array<{ id: string; name: string; address: string }>>([]);
+    const [isSearching, setIsSearching] = useState(false);
+    const inputRef = useRef<HTMLInputElement>(null);
+
+    // Simulate address search (replace with actual Google Places API)
+    useEffect(() => {
+        if (!searchQuery || searchQuery.length < 3) {
+            setSuggestions([]);
+            return;
+        }
+
+        setIsSearching(true);
+        // Debounce search
+        const timer = setTimeout(() => {
+            // Mock suggestions - replace with Google Places API
+            const mockSuggestions = [
+                { id: '1', name: 'London Eye', address: 'Riverside Building, County Hall, London SE1 7PB, UK' },
+                { id: '2', name: 'Tower of London', address: 'St Katharine\'s & Wapping, London EC3N 4AB, UK' },
+                { id: '3', name: 'Buckingham Palace', address: 'Westminster, London SW1A 1AA, UK' },
+                { id: '4', name: 'Big Ben', address: 'Westminster, London SW1A 0AA, UK' },
+                { id: '5', name: 'Hyde Park', address: 'Hyde Park, London W2 2UH, UK' },
+            ].filter(s => 
+                s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                s.address.toLowerCase().includes(searchQuery.toLowerCase())
+            );
+            setSuggestions(mockSuggestions);
+            setIsSearching(false);
+        }, 300);
+
+        return () => clearTimeout(timer);
+    }, [searchQuery]);
+
+    const handleSelect = (suggestion: { name: string; address: string }) => {
+        const fullAddress = `${suggestion.name}, ${suggestion.address}`;
+        onChange(fullAddress);
+        setSearchQuery(fullAddress);
+        setIsOpen(false);
+    };
+
+    return (
+        <Popover open={isOpen} onOpenChange={setIsOpen}>
+            <PopoverTrigger render={
+                <div className="relative">
+                    <InputGroup className="[--radius:9999px]">
+                        <InputGroupAddon>
+                            <InputGroupButton variant="secondary" size="icon-xs">
+                                <MapPin />
+                            </InputGroupButton>
+                        </InputGroupAddon>
+                        <InputGroupAddon className="text-muted-foreground pl-1.5">
+                            Location:
+                        </InputGroupAddon>
+                        <InputGroupInput
+                            ref={inputRef}
+                            value={searchQuery}
+                            onChange={(e) => {
+                                setSearchQuery(e.target.value);
+                                setIsOpen(true);
+                            }}
+                            onFocus={() => setIsOpen(true)}
+                            placeholder="Search for an address..."
+                        />
+                        <InputGroupAddon>
+                            <Search size={14} className="text-muted-foreground" />
+                        </InputGroupAddon>
+                    </InputGroup>
+                </div>
+            } />
+            <PopoverContent className="w-[400px] p-0" align="start">
+                <div className="max-h-[300px] overflow-auto">
+                    {isSearching ? (
+                        <div className="p-4 text-center text-sm text-muted-foreground">
+                            Searching...
+                        </div>
+                    ) : suggestions.length > 0 ? (
+                        <div className="py-2">
+                            {suggestions.map((suggestion) => (
+                                <button
+                                    key={suggestion.id}
+                                    type="button"
+                                    className="w-full px-4 py-3 text-left hover:bg-muted transition-colors"
+                                    onClick={() => handleSelect(suggestion)}
+                                >
+                                    <div className="flex items-start gap-3">
+                                        <MapPin size={16} className="text-primary mt-0.5 shrink-0" />
+                                        <div>
+                                            <p className="text-sm font-medium">{suggestion.name}</p>
+                                            <p className="text-xs text-muted-foreground">{suggestion.address}</p>
+                                        </div>
+                                    </div>
+                                </button>
+                            ))}
+                        </div>
+                    ) : searchQuery.length >= 3 ? (
+                        <div className="p-4 text-center">
+                            <MapPin size={24} className="mx-auto text-muted-foreground/50 mb-2" />
+                            <p className="text-sm text-muted-foreground">No addresses found</p>
+                            <p className="text-xs text-muted-foreground/60 mt-1">Try a different search term</p>
+                        </div>
+                    ) : (
+                        <div className="p-4 text-center">
+                            <Navigation size={24} className="mx-auto text-muted-foreground/50 mb-2" />
+                            <p className="text-sm text-muted-foreground">Start typing to search</p>
+                            <p className="text-xs text-muted-foreground/60 mt-1">Enter at least 3 characters</p>
+                        </div>
+                    )}
+                </div>
+            </PopoverContent>
+        </Popover>
     );
 };
 
@@ -103,23 +227,15 @@ export const EventDetailsEdit: FC<EventDetailsEditProps> = ({
                     />
                 </div>
 
-                {/* Location */}
+                {/* Location with Address Picker */}
                 <div className="space-y-2">
-                    <InputGroup className="[--radius:9999px]">
-                        <InputGroupAddon>
-                            <InputGroupButton variant="secondary" size="icon-xs">
-                                <MapPin />
-                            </InputGroupButton>
-                        </InputGroupAddon>
-                        <InputGroupAddon className="text-muted-foreground pl-1.5">
-                            Location:
-                        </InputGroupAddon>
-                        <InputGroupInput
-                            id="event-location"
-                            value={draftData.location || ''}
-                            onChange={(e) => onFieldUpdate('location', e.target.value)}
-                        />
-                    </InputGroup>
+                    <Label className="text-xs text-zinc-400 uppercase tracking-wider">
+                        Location
+                    </Label>
+                    <AddressPicker
+                        value={draftData.location || ''}
+                        onChange={(address) => onFieldUpdate('location', address)}
+                    />
                 </div>
 
                 {/* Capacity */}

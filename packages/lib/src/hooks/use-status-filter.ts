@@ -1,6 +1,5 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { EventType } from '../schemas';
-import { useCookies } from './use-cookies';
 
 export const EVENTS_FILTER_COOKIE_NAME = 'events_filter_selection';
 export const EVENTS_FILTER_ENABLED_COOKIE_NAME = 'events_filter_enabled';
@@ -8,34 +7,96 @@ export const EVENTS_FILTER_ENABLED_COOKIE_NAME = 'events_filter_enabled';
 export type EventTypeFilters = EventType['status'] | 'actions' | 'timezone';
 
 const DEFAULT_FILTERS: EventTypeFilters[] = ['scheduled', 'ongoing', 'actions'];
+const DB_NAME = 'credopass_settings';
+const STORE_NAME = 'filters';
+const DB_VERSION = 1;
+
+// IndexedDB helper functions
+const openDB = (): Promise<IDBDatabase> => {
+    return new Promise((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME, DB_VERSION);
+        
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () => resolve(request.result);
+        
+        request.onupgradeneeded = (event) => {
+            const db = (event.target as IDBOpenDBRequest).result;
+            if (!db.objectStoreNames.contains(STORE_NAME)) {
+                db.createObjectStore(STORE_NAME);
+            }
+        };
+    });
+};
+
+const getFromDB = async <T>(key: string): Promise<T | undefined> => {
+    try {
+        const db = await openDB();
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction(STORE_NAME, 'readonly');
+            const store = transaction.objectStore(STORE_NAME);
+            const request = store.get(key);
+            
+            request.onerror = () => reject(request.error);
+            request.onsuccess = () => resolve(request.result);
+        });
+    } catch {
+        return undefined;
+    }
+};
+
+const setToDB = async <T>(key: string, value: T): Promise<void> => {
+    try {
+        const db = await openDB();
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction(STORE_NAME, 'readwrite');
+            const store = transaction.objectStore(STORE_NAME);
+            const request = store.put(value, key);
+            
+            request.onerror = () => reject(request.error);
+            request.onsuccess = () => resolve();
+        });
+    } catch {
+        // Silently fail if IndexedDB is not available
+    }
+};
 
 export function useStatusFilter(allFilters: EventTypeFilters[]) {
-    const [filterEnabledCookie, setFilterEnabledCookie] = useCookies(EVENTS_FILTER_ENABLED_COOKIE_NAME);
-    const [filterEnabled, setFilterEnabledState] = useState<boolean>(
-        filterEnabledCookie !== undefined ? filterEnabledCookie === 'true' : true
-    );
+    const [filterEnabled, setFilterEnabledState] = useState<boolean>(true);
+    const [selectedFilters, setSelectedFiltersState] = useState<EventTypeFilters[]>(DEFAULT_FILTERS);
+    const [isInitialized, setIsInitialized] = useState(false);
 
-    const [filterCookie, setFilterCookie] = useCookies(EVENTS_FILTER_COOKIE_NAME);
-    const [selectedFilters, setSelectedFiltersState] = useState<EventTypeFilters[]>(() => {
-        try {
-            return filterCookie ? JSON.parse(filterCookie) : DEFAULT_FILTERS;
-        } catch {
-            return DEFAULT_FILTERS;
-        }
-    });
+    // Load from IndexedDB on mount
+    useEffect(() => {
+        const loadFromDB = async () => {
+            const [storedEnabled, storedFilters] = await Promise.all([
+                getFromDB<boolean>(EVENTS_FILTER_ENABLED_COOKIE_NAME),
+                getFromDB<EventTypeFilters[]>(EVENTS_FILTER_COOKIE_NAME),
+            ]);
+            
+            if (storedEnabled !== undefined) {
+                setFilterEnabledState(storedEnabled);
+            }
+            if (storedFilters !== undefined) {
+                setSelectedFiltersState(storedFilters);
+            }
+            setIsInitialized(true);
+        };
+        
+        loadFromDB();
+    }, []);
 
     const setFilterEnabled = useCallback((value: boolean | ((prev: boolean) => boolean)) => {
         setFilterEnabledState((prev) => {
             const next = typeof value === 'function' ? value(prev) : value;
-            setFilterEnabledCookie(String(next), { path: '/', expires: 7 });
+            setToDB(EVENTS_FILTER_ENABLED_COOKIE_NAME, next);
             return next;
         });
-    }, [setFilterEnabledCookie]);
+    }, []);
 
     const setSelectedFilters = useCallback((values: EventTypeFilters[]) => {
         setSelectedFiltersState(values);
-        setFilterCookie(JSON.stringify(values), { path: '/', expires: 7 });
-    }, [setFilterCookie]);
+        setToDB(EVENTS_FILTER_COOKIE_NAME, values);
+    }, []);
 
     const handleFilterChange = useCallback((value: EventTypeFilters | EventTypeFilters[]) => {
         const values = Array.isArray(value) ? value : [value];
@@ -76,5 +137,6 @@ export function useStatusFilter(allFilters: EventTypeFilters[]) {
         selectedStatuses,
         enableActions,
         enableTimezone,
+        isInitialized,
     };
 }

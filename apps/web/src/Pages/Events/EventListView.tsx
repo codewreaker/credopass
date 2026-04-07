@@ -31,23 +31,36 @@ const EventListView: React.FC<EventListViewProps> = ({
 }) => {
     const navigate = useNavigate();
     const isMobile = useIsMobile();
-    //sort upcoming/scheduled event closest to todays date instead of just desc
+    
+    // Sort upcoming/scheduled event closest to today's date instead of just desc
     const grouped = useMemo(() => {
         const groupedMap = groupEventsByStatus(events);
         groupedMap.set('scheduled', sortEventsByClosestToToday(groupedMap.get('scheduled') || []));
         return getGroupedEventsData<EventWithOrg>(groupedMap, selectedStatus);
     }, [events, selectedStatus]);
 
+    // Check if there are any ongoing or upcoming events
+    const hasOngoingOrUpcoming = useMemo(() => {
+        return events.some(event => 
+            event.status === 'ongoing' || event.status === 'scheduled'
+        );
+    }, [events]);
+
     const handleNavigateToEvent = useCallback((eventId: string) => {
         navigate({ to: '/events/$eventId', params: { eventId } });
     }, [navigate]);
 
-    if (events.length === 0) {
+    // Show empty state ONLY if there are no ongoing or upcoming events
+    // (past/completed events don't count toward having "active" events)
+    if (!hasOngoingOrUpcoming) {
         return (
             <div className="flex items-center justify-center py-20">
                 <EmptyState
-                    title="No events yet"
-                    description="Create your first event to get started. You can set dates, locations, and capacity."
+                    title="No upcoming events"
+                    description={events.length > 0 
+                        ? "You have past events but no upcoming ones. Create a new event to get started."
+                        : "Create your first event to get started. You can set dates, locations, and capacity."
+                    }
                     action={{ label: 'Create Event', onClick: onCreateEvent }}
                 />
             </div>

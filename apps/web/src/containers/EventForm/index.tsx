@@ -2,13 +2,15 @@ import { useState } from 'react';
 import { useForm } from '@tanstack/react-form';
 import { toast } from 'sonner';
 import * as z from 'zod';
+import { format } from 'date-fns';
 import {
   Calendar as CalendarIcon,
   MapPin,
   Users,
   FileText,
   Building2,
-  AlertCircle
+  AlertCircle,
+  Clock
 } from 'lucide-react';
 import { getCollections } from '@credopass/api-client/collections';
 import type { EventStatus } from '@credopass/lib/schemas';
@@ -19,10 +21,12 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectVa
 import { Textarea } from '@credopass/ui/components/textarea';
 import { DialogClose, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@credopass/ui/components/dialog';
 import { Alert, AlertDescription, AlertTitle } from '@credopass/ui/components/alert';
-import { DateTimeRangePicker } from '@credopass/ui/components/date-time-range-picker';
+import { Calendar } from '@credopass/ui/components/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@credopass/ui/components/popover';
 import './style.css';
 import type { LauncherState } from '@credopass/lib/stores';
 import { useOrganizationStore } from '@credopass/lib/stores';
+import { cn } from '@credopass/ui/lib/utils';
 
 // Modal form data type - exported for type safety
 export interface EventFormData {
@@ -42,7 +46,7 @@ export interface EventFormProps {
   onClose?: () => void;
 }
 
-// Status options for the select
+// Status options for the select (only shown when editing)
 const statusOptions = [
   { value: 'draft', label: 'Draft' },
   { value: 'scheduled', label: 'Scheduled' },
@@ -86,6 +90,95 @@ export const launchEventForm = (
 
 const { events: eventCollection } = getCollections();
 
+// Single DateTime Picker Component with separate button
+interface DateTimePickerProps {
+  label: string;
+  value?: Date;
+  onChange: (date: Date | undefined) => void;
+  icon?: React.ReactNode;
+  placeholder?: string;
+}
+
+const DateTimePicker: React.FC<DateTimePickerProps> = ({
+  label,
+  value,
+  onChange,
+  icon,
+  placeholder = "Select date & time"
+}) => {
+  const [time, setTime] = useState(value ? format(value, "HH:mm") : "09:00");
+
+  const handleDateSelect = (date: Date | undefined) => {
+    if (!date) {
+      onChange(undefined);
+      return;
+    }
+    const [hours, minutes] = time.split(':').map(Number);
+    const combined = new Date(date);
+    combined.setHours(hours, minutes, 0, 0);
+    onChange(combined);
+  };
+
+  const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newTime = e.target.value;
+    setTime(newTime);
+    if (value) {
+      const [hours, minutes] = newTime.split(':').map(Number);
+      const combined = new Date(value);
+      combined.setHours(hours, minutes, 0, 0);
+      onChange(combined);
+    }
+  };
+
+  return (
+    <Popover>
+      <PopoverTrigger render={
+        <Button
+          variant="outline"
+          className={cn(
+            "w-full justify-start text-left font-normal h-auto py-3",
+            !value && "text-muted-foreground"
+          )}
+        >
+          <div className="flex items-center gap-3 w-full">
+            {icon || <CalendarIcon className="size-4" />}
+            <div className="flex flex-col items-start gap-0.5">
+              <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</span>
+              {value ? (
+                <span className="text-sm font-medium">
+                  {format(value, "EEE, MMM d, yyyy")} at {format(value, "h:mm a")}
+                </span>
+              ) : (
+                <span className="text-sm">{placeholder}</span>
+              )}
+            </div>
+          </div>
+        </Button>
+      } />
+      <PopoverContent className="w-auto p-0" align="start">
+        <div className="flex flex-col">
+          <Calendar
+            mode="single"
+            selected={value}
+            onSelect={handleDateSelect}
+            initialFocus
+          />
+          <div className="flex items-center gap-2 p-3 border-t">
+            <Clock className="size-4 text-muted-foreground" />
+            <span className="text-sm text-muted-foreground">Time:</span>
+            <Input
+              type="time"
+              value={time}
+              onChange={handleTimeChange}
+              className="w-28"
+            />
+          </div>
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+};
+
 // Event Form Component
 const EventForm = ({ initialData = {}, isEditing = false, onClose }: EventFormProps) => {
   const [isMutating, setIsMutating] = useState(false);
@@ -98,7 +191,7 @@ const EventForm = ({ initialData = {}, isEditing = false, onClose }: EventFormPr
       description: initialData.description || '',
       status: (initialData.status || 'scheduled') as EventStatus,
       dateTimeRange: initialData.dateTimeRange || undefined,
-      location: initialData.location || 'london',
+      location: initialData.location || '',
       capacity: initialData.capacity || '',
       organizationId: initialData.organizationId || activeOrganizationId || '',
     },
@@ -113,7 +206,7 @@ const EventForm = ({ initialData = {}, isEditing = false, onClose }: EventFormPr
       }
 
       if (!value.dateTimeRange?.from) {
-        toast.error('Please select a date range');
+        toast.error('Please select a start date');
         return;
       }
 
@@ -122,7 +215,7 @@ const EventForm = ({ initialData = {}, isEditing = false, onClose }: EventFormPr
       const eventData = {
         name: value.name,
         description: value.description || null,
-        status: value.status,
+        status: isEditing ? value.status : 'scheduled' as EventStatus, // Default to scheduled for new events
         startTime: value.dateTimeRange.from,
         endTime: value.dateTimeRange.to || value.dateTimeRange.from,
         location: value.location,
@@ -167,9 +260,6 @@ const EventForm = ({ initialData = {}, isEditing = false, onClose }: EventFormPr
       }
     },
   });
-
-
-
 
   return (
     <>
@@ -217,22 +307,33 @@ const EventForm = ({ initialData = {}, isEditing = false, onClose }: EventFormPr
               }}
             />
 
-            {/* Date & Time Range */}
+            {/* Date & Time - Separate Start and End Buttons */}
             <form.Field
               name="dateTimeRange"
               children={(field) => {
                 const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
+                const currentValue = field.state.value || { from: undefined, to: undefined };
+                
                 return (
                   <Field data-invalid={isInvalid} className="form-group full-width">
-                    <FieldLabel htmlFor={field.name} className="form-label">
+                    <FieldLabel className="form-label">
                       <CalendarIcon size={14} />
                       Date & Time
                     </FieldLabel>
-                    <DateTimeRangePicker
-                      id={field.name}
-                      value={field.state.value}
-                      onChange={(range) => field.handleChange(range)}
-                    />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <DateTimePicker
+                        label="Start"
+                        value={currentValue.from}
+                        onChange={(date) => field.handleChange({ ...currentValue, from: date })}
+                        placeholder="Set start date"
+                      />
+                      <DateTimePicker
+                        label="End"
+                        value={currentValue.to}
+                        onChange={(date) => field.handleChange({ ...currentValue, to: date })}
+                        placeholder="Set end date"
+                      />
+                    </div>
                     <FieldDescription>Select the start and end date/time for your event</FieldDescription>
                     {isInvalid && <FieldError errors={field.state.meta.errors} />}
                   </Field>
@@ -240,7 +341,7 @@ const EventForm = ({ initialData = {}, isEditing = false, onClose }: EventFormPr
               }}
             />
 
-            {/* Status & Capacity */}
+            {/* Location & Capacity Row */}
             <div className="form-row">
               {/* Location */}
               <form.Field
@@ -268,36 +369,41 @@ const EventForm = ({ initialData = {}, isEditing = false, onClose }: EventFormPr
                   );
                 }}
               />
-              <form.Field
-                name="status"
-                children={(field) => {
-                  const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
-                  return (
-                    <Field data-invalid={isInvalid} className="form-group">
-                      <FieldLabel htmlFor={field.name} className="form-label">Status</FieldLabel>
-                      <Select
-                        name={field.name}
-                        value={field.state.value}
-                        onValueChange={(value) => field.handleChange(value as EventStatus)}
-                      >
-                        <SelectTrigger id={field.name} aria-invalid={isInvalid}>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectGroup>
-                            {statusOptions.map((option) => (
-                              <SelectItem key={option.value} value={option.value}>
-                                {option.label}
-                              </SelectItem>
-                            ))}
-                          </SelectGroup>
-                        </SelectContent>
-                      </Select>
-                      {isInvalid && <FieldError errors={field.state.meta.errors} />}
-                    </Field>
-                  );
-                }}
-              />
+
+              {/* Status - Only show when editing */}
+              {isEditing && (
+                <form.Field
+                  name="status"
+                  children={(field) => {
+                    const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
+                    return (
+                      <Field data-invalid={isInvalid} className="form-group">
+                        <FieldLabel htmlFor={field.name} className="form-label">Status</FieldLabel>
+                        <Select
+                          name={field.name}
+                          value={field.state.value}
+                          onValueChange={(value) => field.handleChange(value as EventStatus)}
+                        >
+                          <SelectTrigger id={field.name} aria-invalid={isInvalid}>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectGroup>
+                              {statusOptions.map((option) => (
+                                <SelectItem key={option.value} value={option.value}>
+                                  {option.label}
+                                </SelectItem>
+                              ))}
+                            </SelectGroup>
+                          </SelectContent>
+                        </Select>
+                        {isInvalid && <FieldError errors={field.state.meta.errors} />}
+                      </Field>
+                    );
+                  }}
+                />
+              )}
+
               <form.Field
                 name="capacity"
                 children={(field) => {
@@ -318,7 +424,7 @@ const EventForm = ({ initialData = {}, isEditing = false, onClose }: EventFormPr
                         onChange={(e) => field.handleChange(e.target.value)}
                         aria-invalid={isInvalid}
                       />
-                      <FieldDescription> Leave blank for unlimited (optional)</FieldDescription>
+                      <FieldDescription>Leave blank for unlimited (optional)</FieldDescription>
                       {isInvalid && <FieldError errors={field.state.meta.errors} />}
                     </Field>
                   );
