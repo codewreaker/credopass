@@ -8,12 +8,9 @@ import {
     Hand,
     Download,
     ChevronDown,
-    ChevronUp,
-    X
+    ChevronUp
 } from 'lucide-react';
 import { Badge } from '@credopass/ui/components/badge';
-import { Button } from '@credopass/ui/components/button';
-import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@credopass/ui/components/dialog';
 import { GlowingQRCode } from '@credopass/ui/components/glowing-qr-code';
 import { cn } from '@credopass/ui/lib/utils';
 import './EventTicket.css';

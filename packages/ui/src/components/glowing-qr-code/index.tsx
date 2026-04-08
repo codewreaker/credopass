@@ -67,7 +67,7 @@ export const GlowingQRCode: FC<GlowingQRCodeProps> = ({
   showGlow = true,
   bgColor = '#ffffff',
   fgColor = '#000000',
-  level = 'H',
+  level = 'L',
 }) => {
   // Calculate container size with padding for the glow effect
   const containerSize = size + 20;
@@ -101,7 +101,7 @@ export const GlowingQRCode: FC<GlowingQRCodeProps> = ({
       {showGlow && (
         <div
           className="glowing-qr-border"
-          style={{ width: containerSize + 2, height: containerSize + 2 }}
+          style={{ width: containerSize - 10, height: containerSize - 10}}
         />
       )}
 
@@ -123,6 +123,8 @@ export const GlowingQRCode: FC<GlowingQRCodeProps> = ({
               level={level}
               bgColor={bgColor}
               fgColor={fgColor}
+              marginSize={4}
+              
             />
           </div>
         </div>
