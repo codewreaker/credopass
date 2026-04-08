@@ -8,7 +8,8 @@ import {
     ScanQrCodeIcon,
     Edit2,
 } from 'lucide-react';
-import { useToolbarContext, useLauncher } from '@credopass/lib/hooks';
+import { useToolbarContext } from '@credopass/lib/hooks';
+import { useLauncher } from '@credopass/lib/stores';
 import './event-detail.css';
 import { EventTicket } from './EventTicket';
 import { EventDetailsReadonly } from './EventDetails';

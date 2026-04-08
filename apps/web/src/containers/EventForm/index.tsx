@@ -27,7 +27,15 @@ import './style.css';
 import type { LauncherState } from '@credopass/lib/stores';
 import { useOrganizationStore } from '@credopass/lib/stores';
 import { cn } from '@credopass/ui/lib/utils';
-import { AddressPicker } from '../../components/AddressPicker';
+
+
+import React from 'react';
+import AddressPicker from '@credopass/ui/components/address-autofill';
+import type { AddressData } from '@credopass/lib/hooks';
+import { MAPBOX_ACCESS_TOKEN } from '../../config';
+
+
+
 
 // Modal form data type - exported for type safety
 export interface EventFormData {
@@ -180,6 +188,21 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
   );
 };
 
+const parseAddress = (addr: AddressData) => {
+  try {
+    const {
+      addressLine1, addressLine2, city, postalCode, state, country
+    } = addr
+    return [
+      addressLine1, addressLine2, city, postalCode, state, country
+    ].filter(Boolean).join(',');
+  } catch (error) {
+    console.error(error)
+    return JSON.stringify(addr, null, 4)
+  }
+
+}
+
 // Event Form Component
 const EventForm = ({ initialData = {}, isEditing = false, onClose }: EventFormProps) => {
   const [isMutating, setIsMutating] = useState(false);
@@ -314,7 +337,7 @@ const EventForm = ({ initialData = {}, isEditing = false, onClose }: EventFormPr
               children={(field) => {
                 const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
                 const currentValue = field.state.value || { from: undefined, to: undefined };
-                
+
                 return (
                   <Field data-invalid={isInvalid} className="form-group full-width">
                     <FieldLabel className="form-label">
@@ -356,11 +379,11 @@ const EventForm = ({ initialData = {}, isEditing = false, onClose }: EventFormPr
                         Location
                       </FieldLabel>
                       <AddressPicker
-                        value={field.state.value}
-                        onChange={(value) => field.handleChange(value)}
-                        placeholder="Search for an address..."
+                        accessToken={MAPBOX_ACCESS_TOKEN}
+                        onChange={(addressData) => field.handleChange(parseAddress(addressData))}
+                        placeholder={'Start typing to search for an address'}
+                        showRecent={true}
                       />
-                      <FieldDescription>Start typing to search for an address</FieldDescription>
                       {isInvalid && <FieldError errors={field.state.meta.errors} />}
                     </Field>
                   );

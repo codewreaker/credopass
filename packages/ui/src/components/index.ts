@@ -37,6 +37,7 @@ export * from './button-group'
 export * from './kbd'
 export * from './chip-filter'
 export * from './sonner'
+export * from './address-autofill'
 
 // Web components (migrated from apps/web)
 export * from './empty-state';
