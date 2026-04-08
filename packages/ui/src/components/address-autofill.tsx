@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useRef, useState, useEffect } from 'react';
+import React, { useCallback, useRef, useState, useEffect, useMemo } from 'react';
 import { AddressAutofill, type AddressAutofillRefType } from '@mapbox/search-js-react';
 import type { AddressAutofillRetrieveResponse } from '@mapbox/search-js-core';
 import { Clock, Trash2 } from 'lucide-react';
@@ -24,12 +24,16 @@ export interface AddressData {
 interface StoredAddressSnapshot {
   id: string;
   response: AddressAutofillRetrieveResponse;
+  /** Normalized key for fast deduplication */
+  normalizedKey: string;
   timestamp: number;
 }
 
 // Constants
 const STORED_ADDRESSES_COOKIE = 'credopass_stored_addresses';
 const MAX_STORED_ADDRESSES = 5;
+/** Debounce delay for cookie writes to prevent excessive I/O */
+const COOKIE_WRITE_DEBOUNCE_MS = 300;
 
 // Native Cookie API utilities
 const getCookie = (name: string): string | null => {
@@ -47,7 +51,6 @@ const setCookie = (name: string, value: string, days: number = 365): void => {
   const isSecure = typeof window !== 'undefined' && window.location.protocol === 'https:';
   const cookie = `${name}=${encodeURIComponent(value)}; expires=${expires.toUTCString()}; path=/${isSecure ? '; secure' : ''}; samesite=lax`;
   document.cookie = cookie;
-  console.log('[Credopass] Cookie set:', name, 'secure:', isSecure);
 };
 
 const removeCookie = (name: string): void => {
@@ -55,47 +58,153 @@ const removeCookie = (name: string): void => {
   document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
 };
 
-// Storage utilities
+/**
+ * Normalize an address string for comparison
+ * - Lowercase
+ * - Remove punctuation and extra whitespace
+ * - Standardize common abbreviations
+ */
+const normalizeAddressString = (str: string | undefined | null): string => {
+  if (!str) return '';
+  return str
+    .toLowerCase()
+    .replace(/[.,#\-\/\\]/g, ' ')  // Replace punctuation with spaces
+    .replace(/\s+/g, ' ')          // Collapse multiple spaces
+    .trim()
+    // Common abbreviations
+    .replace(/\bstreet\b/g, 'st')
+    .replace(/\bavenue\b/g, 'ave')
+    .replace(/\bboulevard\b/g, 'blvd')
+    .replace(/\bdrive\b/g, 'dr')
+    .replace(/\broad\b/g, 'rd')
+    .replace(/\blane\b/g, 'ln')
+    .replace(/\bcourt\b/g, 'ct')
+    .replace(/\bapartment\b/g, 'apt')
+    .replace(/\bsuite\b/g, 'ste')
+    .replace(/\bnorth\b/g, 'n')
+    .replace(/\bsouth\b/g, 's')
+    .replace(/\beast\b/g, 'e')
+    .replace(/\bwest\b/g, 'w');
+};
+
+/**
+ * Create a normalized key from address properties for deduplication
+ */
+const createNormalizedKey = (props: any): string => {
+  if (!props) return '';
+  const parts = [
+    normalizeAddressString(props.address_line1),
+    normalizeAddressString(props.city),
+    normalizeAddressString(props.postcode),
+  ].filter(Boolean);
+  return parts.join('|');
+};
+
+/**
+ * Extract properties from response safely
+ */
+const getPropsFromResponse = (response: AddressAutofillRetrieveResponse | undefined): any | null => {
+  return response?.features?.[0]?.properties ?? null;
+};
+
+// In-memory cache for stored addresses to avoid repeated cookie parsing
+let cachedAddresses: StoredAddressSnapshot[] | null = null;
+let cacheTimestamp = 0;
+const CACHE_TTL_MS = 5000; // 5 second cache
+
+// Storage utilities with caching
 const getStoredAddresses = (): StoredAddressSnapshot[] => {
+  const now = Date.now();
+  
+  // Return cached value if still valid
+  if (cachedAddresses !== null && (now - cacheTimestamp) < CACHE_TTL_MS) {
+    return cachedAddresses;
+  }
+  
   try {
     const stored = getCookie(STORED_ADDRESSES_COOKIE);
     if (!stored) {
-      console.log('[Credopass] No stored addresses found in cookie');
+      cachedAddresses = [];
+      cacheTimestamp = now;
       return [];
     }
     const parsed = JSON.parse(decodeURIComponent(stored));
-    console.log('[Credopass] Loaded stored addresses:', parsed.length, 'items');
-    return parsed;
+    
+    // Migrate old entries that don't have normalizedKey
+    const migrated = parsed.map((item: any) => {
+      if (!item.normalizedKey) {
+        const props = getPropsFromResponse(item.response);
+        return { ...item, normalizedKey: createNormalizedKey(props) };
+      }
+      return item;
+    });
+    
+    cachedAddresses = migrated;
+    cacheTimestamp = now;
+    return migrated;
   } catch (error) {
     console.warn('[Credopass] Error parsing stored addresses:', error);
+    cachedAddresses = [];
+    cacheTimestamp = now;
     return [];
   }
+};
+
+// Debounced cookie write
+let writeTimeout: ReturnType<typeof setTimeout> | null = null;
+
+const debouncedSetCookie = (addresses: StoredAddressSnapshot[]): void => {
+  // Update cache immediately
+  cachedAddresses = addresses;
+  cacheTimestamp = Date.now();
+  
+  // Debounce the actual cookie write
+  if (writeTimeout) {
+    clearTimeout(writeTimeout);
+  }
+  writeTimeout = setTimeout(() => {
+    setCookie(STORED_ADDRESSES_COOKIE, JSON.stringify(addresses), 365);
+    writeTimeout = null;
+  }, COOKIE_WRITE_DEBOUNCE_MS);
 };
 
 const saveAddressToCookie = (response: AddressAutofillRetrieveResponse): void => {
   try {
     const stored = getStoredAddresses();
+    const props = getPropsFromResponse(response);
+    const normalizedKey = createNormalizedKey(props);
+    
+    // Skip if we can't create a valid key
+    if (!normalizedKey) {
+      console.warn('[Credopass] Could not create normalized key for address');
+      return;
+    }
+    
+    // Check if this exact address already exists (using normalized comparison)
+    const existingIndex = stored.findIndex(a => a.normalizedKey === normalizedKey);
+    
+    if (existingIndex !== -1) {
+      // Move existing entry to front and update timestamp
+      const existing = stored[existingIndex];
+      stored.splice(existingIndex, 1);
+      existing.timestamp = Date.now();
+      existing.response = response; // Update with latest response
+      stored.unshift(existing);
+      debouncedSetCookie(stored);
+      return;
+    }
+    
     const id = `addr-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-
-    // Deduplicate based on address
-    const addressLine1 = response.features?.[0]?.properties?.address_line1 as string | undefined;
-    const city = (response.features?.[0]?.properties as any)?.city as string | undefined;
-    const filtered = stored.filter(a => {
-      const prevLine1 = a.response.features?.[0]?.properties?.address_line1 as string | undefined;
-      const prevCity = (a.response.features?.[0]?.properties as any)?.city as string | undefined;
-      return !(prevLine1 === addressLine1 && prevCity === city);
-    });
-
     const snapshot: StoredAddressSnapshot = {
       id,
       response,
+      normalizedKey,
       timestamp: Date.now(),
     };
 
-    filtered.unshift(snapshot);
-    const toStore = filtered.slice(0, MAX_STORED_ADDRESSES);
-
-    setCookie(STORED_ADDRESSES_COOKIE, JSON.stringify(toStore), 365);
+    stored.unshift(snapshot);
+    const toStore = stored.slice(0, MAX_STORED_ADDRESSES);
+    debouncedSetCookie(toStore);
   } catch (error) {
     console.warn('Failed to store address in cookie:', error);
   }
@@ -105,9 +214,11 @@ const removeAddressFromCookie = (addressId: string): void => {
   try {
     const stored = getStoredAddresses().filter(a => a.id !== addressId);
     if (stored.length === 0) {
+      cachedAddresses = [];
+      cacheTimestamp = Date.now();
       removeCookie(STORED_ADDRESSES_COOKIE);
     } else {
-      setCookie(STORED_ADDRESSES_COOKIE, JSON.stringify(stored), 365);
+      debouncedSetCookie(stored);
     }
   } catch (error) {
     console.warn('Failed to remove address:', error);
@@ -116,13 +227,8 @@ const removeAddressFromCookie = (addressId: string): void => {
 
 // Helper to extract display text from MapBox response
 const getAddressDisplayText = (response: AddressAutofillRetrieveResponse | undefined): string => {
-  if (!response?.features?.[0]) {
-    console.warn('[Credopass] Response missing features:', response);
-    return '';
-  }
-  const props = response.features[0].properties as any;
+  const props = getPropsFromResponse(response);
   if (!props) {
-    console.warn('[Credopass] Response missing properties:', response.features[0]);
     return '';
   }
   const address_line1 = props.address_line1 || '';
@@ -130,9 +236,7 @@ const getAddressDisplayText = (response: AddressAutofillRetrieveResponse | undef
   const city_state = [props.city, props.state].filter(Boolean).join(', ');
   const postcode = props.postcode || '';
   const parts = [address_line1 + address_line2, city_state, postcode].filter(Boolean);
-  const result = parts.join(' ');
-  console.log('[Credopass] Display text:', result);
-  return result;
+  return parts.join(' ');
 };
 
 interface AddressAutofillComponentProps
@@ -222,14 +326,11 @@ const AddressAutofillComponent = React.forwardRef<
      */
     const handleSelectStored = useCallback(
       (response: AddressAutofillRetrieveResponse) => {
-        console.log('[Credopass] Selecting stored address:', response);
         const displayText = getAddressDisplayText(response);
-        console.log('[Credopass] Setting input to:', displayText);
         // Update input with formatted address
         setInputValue(displayText);
         setIsDropdownOpen(false);
         // Call onChange with the response
-        console.log('[Credopass] Calling onChange with response');
         onChange?.(response);
       },
       [onChange]
@@ -259,6 +360,23 @@ const AddressAutofillComponent = React.forwardRef<
       document.addEventListener('mousedown', handleClickOutside);
       return () => document.removeEventListener('mousedown', handleClickOutside);
     }, [isDropdownOpen]);
+
+    /**
+     * Memoized dropdown items to prevent unnecessary re-renders
+     */
+    const validAddressItems = useMemo(() => {
+      return storedAddresses
+        .map((item, index) => {
+          // Defensive checks for deserialization issues
+          if (!item || !item.response || typeof item.response !== 'object') return null;
+          const features = (item.response as any).features;
+          if (!Array.isArray(features) || !features.length) return null;
+          const props = features[0]?.properties;
+          if (!props) return null;
+          return { item, props, index, isLast: index === storedAddresses.length - 1 };
+        })
+        .filter((x): x is NonNullable<typeof x> => x !== null);
+    }, [storedAddresses]);
 
     if (!accessToken) {
       return (
@@ -306,7 +424,7 @@ const AddressAutofillComponent = React.forwardRef<
         </AddressAutofill>
 
         {/* Recent Addresses Dropdown */}
-        {isDropdownOpen && showRecent && storedAddresses.length > 0 && (
+        {isDropdownOpen && showRecent && validAddressItems.length > 0 && (
           <div className="absolute top-full left-0 right-0 mt-2 bg-background border border-border rounded-lg shadow-lg max-h-80 overflow-y-auto z-50">
             <div className="sticky top-0 px-4 py-4 text-xs font-bold text-foreground uppercase tracking-wider border-b border-border bg-muted/50">
               <Clock className="inline size-4 mr-2.5 text-primary" />
@@ -314,58 +432,49 @@ const AddressAutofillComponent = React.forwardRef<
             </div>
 
             <div>
-              {storedAddresses.map((item, index) => {
-                // Defensive checks for deserialization issues
-                if (!item || !item.response || typeof item.response !== 'object') return null;
-                const features = (item.response as any).features;
-                if (!Array.isArray(features) || !features.length) return null;
-                const props = features[0]?.properties;
-                if (!props) return null;
-
-                return (
-                  <div
-                    key={item.id}
-                    className={cn(
-                      'w-full px-5 py-4 flex items-start gap-3.5 text-left transition-all duration-200 ease-out group hover:bg-accent/60 focus-within:outline-none focus-within:bg-accent/40 active:bg-accent/80 cursor-pointer',
-                      index !== storedAddresses.length - 1 && 'border-b border-border/50'
-                    )}
+              {validAddressItems.map(({ item, props, isLast }) => (
+                <div
+                  key={item.id}
+                  className={cn(
+                    'w-full px-5 py-4 flex items-start gap-3.5 text-left transition-all duration-200 ease-out group hover:bg-accent/60 focus-within:outline-none focus-within:bg-accent/40 active:bg-accent/80 cursor-pointer',
+                    !isLast && 'border-b border-border/50'
+                  )}
+                >
+                  <button
+                    type="button"
+                    className="flex-1 flex items-start gap-3.5 text-left min-w-0 focus:outline-none"
+                    onClick={() => handleSelectStored(item.response)}
                   >
-                    <button
-                      type="button"
-                      className="flex-1 flex items-start gap-3.5 text-left min-w-0 focus:outline-none"
-                      onClick={() => handleSelectStored(item.response)}
-                    >
-                      <svg className="flex-none w-5 h-5 mt-0.5 text-primary transition-colors" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-                      </svg>
-                      <div className="flex-1 min-w-0 py-0.5">
-                        <p className="font-semibold text-sm leading-snug text-foreground transition-colors">
-                          {props.address_line1}
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-1.5 transition-colors leading-relaxed">
-                          {[props.city, props.state, props.postcode].filter(Boolean).join(', ')}
-                        </p>
-                      </div>
-                    </button>
-                    <button
-                      type="button"
-                      className={cn(
-                        'h-8 w-8 p-1.5 rounded-md flex-none',
-                        'opacity-0 group-hover:opacity-100 transition-opacity duration-150',
-                        'hover:bg-destructive/15 text-muted-foreground hover:text-destructive',
-                        'focus:outline-none focus:ring-2 focus:ring-destructive/40 focus:opacity-100'
-                      )}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleRemoveAddress(item.id);
-                      }}
-                      aria-label="Remove address"
-                    >
-                      <Trash2 className="size-4" />
-                    </button>
-                  </div>
-                );
-              })}
+                    <svg className="flex-none w-5 h-5 mt-0.5 text-primary transition-colors" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                    </svg>
+                    <div className="flex-1 min-w-0 py-0.5">
+                      <p className="font-semibold text-sm leading-snug text-foreground transition-colors">
+                        {props.address_line1}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1.5 transition-colors leading-relaxed">
+                        {[props.city, props.state, props.postcode].filter(Boolean).join(', ')}
+                      </p>
+                    </div>
+                  </button>
+                  <button
+                    type="button"
+                    className={cn(
+                      'h-8 w-8 p-1.5 rounded-md flex-none',
+                      'opacity-0 group-hover:opacity-100 transition-opacity duration-150',
+                      'hover:bg-destructive/15 text-muted-foreground hover:text-destructive',
+                      'focus:outline-none focus:ring-2 focus:ring-destructive/40 focus:opacity-100'
+                    )}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleRemoveAddress(item.id);
+                    }}
+                    aria-label="Remove address"
+                  >
+                    <Trash2 className="size-4" />
+                  </button>
+                </div>
+              ))}
             </div>
           </div>
         )}

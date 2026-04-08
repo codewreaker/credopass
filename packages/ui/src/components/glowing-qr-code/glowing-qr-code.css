@@ -1,0 +1,68 @@
+/* ================================================================
+   GlowingQRCode - Animated Border Effect
+   Premium animated border effect for QR codes
+   ================================================================ */
+
+.glowing-qr-container {
+  position: relative;
+}
+
+.glowing-qr-border {
+  height: 100%;
+  width: 100%;
+  position: absolute;
+  overflow: hidden;
+  z-index: 0;
+  border-radius: 16px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.glowing-qr-border::before {
+  content: '';
+  z-index: -2;
+  text-align: center;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(0deg);
+  position: absolute;
+  width: 99999px;
+  height: 99999px;
+  background-repeat: no-repeat;
+  background-position: 0 0;
+  /* Primary lime color conic gradient */
+  background-image: conic-gradient(
+    rgba(0, 0, 0, 0),
+    oklch(93.604% 0.22511 121.257),
+    rgba(0, 0, 0, 0) 25%
+  );
+  /* Rotation speed */
+  animation: glowing-qr-rotate 4s linear infinite;
+}
+
+.glowing-qr-border::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  /* Border width */
+  left: 4px;
+  top: 4px;
+  width: calc(100% - 8px);
+  height: calc(100% - 8px);
+  /* Background color matching card */
+  background: #18181b;
+  /* Inner border radius */
+  border-radius: 12px;
+}
+
+@keyframes glowing-qr-rotate {
+  100% {
+    transform: translate(-50%, -50%) rotate(1turn);
+  }
+}
+
+/* Hover effect enhancement */
+.glowing-qr-container:hover .glowing-qr-border::before {
+  animation-duration: 2s;
+}

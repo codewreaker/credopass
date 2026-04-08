@@ -14,7 +14,7 @@ import {
 import { Badge } from '@credopass/ui/components/badge';
 import { Button } from '@credopass/ui/components/button';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@credopass/ui/components/dialog';
-import { QRCodeSVG as QRCode } from 'qrcode.react';
+import { GlowingQRCode } from '@credopass/ui/components/glowing-qr-code';
 import { cn } from '@credopass/ui/lib/utils';
 import './EventTicket.css';
 
@@ -124,42 +124,7 @@ const ExpandableDescription: FC<{
     );
 };
 
-// Glowing QR Code component with animated border
-const GlowingQRCode: FC<{
-    value: string;
-    size?: number;
-    onClick?: () => void;
-}> = ({ value, size = 70, onClick }) => {
-    return (
-        <button
-            type="button"
-            onClick={onClick}
-            className="group relative cursor-pointer"
-            style={{ width: size + 20, height: size + 20 }}
-            aria-label="Tap to view fullscreen QR code"
-        >
-            {/* Border animation layer */}
-            <div
-                className="animated-border-box"
-                style={{ width: size + 22, height: size + 22 }}
-            />
-            {/* QR Code container */}
-            <div
-                className="absolute inset-0 flex items-center justify-center z-10"
-            >
-                <div className="bg-white rounded-xl p-2 transition-transform group-hover:scale-[1.02]">
-                    <QRCode
-                        value={value}
-                        size={size}
-                        level="H"
-                        bgColor="#ffffff"
-                        fgColor="#000000"
-                    />
-                </div>
-            </div>
-        </button>
-    );
-};
+
 
 
 // ─── Perforated ticket divider ────────────────────────────────────────────────

@@ -1,7 +1,7 @@
 import React from 'react';
 import { QrCodeIcon, Clock, RefreshCw, UserPlus } from 'lucide-react';
-import { QRCodeSVG as QRCode } from 'qrcode.react';
 import { Button } from '@credopass/ui/components/button';
+import { GlowingQRCode } from '@credopass/ui/components/glowing-qr-code';
 
 interface QRCodeDisplayProps {
     qrCodeData: string | null;
@@ -36,17 +36,12 @@ const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
             {/* QR Code area */}
             <div className="qr-display-body">
                 {hasValidSession && qrCodeData ? (
-                    <div className="qr-code-container">
-                        <div className="qr-code-inner">
-                            <QRCode
-                                value={qrCodeData}
-                                size={size}
-                                level="H"
-                                bgColor="#ffffff"
-                                fgColor="#000000"
-                            />
-                        </div>
-                    </div>
+                    <GlowingQRCode
+                        value={qrCodeData}
+                        size={size}
+                        showGlow={true}
+                        ariaLabel="Scan to check in to event"
+                    />
                 ) : (
                     <div className="qr-code-expired">
                         <QrCodeIcon size={48} />
