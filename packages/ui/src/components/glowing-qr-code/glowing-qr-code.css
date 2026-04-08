@@ -37,8 +37,8 @@
     oklch(93.604% 0.22511 121.257),
     rgba(0, 0, 0, 0) 25%
   );
-  /* Rotation speed */
-  animation: glowing-qr-rotate 4s linear infinite;
+  /* Slower rotation speed - 8 seconds for smooth effect */
+  animation: glowing-qr-rotate 8s linear infinite;
 }
 
 .glowing-qr-border::after {
@@ -46,23 +46,18 @@
   position: absolute;
   z-index: -1;
   /* Border width */
-  left: 4px;
-  top: 4px;
-  width: calc(100% - 8px);
-  height: calc(100% - 8px);
-  /* Background color matching card */
-  background: #18181b;
+  left: 3px;
+  top: 3px;
+  width: calc(100% - 6px);
+  height: calc(100% - 6px);
+  /* Transparent background - no black border */
+  background: transparent;
   /* Inner border radius */
-  border-radius: 12px;
+  border-radius: 13px;
 }
 
 @keyframes glowing-qr-rotate {
   100% {
     transform: translate(-50%, -50%) rotate(1turn);
   }
-}
-
-/* Hover effect enhancement */
-.glowing-qr-container:hover .glowing-qr-border::before {
-  animation-duration: 2s;
 }

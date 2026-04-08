@@ -32,8 +32,6 @@ interface StoredAddressSnapshot {
 // Constants
 const STORED_ADDRESSES_COOKIE = 'credopass_stored_addresses';
 const MAX_STORED_ADDRESSES = 5;
-/** Debounce delay for cookie writes to prevent excessive I/O */
-const COOKIE_WRITE_DEBOUNCE_MS = 300;
 
 // Native Cookie API utilities
 const getCookie = (name: string): string | null => {
@@ -107,25 +105,11 @@ const getPropsFromResponse = (response: AddressAutofillRetrieveResponse | undefi
   return response?.features?.[0]?.properties ?? null;
 };
 
-// In-memory cache for stored addresses to avoid repeated cookie parsing
-let cachedAddresses: StoredAddressSnapshot[] | null = null;
-let cacheTimestamp = 0;
-const CACHE_TTL_MS = 5000; // 5 second cache
-
-// Storage utilities with caching
+// Storage utilities - read directly from cookies (no caching to avoid stale data)
 const getStoredAddresses = (): StoredAddressSnapshot[] => {
-  const now = Date.now();
-  
-  // Return cached value if still valid
-  if (cachedAddresses !== null && (now - cacheTimestamp) < CACHE_TTL_MS) {
-    return cachedAddresses;
-  }
-  
   try {
     const stored = getCookie(STORED_ADDRESSES_COOKIE);
     if (!stored) {
-      cachedAddresses = [];
-      cacheTimestamp = now;
       return [];
     }
     const parsed = JSON.parse(decodeURIComponent(stored));
@@ -139,33 +123,11 @@ const getStoredAddresses = (): StoredAddressSnapshot[] => {
       return item;
     });
     
-    cachedAddresses = migrated;
-    cacheTimestamp = now;
     return migrated;
   } catch (error) {
     console.warn('[Credopass] Error parsing stored addresses:', error);
-    cachedAddresses = [];
-    cacheTimestamp = now;
     return [];
   }
-};
-
-// Debounced cookie write
-let writeTimeout: ReturnType<typeof setTimeout> | null = null;
-
-const debouncedSetCookie = (addresses: StoredAddressSnapshot[]): void => {
-  // Update cache immediately
-  cachedAddresses = addresses;
-  cacheTimestamp = Date.now();
-  
-  // Debounce the actual cookie write
-  if (writeTimeout) {
-    clearTimeout(writeTimeout);
-  }
-  writeTimeout = setTimeout(() => {
-    setCookie(STORED_ADDRESSES_COOKIE, JSON.stringify(addresses), 365);
-    writeTimeout = null;
-  }, COOKIE_WRITE_DEBOUNCE_MS);
 };
 
 const saveAddressToCookie = (response: AddressAutofillRetrieveResponse): void => {
@@ -190,7 +152,7 @@ const saveAddressToCookie = (response: AddressAutofillRetrieveResponse): void =>
       existing.timestamp = Date.now();
       existing.response = response; // Update with latest response
       stored.unshift(existing);
-      debouncedSetCookie(stored);
+      setCookie(STORED_ADDRESSES_COOKIE, JSON.stringify(stored), 365);
       return;
     }
     
@@ -204,7 +166,7 @@ const saveAddressToCookie = (response: AddressAutofillRetrieveResponse): void =>
 
     stored.unshift(snapshot);
     const toStore = stored.slice(0, MAX_STORED_ADDRESSES);
-    debouncedSetCookie(toStore);
+    setCookie(STORED_ADDRESSES_COOKIE, JSON.stringify(toStore), 365);
   } catch (error) {
     console.warn('Failed to store address in cookie:', error);
   }
@@ -214,11 +176,9 @@ const removeAddressFromCookie = (addressId: string): void => {
   try {
     const stored = getStoredAddresses().filter(a => a.id !== addressId);
     if (stored.length === 0) {
-      cachedAddresses = [];
-      cacheTimestamp = Date.now();
       removeCookie(STORED_ADDRESSES_COOKIE);
     } else {
-      debouncedSetCookie(stored);
+      setCookie(STORED_ADDRESSES_COOKIE, JSON.stringify(stored), 365);
     }
   } catch (error) {
     console.warn('Failed to remove address:', error);
@@ -304,6 +264,12 @@ const AddressAutofillComponent = React.forwardRef<
       if (value.length > 0) {
         setIsDropdownOpen(false);
       }
+    }, []);
+
+    // Refresh stored addresses when dropdown opens
+    const handleFocus = useCallback(() => {
+      setStoredAddresses(getStoredAddresses());
+      setIsDropdownOpen(true);
     }, []);
 
     /**
@@ -416,7 +382,7 @@ const AddressAutofillComponent = React.forwardRef<
             placeholder={placeholder}
             disabled={disabled}
             autoComplete="street-address"
-            onFocus={() => setIsDropdownOpen(true)}
+            onFocus={handleFocus}
             className={cn(
               'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm'
             )}

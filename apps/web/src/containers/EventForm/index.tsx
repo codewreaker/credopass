@@ -186,12 +186,10 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
 
 const parseAddress = (response: any) => {
   try {
-    console.log('[EventForm] parseAddress received:', response);
     // Handle MapBox AddressAutofillRetrieveResponse format
     if (response && response.features && Array.isArray(response.features) && response.features.length > 0) {
       const props = response.features[0].properties;
       if (!props) {
-        console.warn('[EventForm] Response features[0].properties is empty');
         return '';
       }
       const parts = [
@@ -202,9 +200,7 @@ const parseAddress = (response: any) => {
         props.postcode,
         props.country
       ];
-      const result = parts.filter(Boolean).join(', ');
-      console.log('[EventForm] Parsed MapBox address:', result);
-      return result;
+      return parts.filter(Boolean).join(', ');
     }
     
     // Fallback for AddressData format (legacy)
@@ -212,17 +208,14 @@ const parseAddress = (response: any) => {
       const {
         addressLine1, addressLine2, city, postalCode, state, country
       } = response;
-      const result = [
+      return [
         addressLine1, addressLine2, city, postalCode, state, country
       ].filter(Boolean).join(', ');
-      console.log('[EventForm] Parsed AddressData:', result);
-      return result;
     }
     
-    console.warn('[EventForm] Could not parse address:', response);
     return '';
   } catch (error) {
-    console.error('[EventForm] Error parsing address:', error, 'response:', response)
+    console.error('[EventForm] Error parsing address:', error);
     return '';
   }
 }

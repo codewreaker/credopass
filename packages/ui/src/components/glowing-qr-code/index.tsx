@@ -112,7 +112,6 @@ export const GlowingQRCode: FC<GlowingQRCodeProps> = ({
             'rounded-xl p-2 transition-transform',
             onClick && 'group-hover:scale-[1.02]'
           )}
-          style={{ backgroundColor: showGlow ? '#18181b' : 'transparent' }}
         >
           <div
             className="rounded-lg overflow-hidden"
