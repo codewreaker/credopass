@@ -3,7 +3,6 @@
 import React, { useCallback, useRef, useState, useEffect } from 'react';
 import { AddressAutofill, type AddressAutofillRefType } from '@mapbox/search-js-react';
 import type { AddressAutofillRetrieveResponse } from '@mapbox/search-js-core';
-import Cookies from 'js-cookie';
 import { Clock, Trash2 } from 'lucide-react';
 import { cn } from '../lib/utils';
 
@@ -22,82 +21,81 @@ export interface AddressData {
   timestamp: number;
 }
 
-interface AddressDataForStorage extends AddressData {
+interface StoredAddressSnapshot {
   id: string;
-  searchText: string;
+  response: AddressAutofillRetrieveResponse;
+  timestamp: number;
 }
 
 // Constants
 const STORED_ADDRESSES_COOKIE = 'credopass_stored_addresses';
 const MAX_STORED_ADDRESSES = 5;
 
-// Utility functions
-const parseRetrieveResponse = (response: AddressAutofillRetrieveResponse): AddressData => {
-  if (!response.features || response.features.length === 0) {
-    return {
-      addressLine1: '',
-      city: '',
-      state: '',
-      postalCode: '',
-      timestamp: Date.now(),
-    };
-  }
-
-  const feature = response.features[0];
-  const props = feature.properties as Record<string, any> || {};
-
-  return {
-    addressLine1: props['address_line1'] || '',
-    addressLine2: props['address_line2'],
-    city: props['city'] || '',
-    state: props['state'] || props['region'] || '',
-    postalCode: props['postcode'] || '',
-    country: props['country'],
-    coordinates: feature.geometry?.type === 'Point'
-      ? {
-        latitude: feature.geometry.coordinates[1],
-        longitude: feature.geometry.coordinates[0],
-      }
-      : undefined,
-    timestamp: Date.now(),
-  };
+// Native Cookie API utilities
+const getCookie = (name: string): string | null => {
+  if (typeof document === 'undefined') return null;
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop()?.split(';').shift() ?? null;
+  return null;
 };
 
-const getStoredAddresses = (): AddressDataForStorage[] => {
+const setCookie = (name: string, value: string, days: number = 365): void => {
+  if (typeof document === 'undefined') return;
+  const expires = new Date();
+  expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000);
+  const isSecure = typeof window !== 'undefined' && window.location.protocol === 'https:';
+  const cookie = `${name}=${encodeURIComponent(value)}; expires=${expires.toUTCString()}; path=/${isSecure ? '; secure' : ''}; samesite=lax`;
+  document.cookie = cookie;
+  console.log('[Credopass] Cookie set:', name, 'secure:', isSecure);
+};
+
+const removeCookie = (name: string): void => {
+  if (typeof document === 'undefined') return;
+  document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+};
+
+// Storage utilities
+const getStoredAddresses = (): StoredAddressSnapshot[] => {
   try {
-    const stored = Cookies.get(STORED_ADDRESSES_COOKIE);
-    return stored ? JSON.parse(stored) : [];
-  } catch {
+    const stored = getCookie(STORED_ADDRESSES_COOKIE);
+    if (!stored) {
+      console.log('[Credopass] No stored addresses found in cookie');
+      return [];
+    }
+    const parsed = JSON.parse(decodeURIComponent(stored));
+    console.log('[Credopass] Loaded stored addresses:', parsed.length, 'items');
+    return parsed;
+  } catch (error) {
+    console.warn('[Credopass] Error parsing stored addresses:', error);
     return [];
   }
 };
 
-const saveAddressToCookie = (address: AddressData, searchText: string): void => {
+const saveAddressToCookie = (response: AddressAutofillRetrieveResponse): void => {
   try {
     const stored = getStoredAddresses();
-    const id = `addr-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const id = `addr-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 
-    const filtered = stored.filter(a =>
-      !(a.addressLine1 === address.addressLine1 &&
-        a.city === address.city &&
-        a.state === address.state &&
-        a.postalCode === address.postalCode)
-    );
+    // Deduplicate based on address
+    const addressLine1 = response.features?.[0]?.properties?.address_line1 as string | undefined;
+    const city = (response.features?.[0]?.properties as any)?.city as string | undefined;
+    const filtered = stored.filter(a => {
+      const prevLine1 = a.response.features?.[0]?.properties?.address_line1 as string | undefined;
+      const prevCity = (a.response.features?.[0]?.properties as any)?.city as string | undefined;
+      return !(prevLine1 === addressLine1 && prevCity === city);
+    });
 
-    const storableAddress: AddressDataForStorage = {
-      ...address,
+    const snapshot: StoredAddressSnapshot = {
       id,
-      searchText,
+      response,
+      timestamp: Date.now(),
     };
 
-    filtered.unshift(storableAddress);
+    filtered.unshift(snapshot);
     const toStore = filtered.slice(0, MAX_STORED_ADDRESSES);
 
-    Cookies.set(STORED_ADDRESSES_COOKIE, JSON.stringify(toStore), {
-      expires: 365,
-      secure: true,
-      sameSite: 'Lax',
-    });
+    setCookie(STORED_ADDRESSES_COOKIE, JSON.stringify(toStore), 365);
   } catch (error) {
     console.warn('Failed to store address in cookie:', error);
   }
@@ -107,21 +105,38 @@ const removeAddressFromCookie = (addressId: string): void => {
   try {
     const stored = getStoredAddresses().filter(a => a.id !== addressId);
     if (stored.length === 0) {
-      Cookies.remove(STORED_ADDRESSES_COOKIE);
+      removeCookie(STORED_ADDRESSES_COOKIE);
     } else {
-      Cookies.set(STORED_ADDRESSES_COOKIE, JSON.stringify(stored), {
-        expires: 365,
-        secure: true,
-        sameSite: 'Lax',
-      });
+      setCookie(STORED_ADDRESSES_COOKIE, JSON.stringify(stored), 365);
     }
   } catch (error) {
     console.warn('Failed to remove address:', error);
   }
 };
 
+// Helper to extract display text from MapBox response
+const getAddressDisplayText = (response: AddressAutofillRetrieveResponse | undefined): string => {
+  if (!response?.features?.[0]) {
+    console.warn('[Credopass] Response missing features:', response);
+    return '';
+  }
+  const props = response.features[0].properties as any;
+  if (!props) {
+    console.warn('[Credopass] Response missing properties:', response.features[0]);
+    return '';
+  }
+  const address_line1 = props.address_line1 || '';
+  const address_line2 = props.address_line2 ? ` ${props.address_line2}` : '';
+  const city_state = [props.city, props.state].filter(Boolean).join(', ');
+  const postcode = props.postcode || '';
+  const parts = [address_line1 + address_line2, city_state, postcode].filter(Boolean);
+  const result = parts.join(' ');
+  console.log('[Credopass] Display text:', result);
+  return result;
+};
+
 interface AddressAutofillComponentProps
-  extends Partial<React.ComponentProps<typeof AddressAutofill>> {
+  extends Omit<Partial<React.ComponentProps<typeof AddressAutofill>>, 'onChange'> {
   /**
    * Mapbox access token
    */
@@ -129,7 +144,7 @@ interface AddressAutofillComponentProps
   /**
    * Callback when an address is selected
    */
-  onChange?: (addressData: AddressData) => void;
+  onChange?: (response: AddressAutofillRetrieveResponse) => void;
   /**
    * Placeholder text for the input field
    */
@@ -152,8 +167,8 @@ interface AddressAutofillComponentProps
  * AddressAutofill Component
  *
  * Uses Mapbox's native AddressAutofill component for address search and suggestions.
- * Adds session token management, cookie persistence, and a shadcn-styled dropdown
- * for recent addresses with full inline storage logic.
+ * Adds cookie persistence and a shadcn-styled dropdown for recent addresses.
+ * MapBox handles all input field updates natively.
  */
 const AddressAutofillComponent = React.forwardRef<
   AddressAutofillRefType,
@@ -172,57 +187,50 @@ const AddressAutofillComponent = React.forwardRef<
     ref
   ) => {
     const containerRef = useRef<HTMLDivElement>(null);
-    const [isDropdownOpen, setIsDropdownOpen] = React.useState(false);
-    const [searchText, setSearchText] = React.useState('');
-    const [storedAddresses, setStoredAddresses] = React.useState<AddressDataForStorage[]>(
-      getStoredAddresses
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const [inputValue, setInputValue] = useState('');
+    const [storedAddresses, setStoredAddresses] = useState<StoredAddressSnapshot[]>(() =>
+      getStoredAddresses()
     );
 
-    const sessionToken = React.useMemo(
-      () => `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      []
-    );
-
-    if (!accessToken) {
-      return (
-        <div
-          className={cn(
-            'w-full p-4 rounded-lg bg-destructive/10 text-destructive text-sm',
-            className
-          )}
-        >
-          ⚠️ Mapbox access token is not configured
-        </div>
-      );
-    }
+    // Reset dropdown when input changes from MapBox
+    const handleInputChange = useCallback((value: string) => {
+      setInputValue(value);
+      // If user is typing (non-empty), close dropdown. If clearing input, dropdown stays open if focused
+      if (value.length > 0) {
+        setIsDropdownOpen(false);
+      }
+    }, []);
 
     /**
      * Handle Mapbox address retrieval and save to storage
      */
     const handleRetrieve = useCallback(
       (response: AddressAutofillRetrieveResponse) => {
-        const address = parseRetrieveResponse(response);
-        saveAddressToCookie(address, searchText);
-
-        // Update stored addresses
+        saveAddressToCookie(response);
         const updated = getStoredAddresses();
         setStoredAddresses(updated);
 
-        onChange?.(address);
+        onChange?.(response);
         setIsDropdownOpen(false);
-        setSearchText('');
       },
-      [searchText, onChange]
+      [onChange]
     );
 
     /**
-     * Handle clicking on a stored address
+     * Handle clicking on a stored address - restore it to input
      */
     const handleSelectStored = useCallback(
-      (address: AddressData) => {
-        onChange?.(address);
+      (response: AddressAutofillRetrieveResponse) => {
+        console.log('[Credopass] Selecting stored address:', response);
+        const displayText = getAddressDisplayText(response);
+        console.log('[Credopass] Setting input to:', displayText);
+        // Update input with formatted address
+        setInputValue(displayText);
         setIsDropdownOpen(false);
-        setSearchText('');
+        // Call onChange with the response
+        console.log('[Credopass] Calling onChange with response');
+        onChange?.(response);
       },
       [onChange]
     );
@@ -252,6 +260,19 @@ const AddressAutofillComponent = React.forwardRef<
       return () => document.removeEventListener('mousedown', handleClickOutside);
     }, [isDropdownOpen]);
 
+    if (!accessToken) {
+      return (
+        <div
+          className={cn(
+            'w-full p-4 rounded-lg bg-destructive/10 text-destructive text-sm',
+            className
+          )}
+        >
+          ⚠️ Mapbox access token is not configured
+        </div>
+      );
+    }
+
     return (
       <div ref={containerRef} className={cn('relative w-full', className)}>
         <AddressAutofill
@@ -260,6 +281,16 @@ const AddressAutofillComponent = React.forwardRef<
           onRetrieve={handleRetrieve}
           onSuggest={() => setIsDropdownOpen(true)}
           onSuggestError={() => setIsDropdownOpen(false)}
+          onChange={handleInputChange}
+          theme={{
+            variables: {
+              colorPrimary: '#0ea5e9',
+              colorBackground: 'hsl(var(--background))',
+              colorText: 'hsl(var(--foreground))',
+              fontFamily: 'inherit',
+              borderRadius: '0.375rem',
+            }
+          }}
           {...mapboxProps}
         >
           <input
@@ -268,7 +299,6 @@ const AddressAutofillComponent = React.forwardRef<
             disabled={disabled}
             autoComplete="street-address"
             onFocus={() => setIsDropdownOpen(true)}
-            onChange={(e) => setSearchText(e.currentTarget.value)}
             className={cn(
               'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm'
             )}
@@ -276,57 +306,66 @@ const AddressAutofillComponent = React.forwardRef<
         </AddressAutofill>
 
         {/* Recent Addresses Dropdown */}
-        {isDropdownOpen && showRecent && !searchText && storedAddresses.length > 0 && (
-          <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-lg shadow-lg max-h-80 overflow-y-auto z-50">
-            <div className="sticky top-0 px-4 py-4 text-xs font-bold text-foreground uppercase tracking-wider border-b border-border bg-muted/30 backdrop-blur-sm">
+        {isDropdownOpen && showRecent && storedAddresses.length > 0 && (
+          <div className="absolute top-full left-0 right-0 mt-2 bg-background border border-border rounded-lg shadow-lg max-h-80 overflow-y-auto z-50">
+            <div className="sticky top-0 px-4 py-4 text-xs font-bold text-foreground uppercase tracking-wider border-b border-border bg-muted/50">
               <Clock className="inline size-4 mr-2.5 text-primary" />
               Recent Addresses
             </div>
 
             <div>
-              {storedAddresses.map((address, index) => (
-                <button
-                  key={address.id}
-                  type="button"
-                  className={cn(
-                    'w-full px-5 py-4 flex items-start gap-3.5 text-left transition-all duration-200 ease-out group',
-                    'hover:bg-primary/5 hover:border-l-2 hover:border-l-primary hover:pl-4',
-                    'focus:outline-none focus:bg-primary/5',
-                    'active:bg-primary/10',
-                    index !== storedAddresses.length - 1 && 'border-b border-border/50'
-                  )}
-                  onClick={() => handleSelectStored(address)}
-                >
-                  <svg className="flex-none w-5 h-5 mt-0.5 text-primary/70 group-hover:text-primary transition-colors" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-                  </svg>
-                  <div className="flex-1 min-w-0 py-0.5">
-                    <p className="font-semibold text-sm leading-snug text-foreground group-hover:text-primary transition-colors">
-                      {address.addressLine1}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1.5 group-hover:text-foreground/70 transition-colors leading-relaxed">
-                      {[address.city, address.state, address.postalCode]
-                        .filter(Boolean)
-                        .join(', ')}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
+              {storedAddresses.map((item, index) => {
+                // Defensive checks for deserialization issues
+                if (!item || !item.response || typeof item.response !== 'object') return null;
+                const features = (item.response as any).features;
+                if (!Array.isArray(features) || !features.length) return null;
+                const props = features[0]?.properties;
+                if (!props) return null;
+
+                return (
+                  <div
+                    key={item.id}
                     className={cn(
-                      'h-8 w-8 p-1.5 rounded-md flex-none ml-2',
-                      'opacity-0 group-hover:opacity-100 transition-opacity duration-150',
-                      'hover:bg-destructive/15 text-muted-foreground hover:text-destructive',
-                      'focus:outline-none focus:ring-2 focus:ring-destructive/40 focus:opacity-100'
+                      'w-full px-5 py-4 flex items-start gap-3.5 text-left transition-all duration-200 ease-out group hover:bg-accent/60 focus-within:outline-none focus-within:bg-accent/40 active:bg-accent/80 cursor-pointer',
+                      index !== storedAddresses.length - 1 && 'border-b border-border/50'
                     )}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleRemoveAddress(address.id);
-                    }}
                   >
-                    <Trash2 className="size-4" />
-                  </button>
-                </button>
-              ))}
+                    <button
+                      type="button"
+                      className="flex-1 flex items-start gap-3.5 text-left min-w-0 focus:outline-none"
+                      onClick={() => handleSelectStored(item.response)}
+                    >
+                      <svg className="flex-none w-5 h-5 mt-0.5 text-primary transition-colors" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                      </svg>
+                      <div className="flex-1 min-w-0 py-0.5">
+                        <p className="font-semibold text-sm leading-snug text-foreground transition-colors">
+                          {props.address_line1}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1.5 transition-colors leading-relaxed">
+                          {[props.city, props.state, props.postcode].filter(Boolean).join(', ')}
+                        </p>
+                      </div>
+                    </button>
+                    <button
+                      type="button"
+                      className={cn(
+                        'h-8 w-8 p-1.5 rounded-md flex-none',
+                        'opacity-0 group-hover:opacity-100 transition-opacity duration-150',
+                        'hover:bg-destructive/15 text-muted-foreground hover:text-destructive',
+                        'focus:outline-none focus:ring-2 focus:ring-destructive/40 focus:opacity-100'
+                      )}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRemoveAddress(item.id);
+                      }}
+                      aria-label="Remove address"
+                    >
+                      <Trash2 className="size-4" />
+                    </button>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
@@ -338,4 +377,3 @@ const AddressAutofillComponent = React.forwardRef<
 AddressAutofillComponent.displayName = 'AddressAutofill';
 
 export { AddressAutofillComponent as default };
-export type { AddressData };

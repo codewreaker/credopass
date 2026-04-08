@@ -8,8 +8,6 @@ import {
   MapPin,
   Users,
   FileText,
-  Building2,
-  AlertCircle,
   Clock
 } from 'lucide-react';
 import { getCollections } from '@credopass/api-client/collections';
@@ -20,7 +18,6 @@ import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@cr
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@credopass/ui/components/select';
 import { Textarea } from '@credopass/ui/components/textarea';
 import { DialogClose, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@credopass/ui/components/dialog';
-import { Alert, AlertDescription, AlertTitle } from '@credopass/ui/components/alert';
 import { Calendar } from '@credopass/ui/components/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@credopass/ui/components/popover';
 import './style.css';
@@ -31,7 +28,6 @@ import { cn } from '@credopass/ui/lib/utils';
 
 import React from 'react';
 import AddressPicker from '@credopass/ui/components/address-autofill';
-import type { AddressData } from '@credopass/lib/hooks';
 import { MAPBOX_ACCESS_TOKEN } from '../../config';
 
 
@@ -188,25 +184,53 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
   );
 };
 
-const parseAddress = (addr: AddressData) => {
+const parseAddress = (response: any) => {
   try {
-    const {
-      addressLine1, addressLine2, city, postalCode, state, country
-    } = addr
-    return [
-      addressLine1, addressLine2, city, postalCode, state, country
-    ].filter(Boolean).join(',');
+    console.log('[EventForm] parseAddress received:', response);
+    // Handle MapBox AddressAutofillRetrieveResponse format
+    if (response && response.features && Array.isArray(response.features) && response.features.length > 0) {
+      const props = response.features[0].properties;
+      if (!props) {
+        console.warn('[EventForm] Response features[0].properties is empty');
+        return '';
+      }
+      const parts = [
+        props.address_line1,
+        props.address_line2,
+        props.city,
+        props.state,
+        props.postcode,
+        props.country
+      ];
+      const result = parts.filter(Boolean).join(', ');
+      console.log('[EventForm] Parsed MapBox address:', result);
+      return result;
+    }
+    
+    // Fallback for AddressData format (legacy)
+    if (response && response.addressLine1) {
+      const {
+        addressLine1, addressLine2, city, postalCode, state, country
+      } = response;
+      const result = [
+        addressLine1, addressLine2, city, postalCode, state, country
+      ].filter(Boolean).join(', ');
+      console.log('[EventForm] Parsed AddressData:', result);
+      return result;
+    }
+    
+    console.warn('[EventForm] Could not parse address:', response);
+    return '';
   } catch (error) {
-    console.error(error)
-    return JSON.stringify(addr, null, 4)
+    console.error('[EventForm] Error parsing address:', error, 'response:', response)
+    return '';
   }
-
 }
 
 // Event Form Component
 const EventForm = ({ initialData = {}, isEditing = false, onClose }: EventFormProps) => {
   const [isMutating, setIsMutating] = useState(false);
-  const { activeOrganizationId, activeOrganization } = useOrganizationStore();
+  const { activeOrganizationId } = useOrganizationStore();
 
   const rand = crypto.randomUUID();
   const form = useForm({
@@ -446,39 +470,6 @@ const EventForm = ({ initialData = {}, isEditing = false, onClose }: EventFormPr
                       />
                       <FieldDescription>Leave blank for unlimited (optional)</FieldDescription>
                       {isInvalid && <FieldError errors={field.state.meta.errors} />}
-                    </Field>
-                  );
-                }}
-              />
-
-              {/* Organization - Read-only display of active organization */}
-              <form.Field
-                name="organizationId"
-                children={(field) => {
-                  const isInvalid = !field.state.value;
-                  return (
-                    <Field data-invalid={isInvalid} className="form-group">
-                      <FieldLabel htmlFor={field.name} className="form-label">
-                        <Building2 size={14} />
-                        Organization
-                      </FieldLabel>
-                      {activeOrganization ? (
-                        <div className="organization-display">
-                          <Building2 size={16} className="text-muted-foreground" />
-                          <span>{activeOrganization.name}</span>
-                        </div>
-                      ) : (
-                        <Alert variant="destructive" className="organization-alert">
-                          <AlertCircle size={14} />
-                          <AlertTitle>No organization selected</AlertTitle>
-                          <AlertDescription>
-                            Please go to Organizations and select an active organization before creating events.
-                          </AlertDescription>
-                        </Alert>
-                      )}
-                      <FieldDescription>
-                        Events are created under the currently active organization
-                      </FieldDescription>
                     </Field>
                   );
                 }}
