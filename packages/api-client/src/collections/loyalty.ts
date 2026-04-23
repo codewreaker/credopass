@@ -6,7 +6,7 @@
 import { createCollection } from '@tanstack/db';
 import { QueryClient } from '@tanstack/query-core';
 import { queryCollectionOptions } from '@tanstack/query-db-collection';
-import type { Loyalty } from '@credopass/lib/schemas';
+import { LoyaltySchema, type Loyalty } from '@credopass/lib/schemas';
 import { getAPIBaseURL, handleAPIErrors } from '../client';
 
 /**
@@ -16,7 +16,7 @@ export function createLoyaltyCollection(queryClient: QueryClient) {
   return createCollection(
     queryCollectionOptions({
       queryKey: ['loyalty'],
-      queryFn: async (): Promise<Loyalty[]> => {
+      queryFn: async () => {
         try {
           const response = await fetch(`${getAPIBaseURL()}/loyalty`);
           const data = await response.json();
@@ -30,6 +30,7 @@ export function createLoyaltyCollection(queryClient: QueryClient) {
           throw `An error occurred while fetching loyalty records: ${String(error)}. Please ensure the API server is running and accessible.`;
         }
       },
+      schema: LoyaltySchema,
       getKey: (item) => item.id,
       queryClient,
 
@@ -73,5 +74,3 @@ export function createLoyaltyCollection(queryClient: QueryClient) {
     })
   );
 }
-
-export type LoyaltyCollection = ReturnType<typeof createLoyaltyCollection>;

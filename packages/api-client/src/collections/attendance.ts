@@ -6,7 +6,7 @@
 import { createCollection } from '@tanstack/db';
 import { QueryClient } from '@tanstack/query-core';
 import { queryCollectionOptions } from '@tanstack/query-db-collection';
-import type { Attendance } from '@credopass/lib/schemas';
+import { AttendanceSchema, type Attendance } from '@credopass/lib/schemas';
 import { getAPIBaseURL, handleAPIErrors } from '../client';
 
 /**
@@ -16,7 +16,7 @@ export function createAttendanceCollection(queryClient: QueryClient) {
   return createCollection(
     queryCollectionOptions({
       queryKey: ['attendance'],
-      queryFn: async (): Promise<Attendance[]> => {
+      queryFn: async () => {
         try {
           const response = await fetch(`${getAPIBaseURL()}/attendance`);
           const data = await response.json();
@@ -30,6 +30,7 @@ export function createAttendanceCollection(queryClient: QueryClient) {
           throw `An error occurred while fetching attendance: ${String(error)}. Please ensure the API server is running and accessible.`;
         }
       },
+      schema: AttendanceSchema,
       getKey: (item) => item.id,
       queryClient,
 
@@ -73,5 +74,3 @@ export function createAttendanceCollection(queryClient: QueryClient) {
     })
   );
 }
-
-export type AttendanceCollection = ReturnType<typeof createAttendanceCollection>;

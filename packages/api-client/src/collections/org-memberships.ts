@@ -6,7 +6,7 @@
 import { createCollection } from '@tanstack/db';
 import { QueryClient } from '@tanstack/query-core';
 import { queryCollectionOptions } from '@tanstack/query-db-collection';
-import type { OrgMembership } from '@credopass/lib/schemas';
+import { OrgMembershipSchema, type OrgMembership } from '@credopass/lib/schemas';
 import { getAPIBaseURL, handleAPIErrors } from '../client';
 
 /**
@@ -16,7 +16,7 @@ export function createOrgMembershipCollection(queryClient: QueryClient) {
   return createCollection(
     queryCollectionOptions({
       queryKey: ['org-memberships'],
-      queryFn: async (): Promise<OrgMembership[]> => {
+      queryFn: async () => {
         try {
           const response = await fetch(`${getAPIBaseURL()}/org-memberships`);
           const data = await response.json();
@@ -32,6 +32,7 @@ export function createOrgMembershipCollection(queryClient: QueryClient) {
           throw `An error occurred while fetching org memberships: ${String(error)}. Please ensure the API server is running and accessible.`;
         }
       },
+      schema: OrgMembershipSchema,
       getKey: (item) => item.id,
       queryClient,
 
@@ -75,5 +76,3 @@ export function createOrgMembershipCollection(queryClient: QueryClient) {
     })
   );
 }
-
-export type OrgMembershipCollection = ReturnType<typeof createOrgMembershipCollection>;

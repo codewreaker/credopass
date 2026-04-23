@@ -6,7 +6,7 @@
 import { createCollection } from '@tanstack/db';
 import { QueryClient } from '@tanstack/query-core';
 import { queryCollectionOptions } from '@tanstack/query-db-collection';
-import type { Event } from '@credopass/lib/schemas';
+import { EventSchema, type Event } from '@credopass/lib/schemas';
 import { getAPIBaseURL, handleAPIErrors } from '../client';
 
 const getStatus = (start: Date, status: Event['status']): Event['status'] => {
@@ -22,12 +22,12 @@ export function createEventCollection(queryClient: QueryClient) {
   return createCollection(
     queryCollectionOptions({
       queryKey: ['events'],
-      queryFn: async (): Promise<Event[]> => {
+      queryFn: async () => {
         try {
           const response = await fetch(`${getAPIBaseURL()}/events`);
-          const data = await response.json() as Event[];
+          const data = await response.json();
           // Transform dates from the API response
-          return data.map((event) => ({
+          return data.map((event: Event) => ({
             ...event,
             startTime: new Date(event.startTime),
             endTime: new Date(event.endTime),
@@ -40,6 +40,7 @@ export function createEventCollection(queryClient: QueryClient) {
         }
 
       },
+      schema: EventSchema,
       getKey: (item) => item.id,
       queryClient,
 

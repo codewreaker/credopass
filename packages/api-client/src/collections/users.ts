@@ -6,7 +6,7 @@
 import { createCollection } from '@tanstack/db';
 import { QueryClient } from '@tanstack/query-core';
 import { queryCollectionOptions } from '@tanstack/query-db-collection';
-import type { User } from '@credopass/lib/schemas';
+import { UserSchema, type User } from '@credopass/lib/schemas';
 import { getAPIBaseURL } from '../client';
 
 /**
@@ -16,7 +16,7 @@ export function createUserCollection(queryClient: QueryClient) {
   return createCollection(
     queryCollectionOptions({
       queryKey: ['users'],
-      queryFn: async (): Promise<User[]> => {
+      queryFn: async () => {
         const response = await fetch(`${getAPIBaseURL()}/users`);
         if (!response.ok) throw new Error('Failed to fetch users');
         const data = await response.json() as User[];
@@ -26,6 +26,7 @@ export function createUserCollection(queryClient: QueryClient) {
           updatedAt: new Date(user.updatedAt),
         }));
       },
+      schema: UserSchema,
       getKey: (item) => item.id,
       queryClient,
 
@@ -69,5 +70,3 @@ export function createUserCollection(queryClient: QueryClient) {
     })
   );
 }
-
-export type UserCollection = ReturnType<typeof createUserCollection>;

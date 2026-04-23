@@ -6,7 +6,7 @@
 import { createCollection } from '@tanstack/db';
 import { QueryClient } from '@tanstack/query-core';
 import { queryCollectionOptions } from '@tanstack/query-db-collection';
-import type { Organization } from '@credopass/lib/schemas';
+import { OrganizationSchema, type Organization } from '@credopass/lib/schemas';
 import { getAPIBaseURL, handleAPIErrors } from '../client';
 
 /**
@@ -16,7 +16,7 @@ export function createOrganizationCollection(queryClient: QueryClient) {
   return createCollection(
     queryCollectionOptions({
       queryKey: ['organizations'],
-      queryFn: async (): Promise<Array<Organization>> => {
+      queryFn: async () => {
         const response = await fetch(`${getAPIBaseURL()}/organizations`);
         if (!response.ok) throw new Error('Failed to fetch organizations');
         const data = await response.json();
@@ -27,6 +27,7 @@ export function createOrganizationCollection(queryClient: QueryClient) {
           deletedAt: org.deletedAt ? new Date(org.deletedAt) : null
         }));
       },
+      schema: OrganizationSchema,
       getKey: (item) => item.id,
       queryClient,
 
@@ -70,5 +71,3 @@ export function createOrganizationCollection(queryClient: QueryClient) {
     })
   );
 }
-
-export type OrganizationCollection = ReturnType<typeof createOrganizationCollection>;

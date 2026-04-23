@@ -6,7 +6,7 @@
 import { createCollection } from '@tanstack/db';
 import { QueryClient } from '@tanstack/query-core';
 import { queryCollectionOptions } from '@tanstack/query-db-collection';
-import type { EventMember } from '@credopass/lib/schemas';
+import { EventMemberSchema,type EventMember } from '@credopass/lib/schemas';
 import { getAPIBaseURL, handleAPIErrors } from '../client';
 
 /**
@@ -16,7 +16,7 @@ export function createEventMemberCollection(queryClient: QueryClient) {
   return createCollection(
     queryCollectionOptions({
       queryKey: ['event-members'],
-      queryFn: async (): Promise<EventMember[]> => {
+      queryFn: async () => {
         try {
           const response = await fetch(`${getAPIBaseURL()}/event-members`);
           const data = await response.json();
@@ -32,6 +32,7 @@ export function createEventMemberCollection(queryClient: QueryClient) {
       },
       getKey: (item) => item.id,
       queryClient,
+      schema: EventMemberSchema,
 
       // Handle INSERT
       onInsert: async ({ transaction }) => {
@@ -73,5 +74,3 @@ export function createEventMemberCollection(queryClient: QueryClient) {
     })
   );
 }
-
-export type EventMemberCollection = ReturnType<typeof createEventMemberCollection>;
