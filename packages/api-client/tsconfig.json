@@ -2,7 +2,6 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "module": "esnext",
-    "lib": ["ES2023"],
     "declaration": true,
     "declarationMap": true,
     "outDir": "../../dist/packages/api-client",

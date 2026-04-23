@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "@credopass/lib": "*",
-    "@tanstack/db": "^0.5.17",
+    "@tanstack/db": "^0.6.5",
     "@tanstack/query-core": "^5.90.16",
     "@tanstack/query-db-collection": "^1.0.6"
   },
