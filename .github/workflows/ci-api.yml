@@ -105,7 +105,7 @@ jobs:
   # Job 3: Build application and Docker image, then deploy to Cloud Run
   # ==========================================================================
   build-and-deploy:
-    name: Build & Deploy to Cloud Run
+    name: Build & Deploy to Hetzner via Coolify
     runs-on: ubuntu-latest
     needs: [quality-checks]
     if: ${{ !failure() && !cancelled() }}
@@ -120,6 +120,9 @@ jobs:
       url: ${{ steps.deploy.outputs.url }}
     
     steps:
+    - name: Checkout repository          # ← ADD THIS STEP
+      uses: actions/checkout@v4          # ← ADD THIS STEP
+
     - name: Login to GitHub Container Registry
       uses: docker/login-action@v3
       with:
