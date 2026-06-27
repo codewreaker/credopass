@@ -120,27 +120,53 @@ jobs:
       url: ${{ steps.deploy.outputs.url }}
     
     steps:
-    - name: Checkout repository          # ← ADD THIS STEP
-      uses: actions/checkout@v4          # ← ADD THIS STEP
+      # ----------------------------------------------------------------------
+      # Step 1: Checkout and setup
+      # ----------------------------------------------------------------------
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-    - name: Login to GitHub Container Registry
-      uses: docker/login-action@v3
-      with:
-        registry: ghcr.io
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
 
-    - name: Build and push Docker image
-      run: |
-        docker build \
-          --file services/core/Dockerfile \
-          --tag ghcr.io/codewreaker/credopass-core:${{ github.sha }} \
-          --tag ghcr.io/codewreaker/credopass-core:latest \
-          .
-        docker push ghcr.io/codewreaker/credopass-core:latest
+      # ----------------------------------------------------------------------
+      # Step 2: Install dependencies and build in CI
+      # ----------------------------------------------------------------------
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
 
-    - name: Deploy to Coolify
-      id: deploy
-      run: |
-        curl --request GET '${{ secrets.COOLIFY_WEBHOOK }}' \
-          --header 'Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}'
+      - name: Build Core API service
+        run: |
+          echo "📦 Building Core API service..."
+          bun nx build coreservice
+          echo "✅ Build complete!"
+          
+          # List build artifacts
+          echo "📁 Build artifacts:"
+          ls -la dist/services/core/ || echo "Build output directory not found"
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        run: |
+          docker build \
+            --file services/core/Dockerfile \
+            --tag ghcr.io/codewreaker/credopass-core:${{ github.sha }} \
+            --tag ghcr.io/codewreaker/credopass-core:latest \
+            .
+          docker push ghcr.io/codewreaker/credopass-core:latest
+
+      - name: Deploy to Coolify
+        id: deploy
+        run: |
+          curl --request GET '${{ secrets.COOLIFY_WEBHOOK }}' \
+            --header 'Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}'
