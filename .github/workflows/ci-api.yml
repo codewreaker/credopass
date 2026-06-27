@@ -120,155 +120,24 @@ jobs:
       url: ${{ steps.deploy.outputs.url }}
     
     steps:
-      # ----------------------------------------------------------------------
-      # Step 1: Checkout and setup
-      # ----------------------------------------------------------------------
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+    - name: Login to GitHub Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
+    - name: Build and push Docker image
+      run: |
+        docker build \
+          --file services/core/Dockerfile \
+          --tag ghcr.io/codewreaker/credopass-core:${{ github.sha }} \
+          --tag ghcr.io/codewreaker/credopass-core:latest \
+          .
+        docker push ghcr.io/codewreaker/credopass-core:latest
 
-      # ----------------------------------------------------------------------
-      # Step 2: Install dependencies and build in CI
-      # ----------------------------------------------------------------------
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
-
-      - name: Build Core API service
-        run: |
-          echo "📦 Building Core API service..."
-          bun nx build coreservice
-          echo "✅ Build complete!"
-          
-          # List build artifacts
-          echo "📁 Build artifacts:"
-          ls -la dist/services/core/ || echo "Build output directory not found"
-
-      # ----------------------------------------------------------------------
-      # Step 3: Authenticate to Google Cloud using Workload Identity Federation
-      # ----------------------------------------------------------------------
-
-      # Uncomment below and comment out Workload Identity Federation if needed
-      # - name: Authenticate to Google Cloud
-      #   id: auth
-      #   uses: google-github-actions/auth@v2
-      #   with:
-      #     token_format: 'access_token'
-      #     workload_identity_provider: ${{ vars.WIF_PROVIDER }}
-      #     service_account: ${{ vars.WIF_SERVICE_ACCOUNT }}
-
-      # Alternative: Service Account Key JSON authentication
-      - name: Authenticate to Google Cloud
-        id: auth
-        uses: google-github-actions/auth@v2
-        with:
-          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
-
-      # ----------------------------------------------------------------------
-      # Step 4: Authenticate Docker to Google Artifact Registry
-      # ----------------------------------------------------------------------
-      - name: Authenticate Docker to Artifact Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.GAR_LOCATION }}-docker.pkg.dev
-          username: _json_key
-          password: ${{ secrets.GCP_CREDENTIALS }}
-
-      # ----------------------------------------------------------------------
-      # Step 5: Build and push Docker image
-      # ----------------------------------------------------------------------
-      - name: Determine environment configuration
-        id: env-config
-        run: |
-          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
-            ENV="${{ github.event.inputs.environment }}"
-          elif [ "${{ github.ref }}" == "refs/heads/main" ]; then
-            ENV="production"
-          else
-            ENV="staging"
-          fi
-          
-          echo "environment=$ENV" >> $GITHUB_OUTPUT
-          
-          if [ "$ENV" == "production" ]; then
-            echo "service_name=credopass-core" >> $GITHUB_OUTPUT
-            echo "min_instances=1" >> $GITHUB_OUTPUT
-            echo "max_instances=10" >> $GITHUB_OUTPUT
-          else
-            echo "service_name=credopass-core-staging" >> $GITHUB_OUTPUT
-            echo "min_instances=0" >> $GITHUB_OUTPUT
-            echo "max_instances=5" >> $GITHUB_OUTPUT
-          fi
-          
-          echo "🎯 Environment: $ENV"
-
-      - name: Build and push Docker image
-        id: docker-build
-        run: |
-          IMAGE_TAG="${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE_NAME }}"
-          
-          echo "🐳 Building Docker image..."
-          docker build \
-            --file ${{ env.DOCKERFILE_PATH }} \
-            --tag "${IMAGE_TAG}:${{ github.sha }}" \
-            --tag "${IMAGE_TAG}:latest" \
-            --build-arg NODE_ENV=${{ steps.env-config.outputs.environment }} \
-            .
-          
-          echo "📤 Pushing Docker image to Artifact Registry..."
-          docker push "${IMAGE_TAG}:${{ github.sha }}"
-          docker push "${IMAGE_TAG}:latest"
-          
-          echo "image=${IMAGE_TAG}:${{ github.sha }}" >> $GITHUB_OUTPUT
-          echo "✅ Docker image pushed successfully!"
-
-      # ----------------------------------------------------------------------
-      # Step 6: Deploy to Cloud Run
-      # ----------------------------------------------------------------------
-      - name: Deploy to Cloud Run
-        id: deploy
-        uses: google-github-actions/deploy-cloudrun@v2
-        with:
-          service: ${{ steps.env-config.outputs.service_name }}
-          region: ${{ env.REGION }}
-          image: ${{ steps.docker-build.outputs.image }}
-          flags: |
-            --port=8080
-            --memory=512Mi
-            --cpu=1
-            --min-instances=${{ steps.env-config.outputs.min_instances }}
-            --max-instances=${{ steps.env-config.outputs.max_instances }}
-            --timeout=300
-            --concurrency=80
-            --allow-unauthenticated
-          env_vars: |
-            NODE_ENV=${{ steps.env-config.outputs.environment }}
-          secrets: |
-            DATABASE_URL=DATABASE_URL:latest
-
-      # ----------------------------------------------------------------------
-      # Step 7: Output deployment summary
-      # ----------------------------------------------------------------------
-      - name: Deployment summary
-        run: |
-          echo "## 🚀 Core API Service Deployment" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Property | Value |" >> $GITHUB_STEP_SUMMARY
-          echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
-          echo "| **Status** | ✅ Deployed successfully |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Environment** | ${{ steps.env-config.outputs.environment }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Service** | ${{ steps.env-config.outputs.service_name }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| **URL** | ${{ steps.deploy.outputs.url }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Branch** | ${{ github.ref_name }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Commit** | \`${{ github.sha }}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Image** | \`${{ steps.docker-build.outputs.image }}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Health Check" >> $GITHUB_STEP_SUMMARY
-          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-          echo "curl ${{ steps.deploy.outputs.url }}/api/core/health" >> $GITHUB_STEP_SUMMARY
-          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+    - name: Deploy to Coolify
+      id: deploy
+      run: |
+        curl --request GET '${{ secrets.COOLIFY_WEBHOOK }}' \
+          --header 'Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}'

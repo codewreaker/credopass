@@ -45,9 +45,7 @@ services:
   # Use native Bun for faster development iteration
   # ---------------------------------------------------------------------------
   credopass-service-core:
-    build:
-      context: ..
-      dockerfile: services/core/Dockerfile
+    image: ghcr.io/codewreaker/credopass-core:latest
     container_name: credopass-service-core
     restart: unless-stopped
     ports:
