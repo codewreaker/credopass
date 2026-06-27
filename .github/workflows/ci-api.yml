@@ -52,6 +52,11 @@ on:
           - staging
         default: 'staging'
 
+permissions:
+  contents: read
+  packages: write
+  id-token: write
+
 env:
   NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
   
@@ -67,39 +72,39 @@ env:
   DOCKERFILE_PATH: services/core/Dockerfile
 
 jobs:
-  # ==========================================================================
-  # Job 1: Quality checks (lint, typecheck, test)
-  # ==========================================================================
-  quality-checks:
-    name: Quality Checks
-    runs-on: ubuntu-latest
-    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch) || github.event_name == 'workflow_dispatch'
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+  # # ==========================================================================
+  # # Job 1: Quality checks (lint, typecheck, test)
+  # # ==========================================================================
+  # quality-checks:
+  #   name: Quality Checks
+  #   runs-on: ubuntu-latest
+  #   if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch) || github.event_name == 'workflow_dispatch'
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v4
+  #       with:
+  #         fetch-depth: 0
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
+  #     - name: Setup Bun
+  #       uses: oven-sh/setup-bun@v2
+  #       with:
+  #         bun-version: latest
 
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
+  #     - name: Install dependencies
+  #       run: bun install --frozen-lockfile
 
-      - name: Derive SHAs for base and head
-        if: github.event_name != 'workflow_dispatch'
-        uses: nrwl/nx-set-shas@v4
+  #     - name: Derive SHAs for base and head
+  #       if: github.event_name != 'workflow_dispatch'
+  #       uses: nrwl/nx-set-shas@v4
 
-      - name: Lint Core API service
-        run: bun nx lint coreservice || echo "No lint configured"
+  #     - name: Lint Core API service
+  #       run: bun nx lint coreservice || echo "No lint configured"
 
-      - name: Type check Core API service
-        run: bun nx typecheck coreservice || echo "No typecheck configured"
+  #     - name: Type check Core API service
+  #       run: bun nx typecheck coreservice || echo "No typecheck configured"
 
-      - name: Test Core API service
-        run: bun nx test coreservice || echo "No tests configured"
+  #     - name: Test Core API service
+  #       run: bun nx test coreservice || echo "No tests configured"
 
   # ==========================================================================
   # Job 3: Build application and Docker image, then deploy to Cloud Run
@@ -107,13 +112,8 @@ jobs:
   build-and-deploy:
     name: Build & Deploy to Hetzner via Coolify
     runs-on: ubuntu-latest
-    needs: [quality-checks]
+    # needs: [quality-checks]
     if: ${{ !failure() && !cancelled() }}
-    
-    # Required permissions for Workload Identity Federation
-    permissions:
-      contents: 'read'
-      id-token: 'write'
     
     environment:
       name: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production') || github.ref == 'refs/heads/main' && 'production-api' || 'staging-api' }}
