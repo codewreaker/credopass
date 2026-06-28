@@ -2,7 +2,6 @@ import { Suspense, useMemo } from "react";
 import { Outlet } from "@tanstack/react-router";
 import { TopNavBar } from "../containers/TopNavBar/index";
 import LeftSidebar, { SidebarInset, SidebarTrigger, OrgSelector } from "../containers/LeftSidebar";
-
 import { RightSidebar } from "../containers/RightSidebar";
 
 import "./layout.css";
@@ -49,7 +48,6 @@ export function RootLayout() {
 
           <RightSidebar />
         </div>
-
         <ModalPortal />
       </div>
       <Toaster
