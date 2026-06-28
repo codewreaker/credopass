@@ -2,30 +2,40 @@
 # CI/CD Pipeline - Core API Service
 # =============================================================================
 # 
-# This workflow builds and deploys the Core API service to Google Cloud Run.
-#
-# Overview:
-#   1. Check if the API service is affected by changes
-#   2. Run quality checks (lint, typecheck, test)
-#   3. Build the application in CI (faster, cached)
-#   4. Build and push Docker image to Artifact Registry
-#   5. Deploy to Cloud Run using google-github-actions/deploy-cloudrun
-#
-# Prerequisites:
-#   - Enable Cloud Run API: run.googleapis.com
-#   - Enable Artifact Registry API: artifactregistry.googleapis.com
-#   - Configure Workload Identity Federation for GitHub
-#   - Grant required IAM roles:
-#     - roles/run.admin
-#     - roles/iam.serviceAccountUser
-#     - roles/artifactregistry.admin
-#
-# Required GitHub Secrets/Variables:
-#   - WIF_PROVIDER: Workload Identity Federation provider
-#   - WIF_SERVICE_ACCOUNT: Service account email
-#   - GCP_PROJECT_ID: Google Cloud project ID
-#   - GCP_REGION: Deployment region (e.g., us-central1)
-#   - GAR_REPOSITORY: Artifact Registry repository name
+# This workflow builds and deploys the Core API service to Coolify instance running on Hetzner.
+# # ==========================================================================
+# # Job 1: Quality checks (lint, typecheck, test)
+# # ==========================================================================
+# quality-checks:
+#   name: Quality Checks
+#   runs-on: ubuntu-latest
+#   if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch) || github.event_name == 'workflow_dispatch'
+#   steps:
+#     - name: Checkout repository
+#       uses: actions/checkout@v4
+#       with:
+#         fetch-depth: 0
+
+#     - name: Setup Bun
+#       uses: oven-sh/setup-bun@v2
+#       with:
+#         bun-version: latest
+
+#     - name: Install dependencies
+#       run: bun install --frozen-lockfile
+
+#     - name: Derive SHAs for base and head
+#       if: github.event_name != 'workflow_dispatch'
+#       uses: nrwl/nx-set-shas@v4
+
+#     - name: Lint Core API service
+#       run: bun nx lint coreservice || echo "No lint configured"
+
+#     - name: Type check Core API service
+#       run: bun nx typecheck coreservice || echo "No typecheck configured"
+
+#     - name: Test Core API service
+#       run: bun nx test coreservice || echo "No tests configured"
 #
 # =============================================================================
 
@@ -72,40 +82,6 @@ env:
   DOCKERFILE_PATH: services/core/Dockerfile
 
 jobs:
-  # # ==========================================================================
-  # # Job 1: Quality checks (lint, typecheck, test)
-  # # ==========================================================================
-  # quality-checks:
-  #   name: Quality Checks
-  #   runs-on: ubuntu-latest
-  #   if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch) || github.event_name == 'workflow_dispatch'
-  #   steps:
-  #     - name: Checkout repository
-  #       uses: actions/checkout@v4
-  #       with:
-  #         fetch-depth: 0
-
-  #     - name: Setup Bun
-  #       uses: oven-sh/setup-bun@v2
-  #       with:
-  #         bun-version: latest
-
-  #     - name: Install dependencies
-  #       run: bun install --frozen-lockfile
-
-  #     - name: Derive SHAs for base and head
-  #       if: github.event_name != 'workflow_dispatch'
-  #       uses: nrwl/nx-set-shas@v4
-
-  #     - name: Lint Core API service
-  #       run: bun nx lint coreservice || echo "No lint configured"
-
-  #     - name: Type check Core API service
-  #       run: bun nx typecheck coreservice || echo "No typecheck configured"
-
-  #     - name: Test Core API service
-  #       run: bun nx test coreservice || echo "No tests configured"
-
   # ==========================================================================
   # Job 3: Build application and Docker image, then deploy to Cloud Run
   # ==========================================================================
