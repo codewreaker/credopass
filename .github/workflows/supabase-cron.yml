@@ -1,0 +1,27 @@
+name: Supabase Keep-Alive
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+
+jobs:
+  keep-alive:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: GET Request - Fetch organizations
+        run: |
+          curl -X GET \
+            "https://${{ secrets.SUPABASE_PROJECT_ID }}.supabase.co/rest/v1/organizations?limit=1&order=id.desc" \
+            -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}" \
+            -w "\nGET Response Status: %{http_code}\n"
+      
+      - name: Log Success
+        if: success()
+        run: echo "✅ Supabase keep-alive completed at $(date)"
+      
+      - name: Log Failure
+        if: failure()
+        run: echo "❌ Supabase keep-alive failed at $(date)"
