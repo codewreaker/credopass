@@ -2,9 +2,9 @@ import { drizzle as drizzlePostgres } from 'drizzle-orm/node-postgres';
 import type { Pool } from 'pg';
 import { isEdgeLight, isWorkerd, isNetlify, isDevelopment } from 'std-env';
 import * as schema from '@credopass/lib/schemas/tables';
-
 // Export schema for convenience
 export * from '@credopass/lib/schemas/tables';
+
 
 // Detect if running on hosted service
 const isHosted = !isDevelopment;
