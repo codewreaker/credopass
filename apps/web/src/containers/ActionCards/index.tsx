@@ -49,7 +49,7 @@ const ACTION_CARDS = [
 
 export default function ActionCards() {
     const { onToggleCollapse } = useSidebarTrigger();
-    const { openLauncher } = useLauncher();
+    const { openLauncher, closeLauncher } = useLauncher();
     const isMobile = useIsMobile();
     const navigate = useNavigate();
 
@@ -57,7 +57,7 @@ export default function ActionCards() {
         (action: string) => {
             switch (action) {
                 case 'create-event':
-                    launchEventForm({ isEditing: false }, openLauncher);
+                    launchEventForm({ isEditing: false }, openLauncher, closeLauncher);
                     break;
                 case 'add-members':
                     launchUserForm({ isEditing: false }, openLauncher);
@@ -70,7 +70,7 @@ export default function ActionCards() {
                     break
             }
         },
-        [openLauncher, onToggleCollapse, navigate],
+        [openLauncher, closeLauncher, onToggleCollapse, navigate],
     );
 
     const actionCards = useMemo(() => (isMobile ? ACTION_CARDS : ACTION_CARDS.filter(({ key }) => (key !== 'calendar'))), [isMobile])

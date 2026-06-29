@@ -507,3 +507,7 @@ This is a private project. For questions or issues, contact the development team
 ---
 
 **Built with ❤️ for organizations that value attendance insights**
+
+
+### Vector Art
+<a href="https://storyset.com/people">People illustrations by Storyset</a>

@@ -8,7 +8,10 @@ import {
   MapPin,
   Users,
   FileText,
-  Clock
+  Clock,
+  XIcon,
+  CheckIcon,
+  PencilIcon
 } from 'lucide-react';
 import { getCollections } from '@credopass/api-client/collections';
 import type { EventStatus } from '@credopass/lib/schemas';
@@ -17,7 +20,7 @@ import { Input } from '@credopass/ui/components/input';
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@credopass/ui/components/field';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@credopass/ui/components/select';
 import { Textarea } from '@credopass/ui/components/textarea';
-import { DialogClose, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@credopass/ui/components/dialog';
+import { DialogClose, DialogHeader, DialogTitle } from '@credopass/ui/components/dialog';
 import { Calendar } from '@credopass/ui/components/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@credopass/ui/components/popover';
 import './style.css';
@@ -29,6 +32,8 @@ import { cn } from '@credopass/ui/lib/utils';
 import React from 'react';
 import AddressPicker from '@credopass/ui/components/address-autofill';
 import { MAPBOX_ACCESS_TOKEN } from '../../config';
+import { InputGroup, InputGroupAddon, InputGroupInput } from '@credopass/ui/components/input-group';
+import { Spinner } from '@credopass/ui/components/spinner';
 
 
 
@@ -74,9 +79,9 @@ const eventFormSchema = z.object({
   organizationId: z.string().min(1, 'Organization is required.'),
 }).superRefine((data, ctx) => {
   if (data.dateTimeRange?.from && data.dateTimeRange?.to) {
-    if (data.dateTimeRange.to < data.dateTimeRange.from) {
+    if (data.dateTimeRange.to.getTime() <= data.dateTimeRange.from.getTime()) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: 'custom',
         message: 'End time must be after start time.',
         path: ['dateTimeRange'],
       });
@@ -86,10 +91,11 @@ const eventFormSchema = z.object({
 
 export const launchEventForm = (
   args: Omit<EventFormProps, 'collection'> = {},
-  openLauncher: (args: Omit<LauncherState, "isOpen">) => void
+  openLauncher: (args: Omit<LauncherState, "isOpen">) => void,
+  closeLauncher?: () => void
 ) => {
   openLauncher({
-    content: <EventForm {...args} />,
+    content: <EventForm {...args} onClose={closeLauncher} />
   });
 };
 
@@ -166,7 +172,7 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
             mode="single"
             selected={value}
             onSelect={handleDateSelect}
-            initialFocus
+            autoFocus
           />
           <div className="flex items-center gap-2 p-3 border-t">
             <Clock className="size-4 text-muted-foreground" />
@@ -202,7 +208,7 @@ const parseAddress = (response: any) => {
       ];
       return parts.filter(Boolean).join(', ');
     }
-    
+
     // Fallback for AddressData format (legacy)
     if (response && response.addressLine1) {
       const {
@@ -212,7 +218,7 @@ const parseAddress = (response: any) => {
         addressLine1, addressLine2, city, postalCode, state, country
       ].filter(Boolean).join(', ');
     }
-    
+
     return '';
   } catch (error) {
     console.error('[EventForm] Error parsing address:', error);
@@ -296,22 +302,16 @@ const EventForm = ({ initialData = {}, isEditing = false, onClose }: EventFormPr
       } catch (error) {
         toast.error(error instanceof Error ? error.message : 'An unexpected error occurred.');
       } finally {
-        setIsMutating(false);
-        onClose?.();
+        setTimeout(() => {
+          setIsMutating(false);
+          onClose?.();
+        }, 1000)
       }
     },
   });
 
   return (
     <>
-      <DialogHeader>
-        <DialogTitle>{isEditing ? 'Edit Event' : 'New Event'}</DialogTitle>
-        <DialogDescription>
-          {isEditing ? 'Update event details' : 'Create a new calendar event'}
-        </DialogDescription>
-      </DialogHeader>
-
-
       <div className="grid gap-4">
         <form
           className="event-form"
@@ -320,6 +320,37 @@ const EventForm = ({ initialData = {}, isEditing = false, onClose }: EventFormPr
             form.handleSubmit();
           }}
         >
+          <DialogHeader>
+            <div className='flex flex-row justify-between items-center'>
+              <DialogClose
+                render={(props) => (
+                  <Button
+                    {...props}
+                    variant="secondary"
+                    size={'icon'}
+                    disabled={isMutating}
+                  >
+                    <XIcon />
+                  </Button>
+                )}
+              />
+              <DialogTitle>{isEditing ? 'Edit Event' : 'New Event'}</DialogTitle>
+              <Button
+                type="submit"
+                variant="default"
+                size="icon"
+                disabled={isMutating}
+                onClick={() => {
+                  console.log('form errors:', form.state.fieldMeta);
+                }}
+
+              >
+                {isMutating ?
+                  <Spinner /> :
+                  isEditing ? <PencilIcon /> : <CheckIcon />}
+              </Button>
+            </div>
+          </DialogHeader>
           <FieldGroup>
             {/* Event Name */}
             <form.Field
@@ -328,20 +359,19 @@ const EventForm = ({ initialData = {}, isEditing = false, onClose }: EventFormPr
                 const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
                 return (
                   <Field data-invalid={isInvalid} className="form-group full-width">
-                    <FieldLabel htmlFor={field.name} className="form-label">
-                      <CalendarIcon size={14} />
-                      Event Name
-                    </FieldLabel>
-                    <Input
-                      id={field.name}
-                      name={field.name}
-                      type="text"
-                      placeholder="Enter event name"
-                      value={field.state.value}
-                      onBlur={field.handleBlur}
-                      onChange={(e) => field.handleChange(e.target.value)}
-                      aria-invalid={isInvalid}
-                    />
+                    <InputGroup>
+                      <InputGroupAddon><CalendarIcon size={14} /></InputGroupAddon>
+                      <InputGroupInput
+                        id={field.name}
+                        name={field.name}
+                        type="text"
+                        placeholder="Enter event name"
+                        value={field.state.value}
+                        onBlur={field.handleBlur}
+                        onChange={(e) => field.handleChange(e.target.value)}
+                        aria-invalid={isInvalid}
+                      />
+                    </InputGroup>
                     {isInvalid && <FieldError errors={field.state.meta.errors} />}
                   </Field>
                 );
@@ -353,14 +383,11 @@ const EventForm = ({ initialData = {}, isEditing = false, onClose }: EventFormPr
               name="dateTimeRange"
               children={(field) => {
                 const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
+                console.log('dateTimeRange', field.state.meta)
                 const currentValue = field.state.value || { from: undefined, to: undefined };
 
                 return (
                   <Field data-invalid={isInvalid} className="form-group full-width">
-                    <FieldLabel className="form-label">
-                      <CalendarIcon size={14} />
-                      Date & Time
-                    </FieldLabel>
                     <div className="flex flex-col gap-3">
                       <DateTimePicker
                         label="Start"
@@ -375,7 +402,6 @@ const EventForm = ({ initialData = {}, isEditing = false, onClose }: EventFormPr
                         placeholder="Set end date"
                       />
                     </div>
-                    <FieldDescription>Select the start and end date/time for your event</FieldDescription>
                     {isInvalid && <FieldError errors={field.state.meta.errors} />}
                   </Field>
                 );
@@ -398,6 +424,8 @@ const EventForm = ({ initialData = {}, isEditing = false, onClose }: EventFormPr
                       <AddressPicker
                         accessToken={MAPBOX_ACCESS_TOKEN}
                         onChange={(addressData) => field.handleChange(parseAddress(addressData))}
+                        onInputChange={(text) => field.handleChange(text)}
+                        onBlur={field.handleBlur}
                         placeholder={'Start typing to search for an address'}
                         showRecent={true}
                       />
@@ -447,20 +475,22 @@ const EventForm = ({ initialData = {}, isEditing = false, onClose }: EventFormPr
                   const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
                   return (
                     <Field data-invalid={isInvalid} className="form-group">
-                      <FieldLabel htmlFor={field.name} className="form-label">
-                        <Users size={14} />
-                        Capacity
-                      </FieldLabel>
-                      <Input
-                        id={field.name}
-                        name={field.name}
-                        type="number"
-                        placeholder="Max attendees"
-                        value={field.state.value}
-                        onBlur={field.handleBlur}
-                        onChange={(e) => field.handleChange(e.target.value)}
-                        aria-invalid={isInvalid}
-                      />
+                      <InputGroup>
+                        <InputGroupAddon>
+                          <Users size={14} />
+                          Capacity
+                        </InputGroupAddon>
+                        <InputGroupInput
+                          id={field.name}
+                          name={field.name}
+                          type="number"
+                          placeholder="Max attendees"
+                          value={field.state.value}
+                          onBlur={field.handleBlur}
+                          onChange={(e) => field.handleChange(e.target.value)}
+                          aria-invalid={isInvalid}
+                        />
+                      </InputGroup>
                       <FieldDescription>Leave blank for unlimited (optional)</FieldDescription>
                       {isInvalid && <FieldError errors={field.state.meta.errors} />}
                     </Field>
@@ -498,26 +528,6 @@ const EventForm = ({ initialData = {}, isEditing = false, onClose }: EventFormPr
               }}
             />
           </FieldGroup>
-
-          <DialogFooter>
-            <DialogClose>
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={onClose}
-                disabled={isMutating}
-              >
-                Cancel
-              </Button>
-            </DialogClose>
-            <Button
-              type="submit"
-              variant="default"
-              disabled={isMutating}
-            >
-              {isMutating ? 'Saving...' : isEditing ? 'Update Event' : 'Create Event'}
-            </Button>
-          </DialogFooter>
         </form>
       </div>
 

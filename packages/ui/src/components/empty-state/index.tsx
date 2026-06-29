@@ -27,6 +27,7 @@ const EmptyState: React.FC<{
     error?: boolean;
     link?: { label: string; url: string };
     icon?: React.ReactElement;
+    iconUrl?: string;
 }> = ({
     title = "No Event Found.",
     description = "You haven&apos;t created any events yet. Get started by creating your first event.",
@@ -34,14 +35,16 @@ const EmptyState: React.FC<{
     secondaryAction,
     link,
     icon = <UserPlus />,
+    iconUrl = null,
     error = false,
 }) => {
         return (
             <Empty className="position-absolute z-50">
                 <EmptyHeader>
-                    <EmptyMedia variant={icon ? 'default' : 'icon'}>
+                    {!iconUrl && <EmptyMedia variant={icon ? 'default' : 'icon'}>
                         {icon}
-                    </EmptyMedia>
+                    </EmptyMedia>}
+                    {iconUrl && <EmptyMedia className="w-4/5"><img src={iconUrl} /></EmptyMedia>}
                     <EmptyTitle className={error ? "text-2xl text-destructive" : "text-2xl"}>{title}</EmptyTitle>
                     <EmptyDescription className={error ? "text-destructive/80 max-w-md" : "max-w-md"}>
                         {description}

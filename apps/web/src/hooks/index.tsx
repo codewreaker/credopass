@@ -38,7 +38,7 @@ export const useCommandPallete = () => {
                 switch (e.key) {
                     case 'e':
                         e.preventDefault();
-                        launchEventForm({ isEditing: false }, openLauncher);
+                        launchEventForm({ isEditing: false }, openLauncher, closeLauncher);
                         break;
                     case 'n':
                         e.preventDefault();

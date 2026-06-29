@@ -68,10 +68,11 @@ const allFilters = Object.keys(STATUS_MAPPING).concat(['actions', 'timezone']) a
  * import { EventCalendar } from '../../components/event-calendar';
  */
 const EventsPage = () => {
-    const { openLauncher } = useLauncher();
+    const { openLauncher, closeLauncher } = useLauncher();
     const { events: eventCollection, organizations: orgCollection } = getCollections();
     const isMobile = useIsMobile();
     const [searchQuery, setSearchQuery] = useState<string>('');
+
 
     const {
         filterEnabled, setFilterEnabled,
@@ -102,8 +103,8 @@ const EventsPage = () => {
 
 
     const handleCreateEvent = useCallback(() => {
-        launchEventForm({ isEditing: false }, openLauncher);
-    }, [openLauncher]);
+        launchEventForm({ isEditing: false }, openLauncher, closeLauncher);
+    }, [openLauncher, closeLauncher]);
 
     const handleEditEvent = useCallback((event: EventType & { orgCollection?: Organization }) => {
         launchEventForm({
@@ -121,8 +122,8 @@ const EventsPage = () => {
                 capacity: event.capacity?.toString() || '',
                 organizationId: event.organizationId,
             },
-        }, openLauncher);
-    }, [openLauncher]);
+        }, openLauncher, closeLauncher);
+    }, [openLauncher, closeLauncher]);
 
     // Register toolbar context: secondary "Create Event" button + search
     useToolbarContext({

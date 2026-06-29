@@ -113,7 +113,7 @@ const getStoredAddresses = (): StoredAddressSnapshot[] => {
       return [];
     }
     const parsed = JSON.parse(decodeURIComponent(stored));
-    
+
     // Migrate old entries that don't have normalizedKey
     const migrated = parsed.map((item: any) => {
       if (!item.normalizedKey) {
@@ -122,7 +122,7 @@ const getStoredAddresses = (): StoredAddressSnapshot[] => {
       }
       return item;
     });
-    
+
     return migrated;
   } catch (error) {
     console.warn('[Credopass] Error parsing stored addresses:', error);
@@ -135,16 +135,16 @@ const saveAddressToCookie = (response: AddressAutofillRetrieveResponse): void =>
     const stored = getStoredAddresses();
     const props = getPropsFromResponse(response);
     const normalizedKey = createNormalizedKey(props);
-    
+
     // Skip if we can't create a valid key
     if (!normalizedKey) {
       console.warn('[Credopass] Could not create normalized key for address');
       return;
     }
-    
+
     // Check if this exact address already exists (using normalized comparison)
     const existingIndex = stored.findIndex(a => a.normalizedKey === normalizedKey);
-    
+
     if (existingIndex !== -1) {
       // Move existing entry to front and update timestamp
       const existing = stored[existingIndex];
@@ -155,7 +155,7 @@ const saveAddressToCookie = (response: AddressAutofillRetrieveResponse): void =>
       setCookie(STORED_ADDRESSES_COOKIE, JSON.stringify(stored), 365);
       return;
     }
-    
+
     const id = `addr-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
     const snapshot: StoredAddressSnapshot = {
       id,
@@ -209,6 +209,9 @@ interface AddressAutofillComponentProps
    * Callback when an address is selected
    */
   onChange?: (response: AddressAutofillRetrieveResponse) => void;
+  /** To allow update while typing as well */
+  onInputChange?: (value: string) => void;
+  onBlur?: ()=>void;
   /**
    * Placeholder text for the input field
    */
@@ -242,6 +245,8 @@ const AddressAutofillComponent = React.forwardRef<
     {
       accessToken,
       onChange,
+      onInputChange,
+      onBlur,
       placeholder = 'Search for an address...',
       className,
       showRecent = true,
@@ -260,6 +265,7 @@ const AddressAutofillComponent = React.forwardRef<
     // Reset dropdown when input changes from MapBox
     const handleInputChange = useCallback((value: string) => {
       setInputValue(value);
+      onInputChange?.(value)
       // If user is typing (non-empty), close dropdown. If clearing input, dropdown stays open if focused
       if (value.length > 0) {
         setIsDropdownOpen(false);
@@ -383,6 +389,7 @@ const AddressAutofillComponent = React.forwardRef<
             disabled={disabled}
             autoComplete="street-address"
             onFocus={handleFocus}
+            onBlur={onBlur}
             className={cn(
               'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm'
             )}
