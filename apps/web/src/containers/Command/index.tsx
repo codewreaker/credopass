@@ -49,7 +49,7 @@ const CommandPalette: React.FC<{
 
   const handleNewEvent = useCallback(() => {
     onClose();
-    launchEventForm({ isEditing: false }, openLauncher);
+    launchEventForm({ isEditing: false }, openLauncher, onClose);
   }, [onClose, openLauncher]);
 
   const handleNewMember = useCallback(() => {

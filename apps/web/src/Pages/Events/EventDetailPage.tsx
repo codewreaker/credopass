@@ -50,6 +50,7 @@ function EventDetailPage() {
     const navigate = useNavigate();
     const { openLauncher } = useLauncher();
 
+
     // Event detail page: no search, no secondary action
     useToolbarContext({
         action: { icon: ScanQrCodeIcon, label: 'Scan Qr Code', onClick: () => console.log("LAUNCH SCANNER") },

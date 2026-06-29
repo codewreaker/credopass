@@ -9,7 +9,15 @@ import { getGroupedEventsData, groupEventsByStatus, sortEventsByClosestToToday }
 import { Separator } from '@credopass/ui/components/separator';
 import { useIsMobile } from '@credopass/ui/hooks/use-mobile';
 import { EventRow, STATUS_MAPPING, type EventWithOrg } from '@credopass/ui/components/event-row';
+import EmptyStateOne from '/empty-state-one.svg'
+import EmptyStateTwo from '/empty-state-two.svg'
 
+
+const randomizeImage =()=>{
+    const svgs = [EmptyStateOne, EmptyStateTwo];
+    const random = Math.floor(Math.random() * svgs.length);
+    return svgs[random];
+}
 
 interface EventListViewProps {
     events: EventType[];
@@ -31,7 +39,7 @@ const EventListView: React.FC<EventListViewProps> = ({
 }) => {
     const navigate = useNavigate();
     const isMobile = useIsMobile();
-    
+
     // Sort upcoming/scheduled event closest to today's date instead of just desc
     const grouped = useMemo(() => {
         const groupedMap = groupEventsByStatus(events);
@@ -41,7 +49,7 @@ const EventListView: React.FC<EventListViewProps> = ({
 
     // Check if there are any ongoing or upcoming events
     const hasOngoingOrUpcoming = useMemo(() => {
-        return events.some(event => 
+        return events.some(event =>
             event.status === 'ongoing' || event.status === 'scheduled'
         );
     }, [events]);
@@ -54,10 +62,11 @@ const EventListView: React.FC<EventListViewProps> = ({
     // (past/completed events don't count toward having "active" events)
     if (!hasOngoingOrUpcoming) {
         return (
-            <div className="flex items-center justify-center py-20">
+            <div className="flex items-center justify-center py-0">
                 <EmptyState
+                    iconUrl={randomizeImage()}
                     title="No upcoming events"
-                    description={events.length > 0 
+                    description={events.length > 0
                         ? "You have past events but no upcoming ones. Create a new event to get started."
                         : "Create your first event to get started. You can set dates, locations, and capacity."
                     }

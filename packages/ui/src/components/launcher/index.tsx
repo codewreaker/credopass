@@ -48,6 +48,10 @@ export function ModalPortal() {
 
   const handleClose = useCallback(() => {
     launcher?.onClose?.();
+    /** 
+     * @todo allow the user to specify if launcher should close
+     * final action is to close the launcher
+     *  */
     closeLauncher();
   }, [launcher, closeLauncher]);
 
@@ -102,7 +106,7 @@ export function ModalPortal() {
   // Regular modal: use Dialog
   return (
     <Dialog open={launcher.isOpen} onOpenChange={handleOpenChange}>
-      <DialogContent className="launcher-dialog" showCloseButton>
+      <DialogContent className="launcher-dialog" showCloseButton={false}>
         {launcher.content || <DefaultModal />}
       </DialogContent>
     </Dialog>
