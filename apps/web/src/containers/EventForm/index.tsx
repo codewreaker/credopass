@@ -305,7 +305,7 @@ const EventForm = ({ initialData = {}, isEditing = false, onClose }: EventFormPr
         setTimeout(() => {
           setIsMutating(false);
           onClose?.();
-        }, 1000)
+        }, 1000);
       }
     },
   });
