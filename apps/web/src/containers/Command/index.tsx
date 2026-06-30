@@ -103,7 +103,7 @@ const CommandPalette: React.FC<{
 
   useHotkey('Mod+T', (event) => {
     event.preventDefault();
-    handleNavigate('/database');
+    handleNavigate('/organizations');
   });
 
   useHotkey('Mod+P', (event) => {
@@ -173,9 +173,9 @@ const CommandPalette: React.FC<{
             <Building2 className="command-palette-item-icon" />
             <span>Organizations</span>
           </CommandItem>
-          <CommandItem onSelect={() => handleNavigate('/database')} className="command-palette-item">
+          <CommandItem onSelect={() => handleNavigate('/organizations')} className="command-palette-item">
             <Database className="command-palette-item-icon" />
-            <span>Tables</span>
+            <span>Organisations</span>
             <CommandShortcut>{'⌘T'}</CommandShortcut>
           </CommandItem>
         </CommandGroup>

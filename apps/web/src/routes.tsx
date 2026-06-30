@@ -7,7 +7,6 @@ const MembersPage = lazy(() => import('./Pages/Members/index'))
 const EventsPage = lazy(() => import('./Pages/Events/index'))
 const EventDetailPage = lazy(() => import('./Pages/Events/EventDetailPage'))
 const Analytics = lazy(() => import('./Pages/Analytics/index'))
-const TablesPage = lazy(() => import('./Pages/Tables/index'))
 const CheckInPage = lazy(() => import('./Pages/CheckIn/index'))
 const OrganizationsPage = lazy(() => import('./Pages/Organizations/index'))
 
@@ -55,13 +54,6 @@ const analyticsRoute = createRoute({
   component: Analytics,
 })
 
-// Database route - Admin page to view all database tables
-const databaseRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/database',
-  component: TablesPage,
-})
-
 // CheckIn route - Check-in page for specific event
 const checkInRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -83,7 +75,6 @@ export const routeTree = rootRoute.addChildren([
   eventsRoute,
   eventDetailRoute,
   analyticsRoute,
-  databaseRoute,
   checkInRoute,
   organizationsRoute,
 ])

@@ -1,4 +1,4 @@
-import { Suspense, useMemo } from "react";
+import { Suspense } from "react";
 import { Outlet } from "@tanstack/react-router";
 import { TopNavBar } from "../containers/TopNavBar/index";
 import LeftSidebar, { SidebarInset, SidebarTrigger, OrgSelector } from "../containers/LeftSidebar";
@@ -16,14 +16,13 @@ import { useCommandPallete } from "../hooks";
 export function RootLayout() {
   const isMobile = useIsMobile();
   //Exclude Organisations from menu
-  const main = useMemo(() => (NAV_ITEMS.filter(({ id }) => (id !== 'organizations'))), []);
   const { openCommandPalette } = useCommandPallete();
   return (
     <>
       <div className="app-container">
         <div className="app-layout">
           <LeftSidebar
-            nav={{ main }}
+            nav={{ main:[...NAV_ITEMS] }}
             onCenterClick={openCommandPalette}
           >
             <SidebarInset className="main-content">

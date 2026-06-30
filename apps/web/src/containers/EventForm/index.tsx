@@ -152,9 +152,11 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
           )}
         >
           <div className="flex items-center gap-3 w-full">
-            {icon || <CalendarIcon className="size-4" />}
-            <div className="flex flex-col items-start gap-0.5">
+            <span className='flex flex-row gap-1 items-center'>
+              {icon || <CalendarIcon className="size-4" />}
               <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</span>
+            </span>
+            <div className="flex flex-col items-start gap-0.5">
               {value ? (
                 <span className="text-sm font-medium">
                   {format(value, "EEE, MMM d, yyyy")} at {format(value, "h:mm a")}
@@ -359,19 +361,16 @@ const EventForm = ({ initialData = {}, isEditing = false, onClose }: EventFormPr
                 const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
                 return (
                   <Field data-invalid={isInvalid} className="form-group full-width">
-                    <InputGroup>
-                      <InputGroupAddon><CalendarIcon size={14} /></InputGroupAddon>
-                      <InputGroupInput
-                        id={field.name}
-                        name={field.name}
-                        type="text"
-                        placeholder="Enter event name"
-                        value={field.state.value}
-                        onBlur={field.handleBlur}
-                        onChange={(e) => field.handleChange(e.target.value)}
-                        aria-invalid={isInvalid}
-                      />
-                    </InputGroup>
+                    <Input
+                      id={field.name}
+                      name={field.name}
+                      type="text"
+                      placeholder="Enter event name"
+                      value={field.state.value}
+                      onBlur={field.handleBlur}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      aria-invalid={isInvalid}
+                    />
                     {isInvalid && <FieldError errors={field.state.meta.errors} />}
                   </Field>
                 );

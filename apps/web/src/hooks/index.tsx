@@ -58,7 +58,7 @@ export const useCommandPallete = () => {
                         break;
                     case 't':
                         e.preventDefault();
-                        navigate({ to: '/database' });
+                        navigate({ to: '/organizations' });
                         break;
                     case 'p':
                         e.preventDefault();

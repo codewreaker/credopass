@@ -13,7 +13,7 @@ import EmptyStateOne from '/empty-state-one.svg'
 import EmptyStateTwo from '/empty-state-two.svg'
 
 
-const randomizeImage =()=>{
+const randomizeImage = () => {
     const svgs = [EmptyStateOne, EmptyStateTwo];
     const random = Math.floor(Math.random() * svgs.length);
     return svgs[random];
@@ -60,24 +60,16 @@ const EventListView: React.FC<EventListViewProps> = ({
 
     // Show empty state ONLY if there are no ongoing or upcoming events
     // (past/completed events don't count toward having "active" events)
-    if (!hasOngoingOrUpcoming) {
-        return (
-            <div className="flex items-center justify-center py-0">
-                <EmptyState
-                    iconUrl={randomizeImage()}
-                    title="No upcoming events"
-                    description={events.length > 0
-                        ? "You have past events but no upcoming ones. Create a new event to get started."
-                        : "Create your first event to get started. You can set dates, locations, and capacity."
-                    }
-                    action={{ label: 'Create Event', onClick: onCreateEvent }}
-                />
-            </div>
-        );
-    }
-
     return (
         <div className="event-list h-full overflow-auto">
+            {!hasOngoingOrUpcoming && (<div className="flex items-center justify-center py-0">
+                <EmptyState
+                    iconUrl={randomizeImage()}
+                    title="You have no upcoming events"
+                    description="Create a new event to get started."
+                    action={{ label: 'Create Event', onClick: onCreateEvent }}
+                />
+            </div>)}
             {grouped.map(([statusLabel, eventsData]: [EventType['status'], EventWithOrg[]]) => (
                 <div key={statusLabel} className="event-list-group">
                     <div className="event-list-date-heading">

@@ -1,7 +1,6 @@
 import {
   Users,
   ChartNoAxesCombined,
-  Database,
   QrCode,
   Building2
 } from "lucide-react";
@@ -19,8 +18,7 @@ export const NAV_ITEMS = [
   { id: 'events', url: "/events", icon: QrCode, label: "Events", isActive: true },
   { id: 'members', url: "/members", icon: Users, label: "Members" },
   { id: 'analytics', url: "/analytics", icon: ChartNoAxesCombined, label: "Analytics" },
-  { id: 'organizations', url: "/organizations", icon: Building2, label: "Organisations" },
-  { id: 'database', url: "/database", icon: Database, label: "Tables" },
+  { id: 'organizations', url: "/organizations", icon: Building2, label: "Organisations" }
 ] as const;
 
 export const tzList = Intl.supportedValuesOf('timeZone');

@@ -33,7 +33,9 @@ const statusFilterOptions = (() => {
         value: 'all',
         label: 'All',
     };
-    const statusOptions = Object.entries(STATUS_MAPPING).map(([status, config]) => ({
+    const statusOptions = Object.entries(STATUS_MAPPING)
+    .filter(([status ])=>((status as EventType['status']) !== 'draft' ))
+    .map(([status, config]) => ({
         value: status as EventTypeFilters,
         label: config.label,
         icon: config.icon
@@ -179,8 +181,7 @@ const EventsPage = () => {
                 />}
                 {enableActions && <ActionCards />}
                 <Separator className={'my-5 bg-gradient-to-r from-transparent via-muted to-transparent'} />
-
-                <div className='flex gap-4 md:h-[calc(100vh-274px)]'>
+                <div className={`flex gap-4 md:h-[calc(100vh-274px)] ${enableActions ? 'h-[calc(100vh-420px)]' : 'h-[calc(100vh-320px)]'}`}>
                     <div className='w-full md:w-2/3 md:border-r'>
                         <EventListView
                             events={filteredEvents}
