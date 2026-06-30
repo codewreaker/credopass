@@ -354,3 +354,24 @@
     animation: shimmer 2s linear infinite;
   }
 }
+
+/* ================================================================
+   Mobile accessibility / iOS zoom prevention
+
+   Safari on iOS automatically zooms into form controls with
+   computed font-size < 16px. To prevent undesired zooming while
+   keeping the design scale on larger screens, enforce a minimum
+   font-size for form controls on narrow viewports.
+   ================================================================ */
+
+html, body {
+  -webkit-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
+}
+
+@media (max-width: 768px) {
+  input, textarea, select {
+    font-size: 16px !important;
+    line-height: 1.25;
+  }
+}

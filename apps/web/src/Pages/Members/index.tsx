@@ -3,12 +3,12 @@ import { useLiveQuery } from '@tanstack/react-db'
 import { type UserType, User } from '@credopass/lib/schemas'
 import { getCollections } from '@credopass/api-client/collections';
 
-import { 
-  UserPlus, 
-  Search, 
-  Mail, 
-  Calendar, 
-  Star, 
+import {
+  UserPlus,
+  Search,
+  Mail,
+  Calendar,
+  Star,
   Trophy,
   Filter,
   MoreHorizontal,
@@ -40,6 +40,7 @@ import {
   DropdownMenuTrigger,
 } from '@credopass/ui/components/dropdown-menu';
 import { cn } from '@credopass/ui/lib/utils';
+import { useIsMobile } from "@credopass/ui/hooks/use-mobile";
 
 // Tier configuration with colors
 const TIER_CONFIG: Record<string, { color: string; bgColor: string; borderColor: string; icon: typeof Star; label: string }> = {
@@ -68,7 +69,7 @@ const MOCK_EVENTS = [
 const EventBadge: React.FC<{ name: string; status: string }> = ({ name, status }) => {
   const config = EVENT_STATUS_CONFIG[status] || EVENT_STATUS_CONFIG.upcoming;
   const StatusIcon = config.icon;
-  
+
   return (
     <TooltipProvider>
       <Tooltip>
@@ -92,8 +93,8 @@ const EventBadge: React.FC<{ name: string; status: string }> = ({ name, status }
 };
 
 // Table Header Cell
-const TableHeaderCell: React.FC<{ 
-  children: React.ReactNode; 
+const TableHeaderCell: React.FC<{
+  children: React.ReactNode;
   sortable?: boolean;
   className?: string;
 }> = ({ children, sortable, className }) => (
@@ -119,11 +120,11 @@ interface MemberTableRowProps {
   onView: (member: UserType) => void;
 }
 
-const MemberTableRow: React.FC<MemberTableRowProps> = ({ 
-  member, 
-  isSelected, 
-  onSelect, 
-  onEdit, 
+const MemberTableRow: React.FC<MemberTableRowProps> = ({
+  member,
+  isSelected,
+  onSelect,
+  onEdit,
   onDelete,
   onView
 }) => {
@@ -135,7 +136,7 @@ const MemberTableRow: React.FC<MemberTableRowProps> = ({
 
   const initials = `${member.firstName?.charAt(0) || ''}${member.lastName?.charAt(0) || ''}`.toUpperCase() || 'U';
   const fullName = `${member.firstName || ''} ${member.lastName || ''}`.trim() || 'Unknown User';
-  
+
   // Mock events for this member (in real app, this would come from member data)
   const memberEvents = MOCK_EVENTS.slice(0, Math.min(totalEvents || 2, 3));
 
@@ -146,8 +147,8 @@ const MemberTableRow: React.FC<MemberTableRowProps> = ({
     )}>
       {/* Checkbox */}
       <td className="w-12 px-4 py-3">
-        <Checkbox 
-          checked={isSelected} 
+        <Checkbox
+          checked={isSelected}
           onCheckedChange={onSelect}
           className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
         />
@@ -183,8 +184,8 @@ const MemberTableRow: React.FC<MemberTableRowProps> = ({
 
       {/* Tier */}
       <td className="px-4 py-3">
-        <Badge 
-          variant="outline" 
+        <Badge
+          variant="outline"
           className={cn(
             "text-[10px] capitalize",
             tierConfig.bgColor,
@@ -237,8 +238,8 @@ const MemberTableRow: React.FC<MemberTableRowProps> = ({
       <td className="px-4 py-3 w-12">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               size="icon-xs"
               className="opacity-0 group-hover:opacity-100 transition-opacity"
             >
@@ -255,8 +256,8 @@ const MemberTableRow: React.FC<MemberTableRowProps> = ({
               Edit
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem 
-              onClick={() => onDelete(member)} 
+            <DropdownMenuItem
+              onClick={() => onDelete(member)}
               className="gap-2 text-destructive focus:text-destructive"
             >
               <Trash2 size={14} />
@@ -270,24 +271,27 @@ const MemberTableRow: React.FC<MemberTableRowProps> = ({
 };
 
 // Stats Card Component
-const StatsCard: React.FC<{ label: string; value: string | number; icon: React.ReactNode; trend?: string }> = ({ 
-  label, value, icon, trend 
+const StatsCard: React.FC<{
+  label: string; value: string | number; icon: React.ReactNode; trend?: string
+  className?: string
+}> = ({
+  label, value, icon, trend, className
 }) => (
-  <Card className="p-4 flex items-center gap-4">
-    <div className="p-2.5 rounded-xl bg-primary/10">
-      {icon}
-    </div>
-    <div className="flex-1">
-      <p className="text-2xl font-bold text-foreground">{value}</p>
-      <p className="text-xs text-muted-foreground">{label}</p>
-    </div>
-    {trend && (
-      <Badge variant="secondary" className="text-xs">
-        {trend}
-      </Badge>
-    )}
-  </Card>
-);
+    <Card className={cn("p-4 flex items-center gap-4", className)}>
+      <div className="p-2.5 rounded-xl bg-primary/10">
+        {icon}
+      </div>
+      <div className="flex-1">
+        <p className="text-2xl font-bold text-foreground">{value}</p>
+        <p className="text-xs text-muted-foreground">{label}</p>
+      </div>
+      {trend && (
+        <Badge variant="secondary" className="text-xs">
+          {trend}
+        </Badge>
+      )}
+    </Card>
+  );
 
 export default function MembersPage() {
   const { users: userCollection } = getCollections();
@@ -297,6 +301,7 @@ export default function MembersPage() {
   const [tierFilter, setTierFilter] = useState<string | null>(null);
 
   const isError = userCollection.utils.isError;
+  const isMobile = useIsMobile();
   const rowData: UserType[] = Array.isArray(data) ? data : [];
   const { openLauncher } = useLauncher();
 
@@ -330,7 +335,7 @@ export default function MembersPage() {
   // Filter members by search query and tier
   const filteredMembers = useMemo(() => {
     let result = rowData;
-    
+
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       result = result.filter(
@@ -340,11 +345,11 @@ export default function MembersPage() {
           m.email?.toLowerCase().includes(q)
       );
     }
-    
+
     if (tierFilter) {
       result = result.filter(m => (m as any).tier === tierFilter);
     }
-    
+
     return result;
   }, [rowData, searchQuery, tierFilter]);
 
@@ -353,7 +358,7 @@ export default function MembersPage() {
     const totalMembers = rowData.length;
     const totalPoints = rowData.reduce((sum, m) => sum + ((m as any).points || 0), 0);
     const activeMembers = rowData.filter(m => (m as any).totalEvents > 0).length;
-    const avgAttendance = totalMembers > 0 
+    const avgAttendance = totalMembers > 0
       ? Math.round(rowData.reduce((sum, m) => sum + ((m as any).totalEvents || 0), 0) / totalMembers)
       : 0;
     return { totalMembers, totalPoints, activeMembers, avgAttendance };
@@ -398,14 +403,16 @@ export default function MembersPage() {
     );
   }
 
+  const iconSize = isMobile ? 12 : 18;
+
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="px-6 py-5 border-b border-border">
+      <div className="px-3 py-2 border-b border-border">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h1 className="text-2xl font-bold text-foreground">Members</h1>
-            <p className="text-sm text-muted-foreground">Manage your community members and their engagement</p>
+            <p className="text-sm text-muted-foreground">Members & Attendees</p>
           </div>
           <Button onClick={handleCreateUser} className="gap-2">
             <UserPlus size={16} />
@@ -414,27 +421,31 @@ export default function MembersPage() {
         </div>
 
         {/* Stats Row */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <StatsCard 
-            label="Total Members" 
-            value={stats.totalMembers} 
-            icon={<UserPlus size={18} className="text-primary" />}
+        <div className="grid grid-cols-4 md:grid-cols-4 gap-34 md:gap-4 overflow-auto py-1">
+          <StatsCard
+            label="Total Members"
+            className="h-2/3 w-30  md:h-full md:w-full"
+            value={stats.totalMembers}
+            icon={<UserPlus size={iconSize} className="text-primary" />}
           />
-          <StatsCard 
-            label="Total Points" 
-            value={stats.totalPoints.toLocaleString()} 
-            icon={<Star size={18} className="text-primary" />}
+          <StatsCard
+            label="Total Points"
+            className="h-2/3 w-30  md:h-full md:w-full"
+            value={stats.totalPoints.toLocaleString()}
+            icon={<Star size={iconSize} className="text-primary" />}
           />
-          <StatsCard 
-            label="Active Members" 
-            value={stats.activeMembers} 
-            icon={<Calendar size={18} className="text-primary" />}
+          <StatsCard
+            label="Active Members"
+            className="h-2/3 w-30  md:h-full md:w-full"
+            value={stats.activeMembers}
+            icon={<Calendar size={iconSize} className="text-primary" />}
             trend={`${Math.round((stats.activeMembers / (stats.totalMembers || 1)) * 100)}%`}
           />
-          <StatsCard 
-            label="Avg Events/Member" 
-            value={stats.avgAttendance} 
-            icon={<Trophy size={18} className="text-primary" />}
+          <StatsCard
+            label="Avg Events/Member"
+            className="h-2/3 w-30  md:h-full md:w-full"
+            value={stats.avgAttendance}
+            icon={<Trophy size={iconSize} className="text-primary" />}
           />
         </div>
       </div>
@@ -443,15 +454,15 @@ export default function MembersPage() {
       <div className="px-6 py-4 border-b border-border flex flex-wrap items-center gap-4">
         <div className="relative flex-1 min-w-[200px] max-w-md">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <Input 
-            placeholder="Search by name or email..." 
+          <Input
+            placeholder="Search by name or email..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-9"
           />
         </div>
-        
-        <div className="flex items-center gap-2">
+
+        <div className="flex items-center gap-2 overflow-auto">
           <Filter size={14} className="text-muted-foreground" />
           <Button
             variant={tierFilter === null ? "default" : "outline"}
@@ -481,9 +492,9 @@ export default function MembersPage() {
         {selectedIds.size > 0 && (
           <div className="flex items-center gap-2 ml-auto">
             <Badge variant="secondary">{selectedIds.size} selected</Badge>
-            <Button 
-              variant="destructive" 
-              size="sm" 
+            <Button
+              variant="destructive"
+              size="sm"
               className="h-7 text-xs gap-1"
               onClick={() => {
                 selectedIds.forEach(id => {
@@ -507,7 +518,7 @@ export default function MembersPage() {
             <EmptyState
               title={searchQuery || tierFilter ? "No members found" : "No members yet"}
               description={searchQuery || tierFilter
-                ? "Try adjusting your search or filters" 
+                ? "Try adjusting your search or filters"
                 : "Add your first member to start building your community."
               }
               action={!searchQuery && !tierFilter ? { label: "Add Member", onClick: handleCreateUser } : undefined}
@@ -518,7 +529,7 @@ export default function MembersPage() {
             <thead className="sticky top-0 bg-background/95 backdrop-blur-sm border-b border-border z-10">
               <tr>
                 <th className="w-12 px-4 py-3 text-left">
-                  <Checkbox 
+                  <Checkbox
                     checked={allSelected}
                     onCheckedChange={handleSelectAll}
                     className={cn(
