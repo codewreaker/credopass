@@ -1,6 +1,7 @@
 import { lazy } from 'react'
 import { createRootRoute, createRoute, redirect } from '@tanstack/react-router'
 import { RootLayout } from './Pages/Layout'
+import { z } from 'zod'
 
 // --- Lazy-loaded page components (code-split per route) ---
 const MembersPage = lazy(() => import('./Pages/Members/index'))
@@ -9,6 +10,7 @@ const EventDetailPage = lazy(() => import('./Pages/Events/EventDetailPage'))
 const Analytics = lazy(() => import('./Pages/Analytics/index'))
 const CheckInPage = lazy(() => import('./Pages/CheckIn/index'))
 const OrganizationsPage = lazy(() => import('./Pages/Organizations/index'))
+const LoginPage = lazy(() => import('./Pages/Login/index'))
 
 // Root route - wraps all pages with layout (sidebar, topbar, etc.)
 const rootRoute = createRootRoute({
@@ -68,6 +70,18 @@ const organizationsRoute = createRoute({
   component: OrganizationsPage,
 })
 
+
+export const loginRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path:'/login',
+  validateSearch: z.object({
+    // Present on links that intentionally send someone to the login page
+    // (e.g. a "Log in" nav item). Skips the automatic guest sign-in.
+    manual: z.boolean().optional().default(false),
+  }),
+  component: LoginPage,
+})
+
 // Route tree - explicitly defines the structure
 export const routeTree = rootRoute.addChildren([
   indexRoute,
@@ -77,6 +91,7 @@ export const routeTree = rootRoute.addChildren([
   analyticsRoute,
   checkInRoute,
   organizationsRoute,
+  loginRoute
 ])
 
 // Export individual routes for type safety and easy access
@@ -88,4 +103,5 @@ export const routes = {
   eventDetail: eventDetailRoute,
   organizations: organizationsRoute,
   analytics: analyticsRoute,
+  login: loginRoute
 } as const

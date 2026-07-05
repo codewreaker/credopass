@@ -15,10 +15,10 @@ const DB_VERSION = 1;
 const openDB = (): Promise<IDBDatabase> => {
     return new Promise((resolve, reject) => {
         const request = indexedDB.open(DB_NAME, DB_VERSION);
-        
+
         request.onerror = () => reject(request.error);
         request.onsuccess = () => resolve(request.result);
-        
+
         request.onupgradeneeded = (event) => {
             const db = (event.target as IDBOpenDBRequest).result;
             if (!db.objectStoreNames.contains(STORE_NAME)) {
@@ -35,7 +35,7 @@ const getFromDB = async <T>(key: string): Promise<T | undefined> => {
             const transaction = db.transaction(STORE_NAME, 'readonly');
             const store = transaction.objectStore(STORE_NAME);
             const request = store.get(key);
-            
+
             request.onerror = () => reject(request.error);
             request.onsuccess = () => resolve(request.result);
         });
@@ -51,7 +51,7 @@ const setToDB = async <T>(key: string, value: T): Promise<void> => {
             const transaction = db.transaction(STORE_NAME, 'readwrite');
             const store = transaction.objectStore(STORE_NAME);
             const request = store.put(value, key);
-            
+
             request.onerror = () => reject(request.error);
             request.onsuccess = () => resolve();
         });
@@ -72,7 +72,7 @@ export function useStatusFilter(allFilters: EventTypeFilters[]) {
                 getFromDB<boolean>(EVENTS_FILTER_ENABLED_COOKIE_NAME),
                 getFromDB<EventTypeFilters[]>(EVENTS_FILTER_COOKIE_NAME),
             ]);
-            
+
             if (storedEnabled !== undefined) {
                 setFilterEnabledState(storedEnabled);
             }
@@ -81,7 +81,7 @@ export function useStatusFilter(allFilters: EventTypeFilters[]) {
             }
             setIsInitialized(true);
         };
-        
+
         loadFromDB();
     }, []);
 
@@ -114,6 +114,15 @@ export function useStatusFilter(allFilters: EventTypeFilters[]) {
         }
     }, [allFilters, selectedFilters, setSelectedFilters]);
 
+    const toggleActions = useCallback(() => {
+        if(selectedFilters.includes('actions')){
+            setSelectedFilters(selectedFilters.filter((f)=>f!=='actions'))
+        }else{
+            setSelectedFilters(selectedFilters.concat(['actions']))
+        }
+    }, [selectedFilters, setSelectedFilters]);
+
+
     // Swap the real selection for ['all'] when every filter is active, so the "All" chip highlights
     const displayedFilterValue = useMemo((): (EventTypeFilters | 'all')[] => {
         const isAllMode = allFilters.every(f => selectedFilters.includes(f));
@@ -125,7 +134,7 @@ export function useStatusFilter(allFilters: EventTypeFilters[]) {
         [selectedFilters]
     );
 
-    const enableActions = useMemo(() => selectedFilters.includes('actions'), [selectedFilters]);
+
     const enableTimezone = useMemo(() => selectedFilters.includes('timezone'), [selectedFilters]);
 
     return {
@@ -135,7 +144,7 @@ export function useStatusFilter(allFilters: EventTypeFilters[]) {
         handleFilterChange,
         displayedFilterValue,
         selectedStatuses,
-        enableActions,
+        toggleActions,
         enableTimezone,
         isInitialized,
     };

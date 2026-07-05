@@ -34,24 +34,20 @@ const statusFilterOptions = (() => {
         label: 'All',
     };
     const statusOptions = Object.entries(STATUS_MAPPING)
-    .filter(([status ])=>((status as EventType['status']) !== 'draft' ))
-    .map(([status, config]) => ({
-        value: status as EventTypeFilters,
-        label: config.label,
-        icon: config.icon
-    }));
+        .filter(([status]) => ((status as EventType['status']) !== 'draft'))
+        .map(([status, config]) => ({
+            value: status as EventTypeFilters,
+            label: config.label,
+            icon: config.icon
+        }));
 
-    const actionOption: ChipFilterOption<string>[] = [{
-        label: 'Timezone',
-        value: 'timezone',
-        icon: <TimerIcon />
-    },
+    const actionOption: ChipFilterOption<string>[] = [
         divider,
-    {
-        label: 'actions',
-        value: 'actions',
-        icon: <FastForward />
-    }]
+        {
+            label: 'Timezone',
+            value: 'timezone',
+            icon: <TimerIcon />
+        }]
 
 
     const allFilters = [
@@ -77,11 +73,13 @@ const EventsPage = () => {
 
 
     const {
-        filterEnabled, setFilterEnabled,
+        filterEnabled, setFilterEnabled, selectedFilters,
         handleFilterChange, displayedFilterValue,
-        selectedStatuses, enableActions, enableTimezone,
+        selectedStatuses, toggleActions, enableTimezone,
     } = useStatusFilter(allFilters);
 
+
+    const enableActions = useMemo(() => selectedFilters.includes('actions'), [selectedFilters]);
     const userName = useEventSessionStore((s) => s.session.currentUserName);
     const firstName = useMemo(() => userName?.split(' ')[0] || 'there', [userName]);
     const greeting = useMemo(() => getGreeting(), []);
@@ -146,6 +144,7 @@ const EventsPage = () => {
     }, [events, searchQuery]);
 
 
+
     return (
         <div className="events-page">
             <div className="events-header">
@@ -164,6 +163,10 @@ const EventsPage = () => {
                         <Button variant='outline' className={'relative'} size={'icon-sm'} onClick={() => setFilterEnabled(prev => !prev)}>
                             {filterEnabled && <span className="absolute bottom-4 left-4 size-2 rounded-full bg-primary" />}
                             <ListFilterPlus />
+                        </Button>
+                        <Button variant='outline' className={'relative'} size={'icon-sm'} onClick={toggleActions}>
+                            {enableActions && <span className="absolute bottom-4 left-4 size-2 rounded-full bg-primary" />}
+                            <FastForward />
                         </Button>
                         <RightSidebarTrigger icon={<CalendarsIcon />} />
                     </ButtonGroup>

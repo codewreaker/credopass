@@ -1,11 +1,16 @@
 //this hook is temporarily in the ui package, but it should be moved to lib once I figure out the best way to handle cross-package dependencies for hooks that are used in both packages (e.g. usePrevious)
-import { useEffect, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { launchEventForm } from '../containers/EventForm/index';
 import CommandPalette from '../containers/Command/index';
 import { launchSignInForm } from '../containers/SignInModal/index';
 import { launchUserForm } from '../containers/UserForm/index';
 import { useNavigate } from '@tanstack/react-router';
 import { useLauncher } from '@credopass/lib/stores';
+
+
+
+import { supabase, signInAsGuest } from '@credopass/api-client/supabase'
+
 
 export const useCommandPallete = () => {
     const { openLauncher, closeLauncher } = useLauncher();
@@ -75,4 +80,54 @@ export const useCommandPallete = () => {
     return {
         openCommandPalette
     }
+}
+
+/**
+ * Guest login is the default experience: a visitor who lands on `/login`
+ * without explicitly asking to sign in (no `?manual=true`) is signed in
+ * anonymously right away and never sees the form.
+ *
+ * Anyone who navigates here on purpose — e.g. a "Log in" link that sets
+ * `?manual=true` — skips the auto sign-in and sees the full page, which
+ * still exposes "Continue as guest" as an explicit button.
+ */
+export function useGuestAutoLogin(manual: boolean) {
+  const [isAutoSigningIn, setIsAutoSigningIn] = useState(!manual)
+  const navigate = useNavigate()
+  const hasRun = useRef(false)
+
+  useEffect(() => {
+    if (manual || hasRun.current) return
+    hasRun.current = true
+
+    let cancelled = false
+
+    async function run() {
+      const { data } = await supabase.auth.getSession()
+      if (data.session) {
+        if (!cancelled) navigate({ to: '/events' })
+        return
+      }
+
+      const { error } = await signInAsGuest()
+      if (cancelled) return
+
+      if (error) {
+        // Fall back to showing the real page so the person isn't stuck
+        // on a spinner if anonymous sign-in is disabled or fails.
+        setIsAutoSigningIn(false)
+        return
+      }
+
+      navigate({ to: '/events' })
+    }
+
+    run()
+
+    return () => {
+      cancelled = true
+    }
+  }, [manual, navigate])
+
+  return isAutoSigningIn
 }

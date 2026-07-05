@@ -22,6 +22,6 @@
       "vite/client"
     ],
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "vite.config.ts", "../../packages/lib/src/hooks/use-sidebar-trigger.tsx", "../../packages/ui/src/hooks/use-swipe-to-reveal.tsx", "../../packages/lib/src/hooks/use-toolbar-context.ts"],
+  "include": ["src/**/*.ts", "src/**/*.tsx", "vite.config.ts", "../../packages/lib/src/hooks/*.tsx","../../packages/lib/src/auth/*.ts", "../../packages/api-client/src/supabase/auth.ts"],
   "exclude": ["node_modules", "dist"]
 }
