@@ -5,7 +5,7 @@ export * from './hooks';
 export * from './schemas';
 export * from './theme';
 export * from './stores';
-export * from '../../api-client/src/supabase/auth'
+export * from './supabase'
 
 export type { 
   ResponsiveGridLayoutProps, 

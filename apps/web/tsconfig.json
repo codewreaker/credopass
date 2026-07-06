@@ -22,6 +22,6 @@
       "vite/client"
     ],
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "vite.config.ts", "../../packages/lib/src/hooks/*.tsx","../../packages/lib/src/auth/*.ts", "../../packages/api-client/src/supabase/auth.ts"],
+  "include": ["src/**/*.ts", "src/**/*.tsx", "vite.config.ts", "../../packages/lib/src/**/*.tsx"],
   "exclude": ["node_modules", "dist"]
 }

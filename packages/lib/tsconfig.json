@@ -12,6 +12,6 @@
     "jsx": "react-jsx",
     "rootDir": "src"
   },
-  "include": ["src/**/*", "../ui/src/hooks/use-previous.ts", "../api-client/src/supabase/auth.ts"],
+  "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]
 }

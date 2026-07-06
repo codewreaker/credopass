@@ -30,3 +30,6 @@ export * from './attendance.schema';
 // Loyalty schemas
 export * from './loyalty.schema';
 
+// email from schemas
+export * from './email.schemas'
+

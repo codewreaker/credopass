@@ -3,9 +3,12 @@ import { Github, Loader2 } from 'lucide-react'
 
 import { Button } from '@credopass/ui/components/button'
 
-import { signInWithGithub } from '../-lib/auth'
 
-export function GithubButton() {
+export function GithubButton({
+  signInWithGithub
+}: {
+  signInWithGithub: () => Promise<any>
+}) {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 

@@ -15,3 +15,19 @@ if (!MAPBOX_ACCESS_TOKEN) {
     'Mapbox access token is not configured. Please set VITE_MAPBOX_ACCESS_TOKEN in your environment variables.'
   );
 }
+
+export const SUPASE_CRED = {
+  URL: import.meta.env.VITE_SUPABASE_URL,
+  ANON_KEY: import.meta.env.VITE_SUPABASE_ANON_KEY,
+}
+
+
+// If you already have a shared Supabase client elsewhere in the monorepo
+// (e.g. `@credopass/core/supabase`), delete this file and import that one
+// instead in `-lib/auth.ts`. This is here so the folder is self-contained.
+
+if (!SUPASE_CRED.ANON_KEY || !SUPASE_CRED.URL) {
+  throw new Error(
+    'Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY environment variables.',
+  )
+}

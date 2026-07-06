@@ -12,12 +12,31 @@ import {
   TabsTrigger,
 } from '@credopass/ui/components/tabs'
 
-import { emailPasswordSchema } from '../-lib/schemas'
-import { signInWithEmail, signUpWithEmail } from '../-lib/auth'
+import { emailPasswordSchema } from '@credopass/lib/schemas'
 
 type Mode = 'sign-in' | 'sign-up'
 
-export function EmailPasswordForm() {
+type SignInCallbackResult = {
+  error: Error,
+  data: {
+    session: string,
+  }
+}
+
+const defaultResolver = (email: string, _password?: string) => (new Promise((res, rej) => {
+  rej(`
+      Can't sign you in: ${email}. You need to provide a handler for Email Password\
+      form. Path /ui/src/components/login/email-password-form.tsx
+      `)
+}));
+
+export function EmailPasswordForm({
+  signInCallback = defaultResolver,
+  signUpCallback = defaultResolver
+}: {
+  signInCallback?: (email: string, password: string) => Promise<SignInCallbackResult>,
+  signUpCallback?: (email: string, password: string) => Promise<SignInCallbackResult>
+}) {
   const [mode, setMode] = useState<Mode>('sign-in')
   const [formError, setFormError] = useState<string | null>(null)
   const [confirmationSent, setConfirmationSent] = useState(false)
@@ -33,8 +52,8 @@ export function EmailPasswordForm() {
 
       const { error, data } =
         mode === 'sign-in'
-          ? await signInWithEmail(result.data.email, result.data.password)
-          : await signUpWithEmail(result.data.email, result.data.password)
+          ? await signInCallback(result.data.email, result.data.password)
+          : await signUpCallback(result.data.email, result.data.password)
 
       if (error) {
         setFormError(error.message)
@@ -48,7 +67,7 @@ export function EmailPasswordForm() {
         return
       }
 
-      window.location.assign('/dashboard')
+      window.location.assign('/events')
     },
   })
 

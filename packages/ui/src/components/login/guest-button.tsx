@@ -4,9 +4,11 @@ import { Loader2 } from 'lucide-react'
 
 import { Button } from '@credopass/ui/components/button'
 
-import { signInAsGuest } from '../-lib/auth'
 
-export function GuestButton() {
+export function GuestButton({
+  signInAsGuest}:{
+  signInAsGuest: ()=>Promise<any>
+}) {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const navigate = useNavigate()
@@ -23,7 +25,7 @@ export function GuestButton() {
       return
     }
 
-    navigate({ to: '/dashboard' })
+    navigate({ to: '/events' })
   }
 
   return (

@@ -9,9 +9,6 @@ import { useLauncher } from '@credopass/lib/stores';
 
 
 
-import { supabase, signInAsGuest } from '@credopass/api-client/supabase'
-
-
 export const useCommandPallete = () => {
     const { openLauncher, closeLauncher } = useLauncher();
     const navigate = useNavigate();
@@ -91,7 +88,7 @@ export const useCommandPallete = () => {
  * `?manual=true` — skips the auto sign-in and sees the full page, which
  * still exposes "Continue as guest" as an explicit button.
  */
-export function useGuestAutoLogin(manual: boolean) {
+export function useGuestAutoLogin(manual: boolean, supabase:any, signInAsGuest:any) {
   const [isAutoSigningIn, setIsAutoSigningIn] = useState(!manual)
   const navigate = useNavigate()
   const hasRun = useRef(false)
