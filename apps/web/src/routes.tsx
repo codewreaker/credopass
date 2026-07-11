@@ -75,9 +75,15 @@ export const loginRoute = createRoute({
   getParentRoute: () => rootRoute,
   path:'/login',
   validateSearch: z.object({
-    // Present on links that intentionally send someone to the login page
-    // (e.g. a "Log in" nav item). Skips the automatic guest sign-in.
-    manual: z.boolean().optional().default(false),
+    // manual - true prevents auto guest sign in and presents user with sign-in options
+    manual: z.boolean().optional().default(true),
+    /**
+     * Determing which view to show (e.g. a "Log in" nav item). 
+     * social - Present social links e.g github, gmail
+     * email - type username and password
+     */
+
+    view: z.enum(['social', 'email']).catch('social')
   }),
   component: LoginPage,
 })

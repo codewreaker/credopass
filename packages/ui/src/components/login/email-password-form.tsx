@@ -1,24 +1,26 @@
 import { useState } from 'react'
 import { useForm } from '@tanstack/react-form'
-import { z } from 'zod'
 import { Loader2 } from 'lucide-react'
 
 import { Button } from '@credopass/ui/components/button'
 import { Input } from '@credopass/ui/components/input'
 import { Label } from '@credopass/ui/components/label'
 
-const emailSchema = z.string().min(1, 'Email is required').email('Enter a valid email')
-const passwordSchema = z.string().min(8, 'Password must be at least 8 characters')
 
-type EmailPasswordValues = { email: string; password: string }
+export type EmailPasswordValues = { email: string; password: string }
 type AuthMode = 'signIn' | 'signUp'
 
 export function EmailPasswordForm({
   signInCallback,
   signUpCallback,
+  schemaValidation,
 }: {
   signInCallback: (values: EmailPasswordValues) => Promise<any>
-  signUpCallback: (values: EmailPasswordValues) => Promise<any>
+  signUpCallback: (values: EmailPasswordValues) => Promise<any>,
+  schemaValidation: {
+    email: any,
+    password: any
+  }
 }) {
   const [mode, setMode] = useState<AuthMode>('signIn')
   const [formError, setFormError] = useState<string | null>(null)
@@ -48,7 +50,7 @@ export function EmailPasswordForm({
       }}
       className="flex flex-col gap-4"
     >
-      <form.Field name="email" validators={{ onChange: emailSchema }}>
+      <form.Field name="email" validators={{ onChange: schemaValidation.email }}>
         {(field) => (
           <div className="flex flex-col gap-1.5">
             <Label htmlFor={field.name}>Email</Label>
@@ -70,7 +72,7 @@ export function EmailPasswordForm({
         )}
       </form.Field>
 
-      <form.Field name="password" validators={{ onChange: passwordSchema }}>
+      <form.Field name="password" validators={{ onChange: schemaValidation.password }}>
         {(field) => (
           <div className="flex flex-col gap-1.5">
             <div className="flex items-center justify-between">
