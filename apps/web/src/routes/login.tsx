@@ -1,7 +1,9 @@
 import LoginPage from "../Pages/Login";
 import {z} from 'zod'
+import { createFileRoute } from "@tanstack/react-router";
 
-export const loginRoute = createFileRoute('/login')({
+
+export const Route = createFileRoute('/login')({
   validateSearch: z.object({
     // manual - true prevents auto guest sign in and presents user with sign-in options
     manual: z.boolean().optional().default(true),

@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as OrganizationsRouteImport } from './routes/organizations'
 import { Route as MembersRouteImport } from './routes/members'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as EventsIndexRouteImport } from './routes/events/index'
@@ -26,6 +27,11 @@ const OrganizationsRoute = OrganizationsRouteImport.update({
 const MembersRoute = MembersRouteImport.update({
   id: '/members',
   path: '/members',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AnalyticsRoute = AnalyticsRouteImport.update({
@@ -62,6 +68,7 @@ const CheckinEventIdRoute = CheckinEventIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/analytics': typeof AnalyticsRoute
+  '/login': typeof LoginRoute
   '/members': typeof MembersRoute
   '/organizations': typeof OrganizationsRoute
   '/checkin/$eventId': typeof CheckinEventIdRoute
@@ -72,6 +79,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/analytics': typeof AnalyticsRoute
+  '/login': typeof LoginRoute
   '/members': typeof MembersRoute
   '/organizations': typeof OrganizationsRoute
   '/checkin/$eventId': typeof CheckinEventIdRoute
@@ -83,6 +91,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/analytics': typeof AnalyticsRoute
+  '/login': typeof LoginRoute
   '/members': typeof MembersRoute
   '/organizations': typeof OrganizationsRoute
   '/checkin/$eventId': typeof CheckinEventIdRoute
@@ -95,6 +104,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/analytics'
+    | '/login'
     | '/members'
     | '/organizations'
     | '/checkin/$eventId'
@@ -105,6 +115,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/analytics'
+    | '/login'
     | '/members'
     | '/organizations'
     | '/checkin/$eventId'
@@ -115,6 +126,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/analytics'
+    | '/login'
     | '/members'
     | '/organizations'
     | '/checkin/$eventId'
@@ -126,6 +138,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AnalyticsRoute: typeof AnalyticsRoute
+  LoginRoute: typeof LoginRoute
   MembersRoute: typeof MembersRoute
   OrganizationsRoute: typeof OrganizationsRoute
   CheckinEventIdRoute: typeof CheckinEventIdRoute
@@ -148,6 +161,13 @@ declare module '@tanstack/react-router' {
       path: '/members'
       fullPath: '/members'
       preLoaderRoute: typeof MembersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/analytics': {
@@ -198,6 +218,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AnalyticsRoute: AnalyticsRoute,
+  LoginRoute: LoginRoute,
   MembersRoute: MembersRoute,
   OrganizationsRoute: OrganizationsRoute,
   CheckinEventIdRoute: CheckinEventIdRoute,

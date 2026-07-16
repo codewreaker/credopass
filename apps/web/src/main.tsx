@@ -5,22 +5,10 @@ import { ThemeProvider } from '@credopass/lib/theme'
 import { Analytics } from '@vercel/analytics/react'
 import { SpeedInsights } from '@vercel/speed-insights/react'
 import { configureAPIClient } from '@credopass/api-client'
-//import { API_BASE_URL } from './config'
+import { routeTree } from './routeTree.gen'
 import './index.css'
 
-declare module '@tanstack/react-router' {
-  interface Register {
-    router: typeof router
-  }
-}
-
-// Configure the API client with environment-specific settings
-configureAPIClient({ baseURL: import.meta.env.VITE_API_URL || '/api/core' });
-
-// Import explicit route configuration
-import { routeTree } from './routes'
-
-// Create a new router instance from the explicit route tree
+// Create the router instance
 const router = createRouter({ routeTree })
 
 // Register the router instance for type safety
@@ -29,6 +17,9 @@ declare module '@tanstack/react-router' {
     router: typeof router
   }
 }
+
+// Configure the API client with environment-specific settings
+configureAPIClient({ baseURL: import.meta.env.VITE_API_URL || '/api/core' })
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

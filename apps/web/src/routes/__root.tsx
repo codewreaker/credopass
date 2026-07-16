@@ -4,7 +4,7 @@ import { TopNavBar } from "../containers/TopNavBar/index";
 import LeftSidebar, { SidebarInset, SidebarTrigger, OrgSelector } from "../containers/LeftSidebar";
 import { RightSidebar } from "../containers/RightSidebar";
 
-import "./layout.css";
+import "../Pages/layout.css";
 import { useIsMobile } from "@credopass/ui/hooks/use-mobile";
 import { Toaster } from "@credopass/ui/components/sonner";
 import { Separator } from "@credopass/ui/components/separator";
