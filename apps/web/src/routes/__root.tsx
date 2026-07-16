@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { Outlet } from "@tanstack/react-router";
+import { createRootRoute, Outlet } from "@tanstack/react-router";
 import { TopNavBar } from "../containers/TopNavBar/index";
 import LeftSidebar, { SidebarInset, SidebarTrigger, OrgSelector } from "../containers/LeftSidebar";
 import { RightSidebar } from "../containers/RightSidebar";
@@ -13,6 +13,16 @@ import { NAV_ITEMS } from "@credopass/lib/constants";
 import { useCommandPallete } from "../hooks";
 
 
+import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
+import { TanStackDevtools } from '@tanstack/react-devtools'
+
+
+// Root route - wraps all pages with layout (sidebar, topbar, etc.)
+export const Route = createRootRoute({
+  component: RootLayout,
+})
+
+
 export function RootLayout() {
   const isMobile = useIsMobile();
   //Exclude Organisations from menu
@@ -22,7 +32,7 @@ export function RootLayout() {
       <div className="app-container">
         <div className="app-layout">
           <LeftSidebar
-            nav={{ main:[...NAV_ITEMS] }}
+            nav={{ main: [...NAV_ITEMS] }}
             onCenterClick={openCommandPalette}
           >
             <SidebarInset className="main-content">
@@ -52,6 +62,17 @@ export function RootLayout() {
       <Toaster
         position="top-center"
         richColors
+      />
+      <TanStackDevtools
+        config={{
+          position: 'bottom-right',
+        }}
+        plugins={[
+          {
+            name: 'TanStack Router',
+            render: <TanStackRouterDevtoolsPanel />,
+          },
+        ]}
       />
     </>
   );

@@ -8,6 +8,12 @@ import { configureAPIClient } from '@credopass/api-client'
 //import { API_BASE_URL } from './config'
 import './index.css'
 
+declare module '@tanstack/react-router' {
+  interface Register {
+    router: typeof router
+  }
+}
+
 // Configure the API client with environment-specific settings
 configureAPIClient({ baseURL: import.meta.env.VITE_API_URL || '/api/core' });
 

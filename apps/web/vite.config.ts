@@ -1,7 +1,9 @@
 import { defineConfig, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin'
+
 import { nxCopyAssetsPlugin } from '@nx/vite/plugins/nx-copy-assets.plugin'
+import { tanstackRouter } from '@tanstack/router-plugin/vite'
 import tailwindcss from '@tailwindcss/vite'
 import { existsSync, statSync } from 'node:fs'
 import { resolve } from 'node:path'
@@ -41,6 +43,10 @@ function nxViteTsPathsFixed(opts?: Parameters<typeof nxViteTsPaths>[0]): Plugin 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
+    tanstackRouter({
+      target: 'react',
+      autoCodeSplitting: true
+    }),
     react({
       babel: {
         plugins: [
@@ -93,7 +99,7 @@ export default defineConfig({
           if (id.includes('node_modules')) {
             return 'vendor'
           }
-          
+
           return undefined;
         },
       },

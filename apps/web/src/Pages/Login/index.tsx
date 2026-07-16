@@ -4,8 +4,7 @@ import { emailPasswordSchema } from '@credopass/lib/schemas'
 import { createAuthClient, createClient } from '@credopass/lib/supabase'
 import { EmailPasswordForm } from '@credopass/ui/components/login/email-password-form'
 import { SUPASE_CRED } from '../../config'
-import { Separator } from '@credopass/ui/components/separator'
-import { Button } from '@credopass/ui/components/button'
+import LoginSVG from '/login-cuate.svg'
 
 
 
@@ -55,25 +54,31 @@ export default function LoginPage() {
 
   return (
     <>
-      {(view === 'social') && <AuthPage
-        signInAsGuest={signInAsGuest}
-        signInWithGithub={signInWithGithub}
-        signInAsEmail={showEmailForm}
-      />
-      }
-
-      {(view === 'email') && (
-        <>
-          <button onClick={showOptions} className="text-sm text-muted-foreground mb-10">
-            ← Back
-          </button>
-          <EmailPasswordForm
-            signInCallback={(values) => signInWithEmail(values.email, values.password)}
-            signUpCallback={(values) => signUpWithEmail(values.email, values.password)}
-            schemaValidation={emailPasswordSchema as any}
+      <button onClick={showOptions} className="text-sm text-muted-foreground mb-10">
+        ← Back
+      </button>
+      <div className='flex md:gap-10 m-auto md:flex-row flex-col w-full md:h-3/4 items-center max-w-5xl'>
+        <div className="flex-1 w-full md:p-10">
+          {(view === 'social') && <AuthPage
+            signInAsGuest={signInAsGuest}
+            signInWithGithub={signInWithGithub}
+            signInAsEmail={showEmailForm}
           />
-        </>
-      )}
+          }
+
+          {(view === 'email') && (
+            <EmailPasswordForm
+              signInCallback={(values) => signInWithEmail(values.email, values.password)}
+              signUpCallback={(values) => signUpWithEmail(values.email, values.password)}
+              schemaValidation={emailPasswordSchema as any}
+            />
+
+          )}
+        </div>
+        <div className="flex-1 w-full">
+          <img src={LoginSVG} />
+        </div>
+      </div>
     </>
 
   )
