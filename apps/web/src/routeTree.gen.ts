@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as UpgradeRouteImport } from './routes/upgrade'
 import { Route as OrganizationsRouteImport } from './routes/organizations'
 import { Route as MembersRouteImport } from './routes/members'
 import { Route as LoginRouteImport } from './routes/login'
@@ -19,6 +20,11 @@ import { Route as CheckinIndexRouteImport } from './routes/checkin/index'
 import { Route as EventsEventIdRouteImport } from './routes/events/$eventId'
 import { Route as CheckinEventIdRouteImport } from './routes/checkin/$eventId'
 
+const UpgradeRoute = UpgradeRouteImport.update({
+  id: '/upgrade',
+  path: '/upgrade',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OrganizationsRoute = OrganizationsRouteImport.update({
   id: '/organizations',
   path: '/organizations',
@@ -71,6 +77,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/members': typeof MembersRoute
   '/organizations': typeof OrganizationsRoute
+  '/upgrade': typeof UpgradeRoute
   '/checkin/$eventId': typeof CheckinEventIdRoute
   '/events/$eventId': typeof EventsEventIdRoute
   '/checkin/': typeof CheckinIndexRoute
@@ -82,6 +89,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/members': typeof MembersRoute
   '/organizations': typeof OrganizationsRoute
+  '/upgrade': typeof UpgradeRoute
   '/checkin/$eventId': typeof CheckinEventIdRoute
   '/events/$eventId': typeof EventsEventIdRoute
   '/checkin': typeof CheckinIndexRoute
@@ -94,6 +102,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/members': typeof MembersRoute
   '/organizations': typeof OrganizationsRoute
+  '/upgrade': typeof UpgradeRoute
   '/checkin/$eventId': typeof CheckinEventIdRoute
   '/events/$eventId': typeof EventsEventIdRoute
   '/checkin/': typeof CheckinIndexRoute
@@ -107,6 +116,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/members'
     | '/organizations'
+    | '/upgrade'
     | '/checkin/$eventId'
     | '/events/$eventId'
     | '/checkin/'
@@ -118,6 +128,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/members'
     | '/organizations'
+    | '/upgrade'
     | '/checkin/$eventId'
     | '/events/$eventId'
     | '/checkin'
@@ -129,6 +140,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/members'
     | '/organizations'
+    | '/upgrade'
     | '/checkin/$eventId'
     | '/events/$eventId'
     | '/checkin/'
@@ -141,6 +153,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   MembersRoute: typeof MembersRoute
   OrganizationsRoute: typeof OrganizationsRoute
+  UpgradeRoute: typeof UpgradeRoute
   CheckinEventIdRoute: typeof CheckinEventIdRoute
   EventsEventIdRoute: typeof EventsEventIdRoute
   CheckinIndexRoute: typeof CheckinIndexRoute
@@ -149,6 +162,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/upgrade': {
+      id: '/upgrade'
+      path: '/upgrade'
+      fullPath: '/upgrade'
+      preLoaderRoute: typeof UpgradeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/organizations': {
       id: '/organizations'
       path: '/organizations'
@@ -221,6 +241,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   MembersRoute: MembersRoute,
   OrganizationsRoute: OrganizationsRoute,
+  UpgradeRoute: UpgradeRoute,
   CheckinEventIdRoute: CheckinEventIdRoute,
   EventsEventIdRoute: EventsEventIdRoute,
   CheckinIndexRoute: CheckinIndexRoute,

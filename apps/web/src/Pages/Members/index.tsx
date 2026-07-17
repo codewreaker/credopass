@@ -275,24 +275,22 @@ const MemberTableRow: React.FC<MemberTableRowProps> = ({
 const StatsCard: React.FC<{
   label: string; value: string | number; icon: React.ReactNode; trend?: string
   className?: string
-}> = ({
-  label, value, icon, trend, className
-}) => (
-    <Card className={cn("p-4 flex items-center gap-4", className)}>
-      <div className="p-2.5 rounded-xl bg-primary/10">
-        {icon}
-      </div>
-      <div className="flex-1">
-        <p className="text-2xl font-bold text-foreground">{value}</p>
-        <p className="text-xs text-muted-foreground">{label}</p>
-      </div>
-      {trend && (
-        <Badge variant="secondary" className="text-xs">
-          {trend}
-        </Badge>
-      )}
-    </Card>
-  );
+}> = ({ label, value, icon, trend, className }) => (
+  <Card className={cn("p-4 flex items-center gap-3", className)}>
+    <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+      {icon}
+    </div>
+    <div className="flex-1 min-w-0">
+      <p className="text-xl font-semibold tabular-nums text-foreground leading-tight">{value}</p>
+      <p className="text-[11px] text-muted-foreground truncate">{label}</p>
+    </div>
+    {trend && (
+      <Badge variant="secondary" className="text-[10px] shrink-0 tabular-nums">
+        {trend}
+      </Badge>
+    )}
+  </Card>
+);
 
 export default function MembersPage() {
   const { users: userCollection } = getCollections();
@@ -407,46 +405,42 @@ export default function MembersPage() {
   const iconSize = isMobile ? 12 : 18;
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full gap-4">
       {/* Header */}
-      <div className="px-3 py-2 border-b border-border">
-        <div className="flex items-center justify-between mb-4">
+      <div className="flex flex-col gap-3">
+        <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Members</h1>
+            <h1 className="text-xl font-semibold tracking-tight">Members</h1>
             <p className="text-sm text-muted-foreground">Members & Attendees</p>
           </div>
-          <Button onClick={handleCreateUser} className="gap-2">
-            <UserPlus size={16} />
+          <Button onClick={handleCreateUser} size="sm" className="gap-1.5">
+            <UserPlus size={14} />
             Add Member
           </Button>
         </div>
 
         {/* Stats Row */}
-        <div className="grid grid-cols-4 md:grid-cols-4 gap-34 md:gap-4 overflow-auto py-1">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <StatsCard
             label="Total Members"
-            className="h-2/3 w-30  md:h-full md:w-full"
             value={stats.totalMembers}
-            icon={<UserPlus size={iconSize} className="text-primary" />}
+            icon={<UserPlus size={14} className="text-primary" />}
           />
           <StatsCard
             label="Total Points"
-            className="h-2/3 w-30  md:h-full md:w-full"
             value={stats.totalPoints.toLocaleString()}
-            icon={<Star size={iconSize} className="text-primary" />}
+            icon={<Star size={14} className="text-primary" />}
           />
           <StatsCard
             label="Active Members"
-            className="h-2/3 w-30  md:h-full md:w-full"
             value={stats.activeMembers}
-            icon={<Calendar size={iconSize} className="text-primary" />}
+            icon={<Calendar size={14} className="text-primary" />}
             trend={`${Math.round((stats.activeMembers / (stats.totalMembers || 1)) * 100)}%`}
           />
           <StatsCard
             label="Avg Events/Member"
-            className="h-2/3 w-30  md:h-full md:w-full"
             value={stats.avgAttendance}
-            icon={<Trophy size={iconSize} className="text-primary" />}
+            icon={<Trophy size={14} className="text-primary" />}
           />
         </div>
       </div>

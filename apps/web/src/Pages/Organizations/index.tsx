@@ -30,7 +30,6 @@ import { Button } from '@credopass/ui/components/button';
 import { Badge } from '@credopass/ui/components/badge';
 import { EmptyState } from '@credopass/ui/components/empty-state';
 import { launchOrganizationForm } from '../../containers/OrganizationForm';
-import './style.css';
 
 // Plan configuration
 const planConfig: Record<OrgPlan, { color: string; icon: React.ElementType; label: string; description: string }> = {
@@ -55,14 +54,13 @@ const OrganizationCard: React.FC<OrgCardProps> = ({ org, isActive, onSelect, onE
 
   return (
     <Card
-      className={`org-card cursor-pointer hover:shadow-lg transition-all duration-200 group ${isActive ? 'ring-2 ring-primary border-primary' : 'hover:border-primary/50'
-        }`}
+      className={`cursor-pointer transition-all duration-150 group ${isActive ? 'ring-2 ring-primary border-primary' : 'hover:ring-1 hover:ring-white/12 hover:shadow-[0_4px_14px_-3px_oklch(0_0_0/0.45)]'}`}
     >
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
-            <div className={`org-icon-wrapper ${isActive ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
-              <Building2 className="w-5 h-5" />
+            <div className={`flex size-10 shrink-0 items-center justify-center rounded-lg transition-colors duration-150 ${isActive ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
+              <Building2 className="w-4.5 h-4.5" />
             </div>
             <div>
               <CardTitle className="text-lg group-hover:text-primary transition-colors flex items-center gap-2">
@@ -81,14 +79,14 @@ const OrganizationCard: React.FC<OrgCardProps> = ({ org, isActive, onSelect, onE
       <CardContent className="pt-0">
         <div className="space-y-3">
           {/* Stats Row */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="stat-item">
-              <Users className="w-4 h-4 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">{org.members ?? '--'} members</span>
+          <div className="grid grid-cols-2 gap-2">
+            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/30">
+              <Users className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+              <span className="text-xs text-muted-foreground tabular-nums">{org.members ?? '--'} members</span>
             </div>
-            <div className="stat-item">
-              <Calendar className="w-4 h-4 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">{eventCount ?? '--'} events</span>
+            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/30">
+              <Calendar className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+              <span className="text-xs text-muted-foreground tabular-nums">{eventCount ?? '--'} events</span>
             </div>
           </div>
 
@@ -145,24 +143,19 @@ interface HeaderProps {
 }
 
 const PageHeader: React.FC<HeaderProps> = ({ orgCount, onCreateNew }) => (
-  <div className="org-page-header">
-    <div className="flex items-center gap-3">
-      <div className="header-icon-wrapper">
-        <Building2 className="w-6 h-6" />
-      </div>
-      <div>
-        <h1 className="text-2xl font-bold">Organizations</h1>
-        <p className="text-muted-foreground">
-          Manage your organizations and switch between them
-        </p>
-      </div>
+  <div className="flex items-start justify-between gap-4 flex-wrap">
+    <div className="flex flex-col gap-0.5">
+      <h1 className="text-xl font-semibold tracking-tight">Organizations</h1>
+      <p className="text-sm text-muted-foreground">
+        Manage your organizations and switch between them
+      </p>
     </div>
-    <div className="flex items-center gap-3">
-      <Badge variant="secondary" className="text-sm">
-        {orgCount} {orgCount === 1 ? 'organization' : 'organizations'}
+    <div className="flex items-center gap-2">
+      <Badge variant="secondary" className="tabular-nums">
+        {orgCount} {orgCount === 1 ? 'org' : 'orgs'}
       </Badge>
-      <Button onClick={onCreateNew}>
-        <Plus className="w-4 h-4 mr-2" />
+      <Button onClick={onCreateNew} size="sm">
+        <Plus className="w-3.5 h-3.5" />
         New Organization
       </Button>
     </div>
@@ -243,26 +236,20 @@ const OrganizationsPage: React.FC = () => {
   // Empty state
   if (organizations.length === 0) {
     return (
-      <div className="organizations-page">
-        <EmptyState
-          title="No organizations yet"
-          description="Create your first organization to get started with attendance tracking."
-          icon={<Building2 className="h-12 w-12" />}
-          action={{
-            label: "Create Organization",
-            onClick: handleCreateNew
-          }}
-        />
-      </div>
+      <EmptyState
+        title="No organizations yet"
+        description="Create your first organization to get started with attendance tracking."
+        icon={<Building2 className="h-10 w-10" />}
+        action={{ label: "Create Organization", onClick: handleCreateNew }}
+      />
     );
   }
-  
 
   return (
-    <div className="organizations-page">
+    <div className="flex flex-col gap-4">
       <PageHeader orgCount={filteredOrganizations.length} onCreateNew={handleCreateNew} />
 
-      <div className="org-grid">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {filteredOrganizations.map((org: Organization) => (
           <OrganizationCard
             key={org.id}

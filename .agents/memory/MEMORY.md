@@ -1,1 +1,2 @@
 - [Vite watcher on Replit monorepos](vite-watcher-replit.md) — chokidar daemon crashes unless watched scope is tightly restricted; usePolling alone is not enough.
+- [Design system step 3 status](design-system-step3.md) — all routes redesigned; key decisions and remaining TODOs documented.

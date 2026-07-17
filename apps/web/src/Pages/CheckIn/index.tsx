@@ -11,25 +11,18 @@ import { API_BASE_URL } from '../../config';
 import { useIsMobile } from '@credopass/ui/hooks/use-mobile';
 import { QrCodeIcon, ArrowLeft } from 'lucide-react';
 
-import './style.css';
-
-
 import CheckInHeader from './components/CheckInHeader';
 import QRCodeDisplay from './components/QRCodeDisplay';
 import ManualSignInForm from './ManualSignInForm';
 import { EmptyState } from '@credopass/ui/components/empty-state';
 
 
-const LoadingState: React.FC = () => {
-  return (
-    <div className="checkin-page loading-state">
-      <div className="loading-content">
-        <div className="spinner" />
-        <p className="loading-text">Loading events...</p>
-      </div>
-    </div>
-  );
-};
+const LoadingState: React.FC = () => (
+  <div className="flex flex-col items-center justify-center h-full min-h-40 gap-4">
+    <div className="w-7 h-7 rounded-full border-2 border-border border-t-primary animate-spin" />
+    <p className="text-sm text-muted-foreground">Loading check-in…</p>
+  </div>
+);
 
 const CheckInPage: React.FC = () => {
   const { eventId } = useParams({ from: '/checkin/$eventId' });
@@ -176,7 +169,7 @@ const CheckInPage: React.FC = () => {
   // Event not found state
   if (!selectedEvent) {
     return (
-      <div className="checkin-page h-full flex flex-col items-center justify-center p-6">
+      <div className="h-full flex flex-col items-center justify-center p-6">
         <EmptyState
           error={true}
           icon={
@@ -204,7 +197,7 @@ const CheckInPage: React.FC = () => {
 
   // Active check-in session
   return (
-    <div className="checkin-page active-checkin-layout">
+    <div className="flex flex-col gap-5 min-h-full">
       <CheckInHeader
         eventName={session.activeEventName || 'Unknown Event'}
         eventLocation={session.activeEventLocation || null}
@@ -214,21 +207,25 @@ const CheckInPage: React.FC = () => {
         onBack={handleBack}
       />
 
-      <div className="main-grid">
-        {!showManualCheckIn && <QRCodeDisplay
-          qrCodeData={qrCodeData}
-          hasValidSession={hasValidSession}
-          timeRemaining={timeRemaining}
-          onRefreshQR={handleRefreshQR}
-          onManualCheckInClick={() => setShowManualCheckIn(true)}
-          size={isMobile ? 220 : 326}
-        />}
-
-
-        <div className="right-column">
-          {showManualCheckIn && <ManualSignInForm onSubmit={handleManualSignIn} onBack={() => setShowManualCheckIn(false)} />}
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
+        {!showManualCheckIn && (
+          <QRCodeDisplay
+            qrCodeData={qrCodeData}
+            hasValidSession={hasValidSession}
+            timeRemaining={timeRemaining}
+            onRefreshQR={handleRefreshQR}
+            onManualCheckInClick={() => setShowManualCheckIn(true)}
+            size={isMobile ? 220 : 326}
+          />
+        )}
+        <div className="flex flex-col gap-5">
+          {showManualCheckIn && (
+            <ManualSignInForm
+              onSubmit={handleManualSignIn}
+              onBack={() => setShowManualCheckIn(false)}
+            />
+          )}
         </div>
-
       </div>
     </div>
   );

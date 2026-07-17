@@ -1,7 +1,4 @@
-import { CardDescription, CardHeader, CardTitle } from '@credopass/ui/components/card'
-import { Separator } from '@credopass/ui/components/separator'
-import type { } from '@credopass/api-client'
-
+import { Separator } from '../separator'
 import { GithubButton } from './github-button'
 import { GuestButton } from './guest-button'
 import { Button } from '../button'
@@ -16,26 +13,31 @@ export function AuthPage({
   signInAsEmail: () => void
 }) {
   return (
-    <div className="flex-col">
-      <CardHeader className="items-center gap-2 px-0 text-center">
-        <CardTitle className="text-xl">Welcome to Credopass</CardTitle>
-        <CardDescription>Sign in to your account, or continue as a guest</CardDescription>
-      </CardHeader>
+    <div>
+      {/* Heading */}
+      <div className="mb-8">
+        <h2 className="text-xl font-semibold tracking-tight text-foreground">Welcome back</h2>
+        <p className="mt-1 text-sm text-muted-foreground">Sign in to your account to continue</p>
+      </div>
 
-      <div className="flex flex-col gap-3">
+      {/* Auth options */}
+      <div className="flex flex-col gap-2.5">
         <GithubButton signInWithGithub={signInWithGithub} />
+
+        <div className="my-1 flex items-center gap-3">
+          <Separator className="flex-1" />
+          <span className="text-[11px] uppercase tracking-wider text-muted-foreground">or</span>
+          <Separator className="flex-1" />
+        </div>
+
+        <Button variant="outline" type="button" className="w-full" onClick={signInAsEmail}>
+          Continue with email
+        </Button>
+
         <GuestButton signInAsGuest={signInAsGuest} />
       </div>
-
-      <div className="my-6 flex items-center gap-3">
-        <Separator className="flex-1" />
-        <span className="text-xs uppercase tracking-wider text-muted-foreground">or</span>
-        <Separator className="flex-1" />
-      </div>
-
-      <Button type="submit" className="w-full" onClick={signInAsEmail}>
-        {'Signin with email'}
-      </Button>
     </div>
   )
 }
+
+export default AuthPage

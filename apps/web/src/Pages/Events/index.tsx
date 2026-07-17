@@ -17,7 +17,6 @@ import { handleCollectionDeleteById } from '@credopass/api-client/collections';
 import { ChipFilter, divider, type ChipFilterOption } from '@credopass/ui/components/chip-filter';
 
 
-import './events.css';
 import { RightSidebarTrigger } from '../../containers/RightSidebar';
 import ActionCards from '../../containers/ActionCards';
 import { Separator } from '@credopass/ui/components/separator';
@@ -146,25 +145,25 @@ const EventsPage = () => {
 
 
     return (
-        <div className="events-page">
-            <div className="events-header">
-                {/* Greeting */}
-                <div className="events-header-left">
-                    <h1 className="events-header-title">
+        <div className="flex flex-col gap-3 h-full">
+            {/* Page header */}
+            <div className="flex items-start justify-between gap-4 flex-wrap">
+                <div className="flex flex-col gap-0.5">
+                    <h1 className="text-xl font-semibold tracking-tight">
                         {greeting}, {firstName}
                     </h1>
-                    <p className="events-header-subtitle">
+                    <p className="text-sm text-muted-foreground">
                         {"Here\u2019s a summary of your events"}
                     </p>
                 </div>
 
-                <div className="events-header-right">
+                <div className="flex items-center gap-2">
                     <ButtonGroup>
-                        <Button variant='outline' className={'relative'} size={'icon-sm'} onClick={() => setFilterEnabled(prev => !prev)}>
+                        <Button variant='outline' className='relative' size='icon-sm' onClick={() => setFilterEnabled(prev => !prev)}>
                             {filterEnabled && <span className="absolute bottom-4 left-4 size-2 rounded-full bg-primary" />}
                             <ListFilterPlus />
                         </Button>
-                        <Button variant='outline' className={'relative'} size={'icon-sm'} onClick={toggleActions}>
+                        <Button variant='outline' className='relative' size='icon-sm' onClick={toggleActions}>
                             {enableActions && <span className="absolute bottom-4 left-4 size-2 rounded-full bg-primary" />}
                             <FastForward />
                         </Button>
@@ -173,19 +172,21 @@ const EventsPage = () => {
                 </div>
             </div>
 
-            <div className="events-content">
-                {/* Chip Filter for Status */}
-                {filterEnabled && <ChipFilter
-                    options={statusFilterOptions}
-                    value={displayedFilterValue as EventTypeFilters[]}
-                    onValueChange={handleFilterChange}
-                    mode="multiple"
-                    className='overflow-x-auto w-100vw py-6'
-                />}
+            {/* Filters + content */}
+            <div className="flex flex-col flex-1 min-h-0 gap-3">
+                {filterEnabled && (
+                    <ChipFilter
+                        options={statusFilterOptions}
+                        value={displayedFilterValue as EventTypeFilters[]}
+                        onValueChange={handleFilterChange}
+                        mode="multiple"
+                        className="overflow-x-auto"
+                    />
+                )}
                 {enableActions && <ActionCards />}
-                <Separator className={'my-5 bg-gradient-to-r from-transparent via-muted to-transparent'} />
-                <div className={`flex gap-4 md:h-[calc(100vh-274px)] ${enableActions ? 'h-[calc(100vh-420px)]' : 'h-[calc(100vh-320px)]'}`}>
-                    <div className='w-full md:w-2/3 md:border-r'>
+                <Separator className="bg-gradient-to-r from-transparent via-border/60 to-transparent" />
+                <div className={`flex gap-4 overflow-hidden ${enableActions ? 'h-[calc(100vh-390px)]' : 'h-[calc(100vh-280px)]'}`}>
+                    <div className="w-full md:w-2/3 md:border-r md:pr-4 overflow-hidden">
                         <EventListView
                             events={filteredEvents}
                             onCreateEvent={handleCreateEvent}
@@ -196,7 +197,7 @@ const EventsPage = () => {
                         />
                     </div>
                     {!isMobile && (
-                        <div className='w-1/3'>
+                        <div className="w-1/3 overflow-hidden">
                             <EventCalendar events={filteredEvents} />
                         </div>
                     )}

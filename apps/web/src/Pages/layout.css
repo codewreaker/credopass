@@ -1,5 +1,6 @@
 /* ================================================================
    APP SHELL - Layout, Header, Content Area
+   Information-dense, compact spacing
    ================================================================ */
 
 .app-container {
@@ -25,48 +26,48 @@
   min-height: 0;
 }
 
-/* Header bar with glass effect */
+/* Header bar — compact with glass effect */
 .app-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  height: 3.75rem;
-  padding: 0 1rem;
+  height: 3.25rem;
+  padding: 0 0.875rem;
   gap: 0.5rem;
-  border-bottom: 1px solid var(--border-strong);
-  background: var(--glass-bg);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  background: oklch(from var(--background) l c h / 80%);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   z-index: 30;
   flex-shrink: 0;
 }
 
-/* Main content area -- Luma-like generous padding */
+/* Main content area — compact, information-dense */
 .page-content {
-  padding: 1.5rem 2rem;
+  padding: 1.25rem 1.5rem;
   flex: 1;
   overflow-y: auto;
   min-height: 0;
-  max-width: 1100px;
+  max-width: 1200px;
   margin: 0 auto;
   width: 100%;
 }
 
-/* Page header component */
+/* Page header */
 .page-header {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   justify-content: center;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
 
   h1 {
     color: var(--foreground);
-    font-size: 1.5rem;
-    font-weight: 700;
-    letter-spacing: -0.03em;
-    line-height: 1.2;
-    margin-bottom: 0.25rem;
+    font-size: 1.25rem;
+    font-weight: 600;
+    letter-spacing: -0.025em;
+    line-height: 1.25;
+    margin-bottom: 0.125rem;
   }
 
   .page-subtitle {
@@ -78,15 +79,14 @@
 
 /* Smooth page transitions */
 .page-transition {
-  animation: page-enter 0.3s ease-out;
+  animation: page-enter 0.25s ease-out;
 }
 
 @keyframes page-enter {
   from {
     opacity: 0;
-    transform: translateY(6px);
+    transform: translateY(5px);
   }
-
   to {
     opacity: 1;
     transform: translateY(0);
@@ -137,7 +137,7 @@
   border-radius: var(--radius);
 }
 
-.react-grid-item>.react-resizable-handle {
+.react-grid-item > .react-resizable-handle {
   position: absolute;
   width: 20px;
   height: 20px;
@@ -150,12 +150,6 @@
   background-origin: content-box;
   box-sizing: border-box;
   cursor: se-resize;
-  opacity: 0;
-  transition: opacity 0.2s ease;
-}
-
-.react-grid-item:hover>.react-resizable-handle {
-  opacity: 0.6;
 }
 
 /* ================================================================
@@ -164,16 +158,8 @@
 
 @media (max-width: 768px) {
   .page-content {
-    padding: 1rem 1.25rem;
-    margin-bottom: 4rem;
-  }
-
-  .page-header {
-    margin-bottom: 1rem;
-
-    h1 {
-      font-size: 1.125rem;
-    }
+    padding: 1rem;
+    max-width: 100%;
   }
 
   .app-header {

@@ -10,7 +10,6 @@ import {
 } from 'lucide-react';
 import { useToolbarContext } from '@credopass/lib/hooks';
 import { useLauncher } from '@credopass/lib/stores';
-import './event-detail.css';
 import { EventTicket } from './EventTicket';
 import { EventDetailsReadonly } from './EventDetails';
 import { launchEventForm } from '../../containers/EventForm';
@@ -95,26 +94,24 @@ function EventDetailPage() {
 
     if (isLoading) {
         return (
-            <div className="event-detail-page loading-state">
-                <div className="loading-content">
-                    <div className="spinner" />
-                    <p className="loading-text">Loading event...</p>
-                </div>
+            <div className="flex flex-col items-center justify-center h-full min-h-40 gap-4">
+                <div className="w-7 h-7 rounded-full border-2 border-border border-t-primary animate-spin" />
+                <p className="text-sm text-muted-foreground">Loading event…</p>
             </div>
         );
     }
 
     if (!event) {
         return (
-            <div className="event-detail-page not-found">
-                <div className="not-found-content">
-                    <h2>Event Not Found</h2>
-                    <p>The event you&apos;re looking for doesn&apos;t exist or has been removed.</p>
-                    <Button variant="outline" onClick={handleBack}>
-                        <ArrowLeft size={16} />
-                        Back to Events
-                    </Button>
-                </div>
+            <div className="flex flex-col items-center justify-center h-full min-h-60 gap-4 text-center">
+                <p className="text-base font-medium">Event Not Found</p>
+                <p className="text-sm text-muted-foreground max-w-xs">
+                    The event you&apos;re looking for doesn&apos;t exist or has been removed.
+                </p>
+                <Button variant="outline" size="sm" onClick={handleBack}>
+                    <ArrowLeft size={14} />
+                    Back to Events
+                </Button>
             </div>
         );
     }
