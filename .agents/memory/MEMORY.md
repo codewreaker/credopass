@@ -1,0 +1,1 @@
+- [Vite watcher on Replit monorepos](vite-watcher-replit.md) — chokidar daemon crashes unless watched scope is tightly restricted; usePolling alone is not enough.

@@ -47,10 +47,23 @@ export default defineConfig({
     host: '0.0.0.0',
     allowedHosts: true,
     watch: {
-      // Replit's inotify limit is too low for large monorepos; use polling instead
+      // Replit: polling avoids inotify limits; restrict scope to src dirs only
+      // to prevent the chokidar daemon from crashing on large monorepos.
       usePolling: true,
-      interval: 1000,
-      ignored: ['**/node_modules/**', '**/.git/**'],
+      useFsEvents: false,
+      interval: 1500,
+      binaryInterval: 3000,
+      ignored: [
+        '**/node_modules/**',
+        '**/.git/**',
+        '**/dist/**',
+        '**/.cache/**',
+        '**/apps/mobile/**',
+        '**/apps/website/**',
+        '**/services/**',
+        '**/docker/**',
+        '**/.nx/**',
+      ],
     },
   },
   plugins: [
