@@ -4,3 +4,38 @@ expertMode = true
 
 [nix]
 channel = "stable-25_05"
+
+[userenv]
+
+[userenv.shared]
+VITE_API_URL = "https://api.credopass.com/api/core"
+VITE_SUPABASE_ANON_KEY = "sb_publishable_gc1o2zuvyrPHx26r7sPaEg_RgZWuMR1"
+VITE_SUPABASE_URL = "https://zzymqzurubgparvpgfvy.supabase.co"
+
+[workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Start application"
+
+[[workflows.workflow]]
+name = "Start application"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd apps/web && bun vite --mode development"
+waitForPort = 5000
+
+[workflows.workflow.metadata]
+outputType = "webview"
+
+[[ports]]
+localPort = 5000
+externalPort = 80

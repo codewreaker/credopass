@@ -42,6 +42,17 @@ function nxViteTsPathsFixed(opts?: Parameters<typeof nxViteTsPaths>[0]): Plugin 
 
 // https://vite.dev/config/
 export default defineConfig({
+  server: {
+    port: 5000,
+    host: '0.0.0.0',
+    allowedHosts: true,
+    watch: {
+      // Replit's inotify limit is too low for large monorepos; use polling instead
+      usePolling: true,
+      interval: 1000,
+      ignored: ['**/node_modules/**', '**/.git/**'],
+    },
+  },
   plugins: [
     tanstackRouter({
       target: 'react',
