@@ -120,10 +120,10 @@ function EventDetailPage() {
     }
 
     return (
-        <div className="min-h-screen bg-[#0a0a0a] text-zinc-200 flex flex-col w-full mx-auto relative" style={{ fontFamily: "'DM Sans', 'Helvetica Neue', sans-serif" }}>
+        <div className="min-h-screen bg-background text-foreground flex flex-col w-full mx-auto relative">
             {/* Simplified Top Nav - just back button */}
-            <div className="flex items-center gap-3 px-4 lg:px-8 pt-6 pb-4 max-w-7xl mx-auto w-full">
-                <Button variant="ghost" size="sm" onClick={handleBack} className="gap-2">
+            <div className="flex items-center gap-3 px-4 lg:px-8 pt-6 pb-4 max-w-6xl mx-auto w-full">
+                <Button variant="ghost" size="sm" onClick={handleBack} className="gap-2 text-muted-foreground hover:text-foreground">
                     <ArrowLeft size={16} />
                     <span>Back to Events</span>
                 </Button>
@@ -137,8 +137,8 @@ function EventDetailPage() {
             </div>
 
             {/* Main Content Grid */}
-            <div className="flex-1 px-4 lg:px-8 pb-10 max-w-7xl mx-auto w-full">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
+            <div className="flex-1 px-4 lg:px-8 pb-10 max-w-6xl mx-auto w-full">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-10 lg:mt-4">
 
                     {/* LEFT: TICKET */}
                     <EventTicket

@@ -116,16 +116,13 @@ const MainSidebar: React.FC<SidebarProps> = ({
 
                 <SidebarContent>
                     <SidebarGroup>
-                        <SidebarGroupLabel className="text-[0.625rem] uppercase tracking-widest text-muted-foreground/60 font-medium">
-                            Quick Commands
-                        </SidebarGroupLabel>
                         <SidebarMenuItem className="flex items-center gap-2">
                             <SidebarMenuButton
                                 tooltip="Quick Create"
                                 onClick={onCenterClick}
-                                className="bg-secondary text-secondary-foreground hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground min-w-8 duration-200 ease-linear"
+                                className="bg-transparent border border-border/50 text-muted-foreground hover:bg-transparent hover:border-border hover:text-foreground active:bg-transparent min-w-8 duration-200 ease-linear"
                             >
-                                <CirclePlus className="text-primary" />
+                                <CirclePlus className="text-current" />
                                 <span>Command</span>
                                 <KbdGroup>
                                     <Kbd>⌘ + K</Kbd>
@@ -134,9 +131,6 @@ const MainSidebar: React.FC<SidebarProps> = ({
                         </SidebarMenuItem>
                     </SidebarGroup>
                     <SidebarGroup>
-                        <SidebarGroupLabel className="text-[0.625rem] uppercase tracking-widest text-muted-foreground/60 font-medium">
-                            Main
-                        </SidebarGroupLabel>
                         <SidebarMenu>
                             {navMain.map((item) => (
                                 item.items ? (
@@ -203,7 +197,7 @@ const MainSidebar: React.FC<SidebarProps> = ({
                                         <SidebarMenuButton
                                             className={cn(
                                                 "cursor-pointer transition-all duration-200",
-                                                isActive(item.url) && "bg-primary/10 text-primary font-medium"
+                                                isActive(item.url) ? "bg-primary/8 text-primary font-medium" : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
                                             )}
                                             isActive={isActive(item.url)}
                                             onClick={() => navigate({ to: item.url })}

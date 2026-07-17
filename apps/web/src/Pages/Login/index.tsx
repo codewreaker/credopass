@@ -4,9 +4,7 @@ import { emailPasswordSchema } from '@credopass/lib/schemas'
 import { createAuthClient, createClient } from '@credopass/lib/supabase'
 import { EmailPasswordForm } from '@credopass/ui/components/login/email-password-form'
 import { SUPASE_CRED } from '../../config'
-import LoginSVG from '/login-cuate.svg'
-
-
+import CredoPassLogoIcon from '../../containers/LeftSidebar/brand-icon'
 
 const supabaseInstance = createClient(SUPASE_CRED.URL, SUPASE_CRED.ANON_KEY)
 
@@ -53,33 +51,38 @@ export default function LoginPage() {
   }
 
   return (
-    <>
-      <button onClick={showOptions} className="text-sm text-muted-foreground mb-10">
-        ← Back
-      </button>
-      <div className='flex md:gap-10 m-auto md:flex-row flex-col w-full md:h-3/4 items-center max-w-5xl'>
-        <div className="flex-1 w-full md:p-10">
-          {(view === 'social') && <AuthPage
+    <div className="gradient-mesh min-h-svh flex items-center justify-center p-4 bg-background">
+      <div className="max-w-md w-full mx-auto bg-card border border-border rounded-2xl p-8 shadow-2xl shadow-black/50">
+        <div className="flex flex-col items-center mb-8">
+          <div className="w-12 h-12 flex items-center justify-center rounded-xl bg-primary/10 text-primary mb-4">
+            <CredoPassLogoIcon />
+          </div>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Welcome back</h1>
+          <p className="text-sm text-muted-foreground mt-2">Sign in to your account</p>
+        </div>
+
+        {view === 'email' && (
+          <button onClick={showOptions} className="text-sm text-muted-foreground hover:text-foreground mb-6 transition-colors">
+            &larr; Back
+          </button>
+        )}
+
+        {(view === 'social') && (
+          <AuthPage
             signInAsGuest={signInAsGuest}
             signInWithGithub={signInWithGithub}
             signInAsEmail={showEmailForm}
           />
-          }
+        )}
 
-          {(view === 'email') && (
-            <EmailPasswordForm
-              signInCallback={(values) => signInWithEmail(values.email, values.password)}
-              signUpCallback={(values) => signUpWithEmail(values.email, values.password)}
-              schemaValidation={emailPasswordSchema as any}
-            />
-
-          )}
-        </div>
-        <div className="flex-1 w-full">
-          <img src={LoginSVG} />
-        </div>
+        {(view === 'email') && (
+          <EmailPasswordForm
+            signInCallback={(values) => signInWithEmail(values.email, values.password)}
+            signUpCallback={(values) => signUpWithEmail(values.email, values.password)}
+            schemaValidation={emailPasswordSchema as any}
+          />
+        )}
       </div>
-    </>
-
+    </div>
   )
 }

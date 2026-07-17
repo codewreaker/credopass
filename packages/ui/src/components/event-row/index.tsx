@@ -138,25 +138,25 @@ export const EventRow: React.FC<{
                     </Badge>
                 </div>}
                 <div className="event-row-title">
-                    <span className="event-row-name group-data-compact:text-[0.8125rem] group-data-compact:font-medium">{event.name}</span>
+                    <span className="event-row-name group-data-compact:text-[0.8125rem] group-data-compact:font-medium text-[0.9375rem] font-semibold">{event.name}</span>
                 </div>
 
                 <div className="event-row-meta group-data-compact:gap-2">
                     {timeString && (
-                        <span className="event-row-meta-item group-data-compact:text-[0.6875rem]">
+                        <span className="event-row-meta-item group-data-compact:text-[0.6875rem] text-[0.75rem] gap-3">
                             <Clock size={12} />
                             {timeString}
                             {timezone && <span className="text-lime-400 text-xs">{timeZoneString}</span>}
                         </span>
                     )}
                     {event.location && (
-                        <span className="event-row-meta-item group-data-compact:text-[0.6875rem]">
+                        <span className="event-row-meta-item group-data-compact:text-[0.6875rem] text-[0.75rem] gap-3">
                             <MapPin size={12} />
                             {event.location}
                         </span>
                     )}
                     {!compact && (
-                        <span className="event-row-meta-item">
+                        <span className="event-row-meta-item text-[0.75rem] gap-3">
                             <Users size={12} />
                             {event.capacity ? `${event.capacity}` : 'Unlimited'}
                         </span>
@@ -202,7 +202,7 @@ export const EventRow: React.FC<{
                 {/* More button — desktop click trigger, hidden on mobile */}
                 {!isMobile && (
                     <div
-                        className="event-row-more"
+                        className="event-row-more hover:bg-accent/50 p-1 rounded-md"
                         role="button"
                         tabIndex={0}
                         onClick={handleMoreClick}

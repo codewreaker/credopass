@@ -158,7 +158,7 @@ const MemberTableRow: React.FC<MemberTableRowProps> = ({
       <td className="px-4 py-3">
         <div className="flex items-center gap-3">
           <div className="relative">
-            <Avatar size="md" className={cn(
+            <Avatar size="default" className={cn(
               "ring-2 ring-offset-1 ring-offset-background",
               tierConfig.color.replace('text-', 'ring-')
             )}>
@@ -237,15 +237,16 @@ const MemberTableRow: React.FC<MemberTableRowProps> = ({
       {/* Actions */}
       <td className="px-4 py-3 w-12">
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
+          <DropdownMenuTrigger render={(props) => (
             <Button
               variant="ghost"
               size="icon-xs"
               className="opacity-0 group-hover:opacity-100 transition-opacity"
+              {...props}
             >
               <MoreHorizontal size={14} />
             </Button>
-          </DropdownMenuTrigger>
+          )} />
           <DropdownMenuContent align="end" className="w-40">
             <DropdownMenuItem onClick={() => onView(member)} className="gap-2">
               <Eye size={14} />
@@ -310,7 +311,7 @@ export default function MembersPage() {
   }, [openLauncher]);
 
   const handleEditUser = useCallback((user: UserType) => {
-    launchUserForm({ isEditing: true, initialData: user }, openLauncher);
+    launchUserForm({ isEditing: true, initialData: { ...user, phone: user.phone ?? undefined } }, openLauncher);
   }, [openLauncher]);
 
   const handleViewUser = useCallback((user: UserType) => {

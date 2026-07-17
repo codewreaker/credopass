@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 import { 
   Users, 
   Calendar, 
@@ -259,9 +259,9 @@ const Analytics: React.FC = () => {
     )}>
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Analytics</h1>
-          <p className="text-sm text-muted-foreground">Track your community engagement and event performance</p>
+        <div className="page-header mb-0">
+          <h1>Analytics</h1>
+          <p className="page-subtitle">Track your community engagement and event performance</p>
         </div>
         
         {/* Time Range Tabs */}

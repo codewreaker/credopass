@@ -1,8 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { Badge } from '@credopass/ui/components/badge';
-
-
 import type { EventType } from '@credopass/lib/schemas';
 import { EmptyState } from '@credopass/ui/components/empty-state';
 import { getGroupedEventsData, groupEventsByStatus, sortEventsByClosestToToday } from '@credopass/lib/utils';
@@ -75,12 +72,12 @@ const EventListView: React.FC<EventListViewProps> = ({
                     <div className="event-list-date-heading">
                         {STATUS_MAPPING[statusLabel].icon}
                         <h3>{STATUS_MAPPING[statusLabel].label}</h3>
-                        <Badge variant={'secondary'} className='size-4'>{eventsData.length}</Badge>
+                        <span className="ml-auto font-mono text-xs tabular-nums text-muted-foreground bg-muted/50 px-1.5 py-0.5 rounded">{eventsData.length}</span>
                     </div>
                     <div className="event-list-items">
                         {eventsData.map((event: EventWithOrg, idx: number) => (
                             <React.Fragment key={event.id}>
-                                {idx !== 0 && <Separator className={'bg-gradient-to-r from-transparent via-muted to-transparent'} />}
+                                {idx !== 0 && <Separator className={'bg-gradient-to-r from-transparent via-border/60 to-transparent'} />}
                                 <EventRow
                                     event={event}
                                     onNavigate={handleNavigateToEvent}

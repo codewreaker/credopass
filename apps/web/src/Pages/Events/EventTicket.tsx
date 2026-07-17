@@ -30,7 +30,7 @@ export const mapStatusToBadgeVariant = (status: EventType['status']): 'default' 
 
 // Gradient SVG placeholder for event image (React Bits style)
 const ImagePlaceholder: FC<{ className?: string }> = ({ className }) => (
-    <div className={cn("relative overflow-hidden rounded-2xl bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900", className)}>
+    <div className={cn("relative overflow-hidden rounded-2xl bg-gradient-to-br from-card via-background to-background/90", className)}>
         <svg
             className="absolute inset-0 w-full h-full"
             viewBox="0 0 400 200"
@@ -93,7 +93,7 @@ const ExpandableDescription: FC<{
     return (
         <div className={cn("space-y-1", className)}>
             <p className={cn(
-                "text-zinc-500 text-sm transition-all duration-300",
+                "text-muted-foreground text-sm transition-all duration-300",
                 !isExpanded && shouldTruncate && "line-clamp-2"
             )}>
                 {description}
@@ -127,9 +127,9 @@ const ExpandableDescription: FC<{
 // ─── Perforated ticket divider ────────────────────────────────────────────────
 const TicketDivider = () => (
     <div className="relative flex items-center h-0 my-0">
-        <div className="absolute -left-5 w-10 h-10 rounded-full bg-[#0a0a0a] z-10" />
-        <div className="flex-1 border-t-2 border-dashed border-zinc-700 mx-6" />
-        <div className="absolute -right-5 w-10 h-10 rounded-full bg-[#0a0a0a] z-10" />
+        <div className="absolute -left-5 w-10 h-10 rounded-full bg-background z-10" />
+        <div className="flex-1 border-t-2 border-dashed border-border mx-6" />
+        <div className="absolute -right-5 w-10 h-10 rounded-full bg-background z-10" />
     </div>
 );
 
@@ -185,7 +185,7 @@ export const EventTicket: FC<{
         <div className="lg:sticky lg:top-6 lg:self-start">
             <div
                 ref={ticketRef}
-                className="rounded-3xl overflow-visible border border-zinc-800 shadow-2xl shadow-black/70 relative"
+                className="rounded-3xl overflow-visible border border-border shadow-2xl shadow-black/70 relative"
             >
                 {/* Download button */}
                 <button
@@ -194,17 +194,17 @@ export const EventTicket: FC<{
                     disabled={isDownloading}
                     className={cn(
                         "ticket-download-btn absolute top-4 right-4 z-20 p-2.5 rounded-full",
-                        "bg-zinc-800/80 hover:bg-zinc-700 backdrop-blur-sm",
+                        "bg-card/80 hover:bg-card backdrop-blur-sm",
                         "transition-all duration-200",
                         isDownloading && "opacity-50 cursor-not-allowed"
                     )}
                     aria-label="Download ticket as image"
                 >
-                    <Download className={cn("size-4 text-zinc-300", isDownloading && "animate-pulse")} />
+                    <Download className={cn("size-4 text-muted-foreground", isDownloading && "animate-pulse")} />
                 </button>
 
                 {/* Hero Section - Ticket and Status at top */}
-                <div className="relative bg-linear-to-br from-[#141414] via-zinc-900 to-[#0d1a04] px-6 pt-6 pb-8 rounded-t-3xl overflow-hidden">
+                <div className="relative bg-linear-to-br from-card via-background to-background/90 px-6 pt-6 pb-8 rounded-t-3xl overflow-hidden">
                     {/* Lime glow blobs */}
                     <div className="absolute -top-10 -right-10 w-56 h-56 bg-[#c6f135]/6 rounded-full blur-3xl pointer-events-none" />
                     <div className="absolute -bottom-6 -left-6 w-40 h-40 bg-[#c6f135]/4 rounded-full blur-2xl pointer-events-none" />
@@ -212,8 +212,8 @@ export const EventTicket: FC<{
                     {/* Header row - Ticket ID and Status at TOP */}
                     <div className="flex justify-between items-start mb-4 relative z-10 pr-10">
                         <div className="flex items-center gap-2">
-                            <span className="text-[10px] text-zinc-500 font-mono tracking-widest">TICKET</span>
-                            <span className="text-[10px] text-zinc-600 font-mono tracking-widest">#{ticketEvent.id?.slice(0, 8).toUpperCase()}</span>
+                            <span className="text-[10px] text-muted-foreground font-mono tracking-widest">TICKET</span>
+                            <span className="text-[10px] text-muted-foreground/70 font-mono tracking-widest">#{ticketEvent.id?.slice(0, 8).toUpperCase()}</span>
                         </div>
                         <Badge variant={mapStatusToBadgeVariant(ticketEvent.status)}>
                             <span className="w-1.5 h-1.5 rounded-full bg-current mr-1" />
@@ -241,17 +241,17 @@ export const EventTicket: FC<{
                             { label: "Capacity", value: ticketEvent.capacity ? `${ticketEvent.capacity} seats` : 'Unlimited', icon: <PeopleIcon size={12} /> },
                         ].map(({ label, value, icon }) => (
                             <div key={label}>
-                                <p className="text-[9px] text-zinc-600 uppercase tracking-[0.18em] mb-1.5 flex items-center gap-1.5">
+                                <p className="text-[0.6875rem] text-muted-foreground/60 uppercase tracking-[0.12em] mb-1.5 flex items-center gap-1.5">
                                     {icon}{label}
                                 </p>
-                                <p className="text-white text-sm font-bold">{value}</p>
+                                <p className="text-foreground text-sm font-bold">{value}</p>
                             </div>
                         ))}
                     </div>
 
                     {/* Title and expandable description at BOTTOM of hero section */}
-                    <div className="relative z-10 border-t border-zinc-800 pt-4">
-                        <h1 className="text-[1.75rem] font-black text-white leading-[0.95] tracking-tight mb-2">
+                    <div className="relative z-10 border-t border-border pt-4">
+                        <h1 className="text-[1.75rem] font-black text-foreground leading-[0.95] tracking-tight mb-2">
                             {ticketEvent.name}
                         </h1>
                         <ExpandableDescription
@@ -262,12 +262,12 @@ export const EventTicket: FC<{
                 </div>
 
                 {/* Perforated divider */}
-                <div className="relative h-px bg-zinc-800">
+                <div className="relative h-px bg-border">
                     <TicketDivider />
                 </div>
 
                 {/* Ticket stub bottom - QR Code section */}
-                <div className="bg-[#111111] px-6 py-5 rounded-b-3xl">
+                <div className="bg-card px-6 py-5 rounded-b-3xl">
                     <div className="flex items-center gap-5">
                         {/* Glowing QR Code - tap to expand */}
                         <GlowingQRCode
@@ -278,13 +278,13 @@ export const EventTicket: FC<{
 
                         {/* Ticket info */}
                         <div className="flex-1 min-w-0">
-                            <p className="text-[9px] text-zinc-600 uppercase tracking-[0.15em] mb-2">Check-in Code</p>
-                            <p className="text-white font-black font-mono text-sm tracking-wide mb-3">
+                            <p className="text-[9px] text-muted-foreground/70 uppercase tracking-[0.15em] mb-2">Check-in Code</p>
+                            <p className="text-foreground font-black font-mono text-sm tracking-wide mb-3">
                                 #{ticketEvent.id?.slice(0, 12).toUpperCase()}
                             </p>
 
                             {/* Instructions */}
-                            <div className="flex items-center gap-2 text-zinc-500">
+                            <div className="flex items-center gap-2 text-muted-foreground">
                                 <Hand size={12} className="animate-bounce" />
                                 <p className="text-[10px]">Tap QR code to expand</p>
                             </div>
@@ -293,5 +293,5 @@ export const EventTicket: FC<{
                 </div>
             </div>
         </div>
-    )
+    );
 }

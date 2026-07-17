@@ -4,7 +4,7 @@
   display: flex;
   align-items: flex-start;
   gap: 0.875rem;
-  padding: 0.75rem;
+  padding: 0.75rem 1rem;
   border-radius: 0.5rem;
   border: none;
   background: transparent;
@@ -19,6 +19,9 @@
   background: var(--muted);
 }
 
+.dark .event-row:hover {
+  background: oklch(1 0 0 / 3%);
+}
 
 /* Luma-style date icon (like FEB / 2) */
 .event-date-icon {
@@ -26,17 +29,22 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  border-radius: 0.5rem;
+  border-radius: 0.375rem;
   border: 1px solid var(--border);
   background: var(--card);
   flex-shrink: 0;
-
+  overflow: hidden;
 
   .event-date-month {
     font-weight: 600;
-    color: var(--primary);
-    letter-spacing: 0.06em;
-    line-height: 1;
+    color: var(--primary-foreground);
+    background: var(--primary);
+    border-radius: 0.25rem 0.25rem 0 0;
+    padding: 0.125rem 0.5rem;
+    font-size: 0.5625rem;
+    letter-spacing: 0.08em;
+    width: 100%;
+    text-align: center;
   }
 
   .event-date-day {
