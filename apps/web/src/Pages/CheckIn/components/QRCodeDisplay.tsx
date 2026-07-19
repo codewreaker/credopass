@@ -24,11 +24,11 @@ const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
         <div className="qr-display">
             {/* Title bar -- Luma: "Scan to Check In" centered */}
             <div className="qr-display-header">
-                <h2 className="text-base font-semibold text-foreground">Scan to Check In</h2>
+                <h2 className="qr-display-title">Scan to Check In</h2>
                 {timeRemaining && (
                     <div className="qr-display-timer">
-                        <Clock size={12} className="text-primary" />
-                        <span className="font-mono text-primary">{timeRemaining}</span>
+                        <Clock size={12} />
+                        <span className="font-mono">{timeRemaining}</span>
                     </div>
                 )}
             </div>
@@ -36,14 +36,12 @@ const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
             {/* QR Code area */}
             <div className="qr-display-body">
                 {hasValidSession && qrCodeData ? (
-                    <div className="animate-[glow-pulse_2s_ease-in-out_infinite] rounded-2xl">
-                        <GlowingQRCode
-                            value={qrCodeData}
-                            size={size}
-                            showGlow={true}
-                            ariaLabel="Scan to check in to event"
-                        />
-                    </div>
+                    <GlowingQRCode
+                        value={qrCodeData}
+                        size={size}
+                        showGlow={true}
+                        ariaLabel="Scan to check in to event"
+                    />
                 ) : (
                     <div className="qr-code-expired">
                         <QrCodeIcon size={48} />
@@ -54,8 +52,8 @@ const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
                     </div>
                 )}
 
-                <p className="text-sm text-muted-foreground text-center max-w-[18rem]">
-                    Point camera here to check in
+                <p className="qr-display-hint">
+                    Attendees scan this code with their phone to check in
                 </p>
             </div>
 

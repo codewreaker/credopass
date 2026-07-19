@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { 
   Users, 
   Calendar, 
@@ -44,6 +44,7 @@ import { Button } from "@credopass/ui/components/button";
 import { Tabs, TabsList, TabsTrigger } from "@credopass/ui/components/tabs";
 import { useIsMobile } from '@credopass/ui/hooks/use-mobile';
 import { cn } from '@credopass/ui/lib/utils';
+import "./style.css";
 
 // Color palette - computed values for Recharts compatibility
 const COLORS = {
@@ -253,13 +254,13 @@ const Analytics: React.FC = () => {
 
   return (
     <div className={cn(
-      "flex flex-col gap-5 overflow-auto",
-      isMobile && "pb-10"
+      "flex flex-col gap-6 p-4 md:p-6 overflow-auto",
+      isMobile && "pb-20" // Extra padding for mobile navigation
     )}>
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex flex-col gap-0.5">
-          <h1 className="text-xl font-semibold tracking-tight">Analytics</h1>
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Analytics</h1>
           <p className="text-sm text-muted-foreground">Track your community engagement and event performance</p>
         </div>
         

@@ -7,6 +7,7 @@ import { SUPASE_CRED } from '../../config'
 import { useNavigate, useSearch } from '@tanstack/react-router'
 import { useGuestAutoLogin } from '../../hooks'
 import CredoPassLogoIcon from '../../containers/LeftSidebar/brand-icon'
+import LoginSVG from '/login-cuate.svg'
 
 const supabaseInstance = createClient(SUPASE_CRED.URL, SUPASE_CRED.ANON_KEY)
 
@@ -81,6 +82,9 @@ export default function LoginPage() {
               </li>
             ))}
           </ul>
+
+          {/* Illustration */}
+          <img src={LoginSVG} alt="" className="mt-10 w-full max-w-[300px] mx-auto" />
         </div>
 
         <p className="relative z-10 text-[11px] text-muted-foreground/50">

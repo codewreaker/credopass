@@ -53,7 +53,7 @@
   --chart-5: oklch(0.47 0.12 46);
 
   /* Radius */
-  --radius: 0.5rem;
+  --radius: 0.625rem;
 
   /* Sidebar */
   --sidebar: oklch(0.98 0 0);
@@ -77,11 +77,11 @@
 
 .dark {
   /* Core surfaces - layered depth, not flat black */
-  --background: oklch(0.115 0.008 263);
+  --background: oklch(0.13 0.005 260);
   --foreground: oklch(0.96 0 0);
-  --card: oklch(0.165 0.007 262);
+  --card: oklch(0.17 0.005 260);
   --card-foreground: oklch(0.96 0 0);
-  --popover: oklch(0.165 0.007 262);
+  --popover: oklch(0.17 0.005 260);
   --popover-foreground: oklch(0.96 0 0);
 
   /* Brand - lime accent on dark */
@@ -92,7 +92,7 @@
   --secondary: oklch(0.22 0.005 260);
   --secondary-foreground: oklch(0.96 0 0);
   --muted: oklch(0.22 0.005 260);
-  --muted-foreground: oklch(0.62 0.006 263);
+  --muted-foreground: oklch(0.60 0 0);
   --accent: oklch(0.22 0.005 260);
   --accent-foreground: oklch(0.96 0 0);
 
@@ -124,12 +124,6 @@
   --sidebar-accent-foreground: oklch(0.96 0 0);
   --sidebar-border: oklch(1 0 0 / 8%);
   --sidebar-ring: oklch(93.604% 0.22511 121.257);
-
-  /* Extended surface system */
-  --elevated: oklch(0.20 0.008 262);           /* popovers, dropdowns, sheets */
-  --primary-subtle: oklch(0.18 0.045 121);     /* lime-tinted hover / selected bg */
-  --border-interactive: oklch(1 0 0 / 14%);   /* hover + focus border state */
-  --surface-inset: oklch(0.10 0.006 263);      /* recessed areas, QR bg, code blocks */
 
   /* Glass effects */
   --glass-bg: oklch(0.17 0.005 260 / 70%);
