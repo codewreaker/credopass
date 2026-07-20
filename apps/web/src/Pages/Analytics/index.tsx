@@ -44,21 +44,16 @@ import { Button } from "@credopass/ui/components/button";
 import { Tabs, TabsList, TabsTrigger } from "@credopass/ui/components/tabs";
 import { useIsMobile } from '@credopass/ui/hooks/use-mobile';
 import { cn } from '@credopass/ui/lib/utils';
-import "./style.css";
 
-// Color palette - computed values for Recharts compatibility
+// Chart colors resolve through the design-token system so both themes
+// (and any future palette change) flow into the charts automatically.
 const COLORS = {
-  primary: '#d4ff00',
-  secondary: '#6366f1',
-  success: '#22c55e',
-  warning: '#f59e0b',
-  danger: '#ef4444',
-  muted: '#6b7280',
-  chart1: '#d4ff00',
-  chart2: '#22c55e',
-  chart3: '#6366f1',
-  chart4: '#f59e0b',
-  chart5: '#ec4899',
+  primary: 'var(--primary)',
+  secondary: 'var(--info)',
+  success: 'var(--success)',
+  warning: 'var(--warning)',
+  danger: 'var(--destructive)',
+  muted: 'var(--chart-neutral)',
 };
 
 // Monthly attendance data
@@ -92,10 +87,10 @@ const distributionData = [
 
 // Tier distribution
 const tierData = [
-  { name: "Bronze", value: 45, fill: '#CD7F32' },
-  { name: "Silver", value: 30, fill: '#C0C0C0' },
-  { name: "Gold", value: 18, fill: '#FFD700' },
-  { name: "Platinum", value: 7, fill: '#E5E4E2' },
+  { name: "Bronze", value: 45, fill: 'var(--tier-bronze)' },
+  { name: "Silver", value: 30, fill: 'var(--tier-silver)' },
+  { name: "Gold", value: 18, fill: 'var(--tier-gold)' },
+  { name: "Platinum", value: 7, fill: 'var(--tier-platinum)' },
 ];
 
 // Event types data
@@ -196,9 +191,9 @@ const StatCard: React.FC<{
             variant="outline" 
             className={cn(
               "text-[10px] font-semibold",
-              stat.trend === 'up' 
-                ? "bg-green-500/10 text-green-500 border-green-500/20" 
-                : "bg-red-500/10 text-red-500 border-red-500/20"
+              stat.trend === 'up'
+                ? "bg-chart-positive/10 text-chart-positive border-chart-positive/20"
+                : "bg-chart-negative/10 text-chart-negative border-chart-negative/20"
             )}
           >
             <TrendIcon size={10} className="mr-0.5" />
@@ -275,10 +270,7 @@ const Analytics: React.FC = () => {
       </div>
 
       {/* Stats Grid - Responsive */}
-      <div className={cn(
-        "grid gap-4",
-        isMobile ? "grid-cols-2" : "grid-cols-4"
-      )}>
+      <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
         {stats.map((stat) => (
           <StatCard key={stat.id} stat={stat} compact={isMobile} />
         ))}
@@ -294,13 +286,10 @@ const Analytics: React.FC = () => {
         </div>
       )}
 
-      {/* Main Charts Grid */}
-      <div className={cn(
-        "grid gap-4",
-        isMobile ? "grid-cols-1" : "grid-cols-2 lg:grid-cols-3"
-      )}>
+      {/* Main charts - bento grid: wide cards span 2 columns from md up */}
+      <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
         {/* Weekly Trend Chart - Area */}
-        <Card className={cn(!isMobile && "lg:col-span-2")}>
+        <Card className="md:col-span-2">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <div>
@@ -328,19 +317,19 @@ const Analytics: React.FC = () => {
                       <stop offset="95%" stopColor={COLORS.secondary} stopOpacity={0}/>
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" vertical={false} />
                   <XAxis 
                     dataKey="day" 
                     fontSize={10} 
                     tickLine={false} 
                     axisLine={false}
-                    tick={{ fill: 'var(--muted-foreground)' }}
+                    tick={{ fill: 'var(--chart-axis)' }}
                   />
                   <YAxis 
                     fontSize={10} 
                     tickLine={false} 
                     axisLine={false}
-                    tick={{ fill: 'var(--muted-foreground)' }}
+                    tick={{ fill: 'var(--chart-axis)' }}
                   />
                   <ChartTooltip content={<ChartTooltipContent />} />
                   <Area
@@ -419,7 +408,7 @@ const Analytics: React.FC = () => {
         </Card>
 
         {/* Monthly Bar Chart */}
-        <Card className={cn(!isMobile && "lg:col-span-2")}>
+        <Card className="md:col-span-2">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold flex items-center gap-2">
               <BarChart3 size={14} className="text-primary" />
@@ -433,19 +422,19 @@ const Analytics: React.FC = () => {
             <ChartContainer config={barChartConfig} className="w-full" style={{ height: chartHeight }}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={monthlyData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" vertical={false} />
                   <XAxis 
                     dataKey="month" 
                     fontSize={10} 
                     tickLine={false} 
                     axisLine={false}
-                    tick={{ fill: 'var(--muted-foreground)' }}
+                    tick={{ fill: 'var(--chart-axis)' }}
                   />
                   <YAxis 
                     fontSize={10} 
                     tickLine={false} 
                     axisLine={false}
-                    tick={{ fill: 'var(--muted-foreground)' }}
+                    tick={{ fill: 'var(--chart-axis)' }}
                   />
                   <ChartTooltip content={<ChartTooltipContent />} />
                   <Bar 
@@ -501,7 +490,7 @@ const Analytics: React.FC = () => {
         </Card>
 
         {/* Event Types */}
-        <Card className={cn(!isMobile && "lg:col-span-2")}>
+        <Card className="md:col-span-2">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold flex items-center gap-2">
               <Zap size={14} className="text-primary" />
@@ -512,10 +501,7 @@ const Analytics: React.FC = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="p-2 md:p-4">
-            <div className={cn(
-              "grid gap-3",
-              isMobile ? "grid-cols-2" : "grid-cols-5"
-            )}>
+            <div className="grid gap-3 grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
               {eventTypesData.map((event) => (
                 <div 
                   key={event.type}
