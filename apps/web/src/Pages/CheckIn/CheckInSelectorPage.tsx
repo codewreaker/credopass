@@ -7,7 +7,7 @@ import type { EventType } from '@credopass/lib/schemas';
 import { EmptyState } from '@credopass/ui/components/empty-state';
 import { Card } from '@credopass/ui/components/card';
 import { Badge } from '@credopass/ui/components/badge';
-import { MapPin, Users, Clock, CalendarCheck, ScanQrCode } from 'lucide-react';
+import { MapPin, Users, Clock, ScanQrCode } from 'lucide-react';
 import { cn } from '@credopass/ui/lib/utils';
 import { STATUS_MAPPING } from '@credopass/ui/components/event-row';
 
