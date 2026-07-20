@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useForm } from '@tanstack/react-form';
-import { toast } from 'sonner';
+import { toast } from '@credopass/ui/components/sonner';
 import * as z from 'zod';
 import { format } from 'date-fns/format';
 import {
