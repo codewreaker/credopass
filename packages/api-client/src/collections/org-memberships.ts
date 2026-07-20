@@ -7,7 +7,7 @@ import { createCollection } from '@tanstack/db';
 import { QueryClient } from '@tanstack/query-core';
 import { queryCollectionOptions } from '@tanstack/query-db-collection';
 import { OrgMembershipSchema, type OrgMembership } from '@credopass/lib/schemas';
-import { getAPIBaseURL, handleAPIErrors } from '../client';
+import { getAPIBaseURL, handleAPIErrors, authHeaders } from '../client';
 
 /**
  * Create organization memberships collection with a specific QueryClient
@@ -18,7 +18,7 @@ export function createOrgMembershipCollection(queryClient: QueryClient) {
       queryKey: ['org-memberships'],
       queryFn: async () => {
         try {
-          const response = await fetch(`${getAPIBaseURL()}/org-memberships`);
+          const response = await fetch(`${getAPIBaseURL()}/org-memberships`, { headers: await authHeaders() });
           const data = await response.json();
           // Transform dates from the API response
           return data.map((record: OrgMembership) => ({
@@ -43,7 +43,7 @@ export function createOrgMembershipCollection(queryClient: QueryClient) {
         const { modified: newRecord } = mutation;
         const response = await fetch(`${getAPIBaseURL()}/org-memberships`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: await authHeaders({ 'Content-Type': 'application/json' }),
           body: JSON.stringify(newRecord),
         });
         await handleAPIErrors(response);
@@ -57,7 +57,7 @@ export function createOrgMembershipCollection(queryClient: QueryClient) {
         const { original, modified } = mutation;
         const response = await fetch(`${getAPIBaseURL()}/org-memberships/${original.id}`, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers: await authHeaders({ 'Content-Type': 'application/json' }),
           body: JSON.stringify(modified),
         });
         if (!response.ok) throw new Error('Failed to update org membership');
@@ -70,6 +70,7 @@ export function createOrgMembershipCollection(queryClient: QueryClient) {
         const { original } = mutation;
         const response = await fetch(`${getAPIBaseURL()}/org-memberships/${original.id}`, {
           method: 'DELETE',
+          headers: await authHeaders(),
         });
         if (!response.ok) throw new Error('Failed to delete org membership');
       },

@@ -7,7 +7,7 @@ import { createCollection } from '@tanstack/db';
 import { QueryClient } from '@tanstack/query-core';
 import { queryCollectionOptions } from '@tanstack/query-db-collection';
 import { AttendanceSchema, type Attendance } from '@credopass/lib/schemas';
-import { getAPIBaseURL, handleAPIErrors } from '../client';
+import { getAPIBaseURL, handleAPIErrors, authHeaders } from '../client';
 
 /**
  * Create attendance collection with a specific QueryClient
@@ -18,7 +18,7 @@ export function createAttendanceCollection(queryClient: QueryClient) {
       queryKey: ['attendance'],
       queryFn: async () => {
         try {
-          const response = await fetch(`${getAPIBaseURL()}/attendance`);
+          const response = await fetch(`${getAPIBaseURL()}/attendance`, { headers: await authHeaders() });
           const data = await response.json();
           // Transform dates from the API response
           return data.map((record: Attendance) => ({
@@ -41,7 +41,7 @@ export function createAttendanceCollection(queryClient: QueryClient) {
         const { modified: newRecord } = mutation;
         const response = await fetch(`${getAPIBaseURL()}/attendance`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: await authHeaders({ 'Content-Type': 'application/json' }),
           body: JSON.stringify(newRecord),
         });
         await handleAPIErrors(response);
@@ -55,7 +55,7 @@ export function createAttendanceCollection(queryClient: QueryClient) {
         const { original, modified } = mutation;
         const response = await fetch(`${getAPIBaseURL()}/attendance/${original.id}`, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers: await authHeaders({ 'Content-Type': 'application/json' }),
           body: JSON.stringify(modified),
         });
         if (!response.ok) throw new Error('Failed to update attendance record');
@@ -68,6 +68,7 @@ export function createAttendanceCollection(queryClient: QueryClient) {
         const { original } = mutation;
         const response = await fetch(`${getAPIBaseURL()}/attendance/${original.id}`, {
           method: 'DELETE',
+          headers: await authHeaders(),
         });
         if (!response.ok) throw new Error('Failed to delete attendance record');
       },

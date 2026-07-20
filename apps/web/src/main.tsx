@@ -5,6 +5,7 @@ import { ThemeProvider } from '@credopass/lib/theme'
 import { Analytics } from '@vercel/analytics/react'
 import { SpeedInsights } from '@vercel/speed-insights/react'
 import { configureAPIClient } from '@credopass/api-client'
+import { getAccessToken } from './supabase'
 import { routeTree } from './routeTree.gen'
 import './index.css'
 
@@ -18,8 +19,12 @@ declare module '@tanstack/react-router' {
   }
 }
 
-// Configure the API client with environment-specific settings
-configureAPIClient({ baseURL: import.meta.env.VITE_API_URL || '/api/core' })
+// Configure the API client with environment-specific settings.
+// The API requires a verified Supabase JWT on every request.
+configureAPIClient({
+  baseURL: import.meta.env.VITE_API_URL || '/api/core',
+  getAuthToken: getAccessToken,
+})
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

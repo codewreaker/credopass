@@ -7,7 +7,7 @@ import { createCollection } from '@tanstack/db';
 import { QueryClient } from '@tanstack/query-core';
 import { queryCollectionOptions } from '@tanstack/query-db-collection';
 import { EventMemberSchema,type EventMember } from '@credopass/lib/schemas';
-import { getAPIBaseURL, handleAPIErrors } from '../client';
+import { getAPIBaseURL, handleAPIErrors, authHeaders } from '../client';
 
 /**
  * Create event members collection with a specific QueryClient
@@ -18,7 +18,7 @@ export function createEventMemberCollection(queryClient: QueryClient) {
       queryKey: ['event-members'],
       queryFn: async () => {
         try {
-          const response = await fetch(`${getAPIBaseURL()}/event-members`);
+          const response = await fetch(`${getAPIBaseURL()}/event-members`, { headers: await authHeaders() });
           const data = await response.json();
           // Transform dates from the API response
           return data.map((record: EventMember) => ({
@@ -41,7 +41,7 @@ export function createEventMemberCollection(queryClient: QueryClient) {
         const { modified: newRecord } = mutation;
         const response = await fetch(`${getAPIBaseURL()}/event-members`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: await authHeaders({ 'Content-Type': 'application/json' }),
           body: JSON.stringify(newRecord),
         });
         await handleAPIErrors(response);
@@ -55,7 +55,7 @@ export function createEventMemberCollection(queryClient: QueryClient) {
         const { original, modified } = mutation;
         const response = await fetch(`${getAPIBaseURL()}/event-members/${original.id}`, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers: await authHeaders({ 'Content-Type': 'application/json' }),
           body: JSON.stringify(modified),
         });
         if (!response.ok) throw new Error('Failed to update event member');
@@ -68,6 +68,7 @@ export function createEventMemberCollection(queryClient: QueryClient) {
         const { original } = mutation;
         const response = await fetch(`${getAPIBaseURL()}/event-members/${original.id}`, {
           method: 'DELETE',
+          headers: await authHeaders(),
         });
         if (!response.ok) throw new Error('Failed to delete event member');
       },

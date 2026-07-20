@@ -13,7 +13,6 @@ import type { OrgPlan } from '@credopass/lib/schemas';
 import { Button } from '@credopass/ui/components/button';
 import { Input } from '@credopass/ui/components/input';
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@credopass/ui/components/field';
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@credopass/ui/components/select';
 import { DialogClose, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@credopass/ui/components/dialog';
 import { handleCollectionDeleteById } from '@credopass/api-client/collections';
 import './style.css';
@@ -33,14 +32,6 @@ export interface OrganizationFormProps {
   onClose?: () => void;
 }
 
-// Plan options for the select
-const planOptions = [
-  { value: 'free', label: 'Free' },
-  { value: 'starter', label: 'Starter' },
-  { value: 'pro', label: 'Pro' },
-  { value: 'enterprise', label: 'Enterprise' },
-];
-
 // Generate a slug from the name
 const generateSlug = (name: string): string => {
   return name
@@ -59,7 +50,6 @@ const organizationFormSchema = z.object({
     .min(2, 'Slug must be at least 2 characters.')
     .max(50, 'Slug must be at most 50 characters.')
     .regex(/^[a-z0-9-]+$/, 'Slug can only contain lowercase letters, numbers, and hyphens.'),
-  plan: z.enum(['free', 'starter', 'pro', 'enterprise'] as const),
 });
 
 export const launchOrganizationForm = (
@@ -81,7 +71,6 @@ const OrganizationForm = ({ initialData = {}, isEditing = false, onClose }: Orga
     defaultValues: {
       name: initialData.name || '',
       slug: initialData.slug || '',
-      plan: (initialData.plan || 'free') as OrgPlan,
     },
     validators: {
       //@ts-ignore
@@ -93,7 +82,6 @@ const OrganizationForm = ({ initialData = {}, isEditing = false, onClose }: Orga
       const organizationData = {
         name: value.name,
         slug: value.slug,
-        plan: value.plan,
       };
 
       try {
@@ -103,12 +91,14 @@ const OrganizationForm = ({ initialData = {}, isEditing = false, onClose }: Orga
           tx = organizationCollection.update(initialData.id, (draft) => {
             draft.name = organizationData.name;
             draft.slug = organizationData.slug;
-            draft.plan = organizationData.plan;
             draft.updatedAt = now;
           });
         } else {
           tx = organizationCollection.insert({
             ...organizationData,
+            // New organizations always start on the free plan; upgrades go
+            // through billing, never through this form (server enforces it).
+            plan: 'free' as OrgPlan,
             id: crypto.randomUUID(),
             externalAuthEndpoint: null,
             externalAuthApiKey: null,
@@ -218,46 +208,19 @@ const OrganizationForm = ({ initialData = {}, isEditing = false, onClose }: Orga
               }}
             />
 
-            {/* Plan */}
-            <form.Field
-              name="plan"
-              children={(field) => {
-                const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
-                return (
-                  <Field data-invalid={isInvalid} className="form-group full-width">
-                    <FieldLabel htmlFor={field.name} className="form-label">
-                      <Crown size={14} />
-                      Plan
-                    </FieldLabel>
-                    <Select
-                      name={field.name}
-                      value={field.state.value}
-                      onValueChange={(value) => field.handleChange(value as OrgPlan)}
-                    >
-                      <SelectTrigger id={field.name} aria-invalid={isInvalid}>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          {planOptions.map((option) => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.label}
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                    <FieldDescription>
-                      {field.state.value === 'free' && 'Free tier with basic features'}
-                      {field.state.value === 'starter' && 'Starter tier with extended limits'}
-                      {field.state.value === 'pro' && 'Pro tier with analytics and advanced features'}
-                      {field.state.value === 'enterprise' && 'Enterprise tier with custom integrations'}
-                    </FieldDescription>
-                    {isInvalid && <FieldError errors={field.state.meta.errors} />}
-                  </Field>
-                );
-              }}
-            />
+            {/* Plan is read-only here: upgrades happen through billing */}
+            <Field className="form-group full-width">
+              <FieldLabel className="form-label">
+                <Crown size={14} />
+                Plan
+              </FieldLabel>
+              <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/30 px-3 py-2 text-sm capitalize">
+                {initialData.plan || 'free'}
+              </div>
+              <FieldDescription>
+                Plan changes are handled through billing, not editable here.
+              </FieldDescription>
+            </Field>
           </FieldGroup>
 
           <DialogFooter>

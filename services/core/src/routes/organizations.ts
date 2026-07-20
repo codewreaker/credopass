@@ -11,14 +11,18 @@ import { createCrudRoute } from '../util/crud-factory';
 
 const organizationsRouter = new Hono();
 
-// Mount standard CRUD
+// Mount standard CRUD.
+// `plan` and the Stripe fields are server-authoritative: they may only
+// change via a validated billing flow (Stripe webhook, once built), never
+// from a client payload - so they are stripped from every create/update.
 organizationsRouter.route('/', createCrudRoute({
   table: organizations,
   createSchema: CreateOrganizationSchema,
   updateSchema: UpdateOrganizationSchema,
   sortField: organizations.createdAt,
   allowedFilters: ['plan', 'slug'],
-  uniqueFields: ['slug']
+  uniqueFields: ['slug'],
+  transformBody: ({ plan, stripeCustomerId, stripeSubscriptionId, ...rest }) => rest,
 }));
 
 // Custom routes

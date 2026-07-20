@@ -1,10 +1,11 @@
 import { Hono } from 'hono';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { getDatabase } from '../db/client';
-import { 
+import {
   orgMemberships,
-  CreateOrgMembershipSchema, 
-  UpdateOrgMembershipSchema 
+  users,
+  CreateOrgMembershipSchema,
+  UpdateOrgMembershipSchema
 } from '@credopass/lib/schemas';
 import { createCrudRoute } from '../util/crud-factory';
 
@@ -65,7 +66,11 @@ orgMembershipsRouter.post('/:id/accept', async (c) => {
   }
 });
 
-// PUT /:id/role - Change member role (admin only)
+// PUT /:id/role - Change member role (owner/admin of the same org only).
+// The caller is resolved from the verified JWT: email -> users row ->
+// membership in the target org. Until the auth-user <-> users linkage
+// gets a dedicated column, callers without a users row (e.g. anonymous
+// guests) cannot change roles at all - which is the correct default.
 orgMembershipsRouter.put('/:id/role', async (c) => {
   try {
     const db = await getDatabase();
@@ -78,9 +83,46 @@ orgMembershipsRouter.put('/:id/role', async (c) => {
       return c.json({ error: 'Invalid role' }, 400);
     }
 
+    const target = await db
+      .select()
+      .from(orgMemberships)
+      .where(eq(orgMemberships.id, membershipId))
+      .limit(1);
+
+    if (!target[0]) {
+      return c.json({ error: 'Membership not found' }, 404);
+    }
+
+    // Resolve the caller's membership in the target organization
+    const callerEmail = (c.get('jwtPayload' as never) as { email?: string } | undefined)?.email;
+    if (!callerEmail) {
+      return c.json({ error: 'Forbidden: role changes require a registered account' }, 403);
+    }
+
+    const caller = await db
+      .select()
+      .from(users)
+      .where(eq(users.email, callerEmail))
+      .limit(1);
+
+    const callerMembership = caller[0]
+      ? await db
+          .select()
+          .from(orgMemberships)
+          .where(and(
+            eq(orgMemberships.userId, caller[0].id),
+            eq(orgMemberships.organizationId, target[0].organizationId)
+          ))
+          .limit(1)
+      : [];
+
+    if (!callerMembership[0] || !['owner', 'admin'].includes(callerMembership[0].role)) {
+      return c.json({ error: 'Forbidden: only organization owners/admins can change roles' }, 403);
+    }
+
     const result = await db
       .update(orgMemberships)
-      .set({ 
+      .set({
         role,
         updatedAt: new Date()
       })

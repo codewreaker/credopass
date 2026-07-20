@@ -17,7 +17,9 @@ export const OrganizationSchema = createSelectSchema(organizations, {
 export const CreateOrganizationSchema = createInsertSchema(organizations, {
   name: z.string().min(1).max(100),
   slug: z.string().min(1).max(50).regex(/^[a-z0-9-]+$/, 'Slug must be lowercase alphanumeric with hyphens'),
-  plan: OrgPlanEnum,
+  // Optional on create: the server strips client-supplied plans and the
+  // database defaults new organizations to 'free'.
+  plan: OrgPlanEnum.optional(),
 }).omit({
   id: true,
   createdAt: true,

@@ -1,18 +1,18 @@
 import { ArrowLeft, Loader2, Zap, CheckCircle2, BarChart3, CalendarCheck } from 'lucide-react'
 import AuthPage from '@credopass/ui/components/login'
 import { emailPasswordSchema } from '@credopass/lib/schemas'
-import { createAuthClient, createClient } from '@credopass/lib/supabase'
 import { EmailPasswordForm } from '@credopass/ui/components/login/email-password-form'
-import { SUPASE_CRED } from '../../config'
+import {
+  supabase as supabaseInstance,
+  signInAsGuest,
+  signInWithEmail,
+  signInWithGithub,
+  signUpWithEmail,
+} from '../../supabase'
 import { useNavigate, useSearch } from '@tanstack/react-router'
 import { useGuestAutoLogin } from '../../hooks'
 import CredoPassLogoIcon from '../../containers/LeftSidebar/brand-icon'
 import LoginSVG from '/login-cuate.svg'
-
-const supabaseInstance = createClient(SUPASE_CRED.URL, SUPASE_CRED.ANON_KEY)
-
-const { signInAsGuest, signInWithEmail, signInWithGithub, signUpWithEmail } =
-  createAuthClient(supabaseInstance)
 
 const FEATURES = [
   { icon: Zap,           text: 'QR check-in from any device in seconds' },
