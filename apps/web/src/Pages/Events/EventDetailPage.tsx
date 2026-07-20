@@ -120,7 +120,7 @@ function EventDetailPage() {
     }
 
     return (
-        <div className="min-h-screen bg-[#0a0a0a] text-zinc-200 flex flex-col w-full mx-auto relative" style={{ fontFamily: "'DM Sans', 'Helvetica Neue', sans-serif" }}>
+        <div className="min-h-screen bg-background text-foreground flex flex-col w-full mx-auto relative" style={{ fontFamily: "'DM Sans', 'Helvetica Neue', sans-serif" }}>
             {/* Simplified Top Nav - just back button */}
             <div className="flex items-center gap-3 px-4 lg:px-8 pt-6 pb-4 max-w-7xl mx-auto w-full">
                 <Button variant="ghost" size="sm" onClick={handleBack} className="gap-2">

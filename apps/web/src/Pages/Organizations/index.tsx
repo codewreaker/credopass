@@ -29,6 +29,7 @@ import {
 import { Button } from '@credopass/ui/components/button';
 import { Badge } from '@credopass/ui/components/badge';
 import { EmptyState } from '@credopass/ui/components/empty-state';
+import { Skeleton } from '@credopass/ui/components/skeleton';
 import { launchOrganizationForm } from '../../containers/OrganizationForm';
 
 // Plan configuration
@@ -46,15 +47,16 @@ interface OrgCardProps {
   onSelect: () => void;
   onEdit: () => void;
   eventCount?: number;
+  memberCount?: number;
 }
 
-const OrganizationCard: React.FC<OrgCardProps> = ({ org, isActive, onSelect, onEdit, eventCount }) => {
+const OrganizationCard: React.FC<OrgCardProps> = ({ org, isActive, onSelect, onEdit, eventCount, memberCount }) => {
   const plan = planConfig[org.plan] || planConfig.free;
   const PlanIcon = plan.icon;
 
   return (
     <Card
-      className={`cursor-pointer transition-all duration-150 group ${isActive ? 'ring-2 ring-primary border-primary' : 'hover:ring-1 hover:ring-white/12 hover:shadow-[0_4px_14px_-3px_oklch(0_0_0/0.45)]'}`}
+      className={`cursor-pointer transition-all duration-150 group ${isActive ? 'ring-2 ring-primary border-primary' : 'hover:ring-1 hover:ring-border-strong hover:shadow-elevation-2'}`}
     >
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
@@ -82,11 +84,11 @@ const OrganizationCard: React.FC<OrgCardProps> = ({ org, isActive, onSelect, onE
           <div className="grid grid-cols-2 gap-2">
             <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/30">
               <Users className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-              <span className="text-xs text-muted-foreground tabular-nums">{org.members ?? '--'} members</span>
+              <span className="text-xs text-muted-foreground tabular-nums">{memberCount ?? 0} members</span>
             </div>
             <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/30">
               <Calendar className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-              <span className="text-xs text-muted-foreground tabular-nums">{eventCount ?? '--'} events</span>
+              <span className="text-xs text-muted-foreground tabular-nums">{eventCount ?? 0} events</span>
             </div>
           </div>
 
@@ -171,7 +173,8 @@ const OrganizationsPage: React.FC = () => {
   // Get collections inside component
   const {
     organizations: organizationCollection,
-    events: eventCollection
+    events: eventCollection,
+    orgMemberships: orgMembershipCollection,
   } = getCollections();
 
   const handleCreateNew = useCallback(() => {
@@ -199,6 +202,17 @@ const OrganizationsPage: React.FC = () => {
       .select(({ ev }) => ({
         organizationId: ev.organizationId,
         eventCount: count(ev.id),
+      }))
+  ).data;
+
+  // Count members grouped by organizationId (replaces the old '--' placeholder)
+  const memberCount = useLiveQuery((q) =>
+    q
+      .from({ m: orgMembershipCollection })
+      .groupBy(({ m }) => m.organizationId)
+      .select(({ m }) => ({
+        organizationId: m.organizationId,
+        memberCount: count(m.id),
       }))
   ).data;
 
@@ -233,6 +247,26 @@ const OrganizationsPage: React.FC = () => {
     }, openLauncher);
   };
 
+  // Loading state: skeleton cards instead of flashing the empty state
+  if (orgsQuery.isLoading) {
+    return (
+      <div className="flex flex-col gap-4" aria-busy="true">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex flex-col gap-1.5">
+            <Skeleton className="h-6 w-40" />
+            <Skeleton className="h-3.5 w-64" />
+          </div>
+          <Skeleton className="h-8 w-40 rounded-lg" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          {[0, 1, 2].map((i) => (
+            <Skeleton key={i} className="h-48 rounded-xl" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   // Empty state
   if (organizations.length === 0) {
     return (
@@ -255,6 +289,7 @@ const OrganizationsPage: React.FC = () => {
             key={org.id}
             org={org}
             eventCount={eventCount?.find(ec => ec.organizationId === org.id)?.eventCount || 0}
+            memberCount={memberCount?.find(mc => mc.organizationId === org.id)?.memberCount || 0}
             isActive={org.id === activeOrganizationId}
             onSelect={() => handleSelectOrganization(org)}
             onEdit={() => handleEditOrganization(org)}
