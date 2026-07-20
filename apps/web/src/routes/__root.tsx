@@ -10,6 +10,7 @@ import { Toaster } from "@credopass/ui/components/sonner";
 import { Separator } from "@credopass/ui/components/separator";
 import { ModalPortal } from "@credopass/ui/components/launcher";
 import { NAV_ITEMS } from "@credopass/lib/constants";
+import { useTheme } from "@credopass/lib/theme";
 import { useCommandPallete } from "../hooks";
 
 // Routes that render standalone without the app shell
@@ -22,6 +23,7 @@ export const Route = createRootRoute({
 export function RootLayout() {
   const isMobile = useIsMobile();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { theme } = useTheme();
   const { openCommandPalette } = useCommandPallete();
 
   const isStandalone = STANDALONE_ROUTES.some(r => pathname.startsWith(r));
@@ -33,7 +35,7 @@ export function RootLayout() {
         <div className="min-h-svh bg-background">
           <Outlet />
         </div>
-        <Toaster position="top-center" richColors />
+        <Toaster position="top-center" richColors theme={theme} />
       </>
     );
   }
@@ -70,7 +72,7 @@ export function RootLayout() {
         </div>
         <ModalPortal />
       </div>
-      <Toaster position="top-center" richColors />
+      <Toaster position="top-center" richColors theme={theme} />
     </>
   );
 }

@@ -52,6 +52,18 @@
   --chart-4: oklch(0.56 0.15 49);
   --chart-5: oklch(0.47 0.12 46);
 
+  /* Chart semantics - trends, axes, grid */
+  --chart-positive: oklch(0.62 0.17 142);
+  --chart-negative: oklch(0.58 0.22 27);
+  --chart-neutral: oklch(0.50 0 0);
+  --chart-grid: oklch(0 0 0 / 6%);
+  --chart-axis: oklch(0.50 0 0);
+
+  /* Elevation scale */
+  --elevation-1: 0 1px 2px oklch(0 0 0 / 5%);
+  --elevation-2: 0 2px 8px oklch(0 0 0 / 7%), 0 1px 2px oklch(0 0 0 / 5%);
+  --elevation-3: 0 8px 24px oklch(0 0 0 / 10%), 0 2px 6px oklch(0 0 0 / 7%);
+
   /* Radius */
   --radius: 0.625rem;
 
@@ -115,6 +127,18 @@
   --chart-4: oklch(0.56 0.15 49);
   --chart-5: oklch(0.47 0.12 46);
 
+  /* Chart semantics - trends, axes, grid */
+  --chart-positive: oklch(0.75 0.19 142);
+  --chart-negative: oklch(0.704 0.191 22.216);
+  --chart-neutral: oklch(0.60 0 0);
+  --chart-grid: oklch(1 0 0 / 7%);
+  --chart-axis: oklch(0.60 0 0);
+
+  /* Elevation scale - deeper shadows for dark surfaces */
+  --elevation-1: 0 1px 2px oklch(0 0 0 / 35%);
+  --elevation-2: 0 2px 8px oklch(0 0 0 / 40%), 0 1px 2px oklch(0 0 0 / 30%);
+  --elevation-3: 0 12px 32px oklch(0 0 0 / 50%), 0 2px 8px oklch(0 0 0 / 35%);
+
   /* Sidebar */
   --sidebar: oklch(0.15 0.005 260);
   --sidebar-foreground: oklch(0.96 0 0);
@@ -153,6 +177,9 @@
   --color-chart-3: var(--chart-3);
   --color-chart-2: var(--chart-2);
   --color-chart-1: var(--chart-1);
+  --color-chart-positive: var(--chart-positive);
+  --color-chart-negative: var(--chart-negative);
+  --color-chart-neutral: var(--chart-neutral);
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
@@ -184,6 +211,18 @@
   --radius-2xl: calc(var(--radius) + 8px);
   --radius-3xl: calc(var(--radius) + 12px);
   --radius-4xl: calc(var(--radius) + 16px);
+
+  /* Elevation utilities: shadow-elevation-{1,2,3} */
+  --shadow-elevation-1: var(--elevation-1);
+  --shadow-elevation-2: var(--elevation-2);
+  --shadow-elevation-3: var(--elevation-3);
+
+  /* Motion scale - one easing family, three speeds.
+     Use ease-out-quart for enter/hover, duration-fast for micro
+     interactions, duration-base for panel/dialog, duration-slow
+     for page-level transitions. */
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-in-out-quart: cubic-bezier(0.76, 0, 0.24, 1);
 
   /* Animation tokens */
   --animate-fade-in: fade-in 0.4s ease-out;
