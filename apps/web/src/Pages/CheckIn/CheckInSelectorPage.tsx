@@ -144,7 +144,7 @@ const EventCard: React.FC<{ event: EventType; onSelect: (id: string) => void }> 
         'p-4 cursor-pointer transition-all duration-150 group',
         isOngoing
           ? 'ring-1 ring-primary/30 hover:ring-primary/60'
-          : 'hover:ring-1 hover:ring-white/12 hover:shadow-[0_4px_14px_-3px_oklch(0_0_0/0.45)]'
+          : 'hover:ring-1 hover:ring-border-strong hover:shadow-elevation-2'
       )}
     >
       <div className="flex flex-col gap-3">

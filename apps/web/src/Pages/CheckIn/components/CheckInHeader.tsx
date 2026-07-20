@@ -13,12 +13,12 @@ interface CheckInHeaderProps {
 }
 
 const statusColors: Record<string, string> = {
-  active: 'bg-green-500/10 text-green-500 border-green-500/30',
-  draft: 'bg-yellow-500/10 text-yellow-500 border-yellow-500/30',
+  active: 'bg-success/10 text-success border-success/30',
+  draft: 'bg-warning/10 text-warning border-warning/30',
   scheduled: 'bg-primary/10 text-primary border-primary/30',
-  ongoing: 'bg-green-500/10 text-green-500 border-green-500/30',
-  completed: 'bg-blue-500/10 text-blue-500 border-blue-500/30',
-  cancelled: 'bg-red-500/10 text-red-500 border-red-500/30',
+  ongoing: 'bg-success/10 text-success border-success/30',
+  completed: 'bg-info/10 text-info border-info/30',
+  cancelled: 'bg-destructive/10 text-destructive border-destructive/30',
 };
 
 const CheckInHeader: React.FC<CheckInHeaderProps> = ({

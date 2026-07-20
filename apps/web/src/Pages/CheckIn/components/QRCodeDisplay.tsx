@@ -9,6 +9,8 @@ interface QRCodeDisplayProps {
     timeRemaining: string | null;
     onRefreshQR: () => void;
     onManualCheckInClick: () => void;
+    /** Hide when the manual form is already visible beside the QR panel */
+    showManualButton?: boolean;
     size?: number;
 }
 
@@ -18,6 +20,7 @@ const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
     timeRemaining,
     onRefreshQR,
     onManualCheckInClick,
+    showManualButton = true,
     size = 256,
 }) => {
     return (
@@ -68,14 +71,16 @@ const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
                     <RefreshCw size={14} />
                     Refresh
                 </Button>
-                <Button
-                    onClick={onManualCheckInClick}
-                    size="default"
-                    className="gap-1.5 flex-1"
-                >
-                    <UserPlus size={14} />
-                    Manual Check-In
-                </Button>
+                {showManualButton && (
+                    <Button
+                        onClick={onManualCheckInClick}
+                        size="default"
+                        className="gap-1.5 flex-1"
+                    >
+                        <UserPlus size={14} />
+                        Manual Check-In
+                    </Button>
+                )}
             </div>
         </div>
     );

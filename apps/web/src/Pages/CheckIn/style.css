@@ -57,17 +57,58 @@
   overflow: auto;
 
   .main-grid {
-    flex: 1;
     display: grid;
     grid-template-columns: 1fr;
     gap: 1.5rem;
+    width: 100%;
+    max-width: 64rem;
+    margin-inline: auto;
+    align-content: start;
   }
+}
 
-  .right-column {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
+/* Tablet and up: QR panel + manual check-in side by side, instead of a
+   mobile-width column centered in empty space */
+@media (min-width: 768px) {
+  .active-checkin-layout .main-grid {
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    align-items: stretch;
+    flex: 1;
   }
+}
+
+/* Manual check-in panel (right column on tablet, toggled view on mobile) */
+.manual-checkin-panel {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: var(--card);
+  overflow: hidden;
+}
+
+.manual-checkin-panel-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  padding: 0.875rem 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.manual-checkin-panel-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.manual-checkin-panel-hint {
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+}
+
+.manual-checkin-panel-body {
+  flex: 1;
+  padding: 1.25rem 1rem;
 }
 
 /* Empty state */
@@ -129,9 +170,7 @@
   background: white;
   padding: 1.25rem;
   border-radius: 1rem;
-  box-shadow:
-    0 8px 24px -4px rgba(0, 0, 0, 0.3),
-    0 0 0 1px rgba(255, 255, 255, 0.06);
+  box-shadow: var(--elevation-2), 0 0 0 1px var(--border);
 }
 
 .qr-code-expired {
@@ -210,7 +249,7 @@
   border-radius: 1rem;
   border: 1px solid var(--border);
   background: var(--card);
-  box-shadow: 0 16px 48px -12px rgba(0, 0, 0, 0.4);
+  box-shadow: var(--elevation-3);
   animation: successSlideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
@@ -226,8 +265,8 @@
   width: 3.5rem;
   height: 3.5rem;
   border-radius: 50%;
-  background: oklch(54% 0.14 150 / 15%);
-  color: oklch(70% 0.18 150);
+  background: color-mix(in oklab, var(--success) 15%, transparent);
+  color: var(--success);
 }
 
 .success-avatar {
@@ -282,7 +321,7 @@
 }
 
 .success-status-going {
-  color: oklch(70% 0.18 150);
+  color: var(--success);
   font-weight: 600;
 }
 
@@ -306,7 +345,7 @@
   width: 0.375rem;
   height: 0.375rem;
   border-radius: 50%;
-  background: oklch(70% 0.18 150);
+  background: var(--success);
   animation: pulse 1.5s ease-in-out infinite;
 }
 
