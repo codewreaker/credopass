@@ -23,7 +23,7 @@ import {
 import { useLauncher } from '@credopass/lib/stores';
 import { launchUserForm } from '../../containers/UserForm/index';
 import { EmptyState } from '@credopass/ui/components/empty-state';
-import { Loader } from '@credopass/ui/components/loader';
+import { Skeleton } from '@credopass/ui/components/skeleton';
 import { useToolbarContext } from '@credopass/lib/hooks';
 import { Avatar, AvatarFallback, AvatarImage } from '@credopass/ui/components/avatar';
 import { Badge } from '@credopass/ui/components/badge';
@@ -44,17 +44,17 @@ import { useIsMobile } from "@credopass/ui/hooks/use-mobile";
 
 // Tier configuration with colors
 const TIER_CONFIG: Record<string, { color: string; bgColor: string; borderColor: string; icon: typeof Star; label: string }> = {
-  bronze: { color: 'text-amber-600', bgColor: 'bg-amber-500/10', borderColor: 'border-amber-500/30', icon: Star, label: 'Bronze' },
-  silver: { color: 'text-slate-400', bgColor: 'bg-slate-400/10', borderColor: 'border-slate-400/30', icon: Star, label: 'Silver' },
-  gold: { color: 'text-yellow-500', bgColor: 'bg-yellow-500/10', borderColor: 'border-yellow-500/30', icon: Trophy, label: 'Gold' },
-  platinum: { color: 'text-cyan-400', bgColor: 'bg-cyan-400/10', borderColor: 'border-cyan-400/30', icon: Trophy, label: 'Platinum' },
+  bronze: { color: 'text-tier-bronze', bgColor: 'bg-tier-bronze/10', borderColor: 'border-tier-bronze/30', icon: Star, label: 'Bronze' },
+  silver: { color: 'text-tier-silver', bgColor: 'bg-tier-silver/10', borderColor: 'border-tier-silver/30', icon: Star, label: 'Silver' },
+  gold: { color: 'text-tier-gold', bgColor: 'bg-tier-gold/10', borderColor: 'border-tier-gold/30', icon: Trophy, label: 'Gold' },
+  platinum: { color: 'text-tier-platinum', bgColor: 'bg-tier-platinum/10', borderColor: 'border-tier-platinum/30', icon: Trophy, label: 'Platinum' },
 };
 
 // Event attendance badge styles
 const EVENT_STATUS_CONFIG: Record<string, { color: string; bgColor: string; icon: typeof CheckCircle }> = {
-  attended: { color: 'text-green-500', bgColor: 'bg-green-500/10', icon: CheckCircle },
-  missed: { color: 'text-red-500', bgColor: 'bg-red-500/10', icon: XCircle },
-  upcoming: { color: 'text-blue-500', bgColor: 'bg-blue-500/10', icon: Clock },
+  attended: { color: 'text-success', bgColor: 'bg-success/10', icon: CheckCircle },
+  missed: { color: 'text-destructive', bgColor: 'bg-destructive/10', icon: XCircle },
+  upcoming: { color: 'text-info', bgColor: 'bg-info/10', icon: Clock },
 };
 
 // Mock event data for demo
@@ -277,13 +277,13 @@ const StatsCard: React.FC<{
 }> = ({
   label, value, icon, trend, className
 }) => (
-    <Card className={cn("p-4 flex items-center gap-4", className)}>
+    <Card className={cn("p-3 md:p-4 flex items-center gap-3 md:gap-4", className)}>
       <div className="p-2.5 rounded-xl bg-primary/10">
         {icon}
       </div>
-      <div className="flex-1">
-        <p className="text-2xl font-bold text-foreground">{value}</p>
-        <p className="text-xs text-muted-foreground">{label}</p>
+      <div className="flex-1 min-w-0">
+        <p className="text-lg md:text-2xl font-bold text-foreground truncate">{value}</p>
+        <p className="text-[11px] md:text-xs text-muted-foreground truncate">{label}</p>
       </div>
       {trend && (
         <Badge variant="secondary" className="text-xs">
@@ -388,7 +388,38 @@ export default function MembersPage() {
   const allSelected = filteredMembers.length > 0 && filteredMembers.every(m => selectedIds.has(m.id));
   const someSelected = selectedIds.size > 0 && !allSelected;
 
-  if (isLoading) return <Loader />
+  if (isLoading) {
+    return (
+      <div className="flex flex-col h-full" aria-busy="true">
+        <div className="px-3 py-2 border-b border-border">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex flex-col gap-1.5">
+              <Skeleton className="h-6 w-32" />
+              <Skeleton className="h-3.5 w-44" />
+            </div>
+            <Skeleton className="h-9 w-32 rounded-lg" />
+          </div>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4 py-1">
+            {[0, 1, 2, 3].map((i) => (
+              <Skeleton key={i} className="h-16 rounded-xl" />
+            ))}
+          </div>
+        </div>
+        <div className="flex-1 p-4 flex flex-col gap-3">
+          {[0, 1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="flex items-center gap-3">
+              <Skeleton className="size-9 rounded-full shrink-0" />
+              <div className="flex-1 flex flex-col gap-1.5">
+                <Skeleton className="h-3.5 w-1/3" />
+                <Skeleton className="h-3 w-1/2" />
+              </div>
+              <Skeleton className="h-5 w-16 rounded-full" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   if (isError) {
     return (
@@ -420,30 +451,26 @@ export default function MembersPage() {
           </Button>
         </div>
 
-        {/* Stats Row */}
-        <div className="grid grid-cols-4 md:grid-cols-4 gap-34 md:gap-4 overflow-auto py-1">
+        {/* Stats Row: 2x2 on phones, one row from lg up */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4 py-1">
           <StatsCard
             label="Total Members"
-            className="h-2/3 w-30  md:h-full md:w-full"
             value={stats.totalMembers}
             icon={<UserPlus size={iconSize} className="text-primary" />}
           />
           <StatsCard
             label="Total Points"
-            className="h-2/3 w-30  md:h-full md:w-full"
             value={stats.totalPoints.toLocaleString()}
             icon={<Star size={iconSize} className="text-primary" />}
           />
           <StatsCard
             label="Active Members"
-            className="h-2/3 w-30  md:h-full md:w-full"
             value={stats.activeMembers}
             icon={<Calendar size={iconSize} className="text-primary" />}
             trend={`${Math.round((stats.activeMembers / (stats.totalMembers || 1)) * 100)}%`}
           />
           <StatsCard
             label="Avg Events/Member"
-            className="h-2/3 w-30  md:h-full md:w-full"
             value={stats.avgAttendance}
             icon={<Trophy size={iconSize} className="text-primary" />}
           />

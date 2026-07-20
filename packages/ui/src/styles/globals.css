@@ -192,6 +192,10 @@
   --color-chart-positive: var(--chart-positive);
   --color-chart-negative: var(--chart-negative);
   --color-chart-neutral: var(--chart-neutral);
+  --color-tier-bronze: var(--tier-bronze);
+  --color-tier-silver: var(--tier-silver);
+  --color-tier-gold: var(--tier-gold);
+  --color-tier-platinum: var(--tier-platinum);
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
