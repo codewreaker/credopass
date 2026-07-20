@@ -38,12 +38,25 @@ function useInView(threshold = 0.15) {
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
+    // Content must never stay hidden: skip the animation entirely for
+    // reduced-motion users, missing IntersectionObserver support, and
+    // headless/full-page captures where observers may never fire.
+    if (
+      typeof IntersectionObserver === 'undefined' ||
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    ) {
+      setIsVisible(true);
+      return;
+    }
     const obs = new IntersectionObserver(
       ([entry]) => { if (entry.isIntersecting) { setIsVisible(true); obs.unobserve(el); } },
       { threshold }
     );
     obs.observe(el);
-    return () => obs.disconnect();
+    // Safety net: whatever happens with the observer, reveal after 2s so
+    // nothing is permanently invisible (e.g. programmatic scrolling).
+    const failsafe = setTimeout(() => setIsVisible(true), 2000);
+    return () => { obs.disconnect(); clearTimeout(failsafe); };
   }, [threshold]);
 
   return { ref, isVisible };
@@ -142,7 +155,7 @@ export function Home() {
       {/* ============================================================
           HERO
           ============================================================ */}
-      <section className="relative pt-32 pb-20 lg:pt-44 lg:pb-32 overflow-hidden">
+      <section className="relative pt-28 pb-12 sm:pt-32 sm:pb-16 lg:pt-44 lg:pb-32 overflow-hidden">
         {/* Animated background grid */}
         <div className="absolute inset-0 opacity-[0.03]" style={{
           backgroundImage: 'linear-gradient(to right, currentColor 1px, transparent 1px), linear-gradient(to bottom, currentColor 1px, transparent 1px)',
@@ -219,7 +232,7 @@ export function Home() {
 
           {/* Hero Image */}
           <Reveal delay={500}>
-            <div className="max-w-6xl mx-auto mt-16 lg:mt-24">
+            <div className="max-w-6xl mx-auto mt-10 sm:mt-16 lg:mt-24">
               <div className="relative">
                 {/* Glow behind screenshot */}
                 <div className="absolute -inset-4 bg-gradient-to-t from-primary/15 via-primary/5 to-transparent blur-3xl rounded-3xl" />
@@ -280,7 +293,7 @@ export function Home() {
           PROBLEM STATEMENT
           ============================================================ */}
       <Reveal>
-        <section className="py-20 lg:py-32">
+        <section className="py-12 sm:py-16 lg:py-32">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <div className="max-w-3xl mx-auto text-center flex flex-col gap-6">
               <Badge variant="outline" className="border-destructive/50 text-destructive w-fit mx-auto">The Problem</Badge>
@@ -304,16 +317,16 @@ export function Home() {
       {/* ============================================================
           HOW IT WORKS - 3 steps
           ============================================================ */}
-      <section className="py-20 lg:py-28 border-y border-border/40 bg-muted/30">
+      <section className="py-12 sm:py-16 lg:py-28 border-y border-border/40 bg-muted/30">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <Reveal>
-            <div className="max-w-2xl mx-auto text-center mb-16 flex flex-col gap-4">
+            <div className="max-w-2xl mx-auto text-center mb-10 lg:mb-16 flex flex-col gap-4">
               <Badge variant="outline" className="w-fit mx-auto">How It Works</Badge>
               <h2 className="text-4xl sm:text-5xl font-bold tracking-tighter">Three steps. That's it.</h2>
             </div>
           </Reveal>
 
-          <div className="grid md:grid-cols-3 gap-8 lg:gap-12 max-w-5xl mx-auto">
+          <div className="grid md:grid-cols-3 gap-6 lg:gap-12 max-w-5xl mx-auto">
             {[
               { step: '01', icon: QrCode, title: 'Create an Event', desc: 'Set up your event in seconds. A unique QR code is generated automatically.' },
               { step: '02', icon: Smartphone, title: 'Members Scan', desc: 'Attendees scan the QR code on arrival. No app download required.' },
@@ -321,7 +334,7 @@ export function Home() {
             ].map((item, i) => (
               <Reveal key={item.step} delay={i * 150}>
                 <div className="relative flex flex-col items-center text-center gap-4">
-                  <div className="text-7xl font-black tracking-tighter text-primary/10 select-none">{item.step}</div>
+                  <div className="text-6xl sm:text-7xl font-black tracking-tighter text-primary/10 select-none">{item.step}</div>
                   <div className="w-14 h-14 bg-primary/10 border border-primary/20 rounded-2xl flex items-center justify-center -mt-8">
                     <item.icon className="w-6 h-6 text-primary" />
                   </div>
@@ -337,10 +350,10 @@ export function Home() {
       {/* ============================================================
           FEATURES GRID
           ============================================================ */}
-      <section id="features" className="py-20 lg:py-32">
+      <section id="features" className="py-12 sm:py-16 lg:py-32">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <Reveal>
-            <div className="max-w-2xl mb-16">
+            <div className="max-w-2xl mb-10 lg:mb-16">
               <Badge variant="outline" className="mb-4">Platform</Badge>
               <h2 className="text-4xl sm:text-5xl font-bold tracking-tighter mb-4">
                 Everything you need in one place
@@ -351,7 +364,7 @@ export function Home() {
             </div>
           </Reveal>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5">
             {[
               { icon: QrCode, title: 'QR Code Check-In', desc: 'Instant check-ins with QR codes. No app downloads required -- just scan and go.' },
               { icon: LineChart, title: 'Real-Time Analytics', desc: 'Live attendance dashboards with trends, patterns, and actionable insights.' },
@@ -364,12 +377,14 @@ export function Home() {
               { icon: Database, title: 'Export & API', desc: 'Full API access. Export data for reports, grants, and presentations.' },
             ].map((f, i) => (
               <Reveal key={f.title} delay={i * 60}>
-                <Card className="group p-6 bg-card border-border/50 hover:border-primary/30 transition-all duration-300 hover:shadow-[0_8px_40px_-12px_rgba(212,255,0,0.1)] h-full">
-                  <div className="w-11 h-11 bg-primary/10 rounded-xl flex items-center justify-center mb-4 group-hover:bg-primary/15 group-hover:scale-110 transition-all duration-300">
+                <Card className="group p-4 sm:p-6 bg-card border-border/50 hover:border-primary/30 transition-all duration-300 hover:shadow-[0_8px_40px_-12px_rgba(212,255,0,0.1)] h-full flex flex-row sm:flex-col items-start gap-4 sm:gap-0">
+                  <div className="w-11 h-11 shrink-0 bg-primary/10 rounded-xl flex items-center justify-center sm:mb-4 group-hover:bg-primary/15 group-hover:scale-110 transition-all duration-300">
                     <f.icon className="w-5 h-5 text-primary" />
                   </div>
-                  <h3 className="text-lg font-bold mb-2 tracking-tight">{f.title}</h3>
-                  <p className="text-muted-foreground text-sm leading-relaxed">{f.desc}</p>
+                  <div>
+                    <h3 className="text-lg font-bold mb-1 sm:mb-2 tracking-tight">{f.title}</h3>
+                    <p className="text-muted-foreground text-sm leading-relaxed">{f.desc}</p>
+                  </div>
                 </Card>
               </Reveal>
             ))}
@@ -380,11 +395,11 @@ export function Home() {
       {/* ============================================================
           PRODUCT SECTIONS
           ============================================================ */}
-      <section id="product" className="py-20 lg:py-32 bg-muted/30">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 flex flex-col gap-32">
+      <section id="product" className="py-12 sm:py-16 lg:py-32 bg-muted/30">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 flex flex-col gap-16 lg:gap-32">
           {/* Check-In Flow */}
           <Reveal>
-            <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+            <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-center">
               <div className="flex flex-col gap-6">
                 <Badge variant="outline" className="w-fit">Check-In Flow</Badge>
                 <h2 className="text-4xl sm:text-5xl font-bold tracking-tighter">
@@ -416,7 +431,7 @@ export function Home() {
 
           {/* Analytics */}
           <Reveal>
-            <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+            <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-center">
               <div className="relative order-2 lg:order-1">
                 <div className="absolute -inset-4 bg-gradient-to-br from-primary/15 to-transparent rounded-3xl blur-3xl" />
                 <div className="relative rounded-xl lg:rounded-2xl overflow-hidden border border-border/50 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.4)]">
@@ -445,7 +460,7 @@ export function Home() {
 
           {/* Members */}
           <Reveal>
-            <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+            <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-center">
               <div className="flex flex-col gap-6">
                 <Badge variant="outline" className="w-fit">Member Portal</Badge>
                 <h2 className="text-4xl sm:text-5xl font-bold tracking-tighter">
@@ -477,7 +492,7 @@ export function Home() {
       {/* ============================================================
           STATS
           ============================================================ */}
-      <section className="py-20 lg:py-28 relative overflow-hidden">
+      <section className="py-12 sm:py-16 lg:py-28 relative overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-primary/8 via-transparent to-transparent" />
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
@@ -501,10 +516,10 @@ export function Home() {
       {/* ============================================================
           TESTIMONIALS
           ============================================================ */}
-      <section id="customers" className="py-20 lg:py-32 bg-muted/30">
+      <section id="customers" className="py-12 sm:py-16 lg:py-32 bg-muted/30">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <Reveal>
-            <div className="max-w-2xl mb-16">
+            <div className="max-w-2xl mb-10 lg:mb-16">
               <Badge variant="outline" className="mb-4">Testimonials</Badge>
               <h2 className="text-4xl sm:text-5xl font-bold tracking-tighter mb-4">
                 Loved by organizations worldwide
@@ -512,7 +527,7 @@ export function Home() {
             </div>
           </Reveal>
 
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-3 gap-4 md:gap-6">
             {[
               { quote: 'CredoPass transformed how we track attendance. We finally have real engagement data to make informed decisions.', name: 'Sarah Richardson', role: 'Community Pastor', initials: 'SR' },
               { quote: 'Setup took less than 5 minutes. Our members love the QR code check-in. No more paper sheets!', name: 'Marcus Johnson', role: 'Book Club Organizer', initials: 'MJ' },
@@ -545,20 +560,20 @@ export function Home() {
           PRICING
           ============================================================ */}
       {showPricing && (
-        <section id="pricing" className="py-20 lg:py-32">
+        <section id="pricing" className="py-12 sm:py-16 lg:py-32">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <Reveal>
-              <div className="max-w-2xl mx-auto text-center mb-16 flex flex-col gap-4">
+              <div className="max-w-2xl mx-auto text-center mb-10 lg:mb-16 flex flex-col gap-4">
                 <Badge variant="outline" className="w-fit mx-auto">Pricing</Badge>
                 <h2 className="text-4xl sm:text-5xl font-bold tracking-tighter">Simple, transparent pricing</h2>
                 <p className="text-lg text-muted-foreground">Start with a 30-day free trial. No credit card required.</p>
               </div>
             </Reveal>
 
-            <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
+            <div className="grid md:grid-cols-3 gap-4 md:gap-6 max-w-6xl mx-auto">
               {/* Free */}
               <Reveal delay={0}>
-                <Card className="p-8 bg-card border-border/50 h-full flex flex-col">
+                <Card className="p-6 lg:p-8 bg-card border-border/50 h-full flex flex-col">
                   <div className="flex flex-col gap-6 flex-1">
                     <div>
                       <h3 className="text-xl font-bold mb-1">Free</h3>
@@ -583,7 +598,7 @@ export function Home() {
 
               {/* Starter - Featured */}
               <Reveal delay={100}>
-                <Card className="p-8 bg-card border-primary relative shadow-[0_16px_64px_-12px_rgba(212,255,0,0.15)] h-full flex flex-col">
+                <Card className="p-6 lg:p-8 bg-card border-primary relative shadow-[0_16px_64px_-12px_rgba(212,255,0,0.15)] h-full flex flex-col">
                   <div className="absolute -top-4 left-1/2 -translate-x-1/2">
                     <Badge className="bg-primary text-primary-foreground border-0 shadow-[0_0_16px_rgba(212,255,0,0.3)]">Most Popular</Badge>
                   </div>
@@ -611,7 +626,7 @@ export function Home() {
 
               {/* Pro */}
               <Reveal delay={200}>
-                <Card className="p-8 bg-card border-border/50 h-full flex flex-col">
+                <Card className="p-6 lg:p-8 bg-card border-border/50 h-full flex flex-col">
                   <div className="flex flex-col gap-6 flex-1">
                     <div>
                       <h3 className="text-xl font-bold mb-1">Pro</h3>
@@ -640,7 +655,7 @@ export function Home() {
       {/* ============================================================
           FINAL CTA
           ============================================================ */}
-      <section className="py-20 lg:py-32 relative overflow-hidden">
+      <section className="py-14 sm:py-20 lg:py-32 relative overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-primary/10 via-transparent to-transparent" />
         <div className="absolute inset-0 opacity-[0.02]" style={{
           backgroundImage: 'linear-gradient(to right, currentColor 1px, transparent 1px), linear-gradient(to bottom, currentColor 1px, transparent 1px)',
