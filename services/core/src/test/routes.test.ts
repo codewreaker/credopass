@@ -27,6 +27,9 @@ let authHeaders: Record<string, string> = {};
 
 const unique = () => crypto.randomUUID().slice(0, 8);
 
+// Response bodies are dynamic JSON; tests assert on individual fields.
+const body = async (res: Response): Promise<any> => res.json();
+
 suite("Core API integration (live schema, authenticated)", () => {
   let orgId: string;
   let userId: string;
