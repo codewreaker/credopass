@@ -1,6 +1,7 @@
 import React from 'react';
 import { LucidePanelRightOpen } from 'lucide-react';
-import { useAppStore } from '@credopass/lib/stores';
+import { useAppStore, useLauncher } from '@credopass/lib/stores';
+import { launchUserForm } from '../UserForm';
 import { useSidebarTrigger } from '../../../../../packages/lib/src/hooks/use-sidebar-trigger';
 import ProfileView from './ProfileView';
 import OverviewView from './OverviewView';
@@ -40,6 +41,7 @@ export const RightSidebar: React.FC = () => {
   const isCollapsed = useAppStore(({ sidebarOpen }) => (sidebarOpen['right']))
   const toggleSidebar = useAppStore(({ toggleSidebar }) => toggleSidebar)
   const viewedItem = useAppStore(({ viewedItem }) => viewedItem)
+  const { openLauncher, closeLauncher } = useLauncher()
 
   const onToggleCollapse = () => toggleSidebar('right')
 
@@ -63,7 +65,7 @@ export const RightSidebar: React.FC = () => {
 
     switch (viewedItem.id) {
       case 'profile':
-        return "Profile";
+        return "Member profile";
       case 'calendar':
         return "Calendar";
       default:
@@ -98,12 +100,19 @@ export const RightSidebar: React.FC = () => {
     switch (viewedItem.id) {
       case 'profile':
         return (
-          <div className="flex items-center gap-2">
-            <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90">
-              Save changes
+          <div className="flex items-center gap-2 w-full">
+            <Button
+              size="sm"
+              className="flex-1 rounded-full font-semibold"
+              onClick={() => {
+                toggleSidebar('right', false);
+                launchUserForm({ isEditing: true, initialData: viewedItem?.content }, openLauncher, closeLauncher);
+              }}
+            >
+              Edit member
             </Button>
             <SheetClose>
-              <Button variant="outline" size="sm">Close</Button>
+              <Button variant="outline" size="sm" className="rounded-full">Close</Button>
             </SheetClose>
           </div>
         );

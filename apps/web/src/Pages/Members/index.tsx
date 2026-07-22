@@ -5,22 +5,17 @@ import { getCollections } from '@credopass/api-client/collections';
 
 import {
   UserPlus,
-  Search,
-  Mail,
-  Calendar,
   Star,
   Trophy,
-  Filter,
+  Calendar,
   MoreHorizontal,
   Trash2,
   Edit,
   Eye,
-  ArrowUpDown,
-  CheckCircle,
-  XCircle,
-  Clock
+  ChevronRight,
+  LayoutGrid
 } from "lucide-react";
-import { useLauncher } from '@credopass/lib/stores';
+import { useLauncher, useAppStore } from '@credopass/lib/stores';
 import { launchUserForm } from '../../containers/UserForm/index';
 import { EmptyState } from '@credopass/ui/components/empty-state';
 import { Skeleton } from '@credopass/ui/components/skeleton';
@@ -28,10 +23,7 @@ import { useToolbarContext } from '@credopass/lib/hooks';
 import { Avatar, AvatarFallback, AvatarImage } from '@credopass/ui/components/avatar';
 import { Badge } from '@credopass/ui/components/badge';
 import { Button } from '@credopass/ui/components/button';
-import { Input } from '@credopass/ui/components/input';
 import { Card } from '@credopass/ui/components/card';
-import { Checkbox } from '@credopass/ui/components/checkbox';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@credopass/ui/components/tooltip';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -50,223 +42,106 @@ const TIER_CONFIG: Record<string, { color: string; bgColor: string; borderColor:
   platinum: { color: 'text-tier-platinum', bgColor: 'bg-tier-platinum/10', borderColor: 'border-tier-platinum/30', icon: Trophy, label: 'Platinum' },
 };
 
-// Event attendance badge styles
-const EVENT_STATUS_CONFIG: Record<string, { color: string; bgColor: string; icon: typeof CheckCircle }> = {
-  attended: { color: 'text-success', bgColor: 'bg-success/10', icon: CheckCircle },
-  missed: { color: 'text-destructive', bgColor: 'bg-destructive/10', icon: XCircle },
-  upcoming: { color: 'text-info', bgColor: 'bg-info/10', icon: Clock },
-};
+const TIER_KEYS = Object.keys(TIER_CONFIG);
 
-// Mock event data for demo
-const MOCK_EVENTS = [
-  { id: '1', name: 'Tech Summit 2024', status: 'attended' },
-  { id: '2', name: 'Hackathon', status: 'attended' },
-  { id: '3', name: 'Workshop', status: 'missed' },
-  { id: '4', name: 'Meetup', status: 'upcoming' },
-];
-
-// Event Badge Component
-const EventBadge: React.FC<{ name: string; status: string }> = ({ name, status }) => {
-  const config = EVENT_STATUS_CONFIG[status] || EVENT_STATUS_CONFIG.upcoming;
-  const StatusIcon = config.icon;
-
-  return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger>
-          <div className={cn(
-            "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border",
-            config.bgColor,
-            config.color,
-            "border-current/20"
-          )}>
-            <StatusIcon size={10} />
-            <span className="truncate max-w-[60px]">{name}</span>
-          </div>
-        </TooltipTrigger>
-        <TooltipContent>
-          <p>{name} - {status.charAt(0).toUpperCase() + status.slice(1)}</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
-  );
-};
-
-// Table Header Cell
-const TableHeaderCell: React.FC<{
-  children: React.ReactNode;
-  sortable?: boolean;
-  className?: string;
-}> = ({ children, sortable, className }) => (
-  <div className={cn(
-    "flex items-center gap-1.5 text-[11px] text-muted-foreground uppercase tracking-wider font-semibold",
-    sortable && "cursor-pointer hover:text-foreground transition-colors group",
-    className
-  )}>
-    {children}
-    {sortable && (
-      <ArrowUpDown size={12} className="opacity-0 group-hover:opacity-100 transition-opacity" />
-    )}
-  </div>
-);
-
-// Member Table Row Component
-interface MemberTableRowProps {
+// Member card — one design across phone, tablet and desktop
+interface MemberCardProps {
   member: UserType;
-  isSelected: boolean;
-  onSelect: (checked: boolean) => void;
   onEdit: (member: UserType) => void;
   onDelete: (member: UserType) => void;
   onView: (member: UserType) => void;
 }
 
-const MemberTableRow: React.FC<MemberTableRowProps> = ({
-  member,
-  isSelected,
-  onSelect,
-  onEdit,
-  onDelete,
-  onView
-}) => {
+const MemberCard: React.FC<MemberCardProps> = ({ member, onEdit, onDelete, onView }) => {
   const tier = (member as any).tier || 'bronze';
   const points = (member as any).points || 0;
-  const totalEvents = (member as any).totalEvents || 0;
   const tierConfig = TIER_CONFIG[tier] || TIER_CONFIG.bronze;
   const TierIcon = tierConfig.icon;
-
   const initials = `${member.firstName?.charAt(0) || ''}${member.lastName?.charAt(0) || ''}`.toUpperCase() || 'U';
   const fullName = `${member.firstName || ''} ${member.lastName || ''}`.trim() || 'Unknown User';
-
-  // Mock events for this member (in real app, this would come from member data)
-  const memberEvents = MOCK_EVENTS.slice(0, Math.min(totalEvents || 2, 3));
+  const joined = (member as any).createdAt
+    ? new Date((member as any).createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+    : null;
 
   return (
-    <tr className={cn(
-      "group border-b border-border/50 hover:bg-muted/30 transition-colors",
-      isSelected && "bg-primary/5"
-    )}>
-      {/* Checkbox */}
-      <td className="w-12 px-4 py-3">
-        <Checkbox
-          checked={isSelected}
-          onCheckedChange={onSelect}
-          className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-        />
-      </td>
-
-      {/* Member Info */}
-      <td className="px-4 py-3">
-        <div className="flex items-center gap-3">
-          <div className="relative">
-            <Avatar size="md" className={cn(
-              "ring-2 ring-offset-1 ring-offset-background",
-              tierConfig.color.replace('text-', 'ring-')
-            )}>
-              <AvatarImage src={(member as any).avatarUrl} alt={fullName} />
-              <AvatarFallback className="text-xs font-semibold">{initials}</AvatarFallback>
-            </Avatar>
-            <div className={cn(
-              "absolute -bottom-0.5 -right-0.5 p-0.5 rounded-full",
-              tierConfig.bgColor
-            )}>
-              <TierIcon size={8} className={tierConfig.color} />
-            </div>
-          </div>
-          <div className="min-w-0">
-            <p className="text-sm font-medium text-foreground truncate">{fullName}</p>
-            <p className="text-xs text-muted-foreground truncate flex items-center gap-1">
-              <Mail size={10} />
-              {member.email || 'No email'}
-            </p>
-          </div>
+    <Card
+      onClick={() => onView(member)}
+      className="group relative rounded-none border-0 p-4 cursor-pointer transition-all duration-200 hover:bg-muted/40 hover:shadow-elevation-1 active:scale-[0.995]"
+    >
+      <div className="flex items-center gap-3">
+        <Avatar size="md" className="shrink-0">
+          <AvatarImage src={(member as any).avatarUrl} alt={fullName} />
+          <AvatarFallback className="text-xs font-semibold">{initials}</AvatarFallback>
+        </Avatar>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold text-foreground truncate leading-tight">{fullName}</p>
+          <p className="text-xs text-muted-foreground truncate mt-0.5">{member.email || 'No email'}</p>
         </div>
-      </td>
 
-      {/* Tier */}
-      <td className="px-4 py-3">
-        <Badge
-          variant="outline"
-          className={cn(
-            "text-[10px] capitalize",
-            tierConfig.bgColor,
-            tierConfig.color,
-            tierConfig.borderColor
+        {/* Inline meta — tablet and up */}
+        <div className="hidden sm:flex items-center gap-3 shrink-0">
+          {joined && (
+            <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground/70 tabular-nums">
+              <Calendar size={10} />
+              {joined}
+            </span>
           )}
-        >
-          <TierIcon size={10} className="mr-1" />
+          <span className="inline-flex items-center gap-1 text-[11px] font-medium text-muted-foreground tabular-nums">
+            <Star size={10} className="text-primary" />
+            {points.toLocaleString()} pts
+          </span>
+          <span className={cn('inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold capitalize', tierConfig.bgColor, tierConfig.color)}>
+            <TierIcon size={9} />
+            {tierConfig.label}
+          </span>
+          <ChevronRight size={13} className="text-muted-foreground/30 group-hover:text-primary transition-colors" />
+        </div>
+
+        <div onClick={(e) => e.stopPropagation()} className="shrink-0 -mr-1.5">
+          <DropdownMenu>
+            <DropdownMenuTrigger render={(props) => (
+              <Button {...props} variant="ghost" size="icon-xs" className="text-muted-foreground/50 hover:text-foreground">
+                <MoreHorizontal size={14} />
+              </Button>
+            )} />
+            <DropdownMenuContent align="end" className="w-40">
+              <DropdownMenuItem onClick={() => onView(member)} className="gap-2">
+                <Eye size={14} />
+                View Profile
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onEdit(member)} className="gap-2">
+                <Edit size={14} />
+                Edit
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => onDelete(member)} className="gap-2 text-destructive focus:text-destructive">
+                <Trash2 size={14} />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
+
+      {/* Mobile meta row */}
+      <div className="sm:hidden flex items-center gap-2 mt-3.5 pt-3 border-t border-border/60">
+        <span className={cn('inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold capitalize', tierConfig.bgColor, tierConfig.color)}>
+          <TierIcon size={9} />
           {tierConfig.label}
-        </Badge>
-      </td>
-
-      {/* Points */}
-      <td className="px-4 py-3 text-center">
-        <div className="flex items-center justify-center gap-1">
-          <Star size={12} className="text-primary" />
-          <span className="text-sm font-semibold">{points.toLocaleString()}</span>
-        </div>
-      </td>
-
-      {/* Events with Badges */}
-      <td className="px-4 py-3">
-        <div className="flex items-center gap-1.5 flex-wrap">
-          {memberEvents.length > 0 ? (
-            <>
-              {memberEvents.slice(0, 2).map((event) => (
-                <EventBadge key={event.id} name={event.name} status={event.status} />
-              ))}
-              {memberEvents.length > 2 && (
-                <Badge variant="secondary" className="text-[10px]">
-                  +{memberEvents.length - 2}
-                </Badge>
-              )}
-            </>
-          ) : (
-            <span className="text-xs text-muted-foreground">No events</span>
-          )}
-        </div>
-      </td>
-
-      {/* Total Events */}
-      <td className="px-4 py-3 text-center hidden lg:table-cell">
-        <div className="flex items-center justify-center gap-1">
-          <Calendar size={12} className="text-muted-foreground" />
-          <span className="text-sm font-medium">{totalEvents}</span>
-        </div>
-      </td>
-
-      {/* Actions */}
-      <td className="px-4 py-3 w-12">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon-xs"
-              className="opacity-0 group-hover:opacity-100 transition-opacity"
-            >
-              <MoreHorizontal size={14} />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-40">
-            <DropdownMenuItem onClick={() => onView(member)} className="gap-2">
-              <Eye size={14} />
-              View Profile
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onEdit(member)} className="gap-2">
-              <Edit size={14} />
-              Edit
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={() => onDelete(member)}
-              className="gap-2 text-destructive focus:text-destructive"
-            >
-              <Trash2 size={14} />
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </td>
-    </tr>
+        </span>
+        <span className="inline-flex items-center gap-1 text-[11px] font-medium text-muted-foreground tabular-nums">
+          <Star size={10} className="text-primary" />
+          {points.toLocaleString()} pts
+        </span>
+        {joined && (
+          <span className="ml-auto inline-flex items-center gap-1 text-[11px] text-muted-foreground/70 tabular-nums">
+            <Calendar size={10} />
+            {joined}
+          </span>
+        )}
+        <ChevronRight size={13} className="text-muted-foreground/30 shrink-0" />
+      </div>
+    </Card>
   );
 };
 
@@ -277,16 +152,16 @@ const StatsCard: React.FC<{
 }> = ({
   label, value, icon, trend, className
 }) => (
-    <Card className={cn("p-3 md:p-4 flex items-center gap-3 md:gap-4", className)}>
-      <div className="p-2.5 rounded-xl bg-primary/10">
+    <Card className={cn("p-2.5 md:p-4 flex flex-row items-center gap-2.5 md:gap-4", className)}>
+      <div className="p-2 md:p-2.5 rounded-lg md:rounded-xl bg-primary/10 shrink-0">
         {icon}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-lg md:text-2xl font-bold text-foreground truncate">{value}</p>
+        <p className="text-base md:text-2xl font-bold tracking-tight text-foreground truncate tabular-nums leading-tight">{value}</p>
         <p className="text-[11px] md:text-xs text-muted-foreground truncate">{label}</p>
       </div>
       {trend && (
-        <Badge variant="secondary" className="text-xs">
+        <Badge variant="secondary" className="text-xs hidden md:inline-flex">
           {trend}
         </Badge>
       )}
@@ -297,27 +172,30 @@ export default function MembersPage() {
   const { users: userCollection } = getCollections();
   const { data, isLoading } = useLiveQuery((q) => q.from({ userCollection }));
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [tierFilter, setTierFilter] = useState<string | null>(null);
 
   const isError = userCollection.utils.isError;
   const isMobile = useIsMobile();
   const rowData: UserType[] = Array.isArray(data) ? data : [];
-  const { openLauncher } = useLauncher();
+  const { openLauncher, closeLauncher } = useLauncher();
 
   const handleCreateUser = useCallback(() => {
-    launchUserForm({ isEditing: false }, openLauncher);
-  }, [openLauncher]);
+    launchUserForm({ isEditing: false }, openLauncher, closeLauncher);
+  }, [openLauncher, closeLauncher]);
 
   const handleEditUser = useCallback((user: UserType) => {
-    launchUserForm({ isEditing: true, initialData: user }, openLauncher);
-  }, [openLauncher]);
+    launchUserForm({ isEditing: true, initialData: user }, openLauncher, closeLauncher);
+  }, [openLauncher, closeLauncher]);
+
+  const setViewedItem = useAppStore((st) => st.setViewedItem);
+  const toggleSidebar = useAppStore((st) => st.toggleSidebar);
 
   const handleViewUser = useCallback((user: UserType) => {
-    // TODO: Implement view user profile
-    console.log('View user:', user);
-  }, []);
+    setViewedItem({ id: 'profile', content: user });
+    toggleSidebar('right', true);
+  }, [setViewedItem, toggleSidebar]);
 
+  // Toolbar owns search — no in-page search bar needed
   useToolbarContext({
     action: { icon: UserPlus, label: 'Add Person', onClick: handleCreateUser },
     search: { enabled: true, placeholder: 'Search members...', onSearch: setSearchQuery },
@@ -325,14 +203,9 @@ export default function MembersPage() {
 
   const deleteUser = useCallback((user: User) => {
     userCollection.delete(user.id);
-    setSelectedIds(prev => {
-      const next = new Set(prev);
-      next.delete(user.id);
-      return next;
-    });
   }, [userCollection]);
 
-  // Filter members by search query and tier
+  // Filter members by toolbar search query and tier
   const filteredMembers = useMemo(() => {
     let result = rowData;
 
@@ -347,7 +220,7 @@ export default function MembersPage() {
     }
 
     if (tierFilter) {
-      result = result.filter(m => (m as any).tier === tierFilter);
+      result = result.filter(m => (((m as any).tier || 'bronze') === tierFilter));
     }
 
     return result;
@@ -364,57 +237,25 @@ export default function MembersPage() {
     return { totalMembers, totalPoints, activeMembers, avgAttendance };
   }, [rowData]);
 
-  // Selection handlers
-  const handleSelectAll = useCallback((checked: boolean) => {
-    if (checked) {
-      setSelectedIds(new Set(filteredMembers.map(m => m.id)));
-    } else {
-      setSelectedIds(new Set());
-    }
-  }, [filteredMembers]);
-
-  const handleSelectOne = useCallback((id: string, checked: boolean) => {
-    setSelectedIds(prev => {
-      const next = new Set(prev);
-      if (checked) {
-        next.add(id);
-      } else {
-        next.delete(id);
-      }
-      return next;
-    });
-  }, []);
-
-  const allSelected = filteredMembers.length > 0 && filteredMembers.every(m => selectedIds.has(m.id));
-  const someSelected = selectedIds.size > 0 && !allSelected;
-
   if (isLoading) {
     return (
-      <div className="flex flex-col h-full" aria-busy="true">
-        <div className="px-3 py-2 border-b border-border">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex flex-col gap-1.5">
-              <Skeleton className="h-6 w-32" />
-              <Skeleton className="h-3.5 w-44" />
-            </div>
-            <Skeleton className="h-9 w-32 rounded-lg" />
+      <div className="flex flex-col h-full gap-4" aria-busy="true">
+        <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-1.5">
+            <Skeleton className="h-6 w-32" />
+            <Skeleton className="h-3.5 w-44" />
           </div>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4 py-1">
-            {[0, 1, 2, 3].map((i) => (
-              <Skeleton key={i} className="h-16 rounded-xl" />
-            ))}
-          </div>
+          <Skeleton className="h-9 w-32 rounded-full" />
         </div>
-        <div className="flex-1 p-4 flex flex-col gap-3">
+        <div className="grid grid-cols-6 lg:grid-cols-4 gap-2 md:gap-4">
+          <Skeleton className="col-span-6 lg:col-span-1 h-16 md:h-20 rounded-xl" />
+          {[0, 1, 2].map((i) => (
+            <Skeleton key={i} className="col-span-2 lg:col-span-1 h-14 md:h-20 rounded-xl" />
+          ))}
+        </div>
+        <div className="flex flex-col gap-1.5">
           {[0, 1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="flex items-center gap-3">
-              <Skeleton className="size-9 rounded-full shrink-0" />
-              <div className="flex-1 flex flex-col gap-1.5">
-                <Skeleton className="h-3.5 w-1/3" />
-                <Skeleton className="h-3 w-1/2" />
-              </div>
-              <Skeleton className="h-5 w-16 rounded-full" />
-            </div>
+            <Skeleton key={i} className="h-28 rounded-xl" />
           ))}
         </div>
       </div>
@@ -439,107 +280,94 @@ export default function MembersPage() {
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="px-3 py-2 border-b border-border">
+      <div className="pb-2">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Members</h1>
-            <p className="text-sm text-muted-foreground">Members & Attendees</p>
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">Members</h1>
+            <p className="text-sm text-muted-foreground">
+              {stats.totalMembers} member{stats.totalMembers === 1 ? '' : 's'} in your community
+            </p>
           </div>
-          <Button onClick={handleCreateUser} className="gap-2">
+          <Button onClick={handleCreateUser} className="gap-2 rounded-full font-semibold">
             <UserPlus size={16} />
             Add Member
           </Button>
         </div>
 
-        {/* Stats Row: 2x2 on phones, one row from lg up */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4 py-1">
+        {/* Stats Row: lime feature stat + tiles */}
+        <div className="grid grid-cols-6 lg:grid-cols-4 gap-2 md:gap-4 py-1">
+          <Card className="col-span-6 lg:col-span-1 relative overflow-hidden border-0 bg-primary text-primary-foreground p-3.5 md:p-4 flex flex-row items-center gap-3 md:gap-4">
+            <div className="pointer-events-none absolute -right-8 -top-8 size-24 rounded-full border-[10px] border-primary-foreground/8" />
+            <div className="p-2.5 rounded-xl bg-primary-foreground text-primary relative z-10">
+              <UserPlus size={iconSize} />
+            </div>
+            <div className="flex-1 min-w-0 relative z-10">
+              <p className="text-2xl md:text-3xl font-bold tracking-tight truncate tabular-nums">{stats.totalMembers}</p>
+              <p className="text-[11px] md:text-xs font-medium text-primary-foreground/65 truncate">Total members</p>
+            </div>
+          </Card>
           <StatsCard
-            label="Total Members"
-            value={stats.totalMembers}
-            icon={<UserPlus size={iconSize} className="text-primary" />}
-          />
-          <StatsCard
-            label="Total Points"
+            className="col-span-2 lg:col-span-1"
+            label="Points"
             value={stats.totalPoints.toLocaleString()}
             icon={<Star size={iconSize} className="text-primary" />}
           />
           <StatsCard
-            label="Active Members"
+            className="col-span-2 lg:col-span-1"
+            label="Active"
             value={stats.activeMembers}
             icon={<Calendar size={iconSize} className="text-primary" />}
             trend={`${Math.round((stats.activeMembers / (stats.totalMembers || 1)) * 100)}%`}
           />
           <StatsCard
-            label="Avg Events/Member"
+            className="col-span-2 lg:col-span-1"
+            label="Avg events"
             value={stats.avgAttendance}
             icon={<Trophy size={iconSize} className="text-primary" />}
           />
         </div>
       </div>
 
-      {/* Search & Filters */}
-      <div className="px-6 py-4 border-b border-border flex flex-wrap items-center gap-4">
-        <div className="relative flex-1 min-w-[200px] max-w-md">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Search by name or email..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9"
-          />
-        </div>
-
-        <div className="flex items-center gap-2 overflow-auto">
-          <Filter size={14} className="text-muted-foreground" />
-          <Button
-            variant={tierFilter === null ? "default" : "outline"}
-            size="sm"
+      {/* Tier filter — compact segmented control */}
+      <div className="flex items-center justify-between gap-3 py-3">
+        <div className="inline-flex items-center gap-0.5 rounded-full border border-border bg-card p-1 overflow-x-auto">
+          <button
+            type="button"
             onClick={() => setTierFilter(null)}
-            className="h-7 text-xs"
+            className={cn(
+              'inline-flex items-center gap-1.5 rounded-full px-3 h-7 text-[11px] font-semibold whitespace-nowrap cursor-pointer transition-colors duration-150',
+              tierFilter === null ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
+            )}
           >
+            <LayoutGrid size={11} />
             All
-          </Button>
-          {Object.entries(TIER_CONFIG).map(([key, config]) => (
-            <Button
-              key={key}
-              variant={tierFilter === key ? "default" : "outline"}
-              size="sm"
-              onClick={() => setTierFilter(tierFilter === key ? null : key)}
-              className={cn(
-                "h-7 text-xs gap-1",
-                tierFilter !== key && config.color
-              )}
-            >
-              <config.icon size={10} />
-              {config.label}
-            </Button>
-          ))}
+          </button>
+          {TIER_KEYS.map((key) => {
+            const config = TIER_CONFIG[key];
+            const active = tierFilter === key;
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setTierFilter(active ? null : key)}
+                className={cn(
+                  'inline-flex items-center gap-1.5 rounded-full px-3 h-7 text-[11px] font-semibold whitespace-nowrap cursor-pointer transition-colors duration-150',
+                  active ? 'bg-primary text-primary-foreground' : cn('hover:bg-muted/60', config.color)
+                )}
+              >
+                <config.icon size={11} />
+                {config.label}
+              </button>
+            );
+          })}
         </div>
-
-        {selectedIds.size > 0 && (
-          <div className="flex items-center gap-2 ml-auto">
-            <Badge variant="secondary">{selectedIds.size} selected</Badge>
-            <Button
-              variant="destructive"
-              size="sm"
-              className="h-7 text-xs gap-1"
-              onClick={() => {
-                selectedIds.forEach(id => {
-                  const user = rowData.find(m => m.id === id);
-                  if (user) userCollection.delete(user.id);
-                });
-                setSelectedIds(new Set());
-              }}
-            >
-              <Trash2 size={12} />
-              Delete
-            </Button>
-          </div>
-        )}
+        <span className="hidden sm:block text-xs text-muted-foreground tabular-nums shrink-0">
+          {filteredMembers.length} shown
+        </span>
       </div>
 
-      {/* Member Table */}
-      <div className="flex-1 overflow-auto">
+      {/* Member card grid */}
+      <div className="flex-1 overflow-auto pb-4">
         {filteredMembers.length === 0 ? (
           <div className="flex items-center justify-center h-full">
             <EmptyState
@@ -552,52 +380,17 @@ export default function MembersPage() {
             />
           </div>
         ) : (
-          <table className="w-full">
-            <thead className="sticky top-0 bg-background/95 backdrop-blur-sm border-b border-border z-10">
-              <tr>
-                <th className="w-12 px-4 py-3 text-left">
-                  <Checkbox
-                    checked={allSelected}
-                    onCheckedChange={handleSelectAll}
-                    className={cn(
-                      "data-[state=checked]:bg-primary data-[state=checked]:border-primary",
-                      someSelected && "data-[state=indeterminate]:bg-primary/50"
-                    )}
-                    {...(someSelected ? { "data-state": "indeterminate" } : {})}
-                  />
-                </th>
-                <th className="px-4 py-3 text-left">
-                  <TableHeaderCell sortable>Member</TableHeaderCell>
-                </th>
-                <th className="px-4 py-3 text-left">
-                  <TableHeaderCell sortable>Tier</TableHeaderCell>
-                </th>
-                <th className="px-4 py-3 text-center">
-                  <TableHeaderCell sortable className="justify-center">Points</TableHeaderCell>
-                </th>
-                <th className="px-4 py-3 text-left">
-                  <TableHeaderCell>Events</TableHeaderCell>
-                </th>
-                <th className="px-4 py-3 text-center hidden lg:table-cell">
-                  <TableHeaderCell sortable className="justify-center">Total</TableHeaderCell>
-                </th>
-                <th className="w-12 px-4 py-3" />
-              </tr>
-            </thead>
-            <tbody>
-              {filteredMembers.map((member) => (
-                <MemberTableRow
-                  key={member.id}
-                  member={member}
-                  isSelected={selectedIds.has(member.id)}
-                  onSelect={(checked) => handleSelectOne(member.id, checked)}
-                  onEdit={handleEditUser}
-                  onDelete={deleteUser}
-                  onView={handleViewUser}
-                />
-              ))}
-            </tbody>
-          </table>
+          <div className="flex flex-col gap-1.5">
+            {filteredMembers.map((member) => (
+              <MemberCard
+                key={member.id}
+                member={member}
+                onEdit={handleEditUser}
+                onDelete={deleteUser}
+                onView={handleViewUser}
+              />
+            ))}
+          </div>
         )}
       </div>
     </div>

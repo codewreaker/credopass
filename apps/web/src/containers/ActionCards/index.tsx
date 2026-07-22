@@ -60,7 +60,7 @@ export default function ActionCards() {
                     launchEventForm({ isEditing: false }, openLauncher, closeLauncher);
                     break;
                 case 'add-members':
-                    launchUserForm({ isEditing: false }, openLauncher);
+                    launchUserForm({ isEditing: false }, openLauncher, closeLauncher);
                     break;
                 case 'show-calendar':
                     onToggleCollapse();

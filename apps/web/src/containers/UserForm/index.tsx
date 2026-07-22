@@ -8,13 +8,16 @@ import {
   Phone,
   User as UserIcon,
   Trash2,
-  Sparkles
+  Star,
+  ScanLine,
+  CalendarHeart,
+  XIcon
 } from 'lucide-react';
 import { getCollections } from '@credopass/api-client/collections';
 import { Button } from '@credopass/ui/components/button';
 import { Input } from '@credopass/ui/components/input';
-import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@credopass/ui/components/field';
-import { DialogFooter, DialogClose, DialogDescription, DialogHeader, DialogTitle } from '@credopass/ui/components/dialog';
+import { Field, FieldError, FieldGroup, FieldLabel } from '@credopass/ui/components/field';
+import { DialogClose, DialogHeader, DialogTitle } from '@credopass/ui/components/dialog';
 import type { LauncherState } from '@credopass/lib/stores';
 import { handleCollectionDeleteById } from '@credopass/api-client/collections';
 
@@ -59,12 +62,19 @@ const userFormSchema = z.object({
 
 export const launchUserForm = (
   args: UserFormProps = {},
-  openLauncher: (args: Omit<LauncherState, "isOpen">) => void
+  openLauncher: (args: Omit<LauncherState, "isOpen">) => void,
+  closeLauncher?: () => void
 ) => {
   openLauncher({
-    content: <UserForm {...args} />,
+    content: <UserForm {...args} onClose={closeLauncher} />,
   });
 };
+
+const PERKS = [
+  { icon: ScanLine, label: 'QR check-in' },
+  { icon: Star, label: 'Earn points' },
+  { icon: CalendarHeart, label: 'Event invites' },
+] as const;
 
 // User Form Component
 const UserForm = ({ initialData = {}, isEditing = false, onClose }: UserFormProps) => {
@@ -126,25 +136,66 @@ const UserForm = ({ initialData = {}, isEditing = false, onClose }: UserFormProp
   });
 
 
-    const handleDelete = useCallback(() => {
-      if (initialData.id) {
-        handleCollectionDeleteById('users', initialData.id, onClose)
-      }
-    }, [initialData.id, onClose]);
+  const handleDelete = useCallback(() => {
+    if (initialData.id) {
+      handleCollectionDeleteById('users', initialData.id, onClose)
+    }
+  }, [initialData.id, onClose]);
 
   return (
-    <>
+    <div className="flex flex-col gap-5">
       <DialogHeader>
-        <DialogTitle>
-          <div className="header-icon">
-            <UserPlus size={24} />
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <DialogTitle className="text-lg font-semibold tracking-tight">
+              {isEditing ? 'Edit member' : 'Add a member'}
+            </DialogTitle>
+            <p className="text-xs text-muted-foreground mt-1">
+              {isEditing
+                ? 'Update this member’s information.'
+                : 'They’ll be part of the community in seconds.'}
+            </p>
           </div>
-        </DialogTitle>
-        <DialogDescription>
-          <h2>{isEditing ? 'Edit Attendee' : 'Register New Attendee'}</h2>
-          <p>{isEditing ? 'Update attendee information' : 'Add a new community member to your events'}</p>
-        </DialogDescription>
+          <DialogClose
+            render={(props) => (
+              <Button
+                {...props}
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="rounded-full text-muted-foreground hover:text-foreground shrink-0"
+                disabled={isMutating}
+                onClick={onClose}
+              >
+                <XIcon />
+              </Button>
+            )}
+          />
+        </div>
       </DialogHeader>
+
+      {/* Live membership-card preview — fills in as they type */}
+      <form.Subscribe selector={(state) => state.values}>
+        {(values) => {
+          const initials = `${values.firstName?.charAt(0) || ''}${values.lastName?.charAt(0) || ''}`.toUpperCase();
+          const fullName = `${values.firstName || ''} ${values.lastName || ''}`.trim();
+          return (
+            <div className="relative overflow-hidden rounded-2xl bg-primary text-primary-foreground p-4 flex items-center gap-3.5">
+              <div className="pointer-events-none absolute -right-8 -top-8 size-24 rounded-full border-[10px] border-primary-foreground/8" />
+              <div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-primary-foreground text-primary text-sm font-bold relative z-10">
+                {initials || <UserPlus size={16} />}
+              </div>
+              <div className="min-w-0 flex-1 relative z-10">
+                <p className="text-sm font-semibold truncate">{fullName || 'New member'}</p>
+                <p className="text-xs text-primary-foreground/65 truncate">{values.email || 'their@email.com'}</p>
+              </div>
+              <span className="relative z-10 shrink-0 rounded-full bg-primary-foreground/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.1em]">
+                Bronze · 0 pts
+              </span>
+            </div>
+          );
+        }}
+      </form.Subscribe>
 
       <form
         className="user-form"
@@ -153,14 +204,6 @@ const UserForm = ({ initialData = {}, isEditing = false, onClose }: UserFormProp
           form.handleSubmit();
         }}
       >
-        {/* Welcome Message for New Users */}
-        {!isEditing && (
-          <div className="welcome-banner">
-            <Sparkles size={16} />
-            <span>Welcome! Let's get you registered for our community events</span>
-          </div>
-        )}
-
         <FieldGroup>
           {/* First Name & Last Name */}
           <div className="form-row">
@@ -179,6 +222,7 @@ const UserForm = ({ initialData = {}, isEditing = false, onClose }: UserFormProp
                       name={field.name}
                       type="text"
                       placeholder="John"
+                      className="h-10 rounded-xl"
                       value={field.state.value}
                       onBlur={field.handleBlur}
                       onChange={(e) => field.handleChange(e.target.value)}
@@ -204,6 +248,7 @@ const UserForm = ({ initialData = {}, isEditing = false, onClose }: UserFormProp
                       name={field.name}
                       type="text"
                       placeholder="Doe"
+                      className="h-10 rounded-xl"
                       value={field.state.value}
                       onBlur={field.handleBlur}
                       onChange={(e) => field.handleChange(e.target.value)}
@@ -232,14 +277,12 @@ const UserForm = ({ initialData = {}, isEditing = false, onClose }: UserFormProp
                     name={field.name}
                     type="email"
                     placeholder="john.doe@example.com"
+                    className="h-10 rounded-xl"
                     value={field.state.value}
                     onBlur={field.handleBlur}
                     onChange={(e) => field.handleChange(e.target.value)}
                     aria-invalid={isInvalid}
                   />
-                  <FieldDescription className="field-hint">
-                    We'll use this to send you event updates
-                  </FieldDescription>
                   {isInvalid && <FieldError errors={field.state.meta.errors} />}
                 </Field>
               );
@@ -255,21 +298,19 @@ const UserForm = ({ initialData = {}, isEditing = false, onClose }: UserFormProp
                 <Field data-invalid={isInvalid} className="form-field-wrapper">
                   <FieldLabel htmlFor={field.name} className="form-label">
                     <Phone size={14} />
-                    Phone Number
+                    Phone <span className="text-[10px] font-normal text-muted-foreground normal-case">(optional)</span>
                   </FieldLabel>
                   <Input
                     id={field.name}
                     name={field.name}
                     type="tel"
                     placeholder="+1 (555) 000-0000"
+                    className="h-10 rounded-xl"
                     value={field.state.value}
                     onBlur={field.handleBlur}
                     onChange={(e) => field.handleChange(e.target.value)}
                     aria-invalid={isInvalid}
                   />
-                  <FieldDescription className="field-hint">
-                    Optional - For important event notifications
-                  </FieldDescription>
                   {isInvalid && <FieldError errors={field.state.meta.errors} />}
                 </Field>
               );
@@ -277,56 +318,45 @@ const UserForm = ({ initialData = {}, isEditing = false, onClose }: UserFormProp
           />
         </FieldGroup>
 
-        {/* Info Box */}
+        {/* Perks strip */}
         {!isEditing && (
-          <div className="info-box">
-            <div className="info-icon">ℹ️</div>
-            <div className="info-text">
-              <strong>What happens next?</strong>
-              <p>You'll be added to our community and can start attending events immediately. Track your attendance and earn loyalty rewards!</p>
-            </div>
+          <div className="grid grid-cols-3 gap-2">
+            {PERKS.map(({ icon: Icon, label }) => (
+              <div key={label} className="flex flex-col items-center gap-1.5 rounded-xl border border-border bg-card/60 py-2.5">
+                <Icon size={14} className="text-primary" />
+                <span className="text-[10px] font-medium text-muted-foreground">{label}</span>
+              </div>
+            ))}
           </div>
         )}
 
-        {/* Form Actions */}
-        <div className="form-actions">
+        {/* Actions */}
+        <div className="flex items-center gap-2 pt-1">
           {isEditing && (
             <Button
               type="button"
-              variant="destructive"
+              variant="ghost"
+              size="icon"
+              className="rounded-full text-destructive hover:bg-destructive/10 hover:text-destructive shrink-0"
               onClick={handleDelete}
               disabled={isMutating}
             >
-              <Trash2 size={14} />
-              Delete
+              <Trash2 size={15} />
             </Button>
           )}
-        </div>
-
-        <DialogFooter>
-          <DialogClose>
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={onClose}
-              disabled={isMutating}
-            >
-              Cancel
-            </Button>
-          </DialogClose>
           <Button
             type="submit"
             variant="default"
             disabled={isMutating}
+            className="flex-1 h-11 rounded-full font-semibold"
           >
             {!isMutating && <UserPlus size={14} />}
-            {isMutating ? 'Saving...' : isEditing ? 'Update Attendee' : 'Register Attendee'}
+            {isMutating ? 'Saving...' : isEditing ? 'Save changes' : 'Add to community'}
           </Button>
-        </DialogFooter>
+        </div>
       </form>
-    </>
+    </div>
   )
 };
 
 export default UserForm;
-
