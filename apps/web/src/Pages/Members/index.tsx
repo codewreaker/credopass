@@ -69,7 +69,7 @@ const MemberCard: React.FC<MemberCardProps> = ({ member, onEdit, onDelete, onVie
       className="group relative rounded-none border-0 p-4 cursor-pointer transition-all duration-200 hover:bg-muted/40 hover:shadow-elevation-1 active:scale-[0.995]"
     >
       <div className="flex items-center gap-3">
-        <Avatar size="md" className="shrink-0">
+        <Avatar size="default" className="shrink-0">
           <AvatarImage src={(member as any).avatarUrl} alt={fullName} />
           <AvatarFallback className="text-xs font-semibold">{initials}</AvatarFallback>
         </Avatar>
@@ -184,7 +184,7 @@ export default function MembersPage() {
   }, [openLauncher, closeLauncher]);
 
   const handleEditUser = useCallback((user: UserType) => {
-    launchUserForm({ isEditing: true, initialData: user }, openLauncher, closeLauncher);
+    launchUserForm({ isEditing: true, initialData: { ...user, phone: user.phone ?? '' } }, openLauncher, closeLauncher);
   }, [openLauncher, closeLauncher]);
 
   const setViewedItem = useAppStore((st) => st.setViewedItem);
