@@ -9,9 +9,19 @@
   height: 100%;
 }
 
-/* Let the calendar grid fill its container naturally */
+/* Calendar grid sits in an elevated card panel */
 .event-calendar-grid {
   width: 100%;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  padding: 0.5rem 0.25rem;
+  box-shadow: var(--elevation-1);
+}
+
+.event-calendar-grid:hover {
+  border-color: var(--border-strong);
+  transition: border-color 0.2s ease;
 }
 
 /* ---- Dot indicators inside day cells ---- */
@@ -42,17 +52,24 @@
 
 .event-calendar-detail-title {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 0.5rem;
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   font-weight: 600;
+  letter-spacing: -0.01em;
   color: var(--foreground);
+  padding: 0 0.125rem;
 }
 
 .event-calendar-count {
-  font-size: 0.6875rem;
-  font-weight: 400;
-  color: var(--muted-foreground);
+  font-size: 0.625rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--primary);
+  background: color-mix(in oklch, var(--primary) 12%, transparent);
+  border-radius: 999px;
+  padding: 0.125rem 0.5rem;
 }
 
 .event-calendar-empty {
@@ -80,8 +97,9 @@
 }
 
 .event-calendar-item:hover {
-  border-color: var(--border);
-  transform: translateY(2px);
+  border-color: var(--border-strong);
+  transform: translateY(-1px);
+  box-shadow: var(--elevation-1);
 }
 
 /* Highlighted when its date is selected on the calendar */

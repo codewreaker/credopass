@@ -7,7 +7,8 @@ import { launchEventForm } from '../../containers/EventForm/index';
 import EventListView from './EventListView';
 import EventCalendar from '@credopass/ui/components/event-calendar';
 import { STATUS_MAPPING } from '@credopass/ui/components/event-row';
-import { CalendarPlus, CalendarsIcon, ListFilterPlus, TimerIcon, FastForward } from 'lucide-react';
+import { CalendarPlus, CalendarsIcon, ListFilterPlus, TimerIcon, FastForward, MapPin, Users, Clock, ScanLine, ArrowUpRight, Plus } from 'lucide-react';
+import { useNavigate } from '@tanstack/react-router';
 import { useStatusFilter, useToolbarContext } from '@credopass/lib/hooks';
 import type { EventTypeFilters } from '@credopass/lib/hooks';
 export { EVENTS_FILTER_COOKIE_NAME, EVENTS_FILTER_ENABLED_COOKIE_NAME } from '@credopass/lib/hooks';
@@ -26,6 +27,126 @@ import { Button } from '@credopass/ui/components/button';
 
 
 const handleDeleteEvent = (eventId: string) => handleCollectionDeleteById('events', eventId);
+
+/** Lime spotlight hero — surfaces the next ongoing/scheduled event with quick actions. */
+const HeroSpotlight = ({
+    nextEvent,
+    stats,
+    onCreateEvent,
+}: {
+    nextEvent: EventType | null;
+    stats: { total: number; upcoming: number; ongoing: number };
+    onCreateEvent: () => void;
+}) => {
+    const navigate = useNavigate();
+    const startDate = nextEvent?.startTime ? new Date(nextEvent.startTime) : null;
+    const isLive = nextEvent?.status === 'ongoing';
+
+    const statBlocks = (
+        <div className="hidden xl:flex items-stretch gap-4 lg:gap-6 shrink-0">
+            {[
+                { label: 'Events', value: stats.total },
+                { label: 'Upcoming', value: stats.upcoming },
+                { label: 'Live now', value: stats.ongoing },
+            ].map(({ label, value }, i) => (
+                <div key={label} className={`flex flex-col justify-center pl-4 lg:pl-6 ${i === 0 ? 'border-l-0 pl-0 lg:pl-0' : 'border-l border-primary-foreground/15'}`}>
+                    <span className="text-2xl lg:text-[1.75rem] font-semibold tracking-tight leading-none tabular-nums">{value}</span>
+                    <span className="text-[11px] font-medium uppercase tracking-[0.12em] text-primary-foreground/60 mt-1.5">{label}</span>
+                </div>
+            ))}
+        </div>
+    );
+
+    return (
+        <div className="relative overflow-hidden rounded-2xl bg-primary text-primary-foreground p-5 lg:p-6 shrink-0">
+            <div className="pointer-events-none absolute -right-14 -top-14 size-44 rounded-full border-[18px] border-primary-foreground/6" />
+
+            {nextEvent ? (
+                <div className="relative z-10 flex flex-col md:flex-row md:items-center gap-4 md:gap-6">
+                    {/* Date chip */}
+                    {startDate && (
+                        <div className="hidden md:flex flex-col items-center justify-center size-16 rounded-xl bg-primary-foreground text-primary shrink-0">
+                            <span className="text-[10px] font-bold uppercase tracking-wider leading-none">
+                                {startDate.toLocaleDateString('en-US', { month: 'short' })}
+                            </span>
+                            <span className="text-2xl font-semibold leading-tight tabular-nums">{startDate.getDate()}</span>
+                        </div>
+                    )}
+
+                    {/* Event info */}
+                    <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 mb-1.5">
+                            <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] ${isLive ? 'bg-primary-foreground text-primary' : 'bg-primary-foreground/10'}`}>
+                                {isLive && <span className="size-1.5 rounded-full bg-primary animate-pulse" />}
+                                {isLive ? 'Live now' : 'Up next'}
+                            </span>
+                        </div>
+                        <h2 className="text-xl lg:text-2xl font-semibold tracking-tight truncate mb-1.5">{nextEvent.name}</h2>
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px] font-medium text-primary-foreground/70">
+                            {startDate && (
+                                <span className="inline-flex items-center gap-1.5">
+                                    <Clock size={13} />
+                                    {startDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} · {startDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+                                </span>
+                            )}
+                            {nextEvent.location && (
+                                <span className="inline-flex items-center gap-1.5 min-w-0">
+                                    <MapPin size={13} className="shrink-0" />
+                                    <span className="truncate">{nextEvent.location}</span>
+                                </span>
+                            )}
+                            {nextEvent.capacity != null && (
+                                <span className="inline-flex items-center gap-1.5">
+                                    <Users size={13} />
+                                    {nextEvent.capacity}
+                                </span>
+                            )}
+                        </div>
+
+                        {/* CTAs */}
+                        <div className="flex items-center gap-2.5 mt-4">
+                            <button
+                                type="button"
+                                onClick={() => navigate({ to: '/checkin' })}
+                                className="inline-flex items-center gap-2 whitespace-nowrap rounded-full bg-primary-foreground text-primary px-4 h-9 text-[13px] font-semibold cursor-pointer transition-transform duration-150 hover:scale-[1.02] active:scale-[0.98]"
+                            >
+                                <ScanLine size={14} />
+                                Open check-in
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => navigate({ to: '/events/$eventId', params: { eventId: nextEvent.id } })}
+                                className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-primary-foreground/25 px-4 h-9 text-[13px] font-semibold cursor-pointer transition-colors duration-150 hover:bg-primary-foreground/10"
+                            >
+                                Details
+                                <ArrowUpRight size={14} />
+                            </button>
+                        </div>
+                    </div>
+
+                    {statBlocks}
+                </div>
+            ) : (
+                <div className="relative z-10 flex flex-col md:flex-row md:items-center gap-4 md:gap-6">
+                    <div className="min-w-0 flex-1">
+                        <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-primary-foreground/60 mb-1.5">Get started</p>
+                        <h2 className="text-xl lg:text-2xl font-semibold tracking-tight mb-1">Plan your next event</h2>
+                        <p className="text-[13px] font-medium text-primary-foreground/70 mb-4">Create an event and start checking people in within minutes.</p>
+                        <button
+                            type="button"
+                            onClick={onCreateEvent}
+                            className="inline-flex items-center gap-2 whitespace-nowrap rounded-full bg-primary-foreground text-primary px-4 h-9 text-[13px] font-semibold cursor-pointer transition-transform duration-150 hover:scale-[1.02] active:scale-[0.98]"
+                        >
+                            <Plus size={14} />
+                            Create Event
+                        </button>
+                    </div>
+                    {statBlocks}
+                </div>
+            )}
+        </div>
+    );
+};
 
 // Create chip filter options from STATUS_MAPPING
 const statusFilterOptions = (() => {
@@ -131,6 +252,23 @@ const EventsPage = () => {
         search: { enabled: true, placeholder: 'Search events…', onSearch: setSearchQuery },
     });
 
+    // Next ongoing event, else soonest upcoming scheduled event — feeds the hero spotlight
+    const nextEvent = useMemo<EventType | null>(() => {
+        const ongoing = events.find((e) => e.status === 'ongoing');
+        if (ongoing) return ongoing;
+        const now = Date.now();
+        const upcoming = events
+            .filter((e) => e.status === 'scheduled' && e.startTime && new Date(e.startTime).getTime() >= now)
+            .sort((a, b) => new Date(a.startTime!).getTime() - new Date(b.startTime!).getTime());
+        return upcoming[0] ?? events.find((e) => e.status === 'scheduled') ?? null;
+    }, [events]);
+
+    const heroStats = useMemo(() => ({
+        total: events.length,
+        upcoming: events.filter((e) => e.status === 'scheduled').length,
+        ongoing: events.filter((e) => e.status === 'ongoing').length,
+    }), [events]);
+
     // Filter events by search query (name, location, description)
     const filteredEvents = useMemo<EventType[]>(() => {
         if (!searchQuery.trim()) return events;
@@ -154,18 +292,31 @@ const EventsPage = () => {
                         {greeting}, {firstName}
                     </h1>
                     <p className="events-header-subtitle">
-                        {"Here\u2019s a summary of your events"}
+                        {`${heroStats.total} event${heroStats.total === 1 ? '' : 's'} \u00b7 ${heroStats.upcoming} upcoming \u00b7 ${heroStats.ongoing} live now`}
                     </p>
                 </div>
 
+                {/* Inline chip filters — share the header row on wide screens */}
+                {filterEnabled && (
+                    <div className="hidden xl:block flex-1 min-w-0 px-2">
+                        <ChipFilter
+                            options={statusFilterOptions}
+                            value={displayedFilterValue as EventTypeFilters[]}
+                            onValueChange={handleFilterChange}
+                            mode="multiple"
+                            className='overflow-x-auto justify-center'
+                        />
+                    </div>
+                )}
+
                 <div className="events-header-right">
-                    <ButtonGroup>
-                        <Button variant='outline' className={'relative'} size={'icon-sm'} onClick={() => setFilterEnabled(prev => !prev)}>
-                            {filterEnabled && <span className="absolute bottom-4 left-4 size-2 rounded-full bg-primary" />}
+                    <ButtonGroup className="rounded-full border border-border bg-card p-1 gap-0.5">
+                        <Button variant='ghost' className={`relative rounded-full ${filterEnabled ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`} size={'icon-sm'} onClick={() => setFilterEnabled(prev => !prev)}>
+                            {filterEnabled && <span className="absolute top-1 right-1 size-1.5 rounded-full bg-primary" />}
                             <ListFilterPlus />
                         </Button>
-                        <Button variant='outline' className={'relative'} size={'icon-sm'} onClick={toggleActions}>
-                            {enableActions && <span className="absolute bottom-4 left-4 size-2 rounded-full bg-primary" />}
+                        <Button variant='ghost' className={`relative rounded-full ${enableActions ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`} size={'icon-sm'} onClick={toggleActions}>
+                            {enableActions && <span className="absolute top-1 right-1 size-1.5 rounded-full bg-primary" />}
                             <FastForward />
                         </Button>
                         <RightSidebarTrigger icon={<CalendarsIcon />} />
@@ -174,26 +325,33 @@ const EventsPage = () => {
             </div>
 
             <div className="events-content">
-                {/* Chip Filter for Status */}
+                {/* Chip Filter for Status — below header on narrow screens */}
                 {filterEnabled && <ChipFilter
                     options={statusFilterOptions}
                     value={displayedFilterValue as EventTypeFilters[]}
                     onValueChange={handleFilterChange}
                     mode="multiple"
-                    className='overflow-x-auto w-100vw py-6'
+                    className='overflow-x-auto w-100vw py-4 xl:hidden'
                 />}
                 {enableActions && <ActionCards />}
-                <Separator className={'my-5 bg-gradient-to-r from-transparent via-muted to-transparent'} />
+                <Separator className={'my-4 bg-gradient-to-r from-transparent via-muted to-transparent'} />
                 <div className={`flex gap-4 md:h-[calc(100vh-274px)] ${enableActions ? 'h-[calc(100vh-420px)]' : 'h-[calc(100vh-320px)]'}`}>
-                    <div className='w-full md:w-2/3 md:border-r'>
-                        <EventListView
-                            events={filteredEvents}
+                    <div className='w-full md:w-2/3 md:border-r md:pr-4 flex flex-col gap-4 min-h-0'>
+                        <HeroSpotlight
+                            nextEvent={nextEvent}
+                            stats={heroStats}
                             onCreateEvent={handleCreateEvent}
-                            onEditEvent={handleEditEvent}
-                            onDeleteEvent={handleDeleteEvent}
-                            selectedStatus={selectedStatuses}
-                            timezone={enableTimezone}
                         />
+                        <div className='flex-1 min-h-0'>
+                            <EventListView
+                                events={filteredEvents}
+                                onCreateEvent={handleCreateEvent}
+                                onEditEvent={handleEditEvent}
+                                onDeleteEvent={handleDeleteEvent}
+                                selectedStatus={selectedStatuses}
+                                timezone={enableTimezone}
+                            />
+                        </div>
                     </div>
                     {!isMobile && (
                         <div className='w-1/3'>

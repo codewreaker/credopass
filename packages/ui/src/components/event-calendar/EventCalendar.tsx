@@ -10,10 +10,10 @@ import './event-calendar.css';
 // ---- Status colour mapping (dot indicator) ----
 const STATUS_DOT_COLORS: Record<EventType['status'], string> = {
   draft: 'bg-muted-foreground',
-  scheduled: 'bg-blue-500',
-  ongoing: 'bg-green-500',
-  completed: 'bg-gray-400',
-  cancelled: 'bg-red-500',
+  scheduled: 'bg-primary',
+  ongoing: 'bg-success',
+  completed: 'bg-muted-foreground/60',
+  cancelled: 'bg-destructive',
 };
 
 // ---- Helpers ----

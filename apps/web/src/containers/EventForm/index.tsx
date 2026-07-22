@@ -147,7 +147,7 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
         <Button
           variant="outline"
           className={cn(
-            "w-full justify-start text-left font-normal h-auto py-3",
+            "w-full justify-start text-left font-normal h-auto py-3 rounded-xl",
             !value && "text-muted-foreground"
           )}
         >
@@ -323,34 +323,26 @@ const EventForm = ({ initialData = {}, isEditing = false, onClose }: EventFormPr
           }}
         >
           <DialogHeader>
-            <div className='flex flex-row justify-between items-center'>
+            <div className='flex flex-row items-start justify-between gap-3'>
+              <div className='min-w-0'>
+                <DialogTitle className='text-lg font-semibold tracking-tight'>{isEditing ? 'Edit Event' : 'New Event'}</DialogTitle>
+                <p className='text-xs text-muted-foreground mt-1'>
+                  {isEditing ? 'Update the details of your event.' : 'Set up your event in under a minute.'}
+                </p>
+              </div>
               <DialogClose
                 render={(props) => (
                   <Button
                     {...props}
-                    variant="secondary"
+                    variant="ghost"
                     size={'icon'}
+                    className='rounded-full text-muted-foreground hover:text-foreground shrink-0'
                     disabled={isMutating}
                   >
                     <XIcon />
                   </Button>
                 )}
               />
-              <DialogTitle>{isEditing ? 'Edit Event' : 'New Event'}</DialogTitle>
-              <Button
-                type="submit"
-                variant="default"
-                size="icon"
-                disabled={isMutating}
-                onClick={() => {
-                  console.log('form errors:', form.state.fieldMeta);
-                }}
-
-              >
-                {isMutating ?
-                  <Spinner /> :
-                  isEditing ? <PencilIcon /> : <CheckIcon />}
-              </Button>
             </div>
           </DialogHeader>
           <FieldGroup>
@@ -370,6 +362,7 @@ const EventForm = ({ initialData = {}, isEditing = false, onClose }: EventFormPr
                       onBlur={field.handleBlur}
                       onChange={(e) => field.handleChange(e.target.value)}
                       aria-invalid={isInvalid}
+                      className='h-12 rounded-xl bg-muted/40 border-transparent px-4 text-base font-medium tracking-tight focus-visible:border-primary/50'
                     />
                     {isInvalid && <FieldError errors={field.state.meta.errors} />}
                   </Field>
@@ -527,6 +520,14 @@ const EventForm = ({ initialData = {}, isEditing = false, onClose }: EventFormPr
               }}
             />
           </FieldGroup>
+
+          <Button
+            type="submit"
+            disabled={isMutating}
+            className='w-full h-11 rounded-full font-semibold mt-1'
+          >
+            {isMutating ? <Spinner /> : isEditing ? <><PencilIcon /> Save changes</> : <><CheckIcon /> Create event</>}
+          </Button>
         </form>
       </div>
 
