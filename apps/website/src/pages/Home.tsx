@@ -486,6 +486,35 @@ export function Home() {
               </div>
             </div>
           </Reveal>
+
+          {/* Event Tickets */}
+          <Reveal>
+            <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-center">
+              <div className="relative order-2 lg:order-1">
+                <div className="absolute -inset-4 bg-gradient-to-br from-primary/15 to-transparent rounded-3xl blur-3xl" />
+                <div className="relative rounded-xl lg:rounded-2xl overflow-hidden border border-border/50 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.4)]">
+                  <ImageWithFallback src="/images/ticket.png" alt="Event Ticket with QR entry pass" className="w-full h-auto" />
+                </div>
+              </div>
+              <div className="flex flex-col gap-6 order-1 lg:order-2">
+                <Badge variant="outline" className="w-fit">Event Tickets</Badge>
+                <h2 className="text-4xl sm:text-5xl font-bold tracking-tighter">
+                  Tickets people <span className="text-primary">want to show off</span>
+                </h2>
+                <p className="text-lg text-muted-foreground leading-relaxed">
+                  Every event gets a beautiful digital ticket -- date, venue, capacity and a live QR entry pass. One tap opens the check-in kiosk at the door.
+                </p>
+                <ul className="flex flex-col gap-3">
+                  {['Shareable ticket with built-in QR entry pass', 'One tap from ticket to check-in kiosk', 'Add to calendar with a single click'].map(t => (
+                    <li key={t} className="flex items-start gap-3">
+                      <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+                      <span className="text-muted-foreground">{t}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </Reveal>
         </div>
       </section>
 
