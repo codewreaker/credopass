@@ -1,4 +1,5 @@
-import { ArrowLeft, Loader2, Zap, CheckCircle2, BarChart3, CalendarCheck } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { ArrowLeft, Loader2, Zap, CheckCircle2, BarChart3, CalendarCheck, XIcon } from 'lucide-react'
 import AuthPage from '@credopass/ui/components/login'
 import { emailPasswordSchema } from '@credopass/lib/schemas'
 import { EmailPasswordForm } from '@credopass/ui/components/login/email-password-form'
@@ -14,6 +15,24 @@ import { useNavigate, useSearch } from '@tanstack/react-router'
 import { useGuestAutoLogin } from '../../hooks'
 import CredoPassLogoIcon from '../../containers/LeftSidebar/brand-icon'
 
+/** Decorative silhouette: renders an SVG as a translucent single-color mask. */
+const DecorMask = ({ src, className }: { src: string; className?: string }) => (
+  <div
+    aria-hidden
+    className={`pointer-events-none absolute ${className ?? ''}`}
+    style={{
+      WebkitMaskImage: `url(${src})`,
+      maskImage: `url(${src})`,
+      WebkitMaskRepeat: 'no-repeat',
+      maskRepeat: 'no-repeat',
+      WebkitMaskSize: 'contain',
+      maskSize: 'contain',
+      WebkitMaskPosition: 'center',
+      maskPosition: 'center',
+    }}
+  />
+)
+
 const FEATURES = [
   { icon: Zap,           text: 'QR check-in from any device in seconds' },
   { icon: CheckCircle2,  text: 'Real-time attendance tracking' },
@@ -22,8 +41,17 @@ const FEATURES = [
 ] as const
 
 export default function LoginPage() {
-  const { manual, view } = useSearch({ from: '/login' })
+  const { manual, view, out } = useSearch({ from: '/login' })
   const navigate = useNavigate({ from: '/login' })
+  const [hasSession, setHasSession] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    supabaseInstance.auth.getSession().then(({ data }) => {
+      if (!cancelled) setHasSession(!!data.session)
+    })
+    return () => { cancelled = true }
+  }, [])
 
   const showEmailForm = () =>
     navigate({ search: (prev) => ({ ...prev, view: 'email' }), replace: true })
@@ -52,6 +80,7 @@ export default function LoginPage() {
         {/* Decorative geometry */}
         <div className="pointer-events-none absolute -right-24 -top-24 size-72 rounded-full border-[28px] border-primary-foreground/8" />
         <div className="pointer-events-none absolute -left-16 bottom-24 size-44 rounded-full border-[20px] border-primary-foreground/6" />
+        <DecorMask src="/login-cuate.svg" className="bg-primary-foreground/10 w-72 h-72 -bottom-6 -right-10 rotate-2" />
 
         {/* Logo */}
         <div className="relative z-10 flex items-center gap-2.5">
@@ -104,6 +133,19 @@ export default function LoginPage() {
       <div className="flex flex-1 flex-col rounded-3xl md:bg-card/40 md:border md:border-border relative overflow-hidden">
         {/* Ambient glow behind form */}
         <div className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 size-[480px] rounded-full bg-primary/4 blur-3xl" />
+        <DecorMask src="/empty-state-one.svg" className="bg-primary/6 w-56 h-56 -bottom-8 -right-8 hidden sm:block" />
+
+        {/* Close — back to the app for already signed-in users */}
+        {hasSession && (
+          <button
+            type="button"
+            onClick={() => navigate({ to: '/events' })}
+            aria-label="Close and return to app"
+            className="absolute top-4 right-4 z-20 flex size-9 items-center justify-center rounded-full border border-border bg-card/80 text-muted-foreground hover:text-foreground hover:border-border-strong transition-colors duration-150 cursor-pointer"
+          >
+            <XIcon size={16} />
+          </button>
+        )}
 
         {/* Mobile brand header */}
         <div className="md:hidden relative z-10 m-3 rounded-2xl bg-primary text-primary-foreground px-5 py-4 flex items-center justify-between overflow-hidden">
@@ -147,6 +189,8 @@ export default function LoginPage() {
                 signInAsGuest={signInAsGuest}
                 signInWithGithub={signInWithGithub}
                 signInAsEmail={showEmailForm}
+                title={out ? 'Signed out — see you soon' : 'Welcome back'}
+                subtitle={out ? 'You\u2019ve been safely signed out. Sign back in whenever you\u2019re ready.' : 'Sign in to your account to continue'}
               />
             )}
           </div>

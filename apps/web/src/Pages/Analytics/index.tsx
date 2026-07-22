@@ -15,6 +15,8 @@ import {
   Crown
 } from "lucide-react";
 import { useToolbarContext } from '@credopass/lib/hooks';
+import { useNavigate } from '@tanstack/react-router';
+import { UpgradeCTA } from '@credopass/ui/components/upgrade-cta';
 import {
   Bar,
   BarChart,
@@ -264,6 +266,7 @@ const GoalGauge: React.FC<{ value: number; goal: number }> = ({ value, goal }) =
 // Main Analytics Component
 const Analytics: React.FC = () => {
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
   const [timeRange, setTimeRange] = useState<'week' | 'month' | 'year'>('month');
 
   useToolbarContext({
@@ -287,13 +290,16 @@ const Analytics: React.FC = () => {
           <h1 className="text-2xl font-bold tracking-tight text-foreground">Analytics</h1>
           <p className="text-sm text-muted-foreground">Track your community engagement and event performance</p>
         </div>
-        <Tabs value={timeRange} onValueChange={(v) => setTimeRange(v as typeof timeRange)}>
-          <TabsList className="grid grid-cols-3 w-[200px] rounded-full">
-            <TabsTrigger value="week" className="text-xs rounded-full">Week</TabsTrigger>
-            <TabsTrigger value="month" className="text-xs rounded-full">Month</TabsTrigger>
-            <TabsTrigger value="year" className="text-xs rounded-full">Year</TabsTrigger>
-          </TabsList>
-        </Tabs>
+        <div className="flex items-center gap-3">
+          <Tabs value={timeRange} onValueChange={(v) => setTimeRange(v as typeof timeRange)}>
+            <TabsList className="grid grid-cols-3 w-[200px] rounded-full">
+              <TabsTrigger value="week" className="text-xs rounded-full">Week</TabsTrigger>
+              <TabsTrigger value="month" className="text-xs rounded-full">Month</TabsTrigger>
+              <TabsTrigger value="year" className="text-xs rounded-full">Year</TabsTrigger>
+            </TabsList>
+          </Tabs>
+          <UpgradeCTA size="md" className="hidden md:inline-flex" onClick={() => navigate({ to: '/upgrade' })} />
+        </div>
       </div>
 
       {/* Bento: lime hero (2x2) + stat tiles */}

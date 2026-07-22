@@ -7,17 +7,21 @@ export function AuthPage({
   signInWithGithub,
   signInAsGuest,
   signInAsEmail,
+  title = 'Welcome back',
+  subtitle = 'Sign in to your account to continue',
 }: {
   signInWithGithub: () => Promise<any>
   signInAsGuest: () => Promise<any>
   signInAsEmail: () => void
+  title?: string
+  subtitle?: string
 }) {
   return (
     <div>
       {/* Heading */}
       <div className="mb-8">
-        <h2 className="text-2xl font-semibold tracking-tight text-foreground">Welcome back</h2>
-        <p className="mt-1.5 text-sm text-muted-foreground">Sign in to your account to continue</p>
+        <h2 className="text-2xl font-semibold tracking-tight text-foreground">{title}</h2>
+        <p className="mt-1.5 text-sm text-muted-foreground">{subtitle}</p>
       </div>
 
       {/* Auth options */}
