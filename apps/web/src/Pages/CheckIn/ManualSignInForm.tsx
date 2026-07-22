@@ -9,6 +9,8 @@ import type { User } from '@credopass/lib/schemas';
 interface ManualSignInFormProps {
   onSubmit: (userData: Partial<User>) => void;
   onBack: () => void;
+  /** Show the back-to-QR button (mobile single-panel flow only) */
+  showBack?: boolean;
 }
 
 const manualSignInSchema = z.object({
@@ -28,7 +30,7 @@ const manualSignInSchema = z.object({
     .min(5, 'Email must be at least 5 characters.'),
 });
 
-const ManualSignInForm: React.FC<ManualSignInFormProps> = ({ onSubmit, onBack }) => {
+const ManualSignInForm: React.FC<ManualSignInFormProps> = ({ onSubmit, onBack, showBack = true }) => {
   const form = useForm({
     defaultValues: {
       firstName: '',
@@ -154,14 +156,16 @@ const ManualSignInForm: React.FC<ManualSignInFormProps> = ({ onSubmit, onBack })
         <UserPlus className="w-4 h-4" />
         {form.state.isSubmitting ? 'Checking In...' : 'Check In Attendee'}
       </Button>
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={onBack}
-        className="w-full"
-      >
-        Qr Code
-      </Button>
+      {showBack && (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onBack}
+          className="w-full"
+        >
+          Show QR code
+        </Button>
+      )}
     </form>
   );
 };

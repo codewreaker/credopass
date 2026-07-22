@@ -97,17 +97,18 @@ export function useGuestAutoLogin(manual: boolean, supabase:any, signInAsGuest:a
     if (manual || hasRun.current) return
     hasRun.current = true
 
-    let cancelled = false
-
+    // No `cancelled` cleanup flag here on purpose: `hasRun` already
+    // guarantees a single execution, and under React StrictMode the
+    // dev-only unmount/remount cycle would flip a cleanup flag and
+    // permanently suppress the post-await navigation.
     async function run() {
       const { data } = await supabase.auth.getSession()
       if (data.session) {
-        if (!cancelled) navigate({ to: '/events' })
+        navigate({ to: '/events' })
         return
       }
 
       const { error } = await signInAsGuest()
-      if (cancelled) return
 
       if (error) {
         // Fall back to showing the real page so the person isn't stuck
@@ -120,10 +121,6 @@ export function useGuestAutoLogin(manual: boolean, supabase:any, signInAsGuest:a
     }
 
     run()
-
-    return () => {
-      cancelled = true
-    }
   }, [manual, navigate])
 
   return isAutoSigningIn

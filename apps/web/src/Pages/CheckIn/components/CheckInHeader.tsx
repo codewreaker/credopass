@@ -13,12 +13,12 @@ interface CheckInHeaderProps {
 }
 
 const statusColors: Record<string, string> = {
-  active: 'bg-green-500/10 text-green-500 border-green-500/30',
-  draft: 'bg-yellow-500/10 text-yellow-500 border-yellow-500/30',
+  active: 'bg-success/10 text-success border-success/30',
+  draft: 'bg-warning/10 text-warning border-warning/30',
   scheduled: 'bg-primary/10 text-primary border-primary/30',
-  ongoing: 'bg-green-500/10 text-green-500 border-green-500/30',
-  completed: 'bg-blue-500/10 text-blue-500 border-blue-500/30',
-  cancelled: 'bg-red-500/10 text-red-500 border-red-500/30',
+  ongoing: 'bg-success/10 text-success border-success/30',
+  completed: 'bg-info/10 text-info border-info/30',
+  cancelled: 'bg-destructive/10 text-destructive border-destructive/30',
 };
 
 const CheckInHeader: React.FC<CheckInHeaderProps> = ({
@@ -43,7 +43,7 @@ const CheckInHeader: React.FC<CheckInHeaderProps> = ({
       {/* Event info */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <h1 className="text-base font-semibold truncate">{eventName}</h1>
+          <h1 className="text-base md:text-lg font-semibold tracking-tight truncate">{eventName}</h1>
           {eventStatus && (
             <Badge variant="outline" className={`text-[0.5625rem] px-1.5 py-0 h-4 shrink-0 ${statusColors[eventStatus] || ''}`}>
               {eventStatus}
@@ -65,9 +65,10 @@ const CheckInHeader: React.FC<CheckInHeaderProps> = ({
       </div>
 
       {/* Live counter */}
-      <div className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-card">
+      <div className="shrink-0 flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-primary/25 bg-primary/10">
         <Users size={14} className="text-primary" />
-        <span className="text-lg font-bold tabular-nums">{checkInCount}</span>
+        <span className="text-lg font-bold tabular-nums text-primary">{checkInCount}</span>
+        <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">in</span>
       </div>
     </div>
   );

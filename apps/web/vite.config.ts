@@ -42,6 +42,30 @@ function nxViteTsPathsFixed(opts?: Parameters<typeof nxViteTsPaths>[0]): Plugin 
 
 // https://vite.dev/config/
 export default defineConfig({
+  server: {
+    port: 5000,
+    host: '0.0.0.0',
+    allowedHosts: true,
+    watch: {
+      // Replit: polling avoids inotify limits; restrict scope to src dirs only
+      // to prevent the chokidar daemon from crashing on large monorepos.
+      usePolling: true,
+      useFsEvents: false,
+      interval: 1500,
+      binaryInterval: 3000,
+      ignored: [
+        '**/node_modules/**',
+        '**/.git/**',
+        '**/dist/**',
+        '**/.cache/**',
+        '**/apps/mobile/**',
+        '**/apps/website/**',
+        '**/services/**',
+        '**/docker/**',
+        '**/.nx/**',
+      ],
+    },
+  },
   plugins: [
     tanstackRouter({
       target: 'react',

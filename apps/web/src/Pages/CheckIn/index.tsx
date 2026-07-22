@@ -9,7 +9,7 @@ import SuccessCheckInScreen from './SuccessCheckInScreen';
 import { generateSignInParams, generateSignInUrl } from '@credopass/lib/utils';
 import { API_BASE_URL } from '../../config';
 import { useIsMobile } from '@credopass/ui/hooks/use-mobile';
-import { QrCodeIcon, ArrowLeft } from 'lucide-react';
+import { QrCodeIcon, ArrowLeft, UserRoundPlus } from 'lucide-react';
 
 import './style.css';
 
@@ -18,14 +18,24 @@ import CheckInHeader from './components/CheckInHeader';
 import QRCodeDisplay from './components/QRCodeDisplay';
 import ManualSignInForm from './ManualSignInForm';
 import { EmptyState } from '@credopass/ui/components/empty-state';
+import { Skeleton } from '@credopass/ui/components/skeleton';
 
 
+// Skeleton mirroring the active check-in layout (header + two panels)
 const LoadingState: React.FC = () => {
   return (
-    <div className="checkin-page loading-state">
-      <div className="loading-content">
-        <div className="spinner" />
-        <p className="loading-text">Loading events...</p>
+    <div className="checkin-page active-checkin-layout" aria-busy="true">
+      <div className="flex items-center gap-3">
+        <Skeleton className="h-8 w-8 rounded-lg" />
+        <div className="flex-1 flex flex-col gap-1.5">
+          <Skeleton className="h-4 w-48" />
+          <Skeleton className="h-3 w-32" />
+        </div>
+        <Skeleton className="h-9 w-16 rounded-lg" />
+      </div>
+      <div className="main-grid">
+        <Skeleton className="h-105 rounded-xl" />
+        <Skeleton className="hidden md:block h-105 rounded-xl" />
       </div>
     </div>
   );
@@ -202,7 +212,10 @@ const CheckInPage: React.FC = () => {
 
 
 
-  // Active check-in session
+  // Active check-in session.
+  // Mobile keeps the single-panel QR <-> manual toggle; from md up both
+  // panels render side by side so a tablet at an event entrance offers
+  // scanning and staff-assisted check-in simultaneously.
   return (
     <div className="checkin-page active-checkin-layout">
       <CheckInHeader
@@ -215,20 +228,38 @@ const CheckInPage: React.FC = () => {
       />
 
       <div className="main-grid">
-        {!showManualCheckIn && <QRCodeDisplay
-          qrCodeData={qrCodeData}
-          hasValidSession={hasValidSession}
-          timeRemaining={timeRemaining}
-          onRefreshQR={handleRefreshQR}
-          onManualCheckInClick={() => setShowManualCheckIn(true)}
-          size={isMobile ? 220 : 326}
-        />}
+        {(!isMobile || !showManualCheckIn) && (
+          <QRCodeDisplay
+            qrCodeData={qrCodeData}
+            hasValidSession={hasValidSession}
+            timeRemaining={timeRemaining}
+            onRefreshQR={handleRefreshQR}
+            onManualCheckInClick={() => setShowManualCheckIn(true)}
+            showManualButton={isMobile}
+            size={isMobile ? 220 : 300}
+          />
+        )}
 
-
-        <div className="right-column">
-          {showManualCheckIn && <ManualSignInForm onSubmit={handleManualSignIn} onBack={() => setShowManualCheckIn(false)} />}
-        </div>
-
+        {(!isMobile || showManualCheckIn) && (
+          <div className="manual-checkin-panel">
+            <div className="manual-checkin-panel-header !flex-row items-center gap-3">
+              <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <UserRoundPlus size={15} />
+              </div>
+              <div className="flex flex-col gap-0.5">
+                <h2 className="manual-checkin-panel-title">Manual Check-In</h2>
+                <p className="manual-checkin-panel-hint">For attendees without a phone</p>
+              </div>
+            </div>
+            <div className="manual-checkin-panel-body">
+              <ManualSignInForm
+                onSubmit={handleManualSignIn}
+                onBack={() => setShowManualCheckIn(false)}
+                showBack={isMobile}
+              />
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

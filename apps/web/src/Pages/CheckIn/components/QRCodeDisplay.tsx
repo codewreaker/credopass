@@ -9,6 +9,8 @@ interface QRCodeDisplayProps {
     timeRemaining: string | null;
     onRefreshQR: () => void;
     onManualCheckInClick: () => void;
+    /** Hide when the manual form is already visible beside the QR panel */
+    showManualButton?: boolean;
     size?: number;
 }
 
@@ -18,6 +20,7 @@ const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
     timeRemaining,
     onRefreshQR,
     onManualCheckInClick,
+    showManualButton = true,
     size = 256,
 }) => {
     return (
@@ -46,7 +49,7 @@ const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
                     <div className="qr-code-expired">
                         <QrCodeIcon size={48} />
                         <p>QR code expired</p>
-                        <Button variant="outline" size="sm" onClick={onRefreshQR}>
+                        <Button variant="outline" size="sm" onClick={onRefreshQR} className="rounded-full bg-transparent border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10">
                             Generate New Code
                         </Button>
                     </div>
@@ -63,19 +66,21 @@ const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
                     variant="ghost"
                     size="sm"
                     onClick={onRefreshQR}
-                    className="gap-1.5"
+                    className="gap-1.5 rounded-full text-primary-foreground/80 hover:text-primary-foreground hover:bg-primary-foreground/10"
                 >
                     <RefreshCw size={14} />
                     Refresh
                 </Button>
-                <Button
-                    onClick={onManualCheckInClick}
-                    size="default"
-                    className="gap-1.5 flex-1"
-                >
-                    <UserPlus size={14} />
-                    Manual Check-In
-                </Button>
+                {showManualButton && (
+                    <Button
+                        onClick={onManualCheckInClick}
+                        size="default"
+                        className="gap-1.5 flex-1 rounded-full bg-primary-foreground text-primary hover:bg-primary-foreground/90 font-semibold"
+                    >
+                        <UserPlus size={14} />
+                        Manual Check-In
+                    </Button>
+                )}
             </div>
         </div>
     );

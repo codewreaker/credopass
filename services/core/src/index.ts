@@ -10,7 +10,9 @@ import eventMembersRoutes from "./routes/event-members";
 import attendanceRoutes from "./routes/attendance";
 import loyaltyRoutes from "./routes/loyalty";
 import { createMiddleware } from "hono/factory";
+import { HTTPException } from "hono/http-exception";
 import { isDevelopment } from 'std-env';
+import { createAuthMiddleware } from "./middleware/auth";
 
 const THROTTLE_DELAY = process.env.THROTTLE_DELAY ? Number(process.env.THROTTLE_DELAY) : 0;
 
@@ -113,6 +115,9 @@ app.get(`${API_BASE_PATH}/openapi.json`, (c) => c.json({
 // Health check
 app.get(`${API_BASE_PATH}/health`, (c) => c.json({ status: "ok", timestamp: Date.now() }));
 
+// Authentication: every API route below requires a verified Supabase JWT
+app.use(`${API_BASE_PATH}/*`, createAuthMiddleware());
+
 // API routes - Multi-tenancy
 app.route(`${API_BASE_PATH}/organizations`, organizationsRoutes);
 app.route(`${API_BASE_PATH}/org-memberships`, orgMembershipsRoutes);
@@ -130,6 +135,10 @@ app.notFound((c) => c.json({ error: "Not found" }, 404));
 
 // Error handler
 app.onError((err, c) => {
+    // Auth failures (and other HTTP exceptions) keep their status, e.g. 401
+    if (err instanceof HTTPException) {
+        return err.getResponse();
+    }
     console.error("Server error:", err);
     return c.json({ error: "Internal server error" }, 500);
 });

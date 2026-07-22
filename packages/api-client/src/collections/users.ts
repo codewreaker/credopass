@@ -7,7 +7,7 @@ import { createCollection } from '@tanstack/db';
 import { QueryClient } from '@tanstack/query-core';
 import { queryCollectionOptions } from '@tanstack/query-db-collection';
 import { UserSchema, type User } from '@credopass/lib/schemas';
-import { getAPIBaseURL } from '../client';
+import { getAPIBaseURL, authHeaders } from '../client';
 
 /**
  * Create user collection with a specific QueryClient
@@ -17,7 +17,7 @@ export function createUserCollection(queryClient: QueryClient) {
     queryCollectionOptions({
       queryKey: ['users'],
       queryFn: async () => {
-        const response = await fetch(`${getAPIBaseURL()}/users`);
+        const response = await fetch(`${getAPIBaseURL()}/users`, { headers: await authHeaders() });
         if (!response.ok) throw new Error('Failed to fetch users');
         const data = await response.json() as User[];
         return data.map((user) => ({
@@ -37,7 +37,7 @@ export function createUserCollection(queryClient: QueryClient) {
         const { modified: newUser } = mutation;
         const response = await fetch(`${getAPIBaseURL()}/users`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: await authHeaders({ 'Content-Type': 'application/json' }),
           body: JSON.stringify(newUser),
         });
         if (!response.ok) throw new Error(`Failed to create loyalty record | HTTP ${response.status}: ${response.statusText}`);
@@ -51,7 +51,7 @@ export function createUserCollection(queryClient: QueryClient) {
         const { original, modified } = mutation;
         const response = await fetch(`${getAPIBaseURL()}/users/${original.id}`, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers: await authHeaders({ 'Content-Type': 'application/json' }),
           body: JSON.stringify(modified),
         });
         if (!response.ok) throw new Error('Failed to update user');
@@ -64,6 +64,7 @@ export function createUserCollection(queryClient: QueryClient) {
         const { original } = mutation;
         const response = await fetch(`${getAPIBaseURL()}/users/${original.id}`, {
           method: 'DELETE',
+          headers: await authHeaders(),
         });
         if (!response.ok) throw new Error('Failed to delete user');
       },

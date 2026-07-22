@@ -33,7 +33,7 @@ export function GuestButton({
       <Button
         type="button"
         variant="ghost"
-        className="w-full text-muted-foreground hover:text-foreground"
+        className="w-full h-11 rounded-full text-muted-foreground hover:text-foreground"
         onClick={handleClick}
         disabled={isLoading}
       >

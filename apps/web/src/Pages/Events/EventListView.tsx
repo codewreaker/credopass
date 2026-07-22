@@ -47,12 +47,9 @@ const EventListView: React.FC<EventListViewProps> = ({
         return getGroupedEventsData<EventWithOrg>(groupedMap, selectedStatus);
     }, [events, selectedStatus]);
 
-    // Check if there are any ongoing or upcoming events
-    const hasOngoingOrUpcoming = useMemo(() => {
-        return events.some(event =>
-            event.status === 'ongoing' || event.status === 'scheduled'
-        );
-    }, [events]);
+    // The hero spotlight already handles the "no upcoming events" message, so the
+    // illustrated empty state only appears when there are no events at all.
+    const hasOngoingOrUpcoming = useMemo(() => events.length > 0, [events]);
 
     const handleNavigateToEvent = useCallback((eventId: string) => {
         navigate({ to: '/events/$eventId', params: { eventId } });

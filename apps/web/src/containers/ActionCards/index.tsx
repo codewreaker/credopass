@@ -60,7 +60,7 @@ export default function ActionCards() {
                     launchEventForm({ isEditing: false }, openLauncher, closeLauncher);
                     break;
                 case 'add-members':
-                    launchUserForm({ isEditing: false }, openLauncher);
+                    launchUserForm({ isEditing: false }, openLauncher, closeLauncher);
                     break;
                 case 'show-calendar':
                     onToggleCollapse();
@@ -77,7 +77,7 @@ export default function ActionCards() {
 
     {/* Luma-style action cards row */ }
     return (
-        <div className="grid gap-3 grid-cols-[repeat(auto-fit,minmax(150px,1fr))]">
+        <div className="flex gap-2.5 overflow-x-auto pb-1 -mx-1 px-1 md:grid md:gap-3 md:grid-cols-[repeat(auto-fit,minmax(170px,1fr))] md:overflow-visible md:pb-0 md:mx-0 md:px-0">
             {
                 actionCards.map((card) => {
                     const Icon = card.icon;
@@ -85,15 +85,15 @@ export default function ActionCards() {
                         <button
                             key={card.key}
                             type="button"
-                            className="flex items-center gap-3 py-1.5  px-2 border border-border rounded-[0.625rem] bg-card cursor-pointer text-left transition-all duration-150 ease text-foreground hover:border-primary hover:bg-primary/5 active:scale-[0.98]"
+                            className="group flex items-center gap-3 py-2 px-2.5 min-w-[44%] shrink-0 md:min-w-0 md:shrink border border-border rounded-xl bg-card cursor-pointer text-left transition-all duration-200 text-foreground hover:border-primary/40 hover:bg-primary/5 hover:-translate-y-0.5 hover:shadow-elevation-2 active:scale-[0.98] active:translate-y-0"
                             onClick={() => handleAction(card.action)}
                         >
-                            <div className="flex items-center justify-center w-6 h-6 md:w-8 md:h-8 rounded-lg bg-primary text-primary-foreground shrink-0">
+                            <div className="flex items-center justify-center size-8 md:size-9 rounded-lg bg-primary text-primary-foreground shrink-0 transition-transform duration-200 group-hover:scale-105">
                                 {Icon && <Icon size={16} />}
                             </div>
                             <div className="flex flex-col gap-0.5 min-w-0">
                                 <span className="text-[0.8125rem] font-semibold text-foreground truncate">{card.label}</span>
-                                <span className="text-[0.6875rem] text-muted-foreground hidden sm:inline">{card.description}</span>
+                                <span className="text-[0.6875rem] text-muted-foreground truncate hidden sm:block">{card.description}</span>
                             </div>
                         </button>
                     );

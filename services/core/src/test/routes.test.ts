@@ -1,44 +1,98 @@
-
 /**
- * Can test as below (ensure Postgres is running and DATABASE_URL is set):
- * DATABASE_URL='postgresql://postgres:Ax!rtrysoph123@localhost:5432/credopass_db' bun test services/core/src/test/routes.test.ts
+ * Integration tests for the Core API against the live schema.
+ *
+ * Requires a reachable Postgres (DATABASE_URL) and Supabase project
+ * (SUPABASE_URL + SUPABASE_ANON_KEY) so a real guest JWT can be minted
+ * for the now-authenticated routes. When those aren't set the suite
+ * skips itself rather than failing, so it's safe in a bare CI checkout.
+ *
+ * Run locally:
+ *   DATABASE_URL='postgres://...' \
+ *   SUPABASE_URL='https://<ref>.supabase.co' \
+ *   SUPABASE_ANON_KEY='<anon key>' \
+ *   bun test services/core/src/test/routes.test.ts
  */
 
-import { describe, expect, it } from "bun:test";
-import { app, API_BASE_PATH } from "../index"; // We probably need to export 'app' from index.ts to test it.
+import { describe, expect, it, beforeAll } from "bun:test";
+import { createClient } from "@supabase/supabase-js";
+import { app, API_BASE_PATH } from "../index";
 
-// Mock data
-const testUser = {
-  email: `test-${crypto.randomUUID()}@example.com`,
-  firstName: "Test",
-  lastName: "User",
-};
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
+const hasEnv = Boolean(process.env.DATABASE_URL && SUPABASE_URL && SUPABASE_ANON_KEY);
 
-let userId: string;
-let eventId: string;
+const suite = hasEnv ? describe : describe.skip;
 
-describe("CRUD API Integration Tests", () => {
+let authHeaders: Record<string, string> = {};
 
-  it("should create a new user", async () => {
-    const res = await app.request(`${API_BASE_PATH}/users`, {
-        method: "POST",
-        body: JSON.stringify(testUser),
-        headers: { "Content-Type": "application/json" }
-    });
+const unique = () => crypto.randomUUID().slice(0, 8);
 
-    expect(res.status).toBe(201);
-    const data = await res.json();
-    expect(data.email).toBe(testUser.email);
-    expect(data.id).toBeDefined();
-    userId = data.id;
-    console.log("Created User ID:", userId);
+// Response bodies are dynamic JSON; tests assert on individual fields.
+const body = async (res: Response): Promise<any> => res.json();
+
+suite("Core API integration (live schema, authenticated)", () => {
+  let orgId: string;
+  let userId: string;
+  let eventId: string;
+
+  beforeAll(async () => {
+    const supabase = createClient(SUPABASE_URL!, SUPABASE_ANON_KEY!);
+    const { data, error } = await supabase.auth.signInAnonymously();
+    if (error || !data.session) {
+      throw new Error(`Could not mint a test token: ${error?.message}`);
+    }
+    authHeaders = {
+      Authorization: `Bearer ${data.session.access_token}`,
+      "Content-Type": "application/json",
+    };
   });
 
-  it("should create a new event for the user", async () => {
-    // Requires a valid user ID as hostId
-    expect(userId).toBeDefined();
-    
-    const testEvent = {
+  it("rejects unauthenticated requests with 401", async () => {
+    const res = await app.request(`${API_BASE_PATH}/events`);
+    expect(res.status).toBe(401);
+  });
+
+  it("creates an organization (plan is server-forced to 'free')", async () => {
+    const res = await app.request(`${API_BASE_PATH}/organizations`, {
+      method: "POST",
+      headers: authHeaders,
+      body: JSON.stringify({
+        name: `Test Org ${unique()}`,
+        slug: `test-org-${unique()}`,
+        // Attempt to self-assign enterprise: must be ignored.
+        plan: "enterprise",
+      }),
+    });
+    expect(res.status).toBe(201);
+    const data = await res.json();
+    expect(data.id).toBeDefined();
+    expect(data.plan).toBe("free");
+    orgId = data.id;
+  });
+
+  it("creates a user", async () => {
+    const res = await app.request(`${API_BASE_PATH}/users`, {
+      method: "POST",
+      headers: authHeaders,
+      body: JSON.stringify({
+        email: `test-${unique()}@example.com`,
+        firstName: "Test",
+        lastName: "User",
+      }),
+    });
+    expect(res.status).toBe(201);
+    const data = await res.json();
+    expect(data.id).toBeDefined();
+    userId = data.id;
+  });
+
+  it("creates an event scoped to the organization", async () => {
+    expect(orgId).toBeDefined();
+    const res = await app.request(`${API_BASE_PATH}/events`, {
+      method: "POST",
+      headers: authHeaders,
+      body: JSON.stringify({
+        organizationId: orgId,
         name: "Test Event",
         description: "A test event description",
         status: "scheduled",
@@ -46,32 +100,32 @@ describe("CRUD API Integration Tests", () => {
         endTime: new Date(Date.now() + 3600000).toISOString(),
         location: "Test Location",
         capacity: 100,
-        hostId: userId 
-    };
-
-    const res = await app.request(`${API_BASE_PATH}/events`, {
-        method: "POST",
-        body: JSON.stringify(testEvent),
-        headers: { "Content-Type": "application/json" }
+      }),
     });
-    
-    // Debugging hooks
-    if (res.status !== 201) {
-        const err = await res.json();
-        console.error("Create Event Failed:", err);
-    }
-
+    if (res.status !== 201) console.error("Create Event Failed:", await res.clone().json());
     expect(res.status).toBe(201);
     const data = await res.json();
-    expect(data.hostId).toBe(userId);
-    expect(data.id).toBeDefined();
+    expect(data.organizationId).toBe(orgId);
     eventId = data.id;
   });
 
-  it("should retrieve the created event", async () => {
+  it("links the user to the event via event_members (replaces the old hostId)", async () => {
     expect(eventId).toBeDefined();
+    expect(userId).toBeDefined();
+    const res = await app.request(`${API_BASE_PATH}/event-members`, {
+      method: "POST",
+      headers: authHeaders,
+      body: JSON.stringify({ eventId, userId, role: "organizer" }),
+    });
+    expect(res.status).toBe(201);
+    const data = await res.json();
+    expect(data.eventId).toBe(eventId);
+    expect(data.userId).toBe(userId);
+    expect(data.role).toBe("organizer");
+  });
 
-    const res = await app.request(`${API_BASE_PATH}/events/${eventId}`);
+  it("retrieves the created event", async () => {
+    const res = await app.request(`${API_BASE_PATH}/events/${eventId}`, { headers: authHeaders });
     expect(res.status).toBe(200);
     const data = await res.json();
     expect(data.id).toBe(eventId);

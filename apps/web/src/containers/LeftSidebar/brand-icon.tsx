@@ -1,7 +1,7 @@
-export default function ({ size = 16 }: { size?: number }) {
+export default function ({ size = 16, className }: { size?: number; className?: string }) {
     const iconSize = size * 16;
     return (
-        <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+        <div className={`flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground ${className ?? ''}`}>
             <svg xmlns="http://www.w3.org/2000/svg" viewBox={`0 0 ${iconSize} ${iconSize}`} className="size-4">
                 <rect width={iconSize} height={iconSize} fill="none"></rect>
                 <line
