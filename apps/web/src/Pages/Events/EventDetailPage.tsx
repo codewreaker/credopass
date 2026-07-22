@@ -52,8 +52,10 @@ function EventDetailPage() {
 
 
     // Event detail page: no search, no secondary action
+    const handleCheckinNav = () => navigate({ to: '/checkin/$eventId', params: { eventId } });
+
     useToolbarContext({
-        action: { icon: ScanQrCodeIcon, label: 'Scan Qr Code', onClick: () => console.log("LAUNCH SCANNER") },
+        action: { icon: ScanQrCodeIcon, label: 'Open Check-in', onClick: handleCheckinNav },
         search: { enabled: false, placeholder: '' },
     });
 

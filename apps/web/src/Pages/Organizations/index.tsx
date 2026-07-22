@@ -31,6 +31,8 @@ import { Badge } from '@credopass/ui/components/badge';
 import { EmptyState } from '@credopass/ui/components/empty-state';
 import { Skeleton } from '@credopass/ui/components/skeleton';
 import { launchOrganizationForm } from '../../containers/OrganizationForm';
+import { UpgradeCTA } from '@credopass/ui/components/upgrade-cta';
+import { useNavigate } from '@tanstack/react-router';
 
 // Plan configuration
 const planConfig: Record<OrgPlan, { color: string; icon: React.ElementType; label: string; description: string }> = {
@@ -181,6 +183,7 @@ const PageHeader: React.FC<HeaderProps> = ({ orgCount, onCreateNew }) => (
 // Main Organizations Page
 const OrganizationsPage: React.FC = () => {
   const { openLauncher } = useLauncher();
+  const navigate = useNavigate();
   const { activeOrganizationId, setActiveOrganization } = useOrganizationStore();
   const [searchQuery, setSearchQuery] = useState<string>('')
 
@@ -296,6 +299,13 @@ const OrganizationsPage: React.FC = () => {
   return (
     <div className="flex flex-col gap-4">
       <PageHeader orgCount={filteredOrganizations.length} onCreateNew={handleCreateNew} />
+
+      <UpgradeCTA
+        size="lg"
+        title="Take your organization Pro"
+        description="Unlimited events, advanced analytics and priority support for your whole team."
+        onClick={() => navigate({ to: '/upgrade' })}
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {filteredOrganizations.map((org: Organization) => (

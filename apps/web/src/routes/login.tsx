@@ -15,7 +15,9 @@ export const Route = createFileRoute('/login')({
      * email - type username and password
      */
 
-    view: z.enum(['social', 'email']).catch('social')
+    view: z.enum(['social', 'email']).catch('social'),
+    // out - true when the user just signed out; shows the goodbye variant.
+    out: z.boolean().optional().default(false),
   }),
   component: LoginPage,
 })

@@ -28,6 +28,7 @@ import CredoPassLogoIcon from "../LeftSidebar/brand-icon";
 import { useLiveQuery } from '@tanstack/react-db';
 import { getCollections } from '@credopass/api-client/collections';
 import { useNavigate } from "@tanstack/react-router";
+import { supabase } from "../../supabase";
 import { Avatar, AvatarFallback, AvatarImage } from "@credopass/ui/components/avatar";
 
 
@@ -189,7 +190,13 @@ const OrgSelector: React.FC<{
                         <span>Help & Support</span>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem className="gap-2 p-2 text-destructive focus:text-destructive">
+                    <DropdownMenuItem
+                        className="gap-2 p-2 text-destructive focus:text-destructive"
+                        onClick={async () => {
+                            await supabase.auth.signOut();
+                            navigate({ to: '/login', search: { manual: true, view: 'social', out: true } });
+                        }}
+                    >
                         <LogOut className="h-4 w-4" />
                         <span>Sign Out</span>
                     </DropdownMenuItem>

@@ -33,6 +33,8 @@ import {
 } from '@credopass/ui/components/dropdown-menu';
 import { cn } from '@credopass/ui/lib/utils';
 import { useIsMobile } from "@credopass/ui/hooks/use-mobile";
+import { UpgradeCTA } from '@credopass/ui/components/upgrade-cta';
+import { useNavigate } from '@tanstack/react-router';
 
 // Tier configuration with colors
 const TIER_CONFIG: Record<string, { color: string; bgColor: string; borderColor: string; icon: typeof Star; label: string }> = {
@@ -176,6 +178,7 @@ export default function MembersPage() {
 
   const isError = userCollection.utils.isError;
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
   const rowData: UserType[] = Array.isArray(data) ? data : [];
   const { openLauncher, closeLauncher } = useLauncher();
 
@@ -288,10 +291,13 @@ export default function MembersPage() {
               {stats.totalMembers} member{stats.totalMembers === 1 ? '' : 's'} in your community
             </p>
           </div>
-          <Button onClick={handleCreateUser} className="gap-2 rounded-full font-semibold">
-            <UserPlus size={16} />
-            Add Member
-          </Button>
+          <div className="flex items-center gap-2">
+            <UpgradeCTA size="md" className="hidden lg:inline-flex" onClick={() => navigate({ to: '/upgrade' })} />
+            <Button onClick={handleCreateUser} className="gap-2 rounded-full font-semibold">
+              <UserPlus size={16} />
+              Add Member
+            </Button>
+          </div>
         </div>
 
         {/* Stats Row: lime feature stat + tiles */}

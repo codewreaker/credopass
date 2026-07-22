@@ -1,9 +1,27 @@
 import { useState } from 'react'
-import { ArrowLeft, CheckCircle2, Star, BarChart3, Users, Shield, Loader2, Sparkles } from 'lucide-react'
+import { ArrowLeft, CheckCircle2, Star, BarChart3, Users, Shield, Loader2, Sparkles, XIcon } from 'lucide-react'
 import { Button } from '@credopass/ui/components/button'
 import { Input } from '@credopass/ui/components/input'
 import { useNavigate } from '@tanstack/react-router'
 import CredoPassLogoIcon from '../../containers/LeftSidebar/brand-icon'
+
+/** Decorative silhouette: renders an SVG as a translucent single-color mask. */
+const DecorMask = ({ src, className }: { src: string; className?: string }) => (
+  <div
+    aria-hidden
+    className={`pointer-events-none absolute ${className ?? ''}`}
+    style={{
+      WebkitMaskImage: `url(${src})`,
+      maskImage: `url(${src})`,
+      WebkitMaskRepeat: 'no-repeat',
+      maskRepeat: 'no-repeat',
+      WebkitMaskSize: 'contain',
+      maskSize: 'contain',
+      WebkitMaskPosition: 'center',
+      maskPosition: 'center',
+    }}
+  />
+)
 
 const UPGRADE_BENEFITS = [
   { icon: Star,      text: 'Earn loyalty points at every event' },
@@ -83,6 +101,7 @@ export default function UpgradePage() {
       <div className="hidden md:flex md:w-[340px] lg:w-[420px] xl:w-[480px] shrink-0 flex-col justify-between rounded-3xl bg-primary text-primary-foreground p-8 lg:p-10 relative overflow-hidden">
         <div className="pointer-events-none absolute -right-24 -top-24 size-72 rounded-full border-[28px] border-primary-foreground/8" />
         <div className="pointer-events-none absolute -left-16 bottom-24 size-44 rounded-full border-[20px] border-primary-foreground/6" />
+        <DecorMask src="/empty-state-two.svg" className="bg-primary-foreground/10 w-64 h-64 -bottom-4 -right-8" />
 
         <div className="relative z-10 flex items-center gap-2.5">
           <div className="flex size-9 items-center justify-center rounded-xl bg-primary-foreground text-primary">
@@ -116,6 +135,17 @@ export default function UpgradePage() {
       {/* ── Form column ── */}
       <div className="flex flex-1 flex-col rounded-3xl md:bg-card/40 md:border md:border-border relative overflow-hidden">
         <div className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 size-[480px] rounded-full bg-primary/4 blur-3xl" />
+        <DecorMask src="/empty-state-one.svg" className="bg-primary/6 w-56 h-56 -bottom-8 -right-8 hidden sm:block" />
+
+        {/* Close — back to the app */}
+        <button
+          type="button"
+          onClick={handleBack}
+          aria-label="Close and return to app"
+          className="absolute top-4 right-4 z-20 flex size-9 items-center justify-center rounded-full border border-border bg-card/80 text-muted-foreground hover:text-foreground hover:border-border-strong transition-colors duration-150 cursor-pointer"
+        >
+          <XIcon size={16} />
+        </button>
 
         {/* Mobile brand banner */}
         <div className="md:hidden relative z-10 m-3 rounded-2xl bg-primary text-primary-foreground px-5 py-4 overflow-hidden">
