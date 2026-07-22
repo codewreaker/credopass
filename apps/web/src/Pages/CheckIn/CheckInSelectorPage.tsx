@@ -63,7 +63,7 @@ const CheckInSelectorPage: React.FC = () => {
     <div className="flex flex-col gap-5">
       {/* Page header */}
       <div className="flex flex-col gap-0.5">
-        <h1 className="text-xl font-semibold tracking-tight">Check-in</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Check-in</h1>
         <p className="text-sm text-muted-foreground">Select an event to start scanning</p>
       </div>
 
@@ -143,8 +143,8 @@ const EventCard: React.FC<{ event: EventType; onSelect: (id: string) => void }> 
       className={cn(
         'p-4 cursor-pointer transition-all duration-150 group',
         isOngoing
-          ? 'ring-1 ring-primary/30 hover:ring-primary/60'
-          : 'hover:ring-1 hover:ring-border-strong hover:shadow-elevation-2'
+          ? 'ring-1 ring-primary/40 hover:ring-primary/70 shadow-[0_0_24px_-8px] shadow-primary/20 hover:-translate-y-0.5'
+          : 'hover:ring-1 hover:ring-border-strong hover:shadow-elevation-2 hover:-translate-y-0.5'
       )}
     >
       <div className="flex flex-col gap-3">

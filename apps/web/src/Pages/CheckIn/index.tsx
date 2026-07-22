@@ -9,7 +9,7 @@ import SuccessCheckInScreen from './SuccessCheckInScreen';
 import { generateSignInParams, generateSignInUrl } from '@credopass/lib/utils';
 import { API_BASE_URL } from '../../config';
 import { useIsMobile } from '@credopass/ui/hooks/use-mobile';
-import { QrCodeIcon, ArrowLeft } from 'lucide-react';
+import { QrCodeIcon, ArrowLeft, UserRoundPlus } from 'lucide-react';
 
 import './style.css';
 
@@ -242,9 +242,14 @@ const CheckInPage: React.FC = () => {
 
         {(!isMobile || showManualCheckIn) && (
           <div className="manual-checkin-panel">
-            <div className="manual-checkin-panel-header">
-              <h2 className="manual-checkin-panel-title">Manual Check-In</h2>
-              <p className="manual-checkin-panel-hint">For attendees without a phone</p>
+            <div className="manual-checkin-panel-header !flex-row items-center gap-3">
+              <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <UserRoundPlus size={15} />
+              </div>
+              <div className="flex flex-col gap-0.5">
+                <h2 className="manual-checkin-panel-title">Manual Check-In</h2>
+                <p className="manual-checkin-panel-hint">For attendees without a phone</p>
+              </div>
             </div>
             <div className="manual-checkin-panel-body">
               <ManualSignInForm
