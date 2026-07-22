@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ArrowLeft, CheckCircle2, Star, BarChart3, Users, Shield, Loader2 } from 'lucide-react'
+import { ArrowLeft, CheckCircle2, Star, BarChart3, Users, Shield, Loader2, Sparkles } from 'lucide-react'
 import { Button } from '@credopass/ui/components/button'
 import { Input } from '@credopass/ui/components/input'
 import { useNavigate } from '@tanstack/react-router'
@@ -11,6 +11,27 @@ const UPGRADE_BENEFITS = [
   { icon: Users,     text: 'Member profile visible to organizers' },
   { icon: Shield,    text: 'Secure account — your data, always' },
 ] as const
+
+/** Mock membership card shown on the billboard — what the guest is about to unlock */
+const MembershipCardPreview = ({ email }: { email: string }) => (
+  <div className="rounded-2xl bg-primary-foreground text-primary p-4 max-w-[21rem] shadow-elevation-3">
+    <div className="flex items-center justify-between mb-5">
+      <span className="text-[10px] font-bold uppercase tracking-[0.16em] opacity-70">CredoPass member</span>
+      <Sparkles size={14} />
+    </div>
+    <p className="text-lg font-semibold tracking-tight truncate">{email || 'you@example.com'}</p>
+    <div className="flex items-center justify-between mt-4">
+      <div>
+        <p className="text-[9px] font-bold uppercase tracking-[0.14em] opacity-60">Points</p>
+        <p className="text-xl font-bold tabular-nums leading-tight">0 → ∞</p>
+      </div>
+      <div className="text-right">
+        <p className="text-[9px] font-bold uppercase tracking-[0.14em] opacity-60">Tier</p>
+        <p className="text-xl font-bold leading-tight">Bronze</p>
+      </div>
+    </div>
+  </div>
+)
 
 export default function UpgradePage() {
   const navigate = useNavigate()
@@ -40,14 +61,14 @@ export default function UpgradePage() {
     return (
       <div className="flex min-h-svh items-center justify-center bg-background p-6">
         <div className="w-full max-w-sm text-center">
-          <div className="mx-auto mb-6 flex size-12 items-center justify-center rounded-2xl bg-primary/10">
-            <CheckCircle2 size={22} className="text-primary" />
+          <div className="mx-auto mb-6 flex size-14 items-center justify-center rounded-full bg-primary text-primary-foreground">
+            <CheckCircle2 size={24} />
           </div>
-          <h2 className="text-xl font-semibold tracking-tight mb-2">Account created</h2>
+          <h2 className="text-2xl font-semibold tracking-tight mb-2">Account created</h2>
           <p className="text-sm text-muted-foreground mb-8">
             Check your inbox to confirm your email, then sign back in.
           </p>
-          <Button className="w-full" onClick={() => navigate({ to: '/login', search: { view: 'email', manual: true } })}>
+          <Button className="w-full h-11 rounded-full font-semibold" onClick={() => navigate({ to: '/login', search: { view: 'email', manual: true } })}>
             Sign in to your new account
           </Button>
         </div>
@@ -56,110 +77,122 @@ export default function UpgradePage() {
   }
 
   return (
-    <div className="flex min-h-svh bg-background">
+    <div className="flex min-h-svh bg-background p-3 sm:p-4 lg:p-5 gap-4 lg:gap-6">
 
-      {/* Left panel */}
-      <div className="hidden lg:flex lg:w-[400px] xl:w-[460px] shrink-0 flex-col justify-between p-10 border-r border-border bg-card/50 relative overflow-hidden">
-        <div className="pointer-events-none absolute -top-40 -left-40 size-80 rounded-full bg-primary/5 blur-3xl" />
+      {/* ── Lime billboard (tablet + desktop) ── */}
+      <div className="hidden md:flex md:w-[340px] lg:w-[420px] xl:w-[480px] shrink-0 flex-col justify-between rounded-3xl bg-primary text-primary-foreground p-8 lg:p-10 relative overflow-hidden">
+        <div className="pointer-events-none absolute -right-24 -top-24 size-72 rounded-full border-[28px] border-primary-foreground/8" />
+        <div className="pointer-events-none absolute -left-16 bottom-24 size-44 rounded-full border-[20px] border-primary-foreground/6" />
+
+        <div className="relative z-10 flex items-center gap-2.5">
+          <div className="flex size-9 items-center justify-center rounded-xl bg-primary-foreground text-primary">
+            <CredoPassLogoIcon className="size-8 bg-transparent! text-primary!" />
+          </div>
+          <span className="text-[15px] font-semibold tracking-tight">CredoPass</span>
+        </div>
 
         <div className="relative z-10">
-          <div className="flex items-center gap-2.5 mb-16">
-            <CredoPassLogoIcon className="size-8" />
-            <span className="text-sm font-semibold tracking-tight">CredoPass</span>
-          </div>
-
-          <div className="mb-10">
-            <h1 className="text-[1.6rem] font-semibold tracking-tight leading-snug mb-3">
-              Unlock your full<br />
-              <span className="text-primary">member profile.</span>
-            </h1>
-            <p className="text-sm text-muted-foreground leading-relaxed max-w-[17rem]">
-              You're currently in guest mode. Create a free account to save your progress and earn loyalty points.
-            </p>
-          </div>
-
-          <ul className="space-y-3">
-            {UPGRADE_BENEFITS.map(({ icon: Icon, text }) => (
-              <li key={text} className="flex items-start gap-3">
-                <div className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-md bg-primary/10">
-                  <Icon size={11} className="text-primary" />
-                </div>
-                <span className="text-sm text-muted-foreground">{text}</span>
-              </li>
-            ))}
-          </ul>
+          <h1 className="text-[2rem] lg:text-[2.5rem] font-semibold tracking-tight leading-[1.08] mb-4">
+            Keep everything<br />you&rsquo;ve earned.
+          </h1>
+          <p className="text-sm lg:text-[15px] leading-relaxed text-primary-foreground/70 max-w-[21rem] mb-8">
+            You&rsquo;re in guest mode. Create a free account to save your check-ins and start climbing the loyalty tiers.
+          </p>
+          <MembershipCardPreview email={email} />
         </div>
 
-        <p className="relative z-10 text-[11px] text-muted-foreground/50">
-          © {new Date().getFullYear()} CredoPass · Free forever for attendees
-        </p>
+        <ul className="relative z-10 space-y-2.5">
+          {UPGRADE_BENEFITS.map(({ icon: Icon, text }) => (
+            <li key={text} className="flex items-center gap-3">
+              <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary-foreground/10">
+                <Icon size={12} strokeWidth={2.2} />
+              </div>
+              <span className="text-[13px] font-medium text-primary-foreground/80">{text}</span>
+            </li>
+          ))}
+        </ul>
       </div>
 
-      {/* Right panel: form */}
-      <div className="flex flex-1 flex-col items-center justify-center p-6 sm:p-10">
-        <div className="lg:hidden flex items-center gap-2 mb-10 self-start">
-          <CredoPassLogoIcon className="size-7" />
-          <span className="text-sm font-semibold tracking-tight">CredoPass</span>
+      {/* ── Form column ── */}
+      <div className="flex flex-1 flex-col rounded-3xl md:bg-card/40 md:border md:border-border relative overflow-hidden">
+        <div className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 size-[480px] rounded-full bg-primary/4 blur-3xl" />
+
+        {/* Mobile brand banner */}
+        <div className="md:hidden relative z-10 m-3 rounded-2xl bg-primary text-primary-foreground px-5 py-4 overflow-hidden">
+          <div className="pointer-events-none absolute -right-10 -top-10 size-28 rounded-full border-[14px] border-primary-foreground/8" />
+          <div className="flex items-center gap-2 mb-1.5">
+            <CredoPassLogoIcon className="size-6 bg-primary-foreground! text-primary! rounded-md" />
+            <span className="text-sm font-semibold tracking-tight">CredoPass</span>
+          </div>
+          <p className="text-xs font-medium text-primary-foreground/70">Keep everything you&rsquo;ve earned — create a free account.</p>
         </div>
 
-        <div className="w-full max-w-[340px]">
-          <button
-            onClick={handleBack}
-            className="mb-6 flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors duration-150 cursor-pointer"
-          >
-            <ArrowLeft size={14} />
-            Back to app
-          </button>
-
-          <div className="mb-8">
-            <h2 className="text-xl font-semibold tracking-tight text-foreground">Create your account</h2>
-            <p className="mt-1 text-sm text-muted-foreground">Free forever. No credit card required.</p>
-          </div>
-
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-foreground" htmlFor="email">Email</label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                required
-                autoComplete="email"
-              />
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-foreground" htmlFor="password">Password</label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="Min. 8 characters"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                required
-                minLength={8}
-                autoComplete="new-password"
-              />
-            </div>
-
-            <Button type="submit" className="w-full mt-2" disabled={isLoading}>
-              {isLoading
-                ? <><Loader2 size={14} className="animate-spin" /> Creating account…</>
-                : 'Create account'}
-            </Button>
-          </form>
-
-          <div className="mt-6 text-center">
+        <div className="relative z-10 flex flex-1 flex-col items-center justify-center p-6 sm:p-10">
+          <div className="w-full max-w-[340px]">
             <button
               onClick={handleBack}
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors duration-150 cursor-pointer"
+              className="mb-6 flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors duration-150 cursor-pointer"
             >
-              Continue as guest instead
+              <ArrowLeft size={14} />
+              Back to app
             </button>
+
+            <div className="mb-8">
+              <h2 className="text-2xl font-semibold tracking-tight text-foreground">Create your account</h2>
+              <p className="mt-1.5 text-sm text-muted-foreground">Free forever. No credit card required.</p>
+            </div>
+
+            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium text-foreground" htmlFor="email">Email</label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="you@example.com"
+                  className="h-11 rounded-xl"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  required
+                  autoComplete="email"
+                />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium text-foreground" htmlFor="password">Password</label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="Min. 8 characters"
+                  className="h-11 rounded-xl"
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  required
+                  minLength={8}
+                  autoComplete="new-password"
+                />
+              </div>
+
+              <Button type="submit" className="w-full h-11 rounded-full font-semibold mt-2" disabled={isLoading}>
+                {isLoading
+                  ? <><Loader2 size={14} className="animate-spin" /> Creating account…</>
+                  : 'Create free account'}
+              </Button>
+            </form>
+
+            <div className="mt-6 text-center">
+              <button
+                onClick={handleBack}
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors duration-150 cursor-pointer"
+              >
+                Continue as guest instead
+              </button>
+            </div>
           </div>
         </div>
+
+        <p className="relative z-10 pb-5 text-center text-[11px] text-muted-foreground/50">
+          © {new Date().getFullYear()} CredoPass · Free forever for attendees
+        </p>
       </div>
     </div>
   )
