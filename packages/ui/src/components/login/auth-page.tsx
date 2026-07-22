@@ -16,8 +16,8 @@ export function AuthPage({
     <div>
       {/* Heading */}
       <div className="mb-8">
-        <h2 className="text-xl font-semibold tracking-tight text-foreground">Welcome back</h2>
-        <p className="mt-1 text-sm text-muted-foreground">Sign in to your account to continue</p>
+        <h2 className="text-2xl font-semibold tracking-tight text-foreground">Welcome back</h2>
+        <p className="mt-1.5 text-sm text-muted-foreground">Sign in to your account to continue</p>
       </div>
 
       {/* Auth options */}
@@ -30,7 +30,7 @@ export function AuthPage({
           <Separator className="flex-1" />
         </div>
 
-        <Button variant="outline" type="button" className="w-full" onClick={signInAsEmail}>
+        <Button variant="outline" type="button" className="w-full h-11 rounded-full" onClick={signInAsEmail}>
           Continue with email
         </Button>
 

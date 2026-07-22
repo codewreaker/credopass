@@ -2,6 +2,7 @@ import { ArrowLeft, Loader2, Zap, CheckCircle2, BarChart3, CalendarCheck } from 
 import AuthPage from '@credopass/ui/components/login'
 import { emailPasswordSchema } from '@credopass/lib/schemas'
 import { EmailPasswordForm } from '@credopass/ui/components/login/email-password-form'
+import { GlowingQRCode } from '@credopass/ui/components/glowing-qr-code'
 import {
   supabase as supabaseInstance,
   signInAsGuest,
@@ -12,7 +13,6 @@ import {
 import { useNavigate, useSearch } from '@tanstack/react-router'
 import { useGuestAutoLogin } from '../../hooks'
 import CredoPassLogoIcon from '../../containers/LeftSidebar/brand-icon'
-import LoginSVG from '/login-cuate.svg'
 
 const FEATURES = [
   { icon: Zap,           text: 'QR check-in from any device in seconds' },
@@ -45,85 +45,116 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-svh bg-background">
+    <div className="flex min-h-svh bg-background p-3 sm:p-4 lg:p-5 gap-4 lg:gap-6">
 
-      {/* ── Left panel: brand + value prop (desktop only) ── */}
-      <div className="hidden lg:flex lg:w-[400px] xl:w-[460px] shrink-0 flex-col justify-between p-10 border-r border-border bg-card/50 relative overflow-hidden">
-        {/* Ambient glow */}
-        <div className="pointer-events-none absolute -top-40 -left-40 size-80 rounded-full bg-primary/5 blur-3xl" />
-        <div className="pointer-events-none absolute bottom-0 right-0 size-56 rounded-full bg-primary/3 blur-3xl" />
+      {/* ── Brand billboard (tablet + desktop) ── */}
+      <div className="hidden md:flex md:w-[340px] lg:w-[420px] xl:w-[480px] shrink-0 flex-col justify-between rounded-3xl bg-primary text-primary-foreground p-8 lg:p-10 relative overflow-hidden">
+        {/* Decorative geometry */}
+        <div className="pointer-events-none absolute -right-24 -top-24 size-72 rounded-full border-[28px] border-primary-foreground/8" />
+        <div className="pointer-events-none absolute -left-16 bottom-24 size-44 rounded-full border-[20px] border-primary-foreground/6" />
 
-        <div className="relative z-10">
-          {/* Logo */}
-          <div className="flex items-center gap-2.5 mb-16">
-            <CredoPassLogoIcon className="size-8" />
-            <span className="text-sm font-semibold tracking-tight">CredoPass</span>
+        {/* Logo */}
+        <div className="relative z-10 flex items-center gap-2.5">
+          <div className="flex size-9 items-center justify-center rounded-xl bg-primary-foreground text-primary">
+            <CredoPassLogoIcon className="size-8 !bg-transparent !text-primary" />
           </div>
-
-          {/* Tagline */}
-          <div className="mb-10">
-            <h1 className="text-[1.6rem] font-semibold tracking-tight leading-snug mb-3">
-              Event credentialing<br />
-              <span className="text-primary">that just works.</span>
-            </h1>
-            <p className="text-sm text-muted-foreground leading-relaxed max-w-[17rem]">
-              Track attendance, manage members, and run QR check-ins — without the ticketing overhead.
-            </p>
-          </div>
-
-          {/* Feature list */}
-          <ul className="space-y-3">
-            {FEATURES.map(({ icon: Icon, text }) => (
-              <li key={text} className="flex items-start gap-3">
-                <div className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-md bg-primary/10">
-                  <Icon size={11} className="text-primary" />
-                </div>
-                <span className="text-sm text-muted-foreground">{text}</span>
-              </li>
-            ))}
-          </ul>
-
-          {/* Illustration */}
-          <img src={LoginSVG} alt="" className="mt-10 w-full max-w-[300px] mx-auto" />
+          <span className="text-[15px] font-semibold tracking-tight">CredoPass</span>
         </div>
 
-        <p className="relative z-10 text-[11px] text-muted-foreground/50">
-          © {new Date().getFullYear()} CredoPass · Built for live events
-        </p>
+        {/* Headline + QR ticket */}
+        <div className="relative z-10">
+          <h1 className="text-[2rem] lg:text-[2.5rem] font-semibold tracking-tight leading-[1.08] mb-4">
+            Know who<br />actually shows up.
+          </h1>
+          <p className="text-sm lg:text-[15px] leading-relaxed text-primary-foreground/70 max-w-[21rem] mb-8">
+            Attendance, membership and loyalty for live events — without the ticketing overhead.
+          </p>
+
+          {/* Ticket card with QR */}
+          <div className="flex items-center gap-3 rounded-2xl bg-primary-foreground/10 border border-primary-foreground/15 p-4 max-w-[21rem] backdrop-blur-sm">
+            <GlowingQRCode
+              value="https://credopass.app"
+              size={60}
+              showGlow={false}
+              bgColor="var(--color-primary-foreground)"
+              fgColor="var(--color-primary)"
+              className="shrink-0"
+            />
+            <div className="min-w-0">
+              <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-primary-foreground/60 mb-1">Entry pass</p>
+              <p className="text-sm font-semibold leading-snug">Scan. Check in.<br />Done in seconds.</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Feature list */}
+        <ul className="relative z-10 space-y-2.5">
+          {FEATURES.map(({ icon: Icon, text }) => (
+            <li key={text} className="flex items-center gap-3">
+              <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary-foreground/10">
+                <Icon size={12} strokeWidth={2.2} />
+              </div>
+              <span className="text-[13px] font-medium text-primary-foreground/80">{text}</span>
+            </li>
+          ))}
+        </ul>
       </div>
 
-      {/* ── Right panel: auth form ── */}
-      <div className="flex flex-1 flex-col items-center justify-center p-6 sm:p-10">
-        {/* Mobile logo */}
-        <div className="lg:hidden flex items-center gap-2 mb-10 self-start">
-          <CredoPassLogoIcon className="size-7" />
-          <span className="text-sm font-semibold tracking-tight">CredoPass</span>
+      {/* ── Form column ── */}
+      <div className="flex flex-1 flex-col rounded-3xl md:bg-card/40 md:border md:border-border relative overflow-hidden">
+        {/* Ambient glow behind form */}
+        <div className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 size-[480px] rounded-full bg-primary/4 blur-3xl" />
+
+        {/* Mobile brand header */}
+        <div className="md:hidden relative z-10 m-3 rounded-2xl bg-primary text-primary-foreground px-5 py-4 flex items-center justify-between overflow-hidden">
+          <div className="pointer-events-none absolute -right-10 -top-10 size-28 rounded-full border-[14px] border-primary-foreground/8" />
+          <div>
+            <div className="flex items-center gap-2 mb-1.5">
+              <CredoPassLogoIcon className="size-6 !bg-primary-foreground !text-primary rounded-md" />
+              <span className="text-sm font-semibold tracking-tight">CredoPass</span>
+            </div>
+            <p className="text-xs font-medium text-primary-foreground/70">Know who actually shows up.</p>
+          </div>
+          <GlowingQRCode
+            value="https://credopass.app"
+            size={40}
+            showGlow={false}
+            bgColor="var(--color-primary-foreground)"
+            fgColor="var(--color-primary)"
+            className="shrink-0 relative z-10"
+          />
         </div>
 
-        <div className="w-full max-w-[340px]">
-          {view === 'email' ? (
-            <>
-              <button
-                onClick={showOptions}
-                className="mb-6 flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors duration-150 cursor-pointer"
-              >
-                <ArrowLeft size={14} />
-                Back
-              </button>
-              <EmailPasswordForm
-                signInCallback={(values) => signInWithEmail(values.email, values.password)}
-                signUpCallback={(values) => signUpWithEmail(values.email, values.password)}
-                schemaValidation={emailPasswordSchema as any}
+        <div className="relative z-10 flex flex-1 flex-col items-center justify-center p-6 sm:p-10">
+          <div className="w-full max-w-[340px]">
+            {view === 'email' ? (
+              <>
+                <button
+                  onClick={showOptions}
+                  className="mb-6 flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors duration-150 cursor-pointer"
+                >
+                  <ArrowLeft size={14} />
+                  Back
+                </button>
+                <EmailPasswordForm
+                  signInCallback={(values) => signInWithEmail(values.email, values.password)}
+                  signUpCallback={(values) => signUpWithEmail(values.email, values.password)}
+                  schemaValidation={emailPasswordSchema as any}
+                />
+              </>
+            ) : (
+              <AuthPage
+                signInAsGuest={signInAsGuest}
+                signInWithGithub={signInWithGithub}
+                signInAsEmail={showEmailForm}
               />
-            </>
-          ) : (
-            <AuthPage
-              signInAsGuest={signInAsGuest}
-              signInWithGithub={signInWithGithub}
-              signInAsEmail={showEmailForm}
-            />
-          )}
+            )}
+          </div>
         </div>
+
+        <p className="relative z-10 pb-5 text-center text-[11px] text-muted-foreground/50">
+          © {new Date().getFullYear()} CredoPass · Built for live events
+        </p>
       </div>
     </div>
   )

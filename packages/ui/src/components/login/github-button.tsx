@@ -30,8 +30,8 @@ export function GithubButton({
     <div className="flex flex-col gap-1.5">
       <Button
         type="button"
-        variant="outline"
-        className="w-full"
+        variant="default"
+        className="w-full h-11 rounded-full font-semibold"
         onClick={handleClick}
         disabled={isLoading}
       >
