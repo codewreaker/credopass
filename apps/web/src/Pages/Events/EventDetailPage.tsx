@@ -76,8 +76,10 @@ function EventDetailPage() {
 
     const handleEdit = () => {
         if (!event) return;
-        const startDate = event.startTime instanceof Date ? event.startTime : undefined;
-        const endDate = event.endTime instanceof Date ? event.endTime : undefined;
+        // Collections synced from Supabase (PostgREST) can surface timestamps as
+        // ISO strings on the initial read, so coerce rather than relying on instanceof.
+        const startDate = event.startTime ? new Date(event.startTime) : undefined;
+        const endDate = event.endTime ? new Date(event.endTime) : undefined;
 
         // Launch the shared EventForm via command launcher
         launchEventForm({

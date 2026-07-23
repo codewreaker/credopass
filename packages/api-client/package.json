@@ -12,9 +12,14 @@
   },
   "dependencies": {
     "@credopass/lib": "*",
-    "@tanstack/db": "^0.6.5",
+    "@standard-schema/spec": "^1.1.0",
+    "@supabase-labs/tanstack-db": "^0.0.1",
+    "@supabase/supabase-js": "2.110.0",
+    "@tanstack/db": "0.6.16",
     "@tanstack/query-core": "^5.90.16",
-    "@tanstack/query-db-collection": "^1.0.6"
+    "@tanstack/query-db-collection": "^1.0.6",
+    "@tanstack/react-db": "0.1.94",
+    "zod": "^4.3.5"
   },
   "peerDependencies": {
     "react": "^19.0.0"
