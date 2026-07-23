@@ -17,8 +17,10 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as EventsIndexRouteImport } from './routes/events/index'
+import { Route as EventsNewRouteImport } from './routes/events/new'
 import { Route as EventsEventIdRouteImport } from './routes/events/$eventId'
 import { Route as CheckinEventIdRouteImport } from './routes/checkin/$eventId'
+import { Route as EventsEventIdEditRouteImport } from './routes/events/$eventId_.edit'
 
 const UpgradeRoute = UpgradeRouteImport.update({
   id: '/upgrade',
@@ -60,6 +62,11 @@ const EventsIndexRoute = EventsIndexRouteImport.update({
   path: '/events/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const EventsNewRoute = EventsNewRouteImport.update({
+  id: '/events/new',
+  path: '/events/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const EventsEventIdRoute = EventsEventIdRouteImport.update({
   id: '/events/$eventId',
   path: '/events/$eventId',
@@ -68,6 +75,11 @@ const EventsEventIdRoute = EventsEventIdRouteImport.update({
 const CheckinEventIdRoute = CheckinEventIdRouteImport.update({
   id: '/checkin/$eventId',
   path: '/checkin/$eventId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EventsEventIdEditRoute = EventsEventIdEditRouteImport.update({
+  id: '/events/$eventId_/edit',
+  path: '/events/$eventId/edit',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -81,7 +93,9 @@ export interface FileRoutesByFullPath {
   '/upgrade': typeof UpgradeRoute
   '/checkin/$eventId': typeof CheckinEventIdRoute
   '/events/$eventId': typeof EventsEventIdRoute
+  '/events/new': typeof EventsNewRoute
   '/events/': typeof EventsIndexRoute
+  '/events/$eventId/edit': typeof EventsEventIdEditRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -93,7 +107,9 @@ export interface FileRoutesByTo {
   '/upgrade': typeof UpgradeRoute
   '/checkin/$eventId': typeof CheckinEventIdRoute
   '/events/$eventId': typeof EventsEventIdRoute
+  '/events/new': typeof EventsNewRoute
   '/events': typeof EventsIndexRoute
+  '/events/$eventId/edit': typeof EventsEventIdEditRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -106,7 +122,9 @@ export interface FileRoutesById {
   '/upgrade': typeof UpgradeRoute
   '/checkin/$eventId': typeof CheckinEventIdRoute
   '/events/$eventId': typeof EventsEventIdRoute
+  '/events/new': typeof EventsNewRoute
   '/events/': typeof EventsIndexRoute
+  '/events/$eventId_/edit': typeof EventsEventIdEditRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -120,7 +138,9 @@ export interface FileRouteTypes {
     | '/upgrade'
     | '/checkin/$eventId'
     | '/events/$eventId'
+    | '/events/new'
     | '/events/'
+    | '/events/$eventId/edit'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -132,7 +152,9 @@ export interface FileRouteTypes {
     | '/upgrade'
     | '/checkin/$eventId'
     | '/events/$eventId'
+    | '/events/new'
     | '/events'
+    | '/events/$eventId/edit'
   id:
     | '__root__'
     | '/'
@@ -144,7 +166,9 @@ export interface FileRouteTypes {
     | '/upgrade'
     | '/checkin/$eventId'
     | '/events/$eventId'
+    | '/events/new'
     | '/events/'
+    | '/events/$eventId_/edit'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -157,7 +181,9 @@ export interface RootRouteChildren {
   UpgradeRoute: typeof UpgradeRoute
   CheckinEventIdRoute: typeof CheckinEventIdRoute
   EventsEventIdRoute: typeof EventsEventIdRoute
+  EventsNewRoute: typeof EventsNewRoute
   EventsIndexRoute: typeof EventsIndexRoute
+  EventsEventIdEditRoute: typeof EventsEventIdEditRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -218,6 +244,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EventsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/events/new': {
+      id: '/events/new'
+      path: '/events/new'
+      fullPath: '/events/new'
+      preLoaderRoute: typeof EventsNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/events/$eventId': {
       id: '/events/$eventId'
       path: '/events/$eventId'
@@ -230,6 +263,13 @@ declare module '@tanstack/react-router' {
       path: '/checkin/$eventId'
       fullPath: '/checkin/$eventId'
       preLoaderRoute: typeof CheckinEventIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/events/$eventId_/edit': {
+      id: '/events/$eventId_/edit'
+      path: '/events/$eventId/edit'
+      fullPath: '/events/$eventId/edit'
+      preLoaderRoute: typeof EventsEventIdEditRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -245,7 +285,9 @@ const rootRouteChildren: RootRouteChildren = {
   UpgradeRoute: UpgradeRoute,
   CheckinEventIdRoute: CheckinEventIdRoute,
   EventsEventIdRoute: EventsEventIdRoute,
+  EventsNewRoute: EventsNewRoute,
   EventsIndexRoute: EventsIndexRoute,
+  EventsEventIdEditRoute: EventsEventIdEditRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

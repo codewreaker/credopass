@@ -2,8 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { eq, useLiveQuery } from '@tanstack/react-db';
 import { getCollections } from '@credopass/api-client/collections';
 import type { EventType, Organization } from '@credopass/lib/schemas';
-import { useEventSessionStore, useLauncher } from '@credopass/lib/stores';
-import { launchEventForm } from '../../containers/EventForm/index';
+import { useEventSessionStore } from '@credopass/lib/stores';
 import EventListView from './EventListView';
 import EventCalendar from '@credopass/ui/components/event-calendar';
 import { STATUS_MAPPING } from '@credopass/ui/components/event-row';
@@ -230,7 +229,7 @@ const allFilters = Object.keys(STATUS_MAPPING).concat(['actions', 'timezone']) a
  * import { EventCalendar } from '../../components/event-calendar';
  */
 const EventsPage = () => {
-    const { openLauncher, closeLauncher } = useLauncher();
+    const navigate = useNavigate();
     const { events: eventCollection, organizations: orgCollection } = getCollections();
     const isMobile = useIsMobile();
     const [searchQuery, setSearchQuery] = useState<string>('');
@@ -267,27 +266,12 @@ const EventsPage = () => {
 
 
     const handleCreateEvent = useCallback(() => {
-        launchEventForm({ isEditing: false }, openLauncher, closeLauncher);
-    }, [openLauncher, closeLauncher]);
+        navigate({ to: '/events/new' });
+    }, [navigate]);
 
     const handleEditEvent = useCallback((event: EventType & { orgCollection?: Organization }) => {
-        launchEventForm({
-            isEditing: true,
-            initialData: {
-                id: event.id,
-                name: event.name,
-                description: event.description || '',
-                status: event.status,
-                dateTimeRange: {
-                    from: event.startTime ? new Date(event.startTime) : undefined,
-                    to: event.endTime ? new Date(event.endTime) : undefined,
-                },
-                location: event.location || '',
-                capacity: event.capacity?.toString() || '',
-                organizationId: event.organizationId,
-            },
-        }, openLauncher, closeLauncher);
-    }, [openLauncher, closeLauncher]);
+        navigate({ to: '/events/$eventId/edit', params: { eventId: event.id } });
+    }, [navigate]);
 
     // Register toolbar context: secondary "Create Event" button + search
     useToolbarContext({

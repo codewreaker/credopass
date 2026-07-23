@@ -6,7 +6,6 @@ import {
     CalendarsIcon,
     Building2
 } from 'lucide-react';
-import { launchEventForm } from '../../containers/EventForm/index';
 import { useLauncher } from '@credopass/lib/stores';
 import { launchUserForm } from '../UserForm';
 import { useSidebarTrigger } from '../../../../../packages/lib/src/hooks/use-sidebar-trigger';
@@ -55,7 +54,7 @@ export default function ActionCards() {
         (action: string) => {
             switch (action) {
                 case 'create-event':
-                    launchEventForm({ isEditing: false }, openLauncher, closeLauncher);
+                    navigate({ to: '/events/new' });
                     break;
                 case 'add-members':
                     launchUserForm({ isEditing: false }, openLauncher, closeLauncher);

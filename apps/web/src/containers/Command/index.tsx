@@ -24,7 +24,6 @@ import {
   CommandShortcut,
 } from '@credopass/ui/components/command';
 
-import { launchEventForm } from '../EventForm/index';
 import { launchSignInForm } from '../SignInModal/index';
 import { launchUserForm } from '../UserForm/index';
 import type { LauncherState } from '@credopass/lib/stores';
@@ -48,8 +47,8 @@ const CommandPalette: React.FC<{
 
   const handleNewEvent = useCallback(() => {
     onClose();
-    launchEventForm({ isEditing: false }, openLauncher, onClose);
-  }, [onClose, openLauncher]);
+    navigate({ to: '/events/new' });
+  }, [onClose, navigate]);
 
   const handleNewMember = useCallback(() => {
     onClose();

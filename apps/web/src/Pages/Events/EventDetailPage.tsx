@@ -9,11 +9,9 @@ import {
     Edit2,
 } from 'lucide-react';
 import { useToolbarContext } from '@credopass/lib/hooks';
-import { useLauncher } from '@credopass/lib/stores';
 import './event-detail.css';
 import { EventTicket } from './EventTicket';
 import { EventDetailsReadonly } from './EventDetails';
-import { launchEventForm } from '../../containers/EventForm';
 
 const handleAddToCalendar = (event: EventType) => {
     if (!event) return;
@@ -48,7 +46,6 @@ const handleAddToCalendar = (event: EventType) => {
 function EventDetailPage() {
     const { eventId } = useParams({ from: '/events/$eventId' });
     const navigate = useNavigate();
-    const { openLauncher } = useLauncher();
 
 
     // Event detail page: no search, no secondary action
@@ -76,23 +73,7 @@ function EventDetailPage() {
 
     const handleEdit = () => {
         if (!event) return;
-        const startDate = event.startTime instanceof Date ? event.startTime : undefined;
-        const endDate = event.endTime instanceof Date ? event.endTime : undefined;
-
-        // Launch the shared EventForm via command launcher
-        launchEventForm({
-            initialData: {
-                id: event.id,
-                name: event.name,
-                description: event.description || '',
-                status: event.status,
-                dateTimeRange: { from: startDate, to: endDate },
-                location: event.location || '',
-                capacity: event.capacity?.toString() || '',
-                organizationId: event.organizationId || '',
-            },
-            isEditing: true,
-        }, openLauncher);
+        navigate({ to: '/events/$eventId/edit', params: { eventId } });
     };
 
     if (isLoading) {

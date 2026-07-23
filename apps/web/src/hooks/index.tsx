@@ -1,6 +1,5 @@
 //this hook is temporarily in the ui package, but it should be moved to lib once I figure out the best way to handle cross-package dependencies for hooks that are used in both packages (e.g. usePrevious)
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { launchEventForm } from '../containers/EventForm/index';
 import CommandPalette from '../containers/Command/index';
 import { launchSignInForm } from '../containers/SignInModal/index';
 import { launchUserForm } from '../containers/UserForm/index';
@@ -40,7 +39,7 @@ export const useCommandPallete = () => {
                 switch (e.key) {
                     case 'e':
                         e.preventDefault();
-                        launchEventForm({ isEditing: false }, openLauncher, closeLauncher);
+                        navigate({ to: '/events/new' });
                         break;
                     case 'n':
                         e.preventDefault();
