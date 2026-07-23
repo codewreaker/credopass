@@ -1,4 +1,4 @@
-import { FC, useState, useRef, useCallback } from 'react'
+import { FC, useState, useRef, useCallback, useMemo } from 'react'
 import { EventType } from '@credopass/lib/schemas';
 import {
     MapPin,
@@ -105,11 +105,13 @@ export const EventTicket: FC<{
     const startDate = ticketEvent.startTime instanceof Date ? ticketEvent.startTime : null;
     const endDate = ticketEvent.endTime instanceof Date ? ticketEvent.endTime : null;
 
+    const timestamp = useMemo(()=>(new Date()),[]);
+
     // Generate QR code data
     const qrData = JSON.stringify({
         eventId: ticketEvent.id,
         checkIn: true,
-        timestamp: Date.now()
+        timestamp
     });
 
     // Download ticket as PNG
