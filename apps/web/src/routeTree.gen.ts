@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as UpgradeRouteImport } from './routes/upgrade'
+import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as OrganizationsRouteImport } from './routes/organizations'
 import { Route as MembersRouteImport } from './routes/members'
 import { Route as LoginRouteImport } from './routes/login'
@@ -22,6 +23,11 @@ import { Route as CheckinEventIdRouteImport } from './routes/checkin/$eventId'
 const UpgradeRoute = UpgradeRouteImport.update({
   id: '/upgrade',
   path: '/upgrade',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileRoute = ProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OrganizationsRoute = OrganizationsRouteImport.update({
@@ -71,6 +77,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/members': typeof MembersRoute
   '/organizations': typeof OrganizationsRoute
+  '/profile': typeof ProfileRoute
   '/upgrade': typeof UpgradeRoute
   '/checkin/$eventId': typeof CheckinEventIdRoute
   '/events/$eventId': typeof EventsEventIdRoute
@@ -82,6 +89,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/members': typeof MembersRoute
   '/organizations': typeof OrganizationsRoute
+  '/profile': typeof ProfileRoute
   '/upgrade': typeof UpgradeRoute
   '/checkin/$eventId': typeof CheckinEventIdRoute
   '/events/$eventId': typeof EventsEventIdRoute
@@ -94,6 +102,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/members': typeof MembersRoute
   '/organizations': typeof OrganizationsRoute
+  '/profile': typeof ProfileRoute
   '/upgrade': typeof UpgradeRoute
   '/checkin/$eventId': typeof CheckinEventIdRoute
   '/events/$eventId': typeof EventsEventIdRoute
@@ -107,6 +116,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/members'
     | '/organizations'
+    | '/profile'
     | '/upgrade'
     | '/checkin/$eventId'
     | '/events/$eventId'
@@ -118,6 +128,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/members'
     | '/organizations'
+    | '/profile'
     | '/upgrade'
     | '/checkin/$eventId'
     | '/events/$eventId'
@@ -129,6 +140,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/members'
     | '/organizations'
+    | '/profile'
     | '/upgrade'
     | '/checkin/$eventId'
     | '/events/$eventId'
@@ -141,6 +153,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   MembersRoute: typeof MembersRoute
   OrganizationsRoute: typeof OrganizationsRoute
+  ProfileRoute: typeof ProfileRoute
   UpgradeRoute: typeof UpgradeRoute
   CheckinEventIdRoute: typeof CheckinEventIdRoute
   EventsEventIdRoute: typeof EventsEventIdRoute
@@ -154,6 +167,13 @@ declare module '@tanstack/react-router' {
       path: '/upgrade'
       fullPath: '/upgrade'
       preLoaderRoute: typeof UpgradeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profile': {
+      id: '/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ProfileRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/organizations': {
@@ -221,6 +241,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   MembersRoute: MembersRoute,
   OrganizationsRoute: OrganizationsRoute,
+  ProfileRoute: ProfileRoute,
   UpgradeRoute: UpgradeRoute,
   CheckinEventIdRoute: CheckinEventIdRoute,
   EventsEventIdRoute: EventsEventIdRoute,
