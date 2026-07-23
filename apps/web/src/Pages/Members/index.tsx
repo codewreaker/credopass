@@ -281,9 +281,9 @@ export default function MembersPage() {
   const iconSize = isMobile ? 12 : 18;
 
   return (
-    <div className="flex flex-col md:h-full">
-      {/* Header */}
-      <div className="pb-2">
+    <div className="flex flex-col h-full min-h-0">
+      {/* Fixed header + stats */}
+      <div className="pb-2 shrink-0">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-foreground">Members</h1>
@@ -334,8 +334,8 @@ export default function MembersPage() {
         </div>
       </div>
 
-      {/* Tier filter — compact segmented control */}
-      <div className="flex items-center justify-between gap-3 py-3">
+      {/* Fixed tier filter — compact segmented control */}
+      <div className="flex items-center justify-between gap-3 py-3 shrink-0 border-b border-border/60">
         <div className="inline-flex items-center gap-0.5 rounded-full border border-border bg-card p-1 overflow-x-auto">
           <button
             type="button"
@@ -372,8 +372,8 @@ export default function MembersPage() {
         </span>
       </div>
 
-      {/* Member card grid */}
-      <div className="md:flex-1 md:overflow-auto pb-4">
+      {/* Scrollable member list */}
+      <div className="flex-1 overflow-auto min-h-0 pt-3 pb-4">
         {filteredMembers.length === 0 ? (
           <div className="flex items-center justify-center h-full">
             <EmptyState

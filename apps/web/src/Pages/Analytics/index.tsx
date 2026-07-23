@@ -400,7 +400,7 @@ const Analytics: React.FC = () => {
             </div>
           </CardHeader>
           <CardContent className="p-2 md:p-4">
-            <ChartContainer config={pillBarConfig} className="w-full aspect-auto" style={{ height: isMobile ? 200 : 260 }}>
+            <ChartContainer config={pillBarConfig} className="w-full !block !aspect-auto" style={{ height: isMobile ? 200 : 260 }}>
               <BarChart data={weeklyCheckIns} margin={{ top: 24, right: 8, left: -22, bottom: 0 }} barCategoryGap="28%">
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" vertical={false} />
                   <XAxis dataKey="day" fontSize={10} tickLine={false} axisLine={false} tick={{ fill: 'var(--chart-axis)' }} />
@@ -448,7 +448,7 @@ const Analytics: React.FC = () => {
             </div>
           </CardHeader>
           <CardContent className="p-2 md:p-4">
-            <ChartContainer config={mixConfig} className="w-full aspect-auto" style={{ height: isMobile ? 210 : 260 }}>
+            <ChartContainer config={mixConfig} className="w-full !block !aspect-auto" style={{ height: isMobile ? 210 : 260 }}>
               <BarChart data={monthlyMix} margin={{ top: 8, right: 8, left: -22, bottom: 0 }} barCategoryGap="34%">
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" vertical={false} />
                   <XAxis dataKey="month" fontSize={10} tickLine={false} axisLine={false} tick={{ fill: 'var(--chart-axis)' }} />
