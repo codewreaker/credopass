@@ -7,7 +7,7 @@ import { launchEventForm } from '../../containers/EventForm/index';
 import EventListView from './EventListView';
 import EventCalendar from '@credopass/ui/components/event-calendar';
 import { STATUS_MAPPING } from '@credopass/ui/components/event-row';
-import { CalendarPlus, CalendarsIcon, ListFilterPlus, TimerIcon, FastForward, MapPin, Users, Clock, ScanLine, ArrowUpRight, Plus } from 'lucide-react';
+import { CalendarPlus, CalendarsIcon, ListFilterPlus, TimerIcon, FastForward, MapPin, Users, Clock, ScanLine, ArrowUpRight, Plus, ChevronUp, ChevronDown } from 'lucide-react';
 import { useNavigate } from '@tanstack/react-router';
 import { useStatusFilter, useToolbarContext } from '@credopass/lib/hooks';
 import type { EventTypeFilters } from '@credopass/lib/hooks';
@@ -29,6 +29,8 @@ import { Button } from '@credopass/ui/components/button';
 const handleDeleteEvent = (eventId: string) => handleCollectionDeleteById('events', eventId);
 
 /** Lime spotlight hero — surfaces the next ongoing/scheduled event with quick actions. */
+const HERO_COLLAPSED_KEY = 'credopass:events-hero-collapsed';
+
 const HeroSpotlight = ({
     nextEvent,
     stats,
@@ -39,8 +41,39 @@ const HeroSpotlight = ({
     onCreateEvent: () => void;
 }) => {
     const navigate = useNavigate();
+    const [collapsed, setCollapsed] = useState<boolean>(() => {
+        try { return localStorage.getItem(HERO_COLLAPSED_KEY) === '1'; } catch { return false; }
+    });
+    const toggleCollapsed = () => {
+        setCollapsed((prev) => {
+            try { localStorage.setItem(HERO_COLLAPSED_KEY, prev ? '0' : '1'); } catch { /* noop */ }
+            return !prev;
+        });
+    };
     const startDate = nextEvent?.startTime ? new Date(nextEvent.startTime) : null;
     const isLive = nextEvent?.status === 'ongoing';
+
+    // Minimized: a compact strip that reads like the other rows
+    if (collapsed && nextEvent) {
+        return (
+            <button
+                type="button"
+                onClick={toggleCollapsed}
+                className="group flex w-full items-center gap-3 rounded-xl bg-primary text-primary-foreground px-4 py-2.5 shrink-0 cursor-pointer transition-all duration-200 hover:brightness-105 text-left"
+            >
+                <span className="rounded-full bg-primary-foreground/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.12em] shrink-0">
+                    {isLive ? 'Live' : 'Up next'}
+                </span>
+                <span className="text-sm font-semibold truncate flex-1">{nextEvent.name}</span>
+                {startDate && (
+                    <span className="text-[11px] font-medium text-primary-foreground/70 tabular-nums shrink-0 hidden sm:inline">
+                        {startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} · {startDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+                    </span>
+                )}
+                <ChevronDown size={14} className="shrink-0 text-primary-foreground/60 group-hover:text-primary-foreground transition-colors" />
+            </button>
+        );
+    }
 
     const statBlocks = (
         <div className="hidden xl:flex items-stretch gap-4 lg:gap-6 shrink-0">
@@ -60,6 +93,16 @@ const HeroSpotlight = ({
     return (
         <div className="relative overflow-hidden rounded-2xl bg-primary text-primary-foreground p-5 lg:p-6 shrink-0">
             <div className="pointer-events-none absolute -right-14 -top-14 size-44 rounded-full border-[18px] border-primary-foreground/6" />
+            {nextEvent && (
+                <button
+                    type="button"
+                    onClick={toggleCollapsed}
+                    aria-label="Minimize spotlight"
+                    className="absolute top-3 right-3 z-20 flex size-7 items-center justify-center rounded-full bg-primary-foreground/10 text-primary-foreground/70 hover:bg-primary-foreground/20 hover:text-primary-foreground transition-colors duration-150 cursor-pointer"
+                >
+                    <ChevronUp size={14} />
+                </button>
+            )}
 
             {nextEvent ? (
                 <div className="relative z-10 flex flex-col md:flex-row md:items-center gap-4 md:gap-6">
@@ -107,7 +150,7 @@ const HeroSpotlight = ({
                         <div className="flex items-center gap-2.5 mt-4">
                             <button
                                 type="button"
-                                onClick={() => navigate({ to: '/checkin' })}
+                                onClick={() => navigate({ to: '/checkin/$eventId', params: { eventId: nextEvent.id } })}
                                 className="inline-flex items-center gap-2 whitespace-nowrap rounded-full bg-primary-foreground text-primary px-4 h-9 text-[13px] font-semibold cursor-pointer transition-transform duration-150 hover:scale-[1.02] active:scale-[0.98]"
                             >
                                 <ScanLine size={14} />
@@ -336,13 +379,13 @@ const EventsPage = () => {
                 {enableActions && <ActionCards />}
                 <Separator className={'my-4 bg-gradient-to-r from-transparent via-muted to-transparent'} />
                 <div className={`flex gap-4 md:h-[calc(100vh-274px)] ${enableActions ? 'h-[calc(100vh-420px)]' : 'h-[calc(100vh-320px)]'}`}>
-                    <div className='w-full md:w-2/3 md:border-r md:pr-4 flex flex-col gap-4 min-h-0'>
-                        <HeroSpotlight
-                            nextEvent={nextEvent}
-                            stats={heroStats}
-                            onCreateEvent={handleCreateEvent}
-                        />
-                        <div className='flex-1 min-h-0'>
+                    <div className='w-full md:w-2/3 md:border-r md:pr-4 min-h-0'>
+                        <div className='h-full overflow-auto flex flex-col gap-4'>
+                            <HeroSpotlight
+                                nextEvent={nextEvent}
+                                stats={heroStats}
+                                onCreateEvent={handleCreateEvent}
+                            />
                             <EventListView
                                 events={filteredEvents}
                                 onCreateEvent={handleCreateEvent}

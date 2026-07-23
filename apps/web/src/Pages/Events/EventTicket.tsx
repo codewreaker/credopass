@@ -2,7 +2,6 @@ import { FC, useState, useRef, useCallback } from 'react'
 import { EventType } from '@credopass/lib/schemas';
 import {
     MapPin,
-    CalendarPlus as CalIcon,
     UserPlus as PeopleIcon,
     Download,
     ChevronDown,
@@ -26,54 +25,18 @@ export const mapStatusToBadgeVariant = (status: EventType['status']): 'default' 
     }
 };
 
-// Gradient SVG placeholder for event image (React Bits style)
+// Placeholder image: brand SVG rendered as a translucent silhouette mask
 const ImagePlaceholder: FC<{ className?: string }> = ({ className }) => (
-    <div className={cn("relative overflow-hidden rounded-2xl bg-gradient-to-br from-secondary via-muted to-secondary", className)}>
-        <svg
-            className="absolute inset-0 w-full h-full"
-            viewBox="0 0 400 200"
-            preserveAspectRatio="xMidYMid slice"
-        >
-            <defs>
-                <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="var(--primary)" stopOpacity="0.15" />
-                    <stop offset="50%" stopColor="var(--primary)" stopOpacity="0.05" />
-                    <stop offset="100%" stopColor="var(--card)" stopOpacity="0" />
-                </linearGradient>
-                <linearGradient id="grad2" x1="100%" y1="0%" x2="0%" y2="100%">
-                    <stop offset="0%" stopColor="var(--primary)" stopOpacity="0.1" />
-                    <stop offset="100%" stopColor="transparent" stopOpacity="0" />
-                </linearGradient>
-                <filter id="glow">
-                    <feGaussianBlur stdDeviation="3" result="coloredBlur" />
-                    <feMerge>
-                        <feMergeNode in="coloredBlur" />
-                        <feMergeNode in="SourceGraphic" />
-                    </feMerge>
-                </filter>
-            </defs>
-            {/* Background gradient shapes */}
-            <ellipse cx="350" cy="30" rx="120" ry="80" fill="url(#grad1)" />
-            <ellipse cx="50" cy="170" rx="100" ry="60" fill="url(#grad2)" />
-            {/* Animated circles */}
-            <circle cx="300" cy="100" r="40" fill="var(--primary)" fillOpacity="0.03" filter="url(#glow)">
-                <animate attributeName="r" values="40;50;40" dur="4s" repeatCount="indefinite" />
-            </circle>
-            <circle cx="100" cy="80" r="25" fill="var(--primary)" fillOpacity="0.05" filter="url(#glow)">
-                <animate attributeName="r" values="25;35;25" dur="3s" repeatCount="indefinite" />
-            </circle>
-            {/* Grid pattern */}
-            <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
-                <path d="M 20 0 L 0 0 0 20" fill="none" stroke="var(--primary)" strokeWidth="0.3" strokeOpacity="0.1" />
-            </pattern>
-            <rect width="100%" height="100%" fill="url(#grid)" />
-        </svg>
-        {/* Centered icon placeholder */}
-        <div className="absolute inset-0 flex items-center justify-center">
-            <div className="p-4 rounded-full bg-muted/50 backdrop-blur-sm">
-                <CalIcon size={32} className="text-primary/40" />
-            </div>
-        </div>
+    <div className={cn("relative overflow-hidden rounded-2xl bg-muted/40 border border-border", className)}>
+        <div
+            aria-hidden
+            className="absolute inset-4 bg-primary/25"
+            style={{
+                content: 'url(/empty-state-two.svg)',
+                WebkitMaskImage: 'url(/empty-state-two.svg)',
+                maskImage: 'url(/empty-state-two.svg)',
+            }}
+        />
     </div>
 );
 
@@ -179,18 +142,18 @@ export const EventTicket: FC<{
                 ref={ticketRef}
                 className="rounded-3xl overflow-visible shadow-2xl shadow-black/70 relative"
             >
-                {/* ── Lime hero section ── */}
-                <div className="relative bg-primary text-primary-foreground px-6 pt-6 pb-7 rounded-t-3xl overflow-hidden">
-                    <div className="pointer-events-none absolute -right-14 -top-14 size-44 rounded-full border-[18px] border-primary-foreground/8" />
+                {/* ── Hero section ── */}
+                <div className="relative bg-linear-to-br from-card via-secondary to-primary/10 border border-b-0 border-border px-6 pt-6 pb-7 rounded-t-3xl overflow-hidden">
+                    <div className="pointer-events-none absolute -right-14 -top-14 size-44 rounded-full border-[18px] border-primary/6" />
 
                     {/* Header row: ticket id + status + download */}
                     <div className="flex justify-between items-center mb-5 relative z-10">
                         <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-bold font-mono tracking-widest text-primary-foreground/60">TICKET</span>
-                            <span className="text-[10px] font-mono tracking-widest text-primary-foreground/40">#{ticketEvent.id?.slice(0, 8).toUpperCase()}</span>
+                            <span className="text-[10px] font-bold font-mono tracking-widest text-muted-foreground">TICKET</span>
+                            <span className="text-[10px] font-mono tracking-widest text-muted-foreground/60">#{ticketEvent.id?.slice(0, 8).toUpperCase()}</span>
                         </div>
                         <div className="flex items-center gap-2">
-                            <span className="inline-flex items-center gap-1.5 rounded-full bg-primary-foreground text-primary px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em]">
+                            <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 border border-primary/25 text-primary px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em]">
                                 <span className="size-1.5 rounded-full bg-primary" />
                                 {ticketEvent.status}
                             </span>
@@ -200,7 +163,7 @@ export const EventTicket: FC<{
                                 disabled={isDownloading}
                                 className={cn(
                                     "ticket-download-btn flex size-8 items-center justify-center rounded-full",
-                                    "bg-primary-foreground/10 hover:bg-primary-foreground/20 transition-colors duration-150 cursor-pointer",
+                                    "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors duration-150 cursor-pointer",
                                     isDownloading && "opacity-50 cursor-not-allowed"
                                 )}
                                 aria-label="Download ticket as calendar file"
@@ -211,7 +174,7 @@ export const EventTicket: FC<{
                     </div>
 
                     {/* Event name */}
-                    <h1 className="relative z-10 text-[1.9rem] font-black leading-[0.98] tracking-tight mb-4">
+                    <h1 className="relative z-10 text-[1.9rem] font-black text-foreground leading-[0.98] tracking-tight mb-4">
                         {ticketEvent.name}
                     </h1>
 
@@ -228,7 +191,7 @@ export const EventTicket: FC<{
                 </div>
 
                 {/* Perforated divider */}
-                <div className="relative h-px bg-primary">
+                <div className="relative h-px bg-muted">
                     <TicketDivider />
                 </div>
 

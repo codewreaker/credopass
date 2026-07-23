@@ -83,7 +83,7 @@ const CommandPalette: React.FC<{
 
   useHotkey('Mod+I', (event) => {
     event.preventDefault();
-    handleNavigate('/checkin');
+    handleNavigate('/events');
   });
 
   useHotkey('Mod+M', (event) => {
@@ -149,7 +149,7 @@ const CommandPalette: React.FC<{
         <CommandSeparator />
 
         <CommandGroup heading="Navigation">
-          <CommandItem onSelect={() => handleNavigate('/checkin')} className="command-palette-item">
+          <CommandItem onSelect={() => handleNavigate('/events')} className="command-palette-item">
             <QrCode className="command-palette-item-icon" />
             <span>Check-In</span>
             <CommandShortcut>{'⌘I'}</CommandShortcut>

@@ -19,7 +19,8 @@
   padding: 1rem 1.25rem;
   flex: 1;
   overflow-y: auto;
-  max-height: calc(100vh - 8rem);
+  max-height: calc(100dvh - 8rem);
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
 }
 
 .right-sheet-footer {

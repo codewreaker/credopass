@@ -58,7 +58,7 @@ const EventListView: React.FC<EventListViewProps> = ({
     // Show empty state ONLY if there are no ongoing or upcoming events
     // (past/completed events don't count toward having "active" events)
     return (
-        <div className="event-list h-full overflow-auto">
+        <div className="event-list">
             {!hasOngoingOrUpcoming && (<div className="flex items-center justify-center py-0">
                 <EmptyState
                     iconUrl={randomizeImage()}

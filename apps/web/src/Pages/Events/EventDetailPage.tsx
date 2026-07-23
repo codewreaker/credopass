@@ -140,7 +140,7 @@ function EventDetailPage() {
 
             {/* Main Content Grid */}
             <div className="flex-1 px-4 lg:px-8 pb-10 max-w-7xl mx-auto w-full">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 lg:gap-8 lg:items-stretch">
 
                     {/* LEFT: TICKET */}
                     <EventTicket
@@ -149,9 +149,12 @@ function EventDetailPage() {
                         onCheckin={handleCheckin}
                     />
 
-                    {/* RIGHT: Info */}
-                    <div className="space-y-4">
-                        <EventDetailsReadonly event={event} />
+                    {/* RIGHT: map — attached under the ticket on mobile, fills the column on lg+ */}
+                    <div className="-mt-5 lg:mt-0 lg:h-full">
+                        <EventDetailsReadonly
+                            event={event}
+                            className="rounded-t-none border-t-0 pt-7 lg:pt-2 lg:rounded-t-xl lg:border-t"
+                        />
                     </div>
                 </div>
             </div>
