@@ -25,7 +25,6 @@ import {
 } from '@credopass/ui/components/command';
 
 import { launchSignInForm } from '../SignInModal/index';
-import { launchUserForm } from '../UserForm/index';
 import type { LauncherState } from '@credopass/lib/stores';
 import { useNavigate } from '@tanstack/react-router';
 
@@ -52,8 +51,8 @@ const CommandPalette: React.FC<{
 
   const handleNewMember = useCallback(() => {
     onClose();
-    launchUserForm({ isEditing: false }, openLauncher);
-  }, [onClose, openLauncher]);
+    navigate({ to: '/members/new' });
+  }, [onClose, navigate]);
 
   const handleSignIn = useCallback(() => {
     onClose();

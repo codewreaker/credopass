@@ -6,8 +6,6 @@ import {
     CalendarsIcon,
     Building2
 } from 'lucide-react';
-import { useLauncher } from '@credopass/lib/stores';
-import { launchUserForm } from '../UserForm';
 import { useSidebarTrigger } from '../../../../../packages/lib/src/hooks/use-sidebar-trigger';
 import { useIsMobile } from '@credopass/ui/hooks/use-mobile';
 import { useNavigate } from '@tanstack/react-router';
@@ -46,7 +44,6 @@ const ACTION_CARDS = [
 
 export default function ActionCards() {
     const { onToggleCollapse } = useSidebarTrigger();
-    const { openLauncher, closeLauncher } = useLauncher();
     const isMobile = useIsMobile();
     const navigate = useNavigate();
 
@@ -57,7 +54,7 @@ export default function ActionCards() {
                     navigate({ to: '/events/new' });
                     break;
                 case 'add-members':
-                    launchUserForm({ isEditing: false }, openLauncher, closeLauncher);
+                    navigate({ to: '/members/new' });
                     break;
                 case 'show-calendar':
                     onToggleCollapse();
@@ -67,7 +64,7 @@ export default function ActionCards() {
                     break
             }
         },
-        [openLauncher, closeLauncher, onToggleCollapse, navigate],
+        [onToggleCollapse, navigate],
     );
 
     const actionCards = useMemo(() => (isMobile ? ACTION_CARDS : ACTION_CARDS.filter(({ key }) => (key !== 'calendar'))), [isMobile])

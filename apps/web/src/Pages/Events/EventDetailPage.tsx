@@ -7,6 +7,7 @@ import {
     ArrowLeft,
     ScanQrCodeIcon,
     Edit2,
+    UserPlus,
 } from 'lucide-react';
 import { useToolbarContext } from '@credopass/lib/hooks';
 import './event-detail.css';
@@ -76,6 +77,9 @@ function EventDetailPage() {
         navigate({ to: '/events/$eventId/edit', params: { eventId } });
     };
 
+    // Members only exist on an event, so the composer opens already bound to this one.
+    const handleAddMember = () => navigate({ to: '/members/new', search: { eventId } });
+
     // `isLoading` only covers the live query settling. A row can also be missing
     // simply because the collection is mid-refetch (right after creating an
     // event, for instance), so keep showing the spinner rather than flashing
@@ -118,6 +122,11 @@ function EventDetailPage() {
                 </Button>
 
                 <div className="flex-1" />
+
+                <Button variant="outline" size="sm" onClick={handleAddMember} className="gap-2">
+                    <UserPlus size={14} />
+                    <span className="hidden sm:inline">Add member</span>
+                </Button>
 
                 <Button variant="outline" size="sm" onClick={handleEdit} className="gap-2">
                     <Edit2 size={14} />

@@ -1,27 +1,27 @@
-import React, { useCallback, useState, useMemo } from "react";
-import { useLiveQuery } from '@tanstack/react-db'
-import { type UserType, User } from '@credopass/lib/schemas'
+import React, { useCallback, useMemo, useState } from 'react';
+import { useLiveQuery } from '@tanstack/react-db';
+import { useNavigate } from '@tanstack/react-router';
 import { getCollections } from '@credopass/api-client/collections';
-
+import type { AttendanceType, EventMember, EventType, UserType } from '@credopass/lib/schemas';
 import {
-  UserPlus,
-  Star,
-  Trophy,
   Calendar,
-  MoreHorizontal,
-  Trash2,
+  CalendarClock,
+  CheckCircle2,
+  ChevronRight,
   Edit,
   Eye,
-  ChevronRight,
-  LayoutGrid
-} from "lucide-react";
-import { useLauncher, useAppStore } from '@credopass/lib/stores';
-import { launchUserForm } from '../../containers/UserForm/index';
+  LayoutGrid,
+  MoreHorizontal,
+  Trash2,
+  UserPlus,
+  Users,
+  XCircle,
+} from 'lucide-react';
+import { useAppStore } from '@credopass/lib/stores';
 import { EmptyState } from '@credopass/ui/components/empty-state';
 import { Skeleton } from '@credopass/ui/components/skeleton';
 import { useToolbarContext } from '@credopass/lib/hooks';
 import { Avatar, AvatarFallback, AvatarImage } from '@credopass/ui/components/avatar';
-import { Badge } from '@credopass/ui/components/badge';
 import { Button } from '@credopass/ui/components/button';
 import { Card } from '@credopass/ui/components/card';
 import {
@@ -32,91 +32,139 @@ import {
   DropdownMenuTrigger,
 } from '@credopass/ui/components/dropdown-menu';
 import { cn } from '@credopass/ui/lib/utils';
-import { useIsMobile } from "@credopass/ui/hooks/use-mobile";
-import { UpgradeCTA } from '@credopass/ui/components/upgrade-cta';
-import { useNavigate } from '@tanstack/react-router';
 
-// Tier configuration with colors
-const TIER_CONFIG: Record<string, { color: string; bgColor: string; borderColor: string; icon: typeof Star; label: string }> = {
-  bronze: { color: 'text-tier-bronze', bgColor: 'bg-tier-bronze/10', borderColor: 'border-tier-bronze/30', icon: Star, label: 'Bronze' },
-  silver: { color: 'text-tier-silver', bgColor: 'bg-tier-silver/10', borderColor: 'border-tier-silver/30', icon: Star, label: 'Silver' },
-  gold: { color: 'text-tier-gold', bgColor: 'bg-tier-gold/10', borderColor: 'border-tier-gold/30', icon: Trophy, label: 'Gold' },
-  platinum: { color: 'text-tier-platinum', bgColor: 'bg-tier-platinum/10', borderColor: 'border-tier-platinum/30', icon: Trophy, label: 'Platinum' },
+/**
+ * The members section answers two questions: who has turned up to our past
+ * events, and who is signed up for an upcoming one. The scope switcher is
+ * therefore a list of events (plus "All"), not a list of people attributes —
+ * a member only means anything relative to an event.
+ */
+
+/** How a person relates to the event currently in scope. */
+type Standing = 'attended' | 'no-show' | 'signed-up' | 'member';
+
+const STANDING_CONFIG: Record<Standing, { label: string; className: string; icon: typeof Users }> = {
+  attended: {
+    label: 'Attended',
+    className: 'bg-success/10 text-success',
+    icon: CheckCircle2,
+  },
+  'no-show': {
+    label: 'No-show',
+    className: 'bg-destructive/10 text-destructive',
+    icon: XCircle,
+  },
+  'signed-up': {
+    label: 'Signed up',
+    className: 'bg-primary/10 text-primary',
+    icon: CalendarClock,
+  },
+  member: {
+    label: 'Member',
+    className: 'bg-muted text-muted-foreground',
+    icon: Users,
+  },
 };
 
-const TIER_KEYS = Object.keys(TIER_CONFIG);
-
-// Member card — one design across phone, tablet and desktop
-interface MemberCardProps {
-  member: UserType;
-  onEdit: (member: UserType) => void;
-  onDelete: (member: UserType) => void;
-  onView: (member: UserType) => void;
+interface MemberRow {
+  user: UserType;
+  standing: Standing;
+  /** How many of your events this person has actually attended. */
+  eventsAttended: number;
+  /** Set when the row is scoped to one event. */
+  checkInTime?: Date | null;
+  role?: string;
 }
 
-const MemberCard: React.FC<MemberCardProps> = ({ member, onEdit, onDelete, onView }) => {
-  const tier = (member as any).tier || 'bronze';
-  const points = (member as any).points || 0;
-  const tierConfig = TIER_CONFIG[tier] || TIER_CONFIG.bronze;
-  const TierIcon = tierConfig.icon;
-  const initials = `${member.firstName?.charAt(0) || ''}${member.lastName?.charAt(0) || ''}`.toUpperCase() || 'U';
-  const fullName = `${member.firstName || ''} ${member.lastName || ''}`.trim() || 'Unknown User';
-  const joined = (member as any).createdAt
-    ? new Date((member as any).createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
-    : null;
+const MemberCard: React.FC<{
+  row: MemberRow;
+  onEdit: (user: UserType) => void;
+  onDelete: (user: UserType) => void;
+  onView: (user: UserType) => void;
+}> = ({ row, onEdit, onDelete, onView }) => {
+  const { user, standing, eventsAttended, checkInTime, role } = row;
+  const initials =
+    `${user.firstName?.charAt(0) || ''}${user.lastName?.charAt(0) || ''}`.toUpperCase() || 'U';
+  const fullName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Unknown User';
+  const config = STANDING_CONFIG[standing];
+  const StandingIcon = config.icon;
 
   return (
     <Card
-      onClick={() => onView(member)}
-      className="group relative rounded-none border-0 p-4 cursor-pointer transition-all duration-200 hover:bg-muted/40 hover:shadow-elevation-1 active:scale-[0.995]"
+      onClick={() => onView(user)}
+      className="group relative cursor-pointer rounded-none border-0 p-4 transition-all duration-200 hover:bg-muted/40 hover:shadow-elevation-1 active:scale-[0.995]"
     >
       <div className="flex items-center gap-3">
         <Avatar size="default" className="shrink-0">
-          <AvatarImage src={(member as any).avatarUrl} alt={fullName} />
+          <AvatarImage src={(user as { avatarUrl?: string }).avatarUrl} alt={fullName} />
           <AvatarFallback className="text-xs font-semibold">{initials}</AvatarFallback>
         </Avatar>
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold text-foreground truncate leading-tight">{fullName}</p>
-          <p className="text-xs text-muted-foreground truncate mt-0.5">{member.email || 'No email'}</p>
+          <p className="truncate text-sm font-semibold leading-tight text-foreground">{fullName}</p>
+          <p className="mt-0.5 truncate text-xs text-muted-foreground">{user.email || 'No email'}</p>
         </div>
 
         {/* Inline meta — tablet and up */}
-        <div className="hidden sm:flex items-center gap-3 shrink-0">
-          {joined && (
-            <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground/70 tabular-nums">
+        <div className="hidden shrink-0 items-center gap-3 sm:flex">
+          {checkInTime && (
+            <span className="inline-flex items-center gap-1 text-[11px] tabular-nums text-muted-foreground/70">
               <Calendar size={10} />
-              {joined}
+              {new Date(checkInTime).toLocaleTimeString('en-US', {
+                hour: 'numeric',
+                minute: '2-digit',
+              })}
             </span>
           )}
-          <span className="inline-flex items-center gap-1 text-[11px] font-medium text-muted-foreground tabular-nums">
-            <Star size={10} className="text-primary" />
-            {points.toLocaleString()} pts
+          {role && (
+            <span className="text-[11px] font-medium capitalize text-muted-foreground">{role}</span>
+          )}
+          <span className="inline-flex items-center gap-1 text-[11px] font-medium tabular-nums text-muted-foreground">
+            <Users size={10} className="text-primary" />
+            {eventsAttended} attended
           </span>
-          <span className={cn('inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold capitalize', tierConfig.bgColor, tierConfig.color)}>
-            <TierIcon size={9} />
-            {tierConfig.label}
+          <span
+            className={cn(
+              'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold',
+              config.className
+            )}
+          >
+            <StandingIcon size={9} />
+            {config.label}
           </span>
-          <ChevronRight size={13} className="text-muted-foreground/30 group-hover:text-primary transition-colors" />
+          <ChevronRight
+            size={13}
+            className="text-muted-foreground/30 transition-colors group-hover:text-primary"
+          />
         </div>
 
-        <div onClick={(e) => e.stopPropagation()} className="shrink-0 -mr-1.5">
+        <div onClick={(e) => e.stopPropagation()} className="-mr-1.5 shrink-0">
           <DropdownMenu>
-            <DropdownMenuTrigger render={(props) => (
-              <Button {...props} variant="ghost" size="icon-xs" className="text-muted-foreground/50 hover:text-foreground">
-                <MoreHorizontal size={14} />
-              </Button>
-            )} />
+            <DropdownMenuTrigger
+              render={(props) => (
+                <Button
+                  {...props}
+                  variant="ghost"
+                  size="icon-xs"
+                  className="text-muted-foreground/50 hover:text-foreground"
+                >
+                  <MoreHorizontal size={14} />
+                </Button>
+              )}
+            />
             <DropdownMenuContent align="end" className="w-40">
-              <DropdownMenuItem onClick={() => onView(member)} className="gap-2">
+              <DropdownMenuItem onClick={() => onView(user)} className="gap-2">
                 <Eye size={14} />
                 View Profile
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onEdit(member)} className="gap-2">
+              <DropdownMenuItem onClick={() => onEdit(user)} className="gap-2">
                 <Edit size={14} />
                 Edit
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => onDelete(member)} className="gap-2 text-destructive focus:text-destructive">
+              <DropdownMenuItem
+                onClick={() => onDelete(user)}
+                className="gap-2 text-destructive focus:text-destructive"
+              >
                 <Trash2 size={14} />
                 Delete
               </DropdownMenuItem>
@@ -126,77 +174,87 @@ const MemberCard: React.FC<MemberCardProps> = ({ member, onEdit, onDelete, onVie
       </div>
 
       {/* Mobile meta row */}
-      <div className="sm:hidden flex items-center gap-2 mt-3.5 pt-3 border-t border-border/60">
-        <span className={cn('inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold capitalize', tierConfig.bgColor, tierConfig.color)}>
-          <TierIcon size={9} />
-          {tierConfig.label}
+      <div className="mt-3.5 flex items-center gap-2 border-t border-border/60 pt-3 sm:hidden">
+        <span
+          className={cn(
+            'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold',
+            config.className
+          )}
+        >
+          <StandingIcon size={9} />
+          {config.label}
         </span>
-        <span className="inline-flex items-center gap-1 text-[11px] font-medium text-muted-foreground tabular-nums">
-          <Star size={10} className="text-primary" />
-          {points.toLocaleString()} pts
+        <span className="inline-flex items-center gap-1 text-[11px] font-medium tabular-nums text-muted-foreground">
+          <Users size={10} className="text-primary" />
+          {eventsAttended} attended
         </span>
-        {joined && (
-          <span className="ml-auto inline-flex items-center gap-1 text-[11px] text-muted-foreground/70 tabular-nums">
-            <Calendar size={10} />
-            {joined}
+        {role && (
+          <span className="ml-auto text-[11px] font-medium capitalize text-muted-foreground">
+            {role}
           </span>
         )}
-        <ChevronRight size={13} className="text-muted-foreground/30 shrink-0" />
+        <ChevronRight size={13} className="shrink-0 text-muted-foreground/30" />
       </div>
     </Card>
   );
 };
 
-// Stats Card Component
-const StatsCard: React.FC<{
-  label: string; value: string | number; icon: React.ReactNode; trend?: string
-  className?: string
-}> = ({
-  label, value, icon, trend, className
-}) => (
-    <Card className={cn("p-2.5 md:p-4 flex flex-row items-center gap-2.5 md:gap-4", className)}>
-      <div className="p-2 md:p-2.5 rounded-lg md:rounded-xl bg-primary/10 shrink-0">
-        {icon}
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-base md:text-2xl font-bold tracking-tight text-foreground truncate tabular-nums leading-tight">{value}</p>
-        <p className="text-[11px] md:text-xs text-muted-foreground truncate">{label}</p>
-      </div>
-      {trend && (
-        <Badge variant="secondary" className="text-xs hidden md:inline-flex">
-          {trend}
-        </Badge>
-      )}
-    </Card>
-  );
+const asArray = <T,>(data: unknown): T[] => (Array.isArray(data) ? (data as T[]) : []);
 
 export default function MembersPage() {
-  const { users: userCollection } = getCollections();
-  const { data, isLoading } = useLiveQuery((q) => q.from({ userCollection }));
+  const {
+    users: userCollection,
+    events: eventCollection,
+    attendance: attendanceCollection,
+    eventMembers: eventMemberCollection,
+  } = getCollections();
+
+  const { data: usersData, isLoading } = useLiveQuery((q) => q.from({ userCollection }));
+  const { data: eventsData } = useLiveQuery((q) => q.from({ eventCollection }));
+  const { data: attendanceData } = useLiveQuery((q) => q.from({ attendanceCollection }));
+  const { data: eventMembersData } = useLiveQuery((q) => q.from({ eventMemberCollection }));
+
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [tierFilter, setTierFilter] = useState<string | null>(null);
+  /** 'all' or an event id. */
+  const [scope, setScope] = useState<string>('all');
 
   const isError = userCollection.utils.isError;
-  const isMobile = useIsMobile();
   const navigate = useNavigate();
-  const rowData: UserType[] = Array.isArray(data) ? data : [];
-  const { openLauncher, closeLauncher } = useLauncher();
+
+  const users = useMemo(() => asArray<UserType>(usersData), [usersData]);
+  const events = useMemo(() => asArray<EventType>(eventsData), [eventsData]);
+  const attendance = useMemo(() => asArray<AttendanceType>(attendanceData), [attendanceData]);
+  const eventMembers = useMemo(() => asArray<EventMember>(eventMembersData), [eventMembersData]);
 
   const handleCreateUser = useCallback(() => {
-    launchUserForm({ isEditing: false }, openLauncher, closeLauncher);
-  }, [openLauncher, closeLauncher]);
+    // Members are added onto an event; without a scope the composer asks for one.
+    navigate({
+      to: '/members/new',
+      search: scope === 'all' ? {} : { eventId: scope },
+    });
+  }, [navigate, scope]);
 
-  const handleEditUser = useCallback((user: UserType) => {
-    launchUserForm({ isEditing: true, initialData: { ...user, phone: user.phone ?? '' } }, openLauncher, closeLauncher);
-  }, [openLauncher, closeLauncher]);
+  const handleEditUser = useCallback(
+    (user: UserType) => {
+      navigate({
+        to: '/members/$userId/edit',
+        params: { userId: user.id },
+        search: scope === 'all' ? {} : { eventId: scope },
+      });
+    },
+    [navigate, scope]
+  );
 
   const setViewedItem = useAppStore((st) => st.setViewedItem);
   const toggleSidebar = useAppStore((st) => st.toggleSidebar);
 
-  const handleViewUser = useCallback((user: UserType) => {
-    setViewedItem({ id: 'profile', content: user });
-    toggleSidebar('right', true);
-  }, [setViewedItem, toggleSidebar]);
+  const handleViewUser = useCallback(
+    (user: UserType) => {
+      setViewedItem({ id: 'profile', content: user });
+      toggleSidebar('right', true);
+    },
+    [setViewedItem, toggleSidebar]
+  );
 
   // Toolbar owns search — no in-page search bar needed
   useToolbarContext({
@@ -204,45 +262,158 @@ export default function MembersPage() {
     search: { enabled: true, placeholder: 'Search members...', onSearch: setSearchQuery },
   });
 
-  const deleteUser = useCallback((user: User) => {
-    userCollection.delete(user.id);
-  }, [userCollection]);
+  const deleteUser = useCallback(
+    (user: UserType) => {
+      userCollection.delete(user.id);
+    },
+    [userCollection]
+  );
 
-  // Filter members by toolbar search query and tier
-  const filteredMembers = useMemo(() => {
-    let result = rowData;
+  const usersById = useMemo(() => new Map(users.map((u) => [u.id, u])), [users]);
 
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      result = result.filter(
-        (m) =>
-          m.firstName?.toLowerCase().includes(q) ||
-          m.lastName?.toLowerCase().includes(q) ||
-          m.email?.toLowerCase().includes(q)
+  /** Attendance totals across every event, used as the trailing meta on each row. */
+  const attendedCountByUser = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const record of attendance) {
+      if (!record.attended) continue;
+      counts.set(record.patronId, (counts.get(record.patronId) ?? 0) + 1);
+    }
+    return counts;
+  }, [attendance]);
+
+  /** Events split into the two things you might want to look at. */
+  const { upcomingEvents, pastEvents } = useMemo(() => {
+    const now = Date.now();
+    const upcoming: EventType[] = [];
+    const past: EventType[] = [];
+    for (const event of events) {
+      const start = event.startTime ? new Date(event.startTime).getTime() : 0;
+      if (event.status === 'ongoing' || (event.status === 'scheduled' && start >= now)) {
+        upcoming.push(event);
+      } else {
+        past.push(event);
+      }
+    }
+    const bySoonest = (a: EventType, b: EventType) =>
+      new Date(a.startTime).getTime() - new Date(b.startTime).getTime();
+    return {
+      upcomingEvents: upcoming.sort(bySoonest),
+      pastEvents: past.sort((a, b) => bySoonest(b, a)),
+    };
+  }, [events]);
+
+  const scopedEvent = useMemo(
+    () => events.find((e) => e.id === scope) ?? null,
+    [events, scope]
+  );
+  const isPastScope = useMemo(
+    () => (scopedEvent ? pastEvents.some((e) => e.id === scopedEvent.id) : false),
+    [pastEvents, scopedEvent]
+  );
+
+  /**
+   * Rows for the current scope. "All" is everyone who has ever attended any of
+   * your programmes; a specific event joins users against its sign-ups and, for
+   * an event that has already run, its attendance records.
+   */
+  const rows = useMemo<MemberRow[]>(() => {
+    const withCounts = (user: UserType, standing: Standing, extra: Partial<MemberRow> = {}) => ({
+      user,
+      standing,
+      eventsAttended: attendedCountByUser.get(user.id) ?? 0,
+      ...extra,
+    });
+
+    if (scope === 'all') {
+      // Everyone who has ever turned up, plus anyone signed up to something.
+      const seen = new Set<string>();
+      const result: MemberRow[] = [];
+
+      for (const [userId] of attendedCountByUser) {
+        const user = usersById.get(userId);
+        if (!user || seen.has(userId)) continue;
+        seen.add(userId);
+        result.push(withCounts(user, 'attended'));
+      }
+
+      for (const membership of eventMembers) {
+        if (seen.has(membership.userId)) continue;
+        const user = usersById.get(membership.userId);
+        if (!user) continue;
+        seen.add(membership.userId);
+        result.push(withCounts(user, 'signed-up', { role: membership.role }));
+      }
+
+      // Anyone else on the books, so the page never hides people entirely.
+      for (const user of users) {
+        if (seen.has(user.id)) continue;
+        seen.add(user.id);
+        result.push(withCounts(user, 'member'));
+      }
+
+      return result;
+    }
+
+    const signUps = eventMembers.filter((m) => m.eventId === scope);
+    const attendanceForEvent = new Map(
+      attendance.filter((a) => a.eventId === scope).map((a) => [a.patronId, a])
+    );
+
+    const result: MemberRow[] = [];
+    const seen = new Set<string>();
+
+    for (const membership of signUps) {
+      const user = usersById.get(membership.userId);
+      if (!user) continue;
+      seen.add(user.id);
+      const record = attendanceForEvent.get(user.id);
+      // A past event distinguishes turned-up from didn't; an upcoming one can't yet.
+      const standing: Standing = record?.attended
+        ? 'attended'
+        : isPastScope
+          ? 'no-show'
+          : 'signed-up';
+      result.push(
+        withCounts(user, standing, { role: membership.role, checkInTime: record?.checkInTime })
       );
     }
 
-    if (tierFilter) {
-      result = result.filter(m => (((m as any).tier || 'bronze') === tierFilter));
+    // Walk-ins: checked in without ever being signed up.
+    for (const [patronId, record] of attendanceForEvent) {
+      if (seen.has(patronId)) continue;
+      const user = usersById.get(patronId);
+      if (!user) continue;
+      result.push(
+        withCounts(user, record.attended ? 'attended' : 'no-show', {
+          checkInTime: record.checkInTime,
+        })
+      );
     }
 
     return result;
-  }, [rowData, searchQuery, tierFilter]);
+  }, [attendance, attendedCountByUser, eventMembers, isPastScope, scope, users, usersById]);
 
-  // Calculate stats
-  const stats = useMemo(() => {
-    const totalMembers = rowData.length;
-    const totalPoints = rowData.reduce((sum, m) => sum + ((m as any).points || 0), 0);
-    const activeMembers = rowData.filter(m => (m as any).totalEvents > 0).length;
-    const avgAttendance = totalMembers > 0
-      ? Math.round(rowData.reduce((sum, m) => sum + ((m as any).totalEvents || 0), 0) / totalMembers)
-      : 0;
-    return { totalMembers, totalPoints, activeMembers, avgAttendance };
-  }, [rowData]);
+  const filteredRows = useMemo(() => {
+    if (!searchQuery.trim()) return rows;
+    const q = searchQuery.toLowerCase();
+    return rows.filter(
+      ({ user }) =>
+        user.firstName?.toLowerCase().includes(q) ||
+        user.lastName?.toLowerCase().includes(q) ||
+        user.email?.toLowerCase().includes(q)
+    );
+  }, [rows, searchQuery]);
+
+  const summary = useMemo(() => {
+    const attended = filteredRows.filter((r) => r.standing === 'attended').length;
+    const signedUp = filteredRows.filter((r) => r.standing === 'signed-up').length;
+    const noShows = filteredRows.filter((r) => r.standing === 'no-show').length;
+    return { attended, signedUp, noShows, total: filteredRows.length };
+  }, [filteredRows]);
 
   if (isLoading) {
     return (
-      <div className="flex flex-col h-full gap-4" aria-busy="true">
+      <div className="flex h-full flex-col gap-4" aria-busy="true">
         <div className="flex items-center justify-between">
           <div className="flex flex-col gap-1.5">
             <Skeleton className="h-6 w-32" />
@@ -250,15 +421,10 @@ export default function MembersPage() {
           </div>
           <Skeleton className="h-9 w-32 rounded-full" />
         </div>
-        <div className="grid grid-cols-6 lg:grid-cols-4 gap-2 md:gap-4">
-          <Skeleton className="col-span-6 lg:col-span-1 h-16 md:h-20 rounded-xl" />
-          {[0, 1, 2].map((i) => (
-            <Skeleton key={i} className="col-span-2 lg:col-span-1 h-14 md:h-20 rounded-xl" />
-          ))}
-        </div>
+        <Skeleton className="h-10 w-full rounded-full" />
         <div className="flex flex-col gap-1.5">
           {[0, 1, 2, 3, 4, 5].map((i) => (
-            <Skeleton key={i} className="h-28 rounded-xl" />
+            <Skeleton key={i} className="h-20 rounded-xl" />
           ))}
         </div>
       </div>
@@ -267,130 +433,155 @@ export default function MembersPage() {
 
   if (isError) {
     return (
-      <div className="flex items-center justify-center h-full p-8">
+      <div className="flex h-full items-center justify-center p-8">
         <EmptyState
           error
           title="Error Loading Members"
           description={`An error occurred while fetching members: ${userCollection.utils.lastError}`}
-          action={{ label: "Retry", onClick: userCollection.utils.refetch }}
+          action={{ label: 'Retry', onClick: userCollection.utils.refetch }}
         />
       </div>
     );
   }
 
-  const iconSize = isMobile ? 12 : 18;
-
   return (
-    <div className="flex flex-col h-full min-h-0">
-      {/* Fixed header + stats */}
-      <div className="pb-2 shrink-0">
-        <div className="flex items-center justify-between mb-4">
-          <div>
+    <div className="flex h-full min-h-0 flex-col">
+      {/* Header + lime billboard summary */}
+      <div className="shrink-0 pb-2">
+        <div className="mb-4 flex items-center justify-between">
+          <div className="min-w-0">
             <h1 className="text-2xl font-bold tracking-tight text-foreground">Members</h1>
-            <p className="text-sm text-muted-foreground">
-              {stats.totalMembers} member{stats.totalMembers === 1 ? '' : 's'} in your community
+            <p className="truncate text-sm text-muted-foreground">
+              {scopedEvent
+                ? `${isPastScope ? 'Who attended' : 'Who is signed up for'} “${scopedEvent.name}”`
+                : 'Everyone who has been to one of your programmes'}
             </p>
           </div>
-          <div className="flex items-center gap-2">
-            <UpgradeCTA size="md" className="hidden lg:inline-flex" onClick={() => navigate({ to: '/upgrade' })} />
-            <Button onClick={handleCreateUser} className="gap-2 rounded-full font-semibold">
-              <UserPlus size={16} />
-              Add Member
-            </Button>
-          </div>
+          <Button onClick={handleCreateUser} className="gap-2 rounded-full font-semibold">
+            <UserPlus size={16} />
+            Add Member
+          </Button>
         </div>
 
-        {/* Stats Row: lime feature stat + tiles */}
-        <div className="grid grid-cols-6 lg:grid-cols-4 gap-2 md:gap-4 py-1">
-          <Card className="col-span-6 lg:col-span-1 relative overflow-hidden border-0 bg-primary text-primary-foreground p-3.5 md:p-4 flex flex-row items-center gap-3 md:gap-4">
-            <div className="pointer-events-none absolute -right-8 -top-8 size-24 rounded-full border-[10px] border-primary-foreground/8" />
-            <div className="p-2.5 rounded-xl bg-primary-foreground text-primary relative z-10">
-              <UserPlus size={iconSize} />
+        <div className="relative overflow-hidden rounded-2xl bg-primary p-4 text-primary-foreground">
+          <div className="pointer-events-none absolute -right-10 -top-10 size-32 rounded-full border-12 border-primary-foreground/8" />
+          <div className="relative z-10 flex items-center gap-6">
+            <div>
+              <p className="text-3xl font-bold tabular-nums leading-none tracking-tight">
+                {summary.total}
+              </p>
+              <p className="mt-1.5 text-[11px] font-medium uppercase tracking-[0.12em] text-primary-foreground/60">
+                {scopedEvent ? 'On this event' : 'People'}
+              </p>
             </div>
-            <div className="flex-1 min-w-0 relative z-10">
-              <p className="text-2xl md:text-3xl font-bold tracking-tight truncate tabular-nums">{stats.totalMembers}</p>
-              <p className="text-[11px] md:text-xs font-medium text-primary-foreground/65 truncate">Total members</p>
+            <div className="flex items-stretch gap-6 border-l border-primary-foreground/15 pl-6">
+              {(scopedEvent && isPastScope
+                ? [
+                    { label: 'Attended', value: summary.attended },
+                    { label: 'No-shows', value: summary.noShows },
+                  ]
+                : [
+                    { label: 'Signed up', value: summary.signedUp },
+                    { label: 'Attended', value: summary.attended },
+                  ]
+              ).map(({ label, value }) => (
+                <div key={label} className="flex flex-col justify-center">
+                  <span className="text-xl font-semibold tabular-nums leading-none">{value}</span>
+                  <span className="mt-1.5 text-[11px] font-medium uppercase tracking-[0.12em] text-primary-foreground/60">
+                    {label}
+                  </span>
+                </div>
+              ))}
             </div>
-          </Card>
-          <StatsCard
-            className="col-span-2 lg:col-span-1"
-            label="Points"
-            value={stats.totalPoints.toLocaleString()}
-            icon={<Star size={iconSize} className="text-primary" />}
-          />
-          <StatsCard
-            className="col-span-2 lg:col-span-1"
-            label="Active"
-            value={stats.activeMembers}
-            icon={<Calendar size={iconSize} className="text-primary" />}
-            trend={`${Math.round((stats.activeMembers / (stats.totalMembers || 1)) * 100)}%`}
-          />
-          <StatsCard
-            className="col-span-2 lg:col-span-1"
-            label="Avg events"
-            value={stats.avgAttendance}
-            icon={<Trophy size={iconSize} className="text-primary" />}
-          />
+          </div>
         </div>
       </div>
 
-      {/* Fixed tier filter — compact segmented control */}
-      <div className="flex items-center justify-between gap-3 py-3 shrink-0 border-b border-border/60">
-        <div className="inline-flex items-center gap-0.5 rounded-full border border-border bg-card p-1 overflow-x-auto">
+      {/* Scope switcher — All, then one chip per event */}
+      <div className="shrink-0 border-b border-border/60 py-3">
+        <div className="flex items-center gap-0.5 overflow-x-auto rounded-full border border-border bg-card p-1">
           <button
             type="button"
-            onClick={() => setTierFilter(null)}
+            onClick={() => setScope('all')}
             className={cn(
-              'inline-flex items-center gap-1.5 rounded-full px-3 h-7 text-[11px] font-semibold whitespace-nowrap cursor-pointer transition-colors duration-150',
-              tierFilter === null ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
+              'inline-flex h-7 shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full px-3 text-[11px] font-semibold transition-colors duration-150',
+              scope === 'all'
+                ? 'bg-primary text-primary-foreground'
+                : 'text-muted-foreground hover:text-foreground'
             )}
           >
             <LayoutGrid size={11} />
             All
           </button>
-          {TIER_KEYS.map((key) => {
-            const config = TIER_CONFIG[key];
-            const active = tierFilter === key;
-            return (
-              <button
-                key={key}
-                type="button"
-                onClick={() => setTierFilter(active ? null : key)}
-                className={cn(
-                  'inline-flex items-center gap-1.5 rounded-full px-3 h-7 text-[11px] font-semibold whitespace-nowrap cursor-pointer transition-colors duration-150',
-                  active ? 'bg-primary text-primary-foreground' : cn('hover:bg-muted/60', config.color)
-                )}
-              >
-                <config.icon size={11} />
-                {config.label}
-              </button>
-            );
-          })}
+
+          {upcomingEvents.length > 0 && (
+            <span className="shrink-0 px-2 text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground/70">
+              Upcoming
+            </span>
+          )}
+          {upcomingEvents.map((event) => (
+            <button
+              key={event.id}
+              type="button"
+              onClick={() => setScope(event.id)}
+              className={cn(
+                'inline-flex h-7 max-w-44 shrink-0 cursor-pointer items-center gap-1.5 truncate whitespace-nowrap rounded-full px-3 text-[11px] font-semibold transition-colors duration-150',
+                scope === event.id
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:text-foreground'
+              )}
+            >
+              <CalendarClock size={11} />
+              {event.name}
+            </button>
+          ))}
+
+          {pastEvents.length > 0 && (
+            <span className="shrink-0 px-2 text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground/70">
+              Past
+            </span>
+          )}
+          {pastEvents.map((event) => (
+            <button
+              key={event.id}
+              type="button"
+              onClick={() => setScope(event.id)}
+              className={cn(
+                'inline-flex h-7 max-w-44 shrink-0 cursor-pointer items-center gap-1.5 truncate whitespace-nowrap rounded-full px-3 text-[11px] font-semibold transition-colors duration-150',
+                scope === event.id
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:text-foreground'
+              )}
+            >
+              <CheckCircle2 size={11} />
+              {event.name}
+            </button>
+          ))}
         </div>
-        <span className="hidden sm:block text-xs text-muted-foreground tabular-nums shrink-0">
-          {filteredMembers.length} shown
-        </span>
       </div>
 
       {/* Scrollable member list */}
-      <div className="flex-1 overflow-auto min-h-0 pt-3 pb-4">
-        {filteredMembers.length === 0 ? (
-          <div className="flex items-center justify-center h-full">
+      <div className="min-h-0 flex-1 overflow-auto pb-4 pt-3">
+        {filteredRows.length === 0 ? (
+          <div className="flex h-full items-center justify-center">
             <EmptyState
-              title={searchQuery || tierFilter ? "No members found" : "No members yet"}
-              description={searchQuery || tierFilter
-                ? "Try adjusting your search or filters"
-                : "Add your first member to start building your community."
+              title={searchQuery ? 'No members found' : 'Nobody here yet'}
+              description={
+                searchQuery
+                  ? 'Try adjusting your search'
+                  : scopedEvent
+                    ? `No one is ${isPastScope ? 'recorded as attending' : 'signed up for'} this event yet.`
+                    : 'Add someone to one of your events to start building your community.'
               }
-              action={!searchQuery && !tierFilter ? { label: "Add Member", onClick: handleCreateUser } : undefined}
+              action={!searchQuery ? { label: 'Add Member', onClick: handleCreateUser } : undefined}
             />
           </div>
         ) : (
           <div className="flex flex-col gap-1.5">
-            {filteredMembers.map((member) => (
+            {filteredRows.map((row) => (
               <MemberCard
-                key={member.id}
-                member={member}
+                key={row.user.id}
+                row={row}
                 onEdit={handleEditUser}
                 onDelete={deleteUser}
                 onView={handleViewUser}

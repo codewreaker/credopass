@@ -2,6 +2,7 @@ import { useState, type ComponentType } from 'react';
 import { CheckIcon } from 'lucide-react';
 import { Button } from '@credopass/ui/components/button';
 import { Input } from '@credopass/ui/components/input';
+import { FieldError } from '@credopass/ui/components/field';
 import { SheetDialog } from '@credopass/ui/components/sheet-dialog';
 import { cn } from '@credopass/ui/lib/utils';
 
@@ -17,7 +18,7 @@ interface TextFieldProps {
   inputMode?: 'text' | 'email' | 'tel';
   optional?: boolean;
   invalid?: boolean;
-  error?: string;
+  errors?: Array<{ message?: string } | undefined>;
 }
 
 /**
@@ -36,7 +37,7 @@ export function TextField({
   inputMode,
   optional,
   invalid,
-  error,
+  errors,
 }: TextFieldProps) {
   const [open, setOpen] = useState(false);
   // Draft state so closing without confirming leaves the value untouched.
@@ -64,7 +65,7 @@ export function TextField({
       >
         <Icon size={16} className="shrink-0 text-muted-foreground" />
         <span className="flex min-w-0 flex-col gap-0.5">
-          <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+          <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
             {label}
             {optional && <span className="ml-1 normal-case tracking-normal">(optional)</span>}
           </span>
@@ -72,7 +73,7 @@ export function TextField({
             {value || hint || `Add ${label.toLowerCase()}`}
           </span>
         </span>
-        {invalid && error && (
+        {invalid && (
           <span className="ml-auto shrink-0 text-[11px] font-medium text-destructive">Fix</span>
         )}
       </button>
@@ -103,7 +104,7 @@ export function TextField({
           }}
           className="h-11 rounded-full px-4"
         />
-        {error && <p className="px-1 text-xs text-destructive">{error}</p>}
+        {invalid && <FieldError errors={errors} className="px-1" />}
       </SheetDialog>
     </>
   );

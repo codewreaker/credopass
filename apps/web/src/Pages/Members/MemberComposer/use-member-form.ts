@@ -147,9 +147,9 @@ export function useMemberForm({ mode, userId, eventId, initialValues, onSaved }:
 /** Create or update this user's membership row for the event. */
 async function syncEventRole(eventId: string, userId: string, role: EventRole) {
   const { eventMembers: eventMemberCollection } = getCollections();
-  const existing = eventMemberCollection
-    .toArray()
-    .find((m) => m.eventId === eventId && m.userId === userId);
+  const existing = eventMemberCollection.toArray.find(
+    (m) => m.eventId === eventId && m.userId === userId
+  );
 
   const now = new Date();
   const tx = existing

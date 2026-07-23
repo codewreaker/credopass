@@ -155,7 +155,7 @@ export function MemberComposer({ mode, userId, event, eventId, initialValues }: 
                     value={field.state.value}
                     onChange={field.handleChange}
                     invalid={isInvalid}
-                    error={isInvalid ? String(field.state.meta.errors[0]?.message ?? '') : undefined}
+                    errors={field.state.meta.errors}
                   />
                 );
               }}
@@ -174,7 +174,7 @@ export function MemberComposer({ mode, userId, event, eventId, initialValues }: 
                     value={field.state.value}
                     onChange={field.handleChange}
                     invalid={isInvalid}
-                    error={isInvalid ? String(field.state.meta.errors[0]?.message ?? '') : undefined}
+                    errors={field.state.meta.errors}
                   />
                 );
               }}

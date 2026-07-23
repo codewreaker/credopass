@@ -1,5 +1,5 @@
 import {
-    MapPin, Users, MoreVertical, Clock, Pencil, Trash2,
+    MapPin, Users, MoreVertical, Clock, Pencil, Trash2, UserPlus,
     ClockCheck, FileClock, CalendarClock, ClockAlert
 } from 'lucide-react';
 
@@ -75,14 +75,16 @@ export const EventRow: React.FC<{
     onNavigate?: (eventId: string) => void;
     onEdit?: (event: EventWithOrg) => void;
     onDelete?: (eventId: string) => void;
+    /** Opens the member composer bound to this event. Omit to hide the action. */
+    onAddMember?: (eventId: string) => void;
     isMobile?: boolean;
     compact?: boolean;
     timezone?: boolean;
-}> = ({ event, onNavigate, onEdit, onDelete, timezone, isMobile = false, compact = false }) => {
+}> = ({ event, onNavigate, onEdit, onDelete, onAddMember, timezone, isMobile = false, compact = false }) => {
     const startDate = event.startTime ? new Date(event.startTime) : null;
     const {
-        offsetX, isSwiped, reset, toggle, onTouchStart, onTouchMove, onTouchEnd
-    } = useSwipeToReveal();
+        offsetX, isSwiped, actionWidth, reset, toggle, onTouchStart, onTouchMove, onTouchEnd
+    } = useSwipeToReveal(onAddMember ? 3 : 2);
 
 
     const handleClick = () => {
@@ -101,6 +103,12 @@ export const EventRow: React.FC<{
         e.stopPropagation();
         reset();
         onDelete?.(event.id);
+    };
+
+    const handleAddMember = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        reset();
+        onAddMember?.(event.id);
     };
 
     const orgData = event?.orgCollection;
@@ -175,7 +183,13 @@ export const EventRow: React.FC<{
         <div className="swipeable-row group" data-compact={compact ? "true" : undefined}>
             {/* Action buttons revealed behind the row — only mount when swiping */}
             {offsetX !== 0 && (
-                <div className="swipeable-actions">
+                <div className="swipeable-actions" style={{ width: actionWidth }}>
+                    {onAddMember && (
+                        <button type="button" className="swipe-action swipe-action-member" onClick={handleAddMember}>
+                            <UserPlus size={18} />
+                            <span>Member</span>
+                        </button>
+                    )}
                     <button type="button" className="swipe-action swipe-action-edit" onClick={handleEdit}>
                         <Pencil size={18} />
                         <span>Edit</span>

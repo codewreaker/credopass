@@ -119,8 +119,8 @@ const HeroSpotlight = ({
                     {/* Event info */}
                     <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 mb-1.5">
-                            <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] ${isLive ? 'bg-green-600 text-white' : 'bg-primary-foreground/10'}`}>
-                                {isLive && <span className="size-1.5 rounded-full bg-white animate-pulse" />}
+                            <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] ${isLive ? 'bg-lime-500 text-black' : 'bg-primary-foreground/10'}`}>
+                                {isLive && <span className="size-1.5 rounded-full bg-black animate-pulse" />}
                                 {isLive ? 'Live now' : 'Up next'}
                             </span>
                         </div>
@@ -296,6 +296,11 @@ const EventsPage = () => {
         navigate({ to: '/events/$eventId/edit', params: { eventId: event.id } });
     }, [navigate]);
 
+    // Members only exist on an event, so the composer opens already bound to one.
+    const handleAddMember = useCallback((eventId: string) => {
+        navigate({ to: '/members/new', search: { eventId } });
+    }, [navigate]);
+
     // Register toolbar context: secondary "Create Event" button + search
     useToolbarContext({
         action: { icon: CalendarPlus, label: 'Create Event', onClick: handleCreateEvent },
@@ -429,6 +434,7 @@ const EventsPage = () => {
                                 onCreateEvent={handleCreateEvent}
                                 onEditEvent={handleEditEvent}
                                 onDeleteEvent={handleDeleteEvent}
+                                onAddMember={handleAddMember}
                                 selectedStatus={selectedStatuses}
                                 timezone={enableTimezone}
                             />
