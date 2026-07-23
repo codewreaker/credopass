@@ -11,15 +11,15 @@
 
 /* Mobile: anchor to the top and size against the *visual* viewport (100dvh
    shrinks when the keyboard opens, so every field and the submit button stays
-   reachable by scrolling inside the dialog). */
+   reachable by scrolling inside the dialog).
+
+   The dialog is centred by a flex wrapper (see DialogContent), so DON'T touch
+   `translate`/`transform` here — overriding them shifts the popup off-screen.
+   Anchor to the top with `align-self` instead. */
 @media (max-width: 640px) {
   .launcher-dialog {
-    top: 0.5rem !important;
-    /* Tailwind v4 positions via the CSS `translate` property — override only
-       that (adding a `transform` too would compose and double the shift). */
-    transform: none !important;
-    translate: -50% 0 !important;
-    max-height: calc(100dvh - 1rem) !important;
+    align-self: flex-start;
+    max-height: calc(100dvh - 2rem) !important;
     overflow-y: auto;
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;

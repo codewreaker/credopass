@@ -1,4 +1,4 @@
-import { FC, useState, useRef, useCallback } from 'react'
+import { FC, useState, useRef, useCallback, useMemo } from 'react'
 import { EventType } from '@credopass/lib/schemas';
 import {
     MapPin,
@@ -105,12 +105,14 @@ export const EventTicket: FC<{
     const startDate = ticketEvent.startTime instanceof Date ? ticketEvent.startTime : null;
     const endDate = ticketEvent.endTime instanceof Date ? ticketEvent.endTime : null;
 
-    // Generate QR code data
-    const qrData = JSON.stringify({
+    // Generate QR code data. The check-in timestamp is captured once on mount via a
+    // lazy state initializer, keeping Date.now() out of render (see React purity rules).
+    const [checkInTimestamp] = useState(() => Date.now());
+    const qrData = useMemo(() => JSON.stringify({
         eventId: ticketEvent.id,
         checkIn: true,
-        timestamp: Date.now()
-    });
+        timestamp: checkInTimestamp
+    }), [ticketEvent.id, checkInTimestamp]);
 
     // Download ticket as PNG
     const handleDownload = useCallback(async () => {

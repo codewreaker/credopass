@@ -101,7 +101,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
       <div className="flex flex-1 flex-col rounded-3xl md:bg-card/40 md:border md:border-border relative overflow-hidden">
         <div className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 size-[480px] rounded-full bg-primary/4 blur-3xl" />
         {formMaskSrc && (
-          <DecorMask src={formMaskSrc} className="bg-primary/6 w-56 h-56 -bottom-8 -right-8 hidden sm:block" />
+          <DecorMask src={formMaskSrc} content className="bg-primary/6 w-56 h-56 -bottom-8 -right-8 hidden sm:block" />
         )}
 
         {/* Close — back to the app */}
