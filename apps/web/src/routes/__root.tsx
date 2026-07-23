@@ -56,7 +56,7 @@ export function RootLayout() {
                 </div>
                 <TopNavBar />
               </header>
-              <div className="page-content page-transition">
+              <div className="page-content">
                 <Suspense fallback={
                   <div className="flex items-center justify-center h-full min-h-40">
                     <div className="w-5 h-5 border-2 border-border border-t-primary rounded-full animate-spin" />

@@ -160,13 +160,16 @@ function Sidebar({
   navigate,
   currentPathname,
   onCenterClick,
+  bottomNavAutoHide,
   ...props
 }: React.ComponentProps<"div"> & {
   side?: "left" | "right"
   variant?: "sidebar" | "floating" | "inset"
   collapsible?: "offcanvas" | "icon" | "none"
   navItems?: BottomNavItem[]
-  onCenterClick?: ()=>void; 
+  onCenterClick?: ()=>void;
+  /** Auto-hide the mobile bottom nav when idle (see BottomNav.autoHide). */
+  bottomNavAutoHide?: boolean; 
   /** Navigation function for mobile bottom nav - pass your router's navigate function */
   navigate?: NavigateFn
   /** Current pathname for mobile bottom nav - pass your router's pathname to track active state */
@@ -218,6 +221,7 @@ function Sidebar({
       items={navItems}
       navigate={navigate}
       currentPathname={currentPathname}
+      autoHide={bottomNavAutoHide}
       centerButton={{
         icon: PlusIcon,
         onClick: onCenterClick

@@ -17,6 +17,7 @@ import {
 } from "@credopass/ui/components/sheet";
 
 import { Button } from "@credopass/ui/components/button"
+import { Avatar, AvatarFallback, AvatarImage } from "@credopass/ui/components/avatar"
 
 import './style.css';
 
@@ -129,10 +130,31 @@ export const RightSidebar: React.FC = () => {
     <Sheet open={isCollapsed} onOpenChange={onToggleCollapse}>
       <SheetContent className="right-sheet-content">
         <SheetHeader className="right-sheet-header">
-          <SheetTitle className="text-sm font-semibold">{getSidebarTitle()}</SheetTitle>
-          <SheetDescription className="text-xs">
-            {getSidebarDescription()}
-          </SheetDescription>
+          {viewedItem?.id === 'profile' && viewedItem?.content ? (
+            <div className="flex items-center gap-3 min-w-0 pr-8">
+              <Avatar className="size-9 shrink-0">
+                <AvatarImage src={viewedItem.content.avatarUrl} alt="" />
+                <AvatarFallback className="text-xs font-semibold bg-primary/10 text-primary">
+                  {`${(viewedItem.content.firstName || ' ')[0] ?? ''}${(viewedItem.content.lastName || ' ')[0] ?? ''}`.trim().toUpperCase() || 'U'}
+                </AvatarFallback>
+              </Avatar>
+              <div className="min-w-0">
+                <SheetTitle className="text-sm font-semibold truncate">
+                  {`${viewedItem.content.firstName || ''} ${viewedItem.content.lastName || ''}`.trim() || 'Member'}
+                </SheetTitle>
+                <SheetDescription className="text-xs capitalize">
+                  {(viewedItem.content.tier || 'bronze')} member
+                </SheetDescription>
+              </div>
+            </div>
+          ) : (
+            <>
+              <SheetTitle className="text-sm font-semibold">{getSidebarTitle()}</SheetTitle>
+              <SheetDescription className="text-xs">
+                {getSidebarDescription()}
+              </SheetDescription>
+            </>
+          )}
         </SheetHeader>
 
         <div className="right-sheet-body">

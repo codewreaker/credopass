@@ -2,6 +2,7 @@ import React, { useMemo, useState } from "react";
 import {
   Users,
   Calendar,
+  Lock,
   TrendingUp,
   Award,
   ArrowUpRight,
@@ -17,6 +18,11 @@ import {
 import { useToolbarContext } from '@credopass/lib/hooks';
 import { useNavigate } from '@tanstack/react-router';
 import { UpgradeCTA } from '@credopass/ui/components/upgrade-cta';
+import { useLiveQuery } from '@tanstack/react-db';
+import { getCollections } from '@credopass/api-client/collections';
+import type { EventType } from '@credopass/lib/schemas';
+import { toast } from '@credopass/ui/components/sonner';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@credopass/ui/components/select';
 import {
   Bar,
   BarChart,
@@ -268,6 +274,20 @@ const Analytics: React.FC = () => {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const [timeRange, setTimeRange] = useState<'week' | 'month' | 'year'>('month');
+  const [scope, setScope] = useState<string>('all');
+
+  // Per-event vs across-the-board analytics scope
+  const { events: eventCollection } = getCollections();
+  const { data: eventsData } = useLiveQuery((q) => q.from({ eventCollection }));
+  const scopeEvents = useMemo<EventType[]>(() => (Array.isArray(eventsData) ? eventsData : []), [eventsData]);
+  const scopedEvent = useMemo(() => scopeEvents.find((e) => e.id === scope) ?? null, [scopeEvents, scope]);
+
+  const handleExport = () => {
+    toast.info('Exporting analytics is a Pro feature', {
+      description: 'Upgrade to download CSV and PDF reports.',
+      action: { label: 'Upgrade', onClick: () => navigate({ to: '/upgrade' }) },
+    });
+  };
 
   useToolbarContext({
     action: null,
@@ -288,17 +308,37 @@ const Analytics: React.FC = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground">Analytics</h1>
-          <p className="text-sm text-muted-foreground">Track your community engagement and event performance</p>
+          <p className="text-sm text-muted-foreground">
+            {scopedEvent ? `Performance for “${scopedEvent.name}”` : 'Across all events and your whole community'}
+          </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 md:gap-3">
+          {/* Scope: one event vs across the board */}
+          <Select value={scope} onValueChange={(v) => setScope(v ?? 'all')}>
+            <SelectTrigger className="h-9 w-[180px] rounded-full text-xs">
+              <SelectValue placeholder="All events" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectItem value="all">All events</SelectItem>
+                {scopeEvents.map((e) => (
+                  <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>
+                ))}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
           <Tabs value={timeRange} onValueChange={(v) => setTimeRange(v as typeof timeRange)}>
-            <TabsList className="grid grid-cols-3 w-[200px] rounded-full">
+            <TabsList className="grid grid-cols-3 w-[180px] rounded-full">
               <TabsTrigger value="week" className="text-xs rounded-full">Week</TabsTrigger>
               <TabsTrigger value="month" className="text-xs rounded-full">Month</TabsTrigger>
               <TabsTrigger value="year" className="text-xs rounded-full">Year</TabsTrigger>
             </TabsList>
           </Tabs>
-          <UpgradeCTA size="md" className="hidden md:inline-flex" onClick={() => navigate({ to: '/upgrade' })} />
+          <Button variant="outline" size="sm" onClick={handleExport} className="h-9 rounded-full gap-1.5 text-xs">
+            <Lock size={12} className="text-primary" />
+            Export
+          </Button>
+          <UpgradeCTA size="md" className="hidden xl:inline-flex" onClick={() => navigate({ to: '/upgrade' })} />
         </div>
       </div>
 
@@ -360,9 +400,8 @@ const Analytics: React.FC = () => {
             </div>
           </CardHeader>
           <CardContent className="p-2 md:p-4">
-            <ChartContainer config={pillBarConfig} className="w-full" style={{ height: isMobile ? 200 : 260 }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={weeklyCheckIns} margin={{ top: 24, right: 8, left: -22, bottom: 0 }} barCategoryGap="28%">
+            <ChartContainer config={pillBarConfig} className="w-full aspect-auto" style={{ height: isMobile ? 200 : 260 }}>
+              <BarChart data={weeklyCheckIns} margin={{ top: 24, right: 8, left: -22, bottom: 0 }} barCategoryGap="28%">
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" vertical={false} />
                   <XAxis dataKey="day" fontSize={10} tickLine={false} axisLine={false} tick={{ fill: 'var(--chart-axis)' }} />
                   <YAxis fontSize={10} tickLine={false} axisLine={false} tick={{ fill: 'var(--chart-axis)' }} />
@@ -373,7 +412,6 @@ const Analytics: React.FC = () => {
                     ))}
                   </Bar>
                 </BarChart>
-              </ResponsiveContainer>
             </ChartContainer>
           </CardContent>
         </Card>
@@ -410,9 +448,8 @@ const Analytics: React.FC = () => {
             </div>
           </CardHeader>
           <CardContent className="p-2 md:p-4">
-            <ChartContainer config={mixConfig} className="w-full" style={{ height: isMobile ? 210 : 260 }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={monthlyMix} margin={{ top: 8, right: 8, left: -22, bottom: 0 }} barCategoryGap="34%">
+            <ChartContainer config={mixConfig} className="w-full aspect-auto" style={{ height: isMobile ? 210 : 260 }}>
+              <BarChart data={monthlyMix} margin={{ top: 8, right: 8, left: -22, bottom: 0 }} barCategoryGap="34%">
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" vertical={false} />
                   <XAxis dataKey="month" fontSize={10} tickLine={false} axisLine={false} tick={{ fill: 'var(--chart-axis)' }} />
                   <YAxis fontSize={10} tickLine={false} axisLine={false} tick={{ fill: 'var(--chart-axis)' }} />
@@ -421,7 +458,6 @@ const Analytics: React.FC = () => {
                   <Bar dataKey="guests" stackId="mix" fill={COLORS.secondary} radius={[6, 6, 6, 6]} maxBarSize={34} stroke="var(--card)" strokeWidth={2} />
                   <Bar dataKey="walkIns" stackId="mix" fill={COLORS.muted} radius={[6, 6, 6, 6]} maxBarSize={34} stroke="var(--card)" strokeWidth={2} />
                 </BarChart>
-              </ResponsiveContainer>
             </ChartContainer>
           </CardContent>
         </Card>

@@ -26,6 +26,9 @@ import {
 import { Kbd, KbdGroup } from '@credopass/ui/components/kbd'
 import { type BottomNavItem } from "@credopass/ui/components/bottom-nav"
 
+/** Toggle: auto-hide the mobile bottom nav when idle to reclaim estate. */
+const BOTTOM_NAV_AUTO_HIDE = true
+
 import { ChevronRightIcon, CirclePlus } from "lucide-react"
 import { useLocation, useNavigate } from "@tanstack/react-router"
 import { cn } from "@credopass/ui/lib/utils"
@@ -102,6 +105,7 @@ const MainSidebar: React.FC<SidebarProps> = ({
                 collapsible="icon"
                 variant="inset"
                 navItems={bottomNavItems}
+                bottomNavAutoHide={BOTTOM_NAV_AUTO_HIDE}
                 navigate={handleNavigate}
                 currentPathname={location.pathname}
                 onCenterClick={onCenterClick}

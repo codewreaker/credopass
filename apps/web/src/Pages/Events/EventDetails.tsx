@@ -8,9 +8,10 @@ import { Navigation } from 'lucide-react';
 
 interface EventDetailsReadonlyProps {
     event: EventType;
+    className?: string;
 }
 
-export const EventDetailsReadonly: FC<EventDetailsReadonlyProps> = ({ event }) => {
+export const EventDetailsReadonly: FC<EventDetailsReadonlyProps> = ({ event, className }) => {
     const handleNavigate = () => {
         if (!event.location) return;
         
@@ -33,8 +34,8 @@ export const EventDetailsReadonly: FC<EventDetailsReadonlyProps> = ({ event }) =
     };
 
     return (
-        <Card className="p-2" size='sm'>
-            <MapWithMarker className="relative z-20 aspect-video w-full h-[35vh]" />
+        <Card className={`p-2 lg:h-full lg:flex lg:flex-col ${className ?? ''}`} size='sm'>
+            <MapWithMarker className="relative z-20 w-full h-[32vh] lg:h-auto lg:flex-1 lg:min-h-[40vh]" />
             <CardHeader>
                 <CardAction>
                     <Badge variant="secondary">location</Badge>
@@ -42,8 +43,9 @@ export const EventDetailsReadonly: FC<EventDetailsReadonlyProps> = ({ event }) =
                 <CardTitle>{event.location || 'No location set'}</CardTitle>
             </CardHeader>
             <CardFooter>
-                <Button 
-                    className="w-full gap-2" 
+                <Button
+                    variant="outline"
+                    className="w-full gap-2 rounded-full"
                     onClick={handleNavigate}
                     disabled={!event.location}
                 >

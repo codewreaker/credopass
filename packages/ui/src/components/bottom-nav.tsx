@@ -42,6 +42,13 @@ interface BottomNavProps {
      * When provided, navigation items will be split into left and right sections.
      */
     centerButton?: CenterButton
+    /**
+     * Auto-hide the bar after a few seconds of inactivity and bring it back on
+     * any tap/scroll — reclaims vertical estate under mobile browser chrome.
+     */
+    autoHide?: boolean
+    /** Idle time in ms before the bar hides (default 3000). */
+    autoHideDelay?: number
 }
 
 const defaultNavigate: NavigateFn = (url: string) => {
@@ -80,9 +87,38 @@ export function BottomNav({
     maxVisibleItems = 5,
     currentPathname,
     navigate = defaultNavigate,
-    centerButton
+    centerButton,
+    autoHide = false,
+    autoHideDelay = 3000,
 }: BottomNavProps) {
     const [open, setOpen] = React.useState(false)
+    const [idle, setIdle] = React.useState(false)
+
+    React.useEffect(() => {
+        if (!autoHide) { setIdle(false); return }
+        let timer: ReturnType<typeof setTimeout>
+        const arm = () => {
+            clearTimeout(timer)
+            timer = setTimeout(() => setIdle(true), autoHideDelay)
+        }
+        const wake = () => {
+            setIdle(false)
+            arm()
+        }
+        window.addEventListener('pointerdown', wake, { passive: true })
+        window.addEventListener('scroll', wake, { passive: true, capture: true })
+        window.addEventListener('keydown', wake)
+        arm()
+        return () => {
+            clearTimeout(timer)
+            window.removeEventListener('pointerdown', wake)
+            window.removeEventListener('scroll', wake, { capture: true } as EventListenerOptions)
+            window.removeEventListener('keydown', wake)
+        }
+    }, [autoHide, autoHideDelay])
+
+    // Never hide while the overflow menu is open
+    const isHidden = autoHide && idle && !open
 
     // Get pathname from window if not provided
     const pathname = React.useMemo(() => {
@@ -108,7 +144,10 @@ export function BottomNav({
     }
 
     return (
-        <nav className="fixed bottom-0 left-0 right-0 z-2000 sm:hidden">
+        <nav className={cn(
+            "fixed bottom-0 left-0 right-0 z-2000 sm:hidden transition-all duration-300 ease-out",
+            isHidden && "translate-y-full opacity-0 pointer-events-none"
+        )}>
             {/* Gradient fade effect at top */}
             <div className="absolute inset-x-0 -top-6 h-6 bg-linear-to-t from-background to-transparent pointer-events-none" />
 

@@ -16,7 +16,6 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as EventsIndexRouteImport } from './routes/events/index'
-import { Route as CheckinIndexRouteImport } from './routes/checkin/index'
 import { Route as EventsEventIdRouteImport } from './routes/events/$eventId'
 import { Route as CheckinEventIdRouteImport } from './routes/checkin/$eventId'
 
@@ -55,11 +54,6 @@ const EventsIndexRoute = EventsIndexRouteImport.update({
   path: '/events/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const CheckinIndexRoute = CheckinIndexRouteImport.update({
-  id: '/checkin/',
-  path: '/checkin/',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const EventsEventIdRoute = EventsEventIdRouteImport.update({
   id: '/events/$eventId',
   path: '/events/$eventId',
@@ -80,7 +74,6 @@ export interface FileRoutesByFullPath {
   '/upgrade': typeof UpgradeRoute
   '/checkin/$eventId': typeof CheckinEventIdRoute
   '/events/$eventId': typeof EventsEventIdRoute
-  '/checkin/': typeof CheckinIndexRoute
   '/events/': typeof EventsIndexRoute
 }
 export interface FileRoutesByTo {
@@ -92,7 +85,6 @@ export interface FileRoutesByTo {
   '/upgrade': typeof UpgradeRoute
   '/checkin/$eventId': typeof CheckinEventIdRoute
   '/events/$eventId': typeof EventsEventIdRoute
-  '/checkin': typeof CheckinIndexRoute
   '/events': typeof EventsIndexRoute
 }
 export interface FileRoutesById {
@@ -105,7 +97,6 @@ export interface FileRoutesById {
   '/upgrade': typeof UpgradeRoute
   '/checkin/$eventId': typeof CheckinEventIdRoute
   '/events/$eventId': typeof EventsEventIdRoute
-  '/checkin/': typeof CheckinIndexRoute
   '/events/': typeof EventsIndexRoute
 }
 export interface FileRouteTypes {
@@ -119,7 +110,6 @@ export interface FileRouteTypes {
     | '/upgrade'
     | '/checkin/$eventId'
     | '/events/$eventId'
-    | '/checkin/'
     | '/events/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -131,7 +121,6 @@ export interface FileRouteTypes {
     | '/upgrade'
     | '/checkin/$eventId'
     | '/events/$eventId'
-    | '/checkin'
     | '/events'
   id:
     | '__root__'
@@ -143,7 +132,6 @@ export interface FileRouteTypes {
     | '/upgrade'
     | '/checkin/$eventId'
     | '/events/$eventId'
-    | '/checkin/'
     | '/events/'
   fileRoutesById: FileRoutesById
 }
@@ -156,7 +144,6 @@ export interface RootRouteChildren {
   UpgradeRoute: typeof UpgradeRoute
   CheckinEventIdRoute: typeof CheckinEventIdRoute
   EventsEventIdRoute: typeof EventsEventIdRoute
-  CheckinIndexRoute: typeof CheckinIndexRoute
   EventsIndexRoute: typeof EventsIndexRoute
 }
 
@@ -211,13 +198,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EventsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/checkin/': {
-      id: '/checkin/'
-      path: '/checkin'
-      fullPath: '/checkin/'
-      preLoaderRoute: typeof CheckinIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/events/$eventId': {
       id: '/events/$eventId'
       path: '/events/$eventId'
@@ -244,7 +224,6 @@ const rootRouteChildren: RootRouteChildren = {
   UpgradeRoute: UpgradeRoute,
   CheckinEventIdRoute: CheckinEventIdRoute,
   EventsEventIdRoute: EventsEventIdRoute,
-  CheckinIndexRoute: CheckinIndexRoute,
   EventsIndexRoute: EventsIndexRoute,
 }
 export const routeTree = rootRouteImport

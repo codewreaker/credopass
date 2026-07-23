@@ -281,7 +281,7 @@ export default function MembersPage() {
   const iconSize = isMobile ? 12 : 18;
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col md:h-full">
       {/* Header */}
       <div className="pb-2">
         <div className="flex items-center justify-between mb-4">
@@ -373,7 +373,7 @@ export default function MembersPage() {
       </div>
 
       {/* Member card grid */}
-      <div className="flex-1 overflow-auto pb-4">
+      <div className="md:flex-1 md:overflow-auto pb-4">
         {filteredMembers.length === 0 ? (
           <div className="flex items-center justify-center h-full">
             <EmptyState
