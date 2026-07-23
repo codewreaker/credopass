@@ -46,15 +46,21 @@ const parseCoordinates = (response: any): [number, number] | null => {
   return null;
 };
 
+const DEFAULT_VIEWPORT: Partial<MapViewport> = { center: [-0.1276, 51.5072], zoom: 11 };
+
 export function LocationField({ value, onChange, invalid }: LocationFieldProps) {
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState(value);
   const [coordinates, setCoordinates] = useState<[number, number] | null>(null);
-  const [viewport, setViewport] = useState<Partial<MapViewport>>({ center: [-0.1276, 51.5072], zoom: 11 });
+  const [viewport, setViewport] = useState<Partial<MapViewport>>(DEFAULT_VIEWPORT);
+  // Remounts the picker per opening so it seeds from the current value and
+  // starts a fresh Mapbox session token.
+  const [pickerKey, setPickerKey] = useState(0);
 
   // Seed the draft on open rather than in an effect — nothing external to sync.
   const openPopup = () => {
     setDraft(value);
+    setPickerKey((k) => k + 1);
     setOpen(true);
   };
 
@@ -105,7 +111,9 @@ export function LocationField({ value, onChange, invalid }: LocationFieldProps) 
         contentClassName="flex flex-col gap-3"
       >
         <AddressPicker
+          key={pickerKey}
           accessToken={MAPBOX_ACCESS_TOKEN}
+          defaultValue={value}
           onChange={handleRetrieve}
           onInputChange={setDraft}
           placeholder="Search for an address or paste a link"

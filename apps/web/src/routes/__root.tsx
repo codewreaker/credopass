@@ -12,13 +12,23 @@ import { ModalPortal } from "@credopass/ui/components/launcher";
 import { NAV_ITEMS } from "@credopass/lib/constants";
 import { useTheme } from "@credopass/lib/theme";
 import { useCommandPallete } from "../hooks";
+import { PremiumProvider } from "../contexts/premium";
 
 // Routes that render standalone without the app shell
 const STANDALONE_ROUTES = ['/login', '/upgrade'];
 
 export const Route = createRootRoute({
-  component: RootLayout,
+  component: RootRoute,
 })
+
+/** Entitlements wrap the whole tree, standalone pages included. */
+function RootRoute() {
+  return (
+    <PremiumProvider>
+      <RootLayout />
+    </PremiumProvider>
+  );
+}
 
 export function RootLayout() {
   const isMobile = useIsMobile();

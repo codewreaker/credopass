@@ -38,6 +38,7 @@ export * from './kbd'
 export * from './chip-filter'
 export * from './sonner'
 export * from './address-autofill'
+export * from './timeline'
 
 // Web components (migrated from apps/web)
 export * from './empty-state';

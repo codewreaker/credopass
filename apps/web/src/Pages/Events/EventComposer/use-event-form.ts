@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useForm } from '@tanstack/react-form';
 import { toast } from '@credopass/ui/components/sonner';
 import * as z from 'zod';
-import { getCollections } from '@credopass/api-client/collections';
+import { getCollections, resolvePersistedEventId } from '@credopass/api-client/collections';
 import type { EventStatus, EventType } from '@credopass/lib/schemas';
 import { useOrganizationStore } from '@credopass/lib/stores';
 
@@ -151,7 +151,9 @@ export function useEventForm({ mode, eventId, initialValues, onSaved }: UseEvent
 
         await tx.isPersisted.promise;
         toast.success(isEditing ? 'Event updated!' : 'Event created!');
-        onSaved?.(id);
+        // On create the server mints its own id and discards ours, so `id` is
+        // only an optimistic key — resolve the persisted one before navigating.
+        onSaved?.(isEditing ? id : resolvePersistedEventId(id));
       } catch (error) {
         toast.error(error instanceof Error ? error.message : 'An unexpected error occurred.');
       } finally {

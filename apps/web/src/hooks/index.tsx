@@ -2,7 +2,6 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import CommandPalette from '../containers/Command/index';
 import { launchSignInForm } from '../containers/SignInModal/index';
-import { launchUserForm } from '../containers/UserForm/index';
 import { useNavigate } from '@tanstack/react-router';
 import { useLauncher } from '@credopass/lib/stores';
 
@@ -43,7 +42,7 @@ export const useCommandPallete = () => {
                         break;
                     case 'n':
                         e.preventDefault();
-                        launchUserForm({ isEditing: false }, openLauncher);
+                        navigate({ to: '/members/new' });
                         break;
                     case 'm':
                         e.preventDefault();

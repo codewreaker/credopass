@@ -4,6 +4,7 @@ import { Button } from '@credopass/ui/components/button';
 import { Spinner } from '@credopass/ui/components/spinner';
 import { FieldError } from '@credopass/ui/components/field';
 import { cn } from '@credopass/ui/lib/utils';
+import { CoverPlaceholder } from './fields/cover-placeholder';
 import { DateTimeField } from './fields/date-time-field';
 import { LocationField } from './fields/location-field';
 import { DescriptionField } from './fields/description-field';
@@ -55,7 +56,7 @@ export function EventComposer({ mode, eventId, initialValues }: EventComposerPro
       : navigate({ to: '/events' });
 
   return (
-    <div className="mx-auto w-full max-w-140 pb-4">
+    <div className="mx-auto w-full max-w-140 pb-4 md:max-w-160 lg:max-w-3xl">
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -63,6 +64,9 @@ export function EventComposer({ mode, eventId, initialValues }: EventComposerPro
         }}
         className="flex flex-col gap-4"
       >
+        {/* Decorative cover — no upload behind it, `events` has no cover column */}
+        <CoverPlaceholder />
+
         {/* Lime billboard header — org pill, mode label and the event name */}
         <div className="relative overflow-hidden rounded-3xl bg-primary p-5 text-primary-foreground">
           <div
@@ -132,6 +136,7 @@ export function EventComposer({ mode, eventId, initialValues }: EventComposerPro
                   <>
                     <DateTimeField
                       label="Start"
+                      connectBelow
                       value={startField.state.value}
                       onChange={(date) => {
                         startField.handleChange(date);
@@ -150,6 +155,7 @@ export function EventComposer({ mode, eventId, initialValues }: EventComposerPro
                     <DateTimeField
                       label="End"
                       marker="hollow"
+                      connectAbove
                       value={endField.state.value}
                       minDate={startField.state.value}
                       onChange={endField.handleChange}

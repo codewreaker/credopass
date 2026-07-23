@@ -8,6 +8,7 @@ import { QueryClient } from '@tanstack/query-core';
 import { queryCollectionOptions } from '@tanstack/query-db-collection';
 import { UserSchema, type User } from '@credopass/lib/schemas';
 import { getAPIBaseURL, authHeaders } from '../client';
+import { rememberPersistedId } from './persisted-ids';
 
 /**
  * Create user collection with a specific QueryClient
@@ -40,8 +41,12 @@ export function createUserCollection(queryClient: QueryClient) {
           headers: await authHeaders({ 'Content-Type': 'application/json' }),
           body: JSON.stringify(newUser),
         });
-        if (!response.ok) throw new Error(`Failed to create loyalty record | HTTP ${response.status}: ${response.statusText}`);
-        return response.json();
+        if (!response.ok) throw new Error(`Failed to create user | HTTP ${response.status}: ${response.statusText}`);
+        const created = await response.json();
+        // The server assigns its own id — record it so callers can link the new
+        // user to an event without writing a foreign key that points nowhere.
+        rememberPersistedId('users', newUser.id, created?.id);
+        return created;
       },
 
       // Handle UPDATE

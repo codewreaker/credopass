@@ -76,7 +76,13 @@ function EventDetailPage() {
         navigate({ to: '/events/$eventId/edit', params: { eventId } });
     };
 
-    if (isLoading) {
+    // `isLoading` only covers the live query settling. A row can also be missing
+    // simply because the collection is mid-refetch (right after creating an
+    // event, for instance), so keep showing the spinner rather than flashing
+    // "Event Not Found" at something that is about to arrive.
+    const isSyncing = isLoading || (!event && eventCollection.utils.isFetching);
+
+    if (isSyncing) {
         return (
             <div className="event-detail-page loading-state">
                 <div className="loading-content">

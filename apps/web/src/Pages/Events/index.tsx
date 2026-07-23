@@ -6,9 +6,9 @@ import { useEventSessionStore } from '@credopass/lib/stores';
 import EventListView from './EventListView';
 import EventCalendar from '@credopass/ui/components/event-calendar';
 import { STATUS_MAPPING } from '@credopass/ui/components/event-row';
-import { CalendarPlus, CalendarsIcon, ListFilterPlus, TimerIcon, FastForward, MapPin, Users, Clock, ScanLine, ArrowUpRight, Plus, ChevronUp, ChevronDown } from 'lucide-react';
+import { CalendarPlus, CalendarsIcon, ListFilterPlus, TimerIcon, FastForward, MapPin, Users, Clock, ScanLine, ArrowUpRight, Plus, ChevronUp, ChevronDown, CalendarClock, History, Sparkles } from 'lucide-react';
 import { useNavigate } from '@tanstack/react-router';
-import { useStatusFilter, useToolbarContext } from '@credopass/lib/hooks';
+import { useStatusFilter, useToolbarContext, STATUS_GROUPS } from '@credopass/lib/hooks';
 import type { EventTypeFilters } from '@credopass/lib/hooks';
 export { EVENTS_FILTER_COOKIE_NAME, EVENTS_FILTER_ENABLED_COOKIE_NAME } from '@credopass/lib/hooks';
 import { ButtonGroup } from '@credopass/ui/components/button-group';
@@ -23,6 +23,7 @@ import ActionCards from '../../containers/ActionCards';
 import { Separator } from '@credopass/ui/components/separator';
 import { useIsMobile } from '@credopass/ui/hooks/use-mobile';
 import { Button } from '@credopass/ui/components/button';
+import { usePremium } from '../../contexts/premium';
 
 
 const handleDeleteEvent = (eventId: string) => handleCollectionDeleteById('events', eventId);
@@ -118,8 +119,8 @@ const HeroSpotlight = ({
                     {/* Event info */}
                     <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 mb-1.5">
-                            <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] ${isLive ? 'bg-primary-foreground text-primary' : 'bg-primary-foreground/10'}`}>
-                                {isLive && <span className="size-1.5 rounded-full bg-primary animate-pulse" />}
+                            <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] ${isLive ? 'bg-green-600 text-white' : 'bg-primary-foreground/10'}`}>
+                                {isLive && <span className="size-1.5 rounded-full bg-white animate-pulse" />}
                                 {isLive ? 'Live now' : 'Up next'}
                             </span>
                         </div>
@@ -190,39 +191,60 @@ const HeroSpotlight = ({
     );
 };
 
-// Create chip filter options from STATUS_MAPPING
-const statusFilterOptions = (() => {
-    const allOption: ChipFilterOption<'all'> = {
-        value: 'all',
-        label: 'All',
-    };
-    const statusOptions = Object.entries(STATUS_MAPPING)
-        .filter(([status]) => ((status as EventType['status']) !== 'draft'))
-        .map(([status, config]) => ({
-            value: status as EventTypeFilters,
-            label: config.label,
-            icon: config.icon
-        }));
+/**
+ * Two status chips instead of five. The grouping lives in the filter layer only —
+ * rows keep their own per-status badge and colour from STATUS_MAPPING.
+ */
+const statusFilterOptions = [
+    { value: 'all', label: 'All' },
+    { value: 'upcoming', label: 'Upcoming', icon: <CalendarClock size={14} className="text-primary/80" /> },
+    { value: 'past', label: 'Past', icon: <History size={14} className="text-muted-foreground" /> },
+    divider,
+    { value: 'timezone', label: 'Timezone', icon: <TimerIcon /> },
+] as ChipFilterOption<EventTypeFilters>[];
 
-    const actionOption: ChipFilterOption<string>[] = [
-        divider,
-        {
-            label: 'Timezone',
-            value: 'timezone',
-            icon: <TimerIcon />
-        }]
+/**
+ * Upgrade prompt as a list card rather than top-bar chrome. It borrows the
+ * spotlight's shape and rhythm but stays on a dark surface — the lime hero above
+ * it is the page's one lime moment.
+ */
+const UpgradeSpotlight = ({ onUpgrade }: { onUpgrade: () => void }) => (
+    <div className="relative overflow-hidden rounded-2xl border border-primary/20 bg-card p-5 shrink-0">
+        <div className="pointer-events-none absolute -right-14 -top-14 size-44 rounded-full border-18 border-primary/6" />
+        <div className="relative z-10 flex flex-col gap-4 md:flex-row md:items-center md:gap-6">
+            <div className="hidden size-16 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground md:flex">
+                <Sparkles size={24} />
+            </div>
+            <div className="min-w-0 flex-1">
+                <span className="mb-1.5 inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-primary">
+                    <Sparkles size={10} />
+                    Credopass Pro
+                </span>
+                <h2 className="mb-1.5 truncate text-xl font-semibold tracking-tight lg:text-2xl">
+                    Unlimited events and full analytics
+                </h2>
+                <p className="text-[13px] font-medium text-muted-foreground">
+                    Export reports, dig into attendance trends and drop the event cap.
+                </p>
+                <button
+                    type="button"
+                    onClick={onUpgrade}
+                    className="mt-4 inline-flex h-9 cursor-pointer items-center gap-2 whitespace-nowrap rounded-full bg-primary px-4 text-[13px] font-semibold text-primary-foreground transition-transform duration-150 hover:scale-[1.02] active:scale-[0.98]"
+                >
+                    Upgrade
+                    <ArrowUpRight size={14} />
+                </button>
+            </div>
+        </div>
+    </div>
+);
 
-
-    const allFilters = [
-        ...statusOptions,
-        divider,
-        ...actionOption
-    ]
-
-    return [allOption, ...allFilters];
-})() as ChipFilterOption<EventTypeFilters>[];
-
-const allFilters = Object.keys(STATUS_MAPPING).concat(['actions', 'timezone']) as Array<EventTypeFilters>;
+/** Secondary layer: narrow the Past group down to one status. */
+const pastSubFilterOptions = STATUS_GROUPS.past.map((status) => ({
+    value: status,
+    label: STATUS_MAPPING[status].label,
+    icon: STATUS_MAPPING[status].icon,
+}));
 /**
  * EventCalendar is a full blown calendar that can be accessed in the sidebar
  * should we want to make it available in the event view just import it here
@@ -236,13 +258,14 @@ const EventsPage = () => {
 
 
     const {
-        filterEnabled, setFilterEnabled, selectedFilters,
+        filterEnabled, setFilterEnabled,
         handleFilterChange, displayedFilterValue,
-        selectedStatuses, toggleActions, enableTimezone,
-    } = useStatusFilter(allFilters);
+        selectedStatuses, enableTimezone,
+        isPastVisible, pastSubFilter, setPastSubFilter,
+        actionsEnabled, toggleActions,
+    } = useStatusFilter();
 
-
-    const enableActions = useMemo(() => selectedFilters.includes('actions'), [selectedFilters]);
+    const { isPremium } = usePremium();
     const userName = useEventSessionStore((s) => s.session.currentUserName);
     const firstName = useMemo(() => userName?.split(' ')[0] || 'there', [userName]);
     const greeting = useMemo(() => getGreeting(), []);
@@ -342,8 +365,10 @@ const EventsPage = () => {
                             {filterEnabled && <span className="absolute top-1 right-1 size-1.5 rounded-full bg-primary" />}
                             <ListFilterPlus />
                         </Button>
-                        <Button variant='ghost' className={`relative rounded-full ${enableActions ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`} size={'icon-sm'} onClick={toggleActions}>
-                            {enableActions && <span className="absolute top-1 right-1 size-1.5 rounded-full bg-primary" />}
+                        {/* Independent toggle — shows/hides the shortcut cards and
+                            has no bearing on which events are listed. */}
+                        <Button variant='ghost' aria-pressed={actionsEnabled} title="Toggle shortcuts" className={`relative rounded-full ${actionsEnabled ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`} size={'icon-sm'} onClick={toggleActions}>
+                            {actionsEnabled && <span className="absolute top-1 right-1 size-1.5 rounded-full bg-primary" />}
                             <FastForward />
                         </Button>
                         <RightSidebarTrigger icon={<CalendarsIcon />} />
@@ -360,9 +385,38 @@ const EventsPage = () => {
                     mode="multiple"
                     className='overflow-x-auto w-100vw py-4 xl:hidden'
                 />}
-                {enableActions && <ActionCards />}
-                <Separator className={'my-4 bg-gradient-to-r from-transparent via-muted to-transparent'} />
-                <div className={`flex gap-4 md:h-[calc(100vh-274px)] ${enableActions ? 'h-[calc(100vh-420px)]' : 'h-[calc(100vh-320px)]'}`}>
+
+                {/* Secondary layer: once you are looking at past events, narrow to
+                    one status. Hidden while Past isn't part of the selection. */}
+                {filterEnabled && isPastVisible && (
+                    <div className="flex items-center gap-1.5 overflow-x-auto pb-2 xl:pt-2">
+                        <span className="shrink-0 text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+                            Past
+                        </span>
+                        <button
+                            type="button"
+                            onClick={() => setPastSubFilter(null)}
+                            className={`inline-flex h-7 shrink-0 items-center rounded-full px-3 text-[11px] font-semibold transition-colors ${pastSubFilter === null ? 'bg-primary/15 text-primary' : 'text-muted-foreground hover:text-foreground'}`}
+                        >
+                            All
+                        </button>
+                        {pastSubFilterOptions.map(({ value, label, icon }) => (
+                            <button
+                                key={value}
+                                type="button"
+                                onClick={() => setPastSubFilter(pastSubFilter === value ? null : value)}
+                                className={`inline-flex h-7 shrink-0 items-center gap-1.5 rounded-full px-3 text-[11px] font-semibold transition-colors ${pastSubFilter === value ? 'bg-primary/15 text-primary' : 'text-muted-foreground hover:text-foreground'}`}
+                            >
+                                {icon}
+                                {label}
+                            </button>
+                        ))}
+                    </div>
+                )}
+
+                {actionsEnabled && <ActionCards />}
+                <Separator className={'my-4 bg-linear-to-r from-transparent via-muted to-transparent'} />
+                <div className={`flex gap-4 md:h-[calc(100vh-274px)] ${actionsEnabled ? 'h-[calc(100vh-420px)]' : 'h-[calc(100vh-320px)]'}`}>
                     <div className='w-full md:w-2/3 md:border-r md:pr-4 min-h-0'>
                         <div className='h-full overflow-auto flex flex-col gap-4'>
                             <HeroSpotlight
@@ -378,6 +432,9 @@ const EventsPage = () => {
                                 selectedStatus={selectedStatuses}
                                 timezone={enableTimezone}
                             />
+                            {!isPremium && (
+                                <UpgradeSpotlight onUpgrade={() => navigate({ to: '/upgrade' })} />
+                            )}
                         </div>
                     </div>
                     {!isMobile && (

@@ -1,7 +1,7 @@
 import React from 'react';
 import { LucidePanelRightOpen } from 'lucide-react';
-import { useAppStore, useLauncher } from '@credopass/lib/stores';
-import { launchUserForm } from '../UserForm';
+import { useAppStore } from '@credopass/lib/stores';
+import { useNavigate } from '@tanstack/react-router';
 import { useSidebarTrigger } from '../../../../../packages/lib/src/hooks/use-sidebar-trigger';
 import ProfileView from './ProfileView';
 import OverviewView from './OverviewView';
@@ -42,7 +42,7 @@ export const RightSidebar: React.FC = () => {
   const isCollapsed = useAppStore(({ sidebarOpen }) => (sidebarOpen['right']))
   const toggleSidebar = useAppStore(({ toggleSidebar }) => toggleSidebar)
   const viewedItem = useAppStore(({ viewedItem }) => viewedItem)
-  const { openLauncher, closeLauncher } = useLauncher()
+  const navigate = useNavigate()
 
   const onToggleCollapse = () => toggleSidebar('right')
 
@@ -107,7 +107,10 @@ export const RightSidebar: React.FC = () => {
               className="flex-1 rounded-full font-semibold"
               onClick={() => {
                 toggleSidebar('right', false);
-                launchUserForm({ isEditing: true, initialData: viewedItem?.content }, openLauncher, closeLauncher);
+                navigate({
+                  to: '/members/$userId/edit',
+                  params: { userId: viewedItem?.content?.id },
+                });
               }}
             >
               Edit member
