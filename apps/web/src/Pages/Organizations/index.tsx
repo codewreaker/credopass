@@ -181,7 +181,9 @@ const PageHeader: React.FC<HeaderProps> = ({ orgCount, onCreateNew }) => (
 );
 
 // Main Organizations Page
-const OrganizationsPage: React.FC = () => {
+// `embedded` = rendered inside the Profile page: skip the standalone header,
+// toolbar registration and Pro banner (Profile owns those).
+const OrganizationsPage: React.FC<{ embedded?: boolean }> = ({ embedded = false }) => {
   const { openLauncher } = useLauncher();
   const navigate = useNavigate();
   const { activeOrganizationId, setActiveOrganization } = useOrganizationStore();
@@ -198,8 +200,9 @@ const OrganizationsPage: React.FC = () => {
     launchOrganizationForm({}, openLauncher);
   }, [openLauncher]);
 
-  // Register toolbar context: secondary "Add Organization" button + search
-  useToolbarContext({
+  // Register toolbar context: secondary "Add Organization" button + search.
+  // When embedded in Profile, the parent page owns the toolbar, so opt out.
+  useToolbarContext(embedded ? {} : {
     action: { icon: Building2, label: 'New Organization', onClick: handleCreateNew },
     search: { enabled: true, placeholder: 'Search organizations\u2026', onSearch:setSearchQuery },
   });
@@ -268,14 +271,16 @@ const OrganizationsPage: React.FC = () => {
   if (orgsQuery.isLoading) {
     return (
       <div className="flex flex-col gap-4" aria-busy="true">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex flex-col gap-1.5">
-            <Skeleton className="h-6 w-40" />
-            <Skeleton className="h-3.5 w-64" />
+        {!embedded && (
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex flex-col gap-1.5">
+              <Skeleton className="h-6 w-40" />
+              <Skeleton className="h-3.5 w-64" />
+            </div>
+            <Skeleton className="h-8 w-40 rounded-lg" />
           </div>
-          <Skeleton className="h-8 w-40 rounded-lg" />
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        )}
+        <div className={`grid grid-cols-1 md:grid-cols-2 ${embedded ? '' : 'xl:grid-cols-3'} gap-4`}>
           {[0, 1, 2].map((i) => (
             <Skeleton key={i} className="h-48 rounded-xl" />
           ))}
@@ -298,16 +303,28 @@ const OrganizationsPage: React.FC = () => {
 
   return (
     <div className="flex flex-col gap-4">
-      <PageHeader orgCount={filteredOrganizations.length} onCreateNew={handleCreateNew} />
+      {!embedded && (
+        <>
+          <PageHeader orgCount={filteredOrganizations.length} onCreateNew={handleCreateNew} />
+          <UpgradeCTA
+            size="lg"
+            title="Take your organization Pro"
+            description="Unlimited events, advanced analytics and priority support for your whole team."
+            onClick={() => navigate({ to: '/upgrade' })}
+          />
+        </>
+      )}
 
-      <UpgradeCTA
-        size="lg"
-        title="Take your organization Pro"
-        description="Unlimited events, advanced analytics and priority support for your whole team."
-        onClick={() => navigate({ to: '/upgrade' })}
-      />
+      {embedded && (
+        <div className="flex justify-end">
+          <Button onClick={handleCreateNew} size="sm" variant="outline" className="rounded-full font-semibold gap-1.5">
+            <Plus className="w-3.5 h-3.5" />
+            New Organization
+          </Button>
+        </div>
+      )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+      <div className={`grid grid-cols-1 md:grid-cols-2 ${embedded ? '' : 'xl:grid-cols-3'} gap-4`}>
         {filteredOrganizations.map((org: Organization) => (
           <OrganizationCard
             key={org.id}

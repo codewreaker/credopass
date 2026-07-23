@@ -7,10 +7,9 @@ import {
   UserPlus,
   Users,
   ChartNoAxesCombined,
-  Database,
   LogIn,
   QrCode,
-  Building2,
+  UserRound,
   Hash,
 } from 'lucide-react';
 
@@ -103,7 +102,7 @@ const CommandPalette: React.FC<{
 
   useHotkey('Mod+T', (event) => {
     event.preventDefault();
-    handleNavigate('/organizations');
+    handleNavigate('/profile');
   });
 
   useHotkey('Mod+P', (event) => {
@@ -169,13 +168,9 @@ const CommandPalette: React.FC<{
             <span>Analytics</span>
             <CommandShortcut>{'⌘A'}</CommandShortcut>
           </CommandItem>
-          <CommandItem onSelect={() => handleNavigate('/organizations')} className="command-palette-item">
-            <Building2 className="command-palette-item-icon" />
-            <span>Organizations</span>
-          </CommandItem>
-          <CommandItem onSelect={() => handleNavigate('/organizations')} className="command-palette-item">
-            <Database className="command-palette-item-icon" />
-            <span>Organisations</span>
+          <CommandItem onSelect={() => handleNavigate('/profile')} className="command-palette-item">
+            <UserRound className="command-palette-item-icon" />
+            <span>Profile & Organizations</span>
             <CommandShortcut>{'⌘T'}</CommandShortcut>
           </CommandItem>
         </CommandGroup>

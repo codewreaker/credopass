@@ -3,17 +3,15 @@ import { useCallback, useMemo } from 'react';
 import {
     Plus,
     UserPlus,
-    CalendarsIcon
+    CalendarsIcon,
+    Building2
 } from 'lucide-react';
 import { launchEventForm } from '../../containers/EventForm/index';
 import { useLauncher } from '@credopass/lib/stores';
 import { launchUserForm } from '../UserForm';
 import { useSidebarTrigger } from '../../../../../packages/lib/src/hooks/use-sidebar-trigger';
 import { useIsMobile } from '@credopass/ui/hooks/use-mobile';
-import { NAV_ITEMS } from '@credopass/lib/constants';
 import { useNavigate } from '@tanstack/react-router';
-
-const orgNavItem = NAV_ITEMS.find(({ id }) => (id === 'organizations'));
 
 /** Luma-style action cards (like Invite Guests / Send a Blast / Share Event) */
 const ACTION_CARDS = [
@@ -40,9 +38,9 @@ const ACTION_CARDS = [
     },
     {
         key: 'organization',
-        icon: orgNavItem?.icon,
-        label: `View ${orgNavItem?.label}`,
-        description: `View and Manage ${orgNavItem?.label}`,
+        icon: Building2,
+        label: 'View Organisations',
+        description: 'View and Manage Organisations',
         action: 'manage-org' as const,
     }
 ] as const;
@@ -66,7 +64,7 @@ export default function ActionCards() {
                     onToggleCollapse();
                     break
                 case 'manage-org':
-                    navigate({ to: '/organizations' });
+                    navigate({ to: '/profile' });
                     break
             }
         },

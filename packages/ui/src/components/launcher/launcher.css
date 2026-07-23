@@ -15,8 +15,9 @@
 @media (max-width: 640px) {
   .launcher-dialog {
     top: 0.5rem !important;
-    transform: translate(-50%, 0) !important;
-    /* Tailwind v4 positions via the `translate` property, not `transform` */
+    /* Tailwind v4 positions via the CSS `translate` property — override only
+       that (adding a `transform` too would compose and double the shift). */
+    transform: none !important;
     translate: -50% 0 !important;
     max-height: calc(100dvh - 1rem) !important;
     overflow-y: auto;

@@ -11,14 +11,9 @@ const DecorMask = ({ src, className }: { src: string; className?: string }) => (
     aria-hidden
     className={`pointer-events-none absolute ${className ?? ''}`}
     style={{
+      content: `url(${src})`,
       WebkitMaskImage: `url(${src})`,
-      maskImage: `url(${src})`,
-      WebkitMaskRepeat: 'no-repeat',
-      maskRepeat: 'no-repeat',
-      WebkitMaskSize: 'contain',
-      maskSize: 'contain',
-      WebkitMaskPosition: 'center',
-      maskPosition: 'center',
+      maskImage: `url(${src})`
     }}
   />
 )
@@ -101,7 +96,6 @@ export default function UpgradePage() {
       <div className="hidden md:flex md:w-[340px] lg:w-[420px] xl:w-[480px] shrink-0 flex-col justify-between rounded-3xl bg-primary text-primary-foreground p-8 lg:p-10 relative overflow-hidden">
         <div className="pointer-events-none absolute -right-24 -top-24 size-72 rounded-full border-[28px] border-primary-foreground/8" />
         <div className="pointer-events-none absolute -left-16 bottom-24 size-44 rounded-full border-[20px] border-primary-foreground/6" />
-        <DecorMask src="/empty-state-two.svg" className="bg-primary-foreground/10 w-64 h-64 -bottom-4 -right-8" />
 
         <div className="relative z-10 flex items-center gap-2.5">
           <div className="flex size-9 items-center justify-center rounded-xl bg-primary-foreground text-primary">
