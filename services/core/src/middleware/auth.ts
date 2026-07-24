@@ -1,5 +1,6 @@
 import { createMiddleware } from 'hono/factory';
 import { jwk } from 'hono/jwk';
+import type { MiddlewareHandler } from 'hono';
 
 /**
  * Supabase JWT verification for every API route.
@@ -13,12 +14,18 @@ import { jwk } from 'hono/jwk';
  *   SUPABASE_URL   - project URL, e.g. https://<ref>.supabase.co (required)
  *   AUTH_DISABLED  - "true" skips verification entirely. Local-dev escape
  *                    hatch only; never set in production.
+ *
+ * Boot safety: this NEVER throws at import/construction time. The JWKS verifier
+ * is built lazily on the first protected request. If SUPABASE_URL is missing the
+ * service still boots and serves /health, /docs and /openapi.json — protected
+ * routes return 500 with a clear message — so a container health check goes
+ * green and a misconfig is visible without crash-looping the deploy.
  */
 
 // Paths served without a token (docs + health probes)
 const PUBLIC_SUFFIXES = ['/health', '/docs', '/openapi.json'];
 
-export function createAuthMiddleware() {
+export function createAuthMiddleware(): MiddlewareHandler {
   if (process.env.AUTH_DISABLED === 'true') {
     console.warn(
       '⚠️  AUTH_DISABLED=true - API authentication is OFF. ' +
@@ -27,23 +34,35 @@ export function createAuthMiddleware() {
     return createMiddleware(async (_c, next) => next());
   }
 
-  const supabaseUrl = process.env.SUPABASE_URL;
-  if (!supabaseUrl) {
-    throw new Error(
-      'SUPABASE_URL is required to verify API tokens against the Supabase JWKS. ' +
-      'Set it in services/core/.env (or set AUTH_DISABLED=true for local dev only).'
-    );
-  }
+  // Built on first use, then cached. Kept out of module scope so importing this
+  // file (and calling createAuthMiddleware) never touches env or throws.
+  let verify: ReturnType<typeof jwk> | null = null;
 
-  const verify = jwk({
-    jwks_uri: `${supabaseUrl}/auth/v1/.well-known/jwks.json`,
-    alg: ['ES256', 'RS256'],
-  });
+  const getVerifier = (): ReturnType<typeof jwk> | null => {
+    if (verify) return verify;
+    const supabaseUrl = process.env.SUPABASE_URL;
+    if (!supabaseUrl) return null;
+    verify = jwk({
+      jwks_uri: `${supabaseUrl}/auth/v1/.well-known/jwks.json`,
+      alg: ['ES256', 'RS256'],
+    });
+    return verify;
+  };
 
   return createMiddleware(async (c, next) => {
     if (PUBLIC_SUFFIXES.some((s) => c.req.path.endsWith(s))) {
       return next();
     }
-    return verify(c, next);
+
+    const verifier = getVerifier();
+    if (!verifier) {
+      console.error(
+        'SUPABASE_URL is not set — cannot verify API tokens. ' +
+        'Set SUPABASE_URL in the environment (or AUTH_DISABLED=true for local dev only).'
+      );
+      return c.json({ error: 'auth not configured' }, 500);
+    }
+
+    return verifier(c, next);
   });
 }

@@ -153,7 +153,7 @@ const HeroSpotlight = ({
                                 className="inline-flex items-center gap-2 whitespace-nowrap rounded-full bg-primary-foreground text-primary px-4 h-9 text-[13px] font-semibold cursor-pointer transition-transform duration-150 hover:scale-[1.02] active:scale-[0.98]"
                             >
                                 <ScanLine size={14} />
-                                Open check-in
+                                Check-in
                             </button>
                             <button
                                 type="button"

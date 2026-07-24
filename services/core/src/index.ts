@@ -157,6 +157,9 @@ const port = Number(process.env.PORT) || 3000;
 console.log(`\n🔧 [server.ts] Attempting to start server on port ${port}`);
 console.log(`   PORT env: ${process.env.PORT || 'not set (using default 3000)'}`);
 console.log(`📦 Mode: ${isDevelopment ? "development" : "production"}`);
+// Presence-only env check (never log values) so a misconfigured deploy is obvious.
+const envStatus = (name: string) => `${name}=${process.env[name] ? '✓' : '✗ missing'}`;
+console.log(`🔑 Env: ${['SUPABASE_URL', 'DATABASE_URL'].map(envStatus).join('  ')}`);
 
 export default {
     port,
