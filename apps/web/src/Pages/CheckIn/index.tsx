@@ -5,7 +5,7 @@ import { useToolbarContext } from '@credopass/lib/hooks';
 import type { EventType, User, UserType } from '@credopass/lib/schemas';
 import { getCollections } from '@credopass/api-client/collections';
 import { useIsMobile } from '@credopass/ui/hooks/use-mobile';
-import { QrCodeIcon, ArrowLeft, ScanLine, UserRoundPlus } from 'lucide-react';
+import { QrCodeIcon, ArrowLeft, ScanLine, UserRoundPlus, Bug, Trash2 } from 'lucide-react';
 import { Button } from '@credopass/ui/components/button';
 import { GlowingQRCode } from '@credopass/ui/components/glowing-qr-code';
 import { SheetDialog } from '@credopass/ui/components/sheet-dialog';
@@ -43,7 +43,22 @@ const CheckInPage: React.FC = () => {
   const isMobile = useIsMobile();
   const { events: eventCollection, users: userCollection } = getCollections();
 
-  useToolbarContext({ action: null, search: { enabled: false, placeholder: '' } });
+  // DEV drawer — a running log of scans, parse outcomes and errors so check-in
+  // (especially the camera scanner on real devices) can be debugged in place.
+  const [debugOpen, setDebugOpen] = useState(false);
+  const [debugLog, setDebugLog] = useState<{ at: string; kind: 'scan' | 'ok' | 'error' | 'info'; msg: string }[]>([]);
+  const [lastDecodeError, setLastDecodeError] = useState<string | null>(null);
+  const pushLog = useCallback(
+    (kind: 'scan' | 'ok' | 'error' | 'info', msg: string) =>
+      setDebugLog((l) => [{ at: new Date().toLocaleTimeString(), kind, msg }, ...l].slice(0, 50)),
+    []
+  );
+
+  // Expose the DEV drawer as this view's contextual toolbar action.
+  useToolbarContext({
+    action: { icon: Bug, label: 'Debug check-in', onClick: () => setDebugOpen(true) },
+    search: { enabled: false, placeholder: '' },
+  });
 
   const { data: event, isLoading } = useLiveQuery((q) =>
     q.from({ eventCollection }).where(({ eventCollection }) => eq(eventCollection.id, eventId)).findOne()
@@ -92,13 +107,21 @@ const CheckInPage: React.FC = () => {
     async (value: string) => {
       const ev = event as EventType | undefined;
       if (!ev) return;
+      pushLog('scan', value);
       const [scannedEventId, userId] = value.split(':');
       if (!userId || scannedEventId !== ev.id) {
+        pushLog(
+          'error',
+          value.includes('/e/')
+            ? "That's the event's shareable link, not an attendee ticket."
+            : `Not a valid ticket for this event (got eventId "${scannedEventId ?? ''}").`
+        );
         toast.error('Not a valid ticket for this event');
         return;
       }
       const user = users.find((u) => u.id === userId);
       if (!user) {
+        pushLog('error', `No local user matches ticket userId "${userId}".`);
         toast.error('Ticket not recognised');
         return;
       }
@@ -107,11 +130,15 @@ const CheckInPage: React.FC = () => {
         { firstName: user.firstName, lastName: user.lastName, email: user.email },
         'qr'
       );
-      if (!result) return;
+      if (!result) {
+        pushLog('error', `Check-in write failed for ${user.firstName} ${user.lastName}.`);
+        return;
+      }
+      pushLog('ok', `${result.alreadyCheckedIn ? 'Already in' : 'Checked in'}: ${user.firstName} ${user.lastName}`);
       if (result.alreadyCheckedIn) toast.info(`${user.firstName} was already checked in`);
       celebrate(user);
     },
-    [event, users, checkIn, celebrate]
+    [event, users, checkIn, celebrate, pushLog]
   );
 
   if (isLoading) return <LoadingState />;
@@ -184,7 +211,12 @@ const CheckInPage: React.FC = () => {
             </div>
           </div>
         ) : (
-          <QRScanner onResult={handleScan} className="aspect-square w-full" />
+          <QRScanner
+            onResult={handleScan}
+            onDecodeError={(m) => setLastDecodeError(m)}
+            paused={!!successUser}
+            className="aspect-square w-full"
+          />
         )}
       </div>
 
@@ -198,6 +230,63 @@ const CheckInPage: React.FC = () => {
 
       <SheetDialog open={manualOpen} onOpenChange={setManualOpen} title="Manual check-in" contentClassName="flex flex-col gap-3">
         <ManualSignInForm onSubmit={handleManual} onBack={() => setManualOpen(false)} showBack={false} />
+      </SheetDialog>
+
+      {/* DEV drawer — scan/parse/error log for debugging check-in on device */}
+      <SheetDialog
+        open={debugOpen}
+        onOpenChange={setDebugOpen}
+        title="Check-in debug"
+        footerStart={
+          <Button variant="ghost" size="sm" className="gap-1.5 rounded-full text-muted-foreground" onClick={() => setDebugLog([])}>
+            <Trash2 size={13} /> Clear
+          </Button>
+        }
+        contentClassName="flex flex-col gap-3"
+      >
+        <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 rounded-xl border border-border bg-muted/30 p-3 text-xs">
+          <dt className="text-muted-foreground">Event id</dt>
+          <dd className="truncate font-mono">{event.id}</dd>
+          <dt className="text-muted-foreground">Mode</dt>
+          <dd className="font-mono">{mode}</dd>
+          <dt className="text-muted-foreground">Share URL</dt>
+          <dd className="truncate font-mono">{shareUrl}</dd>
+          <dt className="text-muted-foreground">Ticket format</dt>
+          <dd className="font-mono">{'{eventId}:{userId}'}</dd>
+          <dt className="text-muted-foreground">Last decode err</dt>
+          <dd className="truncate font-mono text-muted-foreground">{lastDecodeError ?? '—'}</dd>
+        </dl>
+
+        <p className="px-1 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+          Log ({debugLog.length})
+        </p>
+        {debugLog.length === 0 ? (
+          <p className="rounded-xl border border-dashed border-border px-3 py-6 text-center text-xs text-muted-foreground">
+            No scans yet. Switch to Scan and point at a ticket QR — the raw contents show here.
+          </p>
+        ) : (
+          <div className="flex flex-col gap-1.5">
+            {debugLog.map((e, i) => (
+              <div key={i} className="rounded-lg border border-border bg-card px-3 py-2">
+                <div className="flex items-center justify-between gap-2">
+                  <span
+                    className={cn(
+                      'rounded-full px-1.5 py-0.5 text-[10px] font-bold uppercase',
+                      e.kind === 'ok' && 'bg-success/10 text-success',
+                      e.kind === 'error' && 'bg-destructive/10 text-destructive',
+                      e.kind === 'scan' && 'bg-primary/10 text-primary',
+                      e.kind === 'info' && 'bg-muted text-muted-foreground'
+                    )}
+                  >
+                    {e.kind}
+                  </span>
+                  <span className="text-[10px] tabular-nums text-muted-foreground">{e.at}</span>
+                </div>
+                <p className="mt-1 break-all font-mono text-xs">{e.msg}</p>
+              </div>
+            ))}
+          </div>
+        )}
       </SheetDialog>
     </div>
   );

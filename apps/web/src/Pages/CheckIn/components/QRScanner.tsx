@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
+import { Html5Qrcode } from 'html5-qrcode';
 import { CameraOff, ScanLine } from 'lucide-react';
 
 interface QRScannerProps {
@@ -6,142 +7,111 @@ interface QRScannerProps {
   onResult: (value: string) => void;
   /** Paused while a success screen is up, so we don't re-fire mid-celebration. */
   paused?: boolean;
+  /** Surfaces raw decode failures to the DEV drawer for debugging. */
+  onDecodeError?: (message: string) => void;
   className?: string;
 }
 
-// BarcodeDetector is not in the TS DOM lib yet; declare the slice we use.
-type BarcodeDetectorLike = {
-  detect: (source: CanvasImageSource) => Promise<{ rawValue: string }[]>;
-};
-type BarcodeDetectorCtor = {
-  new (opts?: { formats?: string[] }): BarcodeDetectorLike;
-  getSupportedFormats?: () => Promise<string[]>;
-};
-
-const getDetectorCtor = (): BarcodeDetectorCtor | null =>
-  (globalThis as unknown as { BarcodeDetector?: BarcodeDetectorCtor }).BarcodeDetector ?? null;
-
-type ScannerState = 'starting' | 'scanning' | 'unsupported' | 'denied' | 'error';
+type ScannerState = 'starting' | 'scanning' | 'denied' | 'error';
 
 /**
- * Camera QR scanner built on the native BarcodeDetector API — no dependency.
- * Chrome/Android decode natively; Safari/Firefox lack BarcodeDetector, so we
- * show a clear fallback pointing to manual check-in.
+ * Camera QR scanner built on `html5-qrcode`.
+ *
+ * We moved off the native BarcodeDetector because it isn't supported in mobile
+ * Chrome (and Safari). html5-qrcode is a battle-tested camera scanner with broad
+ * mobile support. It injects its own <video> into a host element by id.
  */
-export function QRScanner({ onResult, paused = false, className }: QRScannerProps) {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  // Detect support at mount so we never setState synchronously in an effect.
-  const [state, setState] = useState<ScannerState>(() => (getDetectorCtor() ? 'starting' : 'unsupported'));
+export function QRScanner({ onResult, paused = false, onDecodeError, className }: QRScannerProps) {
+  const [state, setState] = useState<ScannerState>('starting');
+  // Stable, render-safe host id for html5-qrcode to mount its video into.
+  const containerId = `qr-scanner-${useId().replace(/:/g, '')}`;
 
-  // Ref mirrors of props so the scan loop reads the latest without restarting.
+  // Ref mirrors so the scan loop reads the latest without restarting.
   const pausedRef = useRef(paused);
   const onResultRef = useRef(onResult);
+  const onDecodeErrorRef = useRef(onDecodeError);
   useEffect(() => {
     pausedRef.current = paused;
     onResultRef.current = onResult;
+    onDecodeErrorRef.current = onDecodeError;
   });
 
   useEffect(() => {
-    const Ctor = getDetectorCtor();
-    if (!Ctor) return undefined;
-
-    let stream: MediaStream | null = null;
-    let raf = 0;
-    let cancelled = false;
+    const scanner = new Html5Qrcode(containerId, /* verbose */ false);
+    let stopped = false;
     let lastValue = '';
     let lastAt = 0;
-    const detector = new Ctor({ formats: ['qr_code'] });
 
-    const tick = async () => {
-      const video = videoRef.current;
-      if (cancelled || !video || video.readyState < 2) {
-        raf = requestAnimationFrame(tick);
-        return;
-      }
-      if (!pausedRef.current) {
-        try {
-          const codes = await detector.detect(video);
-          const value = codes[0]?.rawValue;
+    scanner
+      .start(
+        { facingMode: 'environment' },
+        {
+          fps: 10,
+          qrbox: (vw: number, vh: number) => {
+            const side = Math.floor(Math.min(vw, vh) * 0.7);
+            return { width: side, height: side };
+          },
+        },
+        (decodedText) => {
+          if (pausedRef.current) return;
           const now = Date.now();
           // Debounce the same value for 2.5s so one presentation = one check-in.
-          if (value && (value !== lastValue || now - lastAt > 2500)) {
-            lastValue = value;
+          if (decodedText && (decodedText !== lastValue || now - lastAt > 2500)) {
+            lastValue = decodedText;
             lastAt = now;
-            onResultRef.current(value);
+            onResultRef.current(decodedText);
           }
-        } catch {
-          /* transient decode error — keep scanning */
+        },
+        (errorMessage) => {
+          // Per-frame "no code found" is normal noise; forward to DEV only.
+          onDecodeErrorRef.current?.(errorMessage);
         }
-      }
-      raf = requestAnimationFrame(tick);
-    };
-
-    (async () => {
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: 'environment' },
-        });
-        if (cancelled) {
-          stream.getTracks().forEach((t) => t.stop());
-          return;
-        }
-        const video = videoRef.current;
-        if (video) {
-          video.srcObject = stream;
-          await video.play().catch(() => {});
-        }
-        setState('scanning');
-        raf = requestAnimationFrame(tick);
-      } catch (err) {
-        setState((err as DOMException)?.name === 'NotAllowedError' ? 'denied' : 'error');
-      }
-    })();
+      )
+      .then(() => {
+        if (!stopped) setState('scanning');
+      })
+      .catch((err: unknown) => {
+        const name = (err as { name?: string })?.name ?? String(err);
+        setState(name.includes('NotAllowed') || name.includes('Permission') ? 'denied' : 'error');
+      });
 
     return () => {
-      cancelled = true;
-      cancelAnimationFrame(raf);
-      stream?.getTracks().forEach((t) => t.stop());
+      stopped = true;
+      // stop() rejects if it never fully started; swallow either way.
+      scanner
+        .stop()
+        .then(() => scanner.clear())
+        .catch(() => {});
     };
-  }, []);
+  }, [containerId]);
 
-  if (state === 'unsupported' || state === 'denied' || state === 'error') {
-    return (
-      <div
-        className={`flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-border bg-card p-8 text-center ${className ?? ''}`}
-      >
-        <CameraOff size={32} className="text-muted-foreground" />
-        <div>
-          <p className="text-sm font-semibold">
-            {state === 'unsupported' ? 'Scanning not supported here' : state === 'denied' ? 'Camera permission needed' : 'Camera unavailable'}
-          </p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            {state === 'unsupported'
-              ? 'This browser has no QR scanner. Use manual check-in, or open the kiosk in Chrome/Android.'
-              : state === 'denied'
-                ? 'Allow camera access to scan tickets, or use manual check-in.'
-                : 'Couldn’t start the camera. Use manual check-in.'}
-          </p>
-        </div>
-      </div>
-    );
-  }
+  const errored = state === 'denied' || state === 'error';
 
   return (
     <div className={`relative overflow-hidden rounded-2xl bg-black ${className ?? ''}`}>
-      <video ref={videoRef} playsInline muted className="h-full w-full object-cover" />
-      {/* Reticle */}
-      <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-        <div className="relative size-52 max-w-[70%]">
-          <span className="absolute left-0 top-0 size-8 rounded-tl-xl border-l-4 border-t-4 border-primary" />
-          <span className="absolute right-0 top-0 size-8 rounded-tr-xl border-r-4 border-t-4 border-primary" />
-          <span className="absolute bottom-0 left-0 size-8 rounded-bl-xl border-b-4 border-l-4 border-primary" />
-          <span className="absolute bottom-0 right-0 size-8 rounded-br-xl border-b-4 border-r-4 border-primary" />
+      {/* html5-qrcode mounts its <video> here */}
+      <div id={containerId} className="h-full w-full [&_video]:h-full [&_video]:w-full [&_video]:object-cover" />
+
+      {errored ? (
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-card p-8 text-center">
+          <CameraOff size={32} className="text-muted-foreground" />
+          <div>
+            <p className="text-sm font-semibold">
+              {state === 'denied' ? 'Camera permission needed' : 'Camera unavailable'}
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {state === 'denied'
+                ? 'Allow camera access to scan tickets, or use manual check-in.'
+                : 'Couldn’t start the camera. Use manual check-in.'}
+            </p>
+          </div>
         </div>
-      </div>
-      <div className="absolute inset-x-0 bottom-0 flex items-center justify-center gap-2 bg-linear-to-t from-black/70 to-transparent py-3 text-xs font-medium text-white">
-        <ScanLine size={14} className="text-primary" />
-        {state === 'starting' ? 'Starting camera…' : 'Point at an attendee’s ticket QR'}
-      </div>
+      ) : (
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-center justify-center gap-2 bg-linear-to-t from-black/70 to-transparent py-3 text-xs font-medium text-white">
+          <ScanLine size={14} className="text-primary" />
+          {state === 'starting' ? 'Starting camera…' : 'Point at an attendee’s ticket QR'}
+        </div>
+      )}
     </div>
   );
 }
