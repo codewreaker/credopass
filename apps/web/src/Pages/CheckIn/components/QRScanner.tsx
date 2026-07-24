@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { Html5Qrcode } from 'html5-qrcode';
-import { CameraOff, ScanLine } from 'lucide-react';
+import { CameraOff, ScanLine, UserRoundPlus } from 'lucide-react';
 
 interface QRScannerProps {
   /** Fires with the decoded QR text; deduped so a held code fires once. */
@@ -9,6 +9,8 @@ interface QRScannerProps {
   paused?: boolean;
   /** Surfaces raw decode failures to the DEV drawer for debugging. */
   onDecodeError?: (message: string) => void;
+  /** Inline escape hatch when the camera can't start — jump to manual check-in. */
+  onUseManual?: () => void;
   className?: string;
 }
 
@@ -21,7 +23,7 @@ type ScannerState = 'starting' | 'scanning' | 'denied' | 'error';
  * Chrome (and Safari). html5-qrcode is a battle-tested camera scanner with broad
  * mobile support. It injects its own <video> into a host element by id.
  */
-export function QRScanner({ onResult, paused = false, onDecodeError, className }: QRScannerProps) {
+export function QRScanner({ onResult, paused = false, onDecodeError, onUseManual, className }: QRScannerProps) {
   const [state, setState] = useState<ScannerState>('starting');
   // Stable, render-safe host id for html5-qrcode to mount its video into.
   const containerId = `qr-scanner-${useId().replace(/:/g, '')}`;
@@ -101,10 +103,20 @@ export function QRScanner({ onResult, paused = false, onDecodeError, className }
             </p>
             <p className="mt-1 text-xs text-muted-foreground">
               {state === 'denied'
-                ? 'Allow camera access to scan tickets, or use manual check-in.'
-                : 'Couldn’t start the camera. Use manual check-in.'}
+                ? 'Allow camera access in your browser to scan tickets, or check people in by name instead.'
+                : 'We couldn’t start the camera on this device. You can still check people in by name.'}
             </p>
           </div>
+          {onUseManual && (
+            <button
+              type="button"
+              onClick={onUseManual}
+              className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-transform hover:scale-[1.02] active:scale-[0.98]"
+            >
+              <UserRoundPlus size={15} />
+              Manual check-in
+            </button>
+          )}
         </div>
       ) : (
         <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-center justify-center gap-2 bg-linear-to-t from-black/70 to-transparent py-3 text-xs font-medium text-white">

@@ -1,10 +1,11 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { eq, useLiveQuery } from '@tanstack/react-db';
 import { getCollections } from '@credopass/api-client/collections';
 import type { EventType, Organization } from '@credopass/lib/schemas';
 import {
   ArrowLeft,
+  CalendarCheck,
   CalendarPlus,
   CheckIcon,
   Clock,
@@ -25,21 +26,42 @@ import { TimelineMarker } from '@credopass/ui/components/timeline';
 import { GlowingQRCode } from '@credopass/ui/components/glowing-qr-code';
 import { toast } from '@credopass/ui/components/sonner';
 import { cn } from '@credopass/ui/lib/utils';
-import { EventImage } from '../EventComposer/fields/event-image';
+import { supabase } from '../../../supabase';
 import { EventDetailsReadonly } from '../EventDetails';
-import { useAttendeeCheckIn } from '../use-attendee-checkin';
+import { usePublicAttend, type PublicEvent } from '../use-public-event';
 
 /**
- * Loads an event by id and renders the shared read-only view, with loading and
- * not-found states. Used by both the in-shell detail route and the public route.
+ * The fields the shared `EventView` renders. `EventType` (organiser, from the
+ * authenticated collection) and `PublicEvent` (attendee, from the public
+ * endpoint) both satisfy it — so the same component drives both surfaces without
+ * the public path ever touching an authenticated collection.
  */
-export function EventViewPage({ eventId, variant }: { eventId: string; variant: 'detail' | 'public' }) {
+type EventViewModel = Pick<EventType, 'id' | 'name' | 'status' | 'description' | 'capacity'> & {
+  startTime: Date | null;
+  endTime: Date | null;
+  // Nullable so both EventType (non-null) and PublicEvent (nullable) satisfy it.
+  location: string | null;
+  organizationId?: string | null;
+};
+
+/**
+ * Loads an event by id from the authenticated collection and renders the shared
+ * read-only view (organiser / in-shell only). The public route uses
+ * `PublicEventPage`, which fetches the token-optional endpoint instead.
+ */
+export function EventViewPage({ eventId }: { eventId: string }) {
   const navigate = useNavigate();
-  const { events: eventCollection } = getCollections();
+  const { events: eventCollection, organizations: orgCollection } = getCollections();
   const { data: event, isLoading } = useLiveQuery((q) =>
     q
       .from({ eventCollection })
       .where(({ eventCollection }) => eq(eventCollection.id, eventId))
+      .findOne()
+  );
+  const { data: org } = useLiveQuery((q) =>
+    q
+      .from({ orgCollection })
+      .where(({ orgCollection }) => eq(orgCollection.id, (event as EventType | undefined)?.organizationId ?? ''))
       .findOne()
   );
 
@@ -62,16 +84,20 @@ export function EventViewPage({ eventId, variant }: { eventId: string; variant: 
         <p className="text-sm text-muted-foreground">
           This event doesn&apos;t exist or has been removed.
         </p>
-        {variant === 'detail' && (
-          <Button variant="outline" className="rounded-full" onClick={() => navigate({ to: '/events' })}>
-            <ArrowLeft size={16} /> Back to Events
-          </Button>
-        )}
+        <Button variant="outline" className="rounded-full" onClick={() => navigate({ to: '/events' })}>
+          <ArrowLeft size={16} /> Back to Events
+        </Button>
       </div>
     );
   }
 
-  return <EventView event={event as EventType} variant={variant} />;
+  return (
+    <EventView
+      event={event as EventType}
+      variant="detail"
+      orgName={(org as Organization | undefined)?.name}
+    />
+  );
 }
 
 /** GMT offset + zone, matching the composer's footer. */
@@ -96,8 +122,24 @@ const STATUS_STYLE: Record<EventType['status'], string> = {
   cancelled: 'bg-primary-foreground/10',
 };
 
+/**
+ * The public-page primary action follows event state (§3.5): register ahead of
+ * time, check in while it's live, nothing once it's over. This one rule makes
+ * the register-vs-checkin split legible and stops offering check-in on a
+ * finished event (B4).
+ */
+type PublicCta =
+  | { kind: 'register' | 'checkin'; label: string }
+  | { kind: 'ended'; label: string };
+
+const publicCtaFor = (status: EventType['status']): PublicCta => {
+  if (status === 'ongoing') return { kind: 'checkin', label: 'Check in' };
+  if (status === 'completed' || status === 'cancelled') return { kind: 'ended', label: 'This event has ended' };
+  return { kind: 'register', label: 'Register' };
+};
+
 /** Download an .ics for the event (same ICS the detail page produced). */
-const downloadIcs = (event: EventType) => {
+const downloadIcs = (event: EventViewModel) => {
   const start = event.startTime instanceof Date ? event.startTime : new Date();
   const end = event.endTime instanceof Date ? event.endTime : new Date();
   const stamp = (d: Date) => d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
@@ -118,29 +160,21 @@ const downloadIcs = (event: EventType) => {
 };
 
 interface EventViewProps {
-  event: EventType;
+  event: EventViewModel;
   /** `detail` = organiser, in the app shell. `public` = attendee, standalone. */
   variant: 'detail' | 'public';
+  /** Org name for the billboard pill (passed in so public never queries collections). */
+  orgName?: string;
 }
 
 /**
  * The read-only twin of the event composer — same billboard + When/Where/What
- * layout, plus the shareable ticket. One component, mounted both in-shell at
+ * layout, plus the shareable pass. One component, mounted both in-shell at
  * `/events/$eventId` (organiser) and standalone at `/e/$eventId` (attendee).
  */
-export function EventView({ event, variant }: EventViewProps) {
+export function EventView({ event, variant, orgName }: EventViewProps) {
   const navigate = useNavigate();
   const isPublic = variant === 'public';
-
-  // Org name for the billboard pill (parity with the composer's OrgField).
-  const { organizations: orgCollection } = getCollections();
-  const { data: org } = useLiveQuery((q) =>
-    q
-      .from({ orgCollection })
-      .where(({ orgCollection }) => eq(orgCollection.id, event.organizationId ?? ''))
-      .findOne()
-  );
-  const orgName = (org as Organization | undefined)?.name;
 
   const shareUrl = useMemo(
     () => (typeof window !== 'undefined' ? `${window.location.origin}/e/${event.id}` : `/e/${event.id}`),
@@ -150,7 +184,12 @@ export function EventView({ event, variant }: EventViewProps) {
   const start = event.startTime ? new Date(event.startTime) : null;
   const end = event.endTime ? new Date(event.endTime) : null;
 
-  const [checkInOpen, setCheckInOpen] = useState(false);
+  const cta = publicCtaFor(event.status);
+  const isEnded = event.status === 'completed' || event.status === 'cancelled';
+
+  // The public check-in/register sheet, opened in whichever mode the state implies.
+  const [attendOpen, setAttendOpen] = useState(false);
+  const attendMode = cta.kind === 'checkin' ? 'checkin' : 'register';
 
   const copyLink = async () => {
     try {
@@ -176,6 +215,21 @@ export function EventView({ event, variant }: EventViewProps) {
   };
 
   const openCheckinKiosk = () => navigate({ to: '/checkin/$eventId', params: { eventId: event.id } });
+  const openAttend = () => setAttendOpen(true);
+
+  // Organiser pass-card CTA is gated by status too: a completed event points at
+  // the attendee summary instead of a live check-in kiosk (B4).
+  const organiserPassPrimary = isEnded
+    ? {
+        label: 'View summary',
+        icon: <Users size={14} />,
+        onClick: () => navigate({ to: '/attendees', search: { eventId: event.id } }),
+      }
+    : {
+        label: 'Check-in Guests',
+        icon: <ScanLine size={14} />,
+        onClick: openCheckinKiosk,
+      };
 
   return (
     <div
@@ -203,10 +257,12 @@ export function EventView({ event, variant }: EventViewProps) {
               <Users size={14} />
               <span className="hidden sm:inline">Attendees</span>
             </Button>
-            <Button variant="outline" size="sm" className="gap-2 rounded-full" onClick={openCheckinKiosk}>
-              <ScanLine size={14} />
-              <span className="hidden sm:inline">Check-in</span>
-            </Button>
+            {!isEnded && (
+              <Button variant="outline" size="sm" className="gap-2 rounded-full" onClick={openCheckinKiosk}>
+                <ScanLine size={14} />
+                <span className="hidden sm:inline">Check-in</span>
+              </Button>
+            )}
             <Button variant="outline" size="sm" className="gap-2 rounded-full" onClick={() => navigate({ to: '/events/$eventId/edit', params: { eventId: event.id } })}>
               <Edit2 size={14} />
               <span className="hidden sm:inline">Edit</span>
@@ -250,8 +306,8 @@ export function EventView({ event, variant }: EventViewProps) {
           <GlowingQRCode
             value={shareUrl}
             size={92}
-            onClick={isPublic ? () => setCheckInOpen(true) : openCheckinKiosk}
-            ariaLabel={isPublic ? 'Check in to this event' : 'Open the check-in kiosk'}
+            onClick={isPublic ? (isEnded ? undefined : openAttend) : openCheckinKiosk}
+            ariaLabel={isPublic ? 'Register or check in to this event' : 'Open the check-in kiosk'}
           />
           <div className="min-w-0 flex-1">
             <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-muted-foreground/70">
@@ -261,17 +317,28 @@ export function EventView({ event, variant }: EventViewProps) {
               #{event.id?.slice(0, 12).toUpperCase()}
             </p>
             <p className="mt-1 text-xs text-muted-foreground">
-              {isPublic ? 'Scan or tap to check in.' : 'Scan to open the shareable page.'}
+              {isPublic
+                ? isEnded
+                  ? 'This event has ended.'
+                  : cta.kind === 'checkin'
+                    ? 'Scan or tap to check in.'
+                    : 'Scan or tap to register.'
+                : 'Scan to open the shareable page.'}
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
-              <Button
-                size="sm"
-                className="rounded-full font-semibold"
-                onClick={isPublic ? () => setCheckInOpen(true) : openCheckinKiosk}
-              >
-                {isPublic ? <Ticket size={14} /> : <ScanLine size={14} />}
-                {isPublic ? 'Check-in to Event' : 'Check-in Guests'}
-              </Button>
+              {isPublic ? (
+                !isEnded && (
+                  <Button size="sm" className="rounded-full font-semibold" onClick={openAttend}>
+                    {cta.kind === 'checkin' ? <Ticket size={14} /> : <CalendarCheck size={14} />}
+                    {cta.label}
+                  </Button>
+                )
+              ) : (
+                <Button size="sm" className="rounded-full font-semibold" onClick={organiserPassPrimary.onClick}>
+                  {organiserPassPrimary.icon}
+                  {organiserPassPrimary.label}
+                </Button>
+              )}
               <Button variant="outline" size="sm" className="gap-1.5 rounded-full" onClick={share}>
                 <Share2 size={14} /> Share
               </Button>
@@ -312,7 +379,7 @@ export function EventView({ event, variant }: EventViewProps) {
             <span className="text-xs text-muted-foreground">Offline location or virtual link</span>
           </span>
         </div>
-        {event.location && <EventDetailsReadonly event={event} />}
+        {event.location && <EventDetailsReadonly event={event as EventType} />}
       </div>
 
       {/* Description */}
@@ -342,61 +409,111 @@ export function EventView({ event, variant }: EventViewProps) {
         </div>
       </div>
 
-      <EventImage />
-
-      {/* Sticky attendee CTA on the public page */}
+      {/* Sticky attendee CTA on the public page — state-driven (§3.5) */}
       {isPublic && (
         <div className="sticky bottom-0 -mx-4 mt-1 flex gap-2 bg-linear-to-t from-background via-background to-transparent px-4 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-3">
-          <Button variant="outline" className="h-12 flex-1 rounded-full font-semibold" onClick={() => downloadIcs(event)}>
-            <CalendarPlus /> Add to calendar
-          </Button>
-          <Button className="h-12 flex-2 rounded-full font-semibold" onClick={() => setCheckInOpen(true)}>
-            <Ticket /> Check in
-          </Button>
+          {isEnded ? (
+            <div className="flex h-12 flex-1 items-center justify-center gap-2 rounded-full border border-border bg-card text-sm font-medium text-muted-foreground">
+              <Clock size={15} /> This event has ended
+            </div>
+          ) : (
+            <>
+              <Button variant="outline" className="h-12 flex-1 rounded-full font-semibold" onClick={() => downloadIcs(event)}>
+                <CalendarPlus /> Add to calendar
+              </Button>
+              <Button className="h-12 flex-2 rounded-full font-semibold" onClick={openAttend}>
+                {cta.kind === 'checkin' ? <Ticket /> : <CalendarCheck />}
+                {cta.label}
+              </Button>
+            </>
+          )}
         </div>
       )}
 
-      {isPublic && (
-        <AttendeeCheckInDialog open={checkInOpen} onOpenChange={setCheckInOpen} event={event} />
+      {isPublic && !isEnded && (
+        <AttendeeSelfServiceDialog
+          open={attendOpen}
+          onOpenChange={setAttendOpen}
+          event={event as PublicEvent}
+          mode={attendMode}
+        />
       )}
     </div>
   );
 }
 
-/** Self check-in: collect name/email, write attendance, then show the ticket QR. */
-function AttendeeCheckInDialog({
+/**
+ * Self register / check-in against the token-optional public endpoint. Collects
+ * name + email (soft-prefilled from a signed-in session where possible, M5) and,
+ * on success, shows the personal pass QR the host scanner reads.
+ */
+function AttendeeSelfServiceDialog({
   open,
   onOpenChange,
   event,
+  mode,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  event: EventType;
+  event: PublicEvent;
+  mode: 'register' | 'checkin';
 }) {
-  const { checkIn, isSubmitting } = useAttendeeCheckIn();
+  const { attend, isSubmitting } = usePublicAttend();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [ticketId, setTicketId] = useState<string | null>(null);
+  const [done, setDone] = useState<'registered' | 'checkin' | null>(null);
+
+  const isCheckin = mode === 'checkin';
+
+  // Soft prefill (M5): a signed-in, non-anonymous session already knows who this
+  // is — carry their email/name into the form so returning attendees barely type.
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    supabase.auth.getUser().then(({ data }) => {
+      const user = data.user;
+      if (cancelled || !user || user.is_anonymous) return;
+      const meta = (user.user_metadata ?? {}) as { full_name?: string; name?: string; first_name?: string; last_name?: string };
+      if (user.email) setEmail((prev) => prev || user.email!);
+      const full = meta.full_name || meta.name || '';
+      const [firstFromFull, ...rest] = full.trim().split(/\s+/);
+      const first = meta.first_name || firstFromFull || '';
+      const last = meta.last_name || rest.join(' ') || '';
+      if (first) setFirstName((prev) => prev || first);
+      if (last) setLastName((prev) => prev || last);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [open]);
 
   const canSubmit = firstName.trim().length > 1 && lastName.trim().length > 1 && /.+@.+\..+/.test(email);
 
   const submit = async () => {
     if (!canSubmit) return;
-    const result = await checkIn(event, { firstName, lastName, email }, 'manual');
+    const result = await attend(event.id, { firstName, lastName, email }, mode, 'manual');
     if (!result) return;
     setTicketId(result.userId);
-    toast.success(result.alreadyCheckedIn ? 'You were already checked in' : "You're checked in!");
+    setDone(isCheckin ? 'checkin' : 'registered');
+    if (isCheckin) {
+      toast.success(result.alreadyExisted && result.attended ? 'You were already checked in' : "You're checked in!");
+    } else {
+      toast.success(result.alreadyExisted ? "You're on the list" : "You're registered — see you there!");
+    }
   };
 
-  // The personal ticket the host scanner reads to confirm attendance.
+  // The personal pass the host scanner reads to confirm attendance.
   const ticketValue = ticketId ? `${event.id}:${ticketId}` : '';
+
+  const title = ticketId ? 'Your pass' : isCheckin ? 'Check in' : 'Register';
 
   return (
     <SheetDialog
       open={open}
       onOpenChange={onOpenChange}
-      title={ticketId ? 'Your ticket' : 'Check in'}
+      title={title}
       footer={
         ticketId ? (
           <Button size="sm" className="rounded-full px-4" onClick={() => onOpenChange(false)}>
@@ -404,7 +521,7 @@ function AttendeeCheckInDialog({
           </Button>
         ) : (
           <Button size="sm" className="rounded-full px-4" disabled={!canSubmit || isSubmitting} onClick={submit}>
-            <CheckIcon /> Check in
+            {isCheckin ? <CheckIcon /> : <CalendarCheck />} {isCheckin ? 'Check in' : 'Register'}
           </Button>
         )
       }
@@ -412,10 +529,15 @@ function AttendeeCheckInDialog({
     >
       {ticketId ? (
         <div className="flex flex-col items-center gap-3 py-2 text-center">
-          <GlowingQRCode value={ticketValue} size={200} ariaLabel="Your check-in ticket" />
-          <p className="text-sm font-medium">Show this to the host to confirm your attendance.</p>
+          <GlowingQRCode value={ticketValue} size={200} ariaLabel="Your event pass" />
+          <p className="text-sm font-medium">
+            {done === 'registered'
+              ? 'Save your pass — show this at the door to check in.'
+              : 'Show this to the host to confirm your attendance.'}
+          </p>
           <p className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-            <Clock size={12} /> Checked in just now
+            {done === 'registered' ? <CalendarCheck size={12} /> : <Clock size={12} />}
+            {done === 'registered' ? 'Registered' : 'Checked in just now'}
           </p>
         </div>
       ) : (
@@ -426,7 +548,9 @@ function AttendeeCheckInDialog({
           </div>
           <Input type="email" inputMode="email" placeholder="you@email.com" value={email} onChange={(e) => setEmail(e.target.value)} className="h-11 rounded-xl" />
           <p className="px-1 text-xs text-muted-foreground">
-            We record your attendance for “{event.name}”.
+            {isCheckin
+              ? `We record your attendance for “${event.name}”.`
+              : `Let the host know you’re coming to “${event.name}”. You’ll get a pass to check in at the door.`}
           </p>
         </>
       )}

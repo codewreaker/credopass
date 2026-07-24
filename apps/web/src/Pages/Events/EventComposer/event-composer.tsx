@@ -69,7 +69,7 @@ export function EventComposer({ mode, eventId, initialValues }: EventComposerPro
   const [coverImage, setCoverImage] = useState<string | undefined>(undefined);
 
   return (
-    <div className="mx-auto w-full max-w-140 pb-4 md:max-w-160 lg:max-w-3xl">
+    <div className="mx-auto w-full max-w-140 pb-4 md:max-w-160 lg:max-w-lg">
       <form
         onSubmit={(e) => {
           e.preventDefault();

@@ -30,7 +30,7 @@ const CheckInHeader: React.FC<CheckInHeaderProps> = ({
   onBack,
 }) => {
   return (
-    <div className="flex items-center gap-3" data-testid="check-in-header">
+    <div className="flex min-w-0 items-center gap-2 md:gap-3" data-testid="check-in-header">
       <Button
         variant="ghost"
         size="icon"
@@ -64,10 +64,10 @@ const CheckInHeader: React.FC<CheckInHeaderProps> = ({
         </div>
       </div>
 
-      {/* Live counter */}
-      <div className="shrink-0 flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-primary/25 bg-primary/10">
-        <Users size={14} className="text-primary" />
-        <span className="text-lg font-bold tabular-nums text-primary">{checkInCount}</span>
+      {/* Live counter — compact on mobile so it never overflows a 390px viewport (B7) */}
+      <div className="shrink-0 flex items-center gap-1.5 md:gap-2 px-2.5 md:px-3.5 py-1 md:py-1.5 rounded-full border border-primary/25 bg-primary/10">
+        <Users size={13} className="text-primary" />
+        <span className="text-base md:text-lg font-bold tabular-nums text-primary">{checkInCount}</span>
         <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">in</span>
       </div>
     </div>

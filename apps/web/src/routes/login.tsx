@@ -18,6 +18,9 @@ export const Route = createFileRoute('/login')({
     view: z.enum(['social', 'email']).catch('social'),
     // out - true when the user just signed out; shows the goodbye variant.
     out: z.boolean().optional().default(false),
+    // redirect - where to return after auth, set by the private-route guard
+    // (requireAuth). Honoured by useGuestAutoLogin and the manual sign-in watcher.
+    redirect: z.string().optional(),
   }),
   component: LoginPage,
 })

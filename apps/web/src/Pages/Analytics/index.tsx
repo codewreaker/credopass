@@ -350,7 +350,19 @@ const Analytics: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">Analytics</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">Analytics</h1>
+            {/* These figures are illustrative until real attendance aggregates are
+                wired in — label them so they never read as live numbers (B5). */}
+            <Badge
+              variant="outline"
+              className="gap-1 rounded-full border-warning/30 bg-warning/10 text-[10px] font-semibold text-warning"
+              title="Illustrative figures — not yet derived from your real attendance data."
+            >
+              <Sparkles size={10} />
+              Sample data
+            </Badge>
+          </div>
           <p className="text-sm text-muted-foreground">
             {scopedEvent ? `Performance for “${scopedEvent.name}”` : 'Across all events and your whole community'}
           </p>
