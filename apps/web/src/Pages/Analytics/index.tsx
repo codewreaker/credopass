@@ -13,32 +13,23 @@ import {
   Target,
   Zap,
   Flame,
-  Crown
+  Crown,
+  Sparkles
 } from "lucide-react";
 import { useToolbarContext } from '@credopass/lib/hooks';
 import { useNavigate } from '@tanstack/react-router';
 import { UpgradeCTA } from '@credopass/ui/components/upgrade-cta';
+import { usePremium } from '../../contexts/premium';
 import { useLiveQuery } from '@tanstack/react-db';
 import { getCollections } from '@credopass/api-client/collections';
 import type { EventType } from '@credopass/lib/schemas';
 import { toast } from '@credopass/ui/components/sonner';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@credopass/ui/components/select';
-import {
-  Bar,
-  BarChart,
-  Cell,
-  CartesianGrid,
-  XAxis,
-  YAxis,
-  Area,
-  AreaChart,
-  ResponsiveContainer
-} from "recharts";
 import type { ChartConfig } from "@credopass/ui/components/chart";
 import {
+  AreaChart,
+  BarChart,
   ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent
 } from "@credopass/ui/components/chart";
 import {
   Card,
@@ -122,6 +113,10 @@ const stats = [
   { id: "stat-4", icon: Flame, label: "Active streaks", value: "342", change: "-3%", trend: "down" as const },
 ];
 
+const heroConfig = {
+  rate: { label: "Attendance", color: 'var(--primary-foreground)' },
+} satisfies ChartConfig;
+
 const pillBarConfig = {
   checkIns: { label: "Check-ins", color: COLORS.primary },
 } satisfies ChartConfig;
@@ -157,33 +152,20 @@ const HeroAttendanceCard: React.FC<{ compact?: boolean }> = ({ compact }) => (
       </div>
     </CardHeader>
     <CardContent className="relative z-10 flex-1 flex flex-col justify-end pt-4 pb-3 px-3">
-      <ResponsiveContainer width="100%" height={compact ? 110 : 150}>
-        <AreaChart data={heroTrend} margin={{ top: 4, right: 6, left: 6, bottom: 0 }}>
-          <defs>
-            <linearGradient id="heroFill" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="var(--primary-foreground)" stopOpacity={0.28} />
-              <stop offset="100%" stopColor="var(--primary-foreground)" stopOpacity={0.02} />
-            </linearGradient>
-          </defs>
-          <XAxis
-            dataKey="month"
-            fontSize={10}
-            tickLine={false}
-            axisLine={false}
-            tick={{ fill: 'color-mix(in oklch, var(--primary-foreground) 55%, transparent)' }}
-            interval="preserveStartEnd"
-          />
-          <Area
-            type="monotone"
-            dataKey="rate"
-            stroke="var(--primary-foreground)"
-            strokeWidth={2.5}
-            fill="url(#heroFill)"
-            dot={false}
-            activeDot={{ r: 4, fill: 'var(--primary-foreground)', strokeWidth: 0 }}
-          />
-        </AreaChart>
-      </ResponsiveContainer>
+      <ChartContainer
+        config={heroConfig}
+        className="w-full !block !aspect-auto"
+        style={{ height: compact ? 110 : 150 }}
+      >
+        <AreaChart
+          data={heroTrend}
+          xKey="month"
+          series={[{ key: 'rate' }]}
+          axisColor="var(--primary-foreground)"
+          axisOpacity={0.55}
+          hideTooltip
+        />
+      </ChartContainer>
     </CardContent>
   </Card>
 );
@@ -266,6 +248,54 @@ const GoalGauge: React.FC<{ value: number; goal: number }> = ({ value, goal }) =
         </div>
       </CardContent>
     </Card>
+  );
+};
+
+/**
+ * Frosts everything inside it for non-premium accounts.
+ *
+ * The content still renders — the point is to show there is something here —
+ * but it is blurred, non-interactive and hidden from assistive tech, with the
+ * upgrade prompt floating on the glass.
+ */
+const PremiumGate: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { isPremium } = usePremium();
+  const navigate = useNavigate();
+
+  if (isPremium) return <>{children}</>;
+
+  return (
+    <div className="relative isolate">
+      <div
+        aria-hidden
+        inert
+        className="pointer-events-none select-none blur-[6px] saturate-50"
+      >
+        {children}
+      </div>
+
+      <div className="absolute inset-0 z-10 flex items-start justify-center overflow-hidden rounded-2xl bg-background/40 supports-backdrop-filter:backdrop-blur-sm">
+        <div className="sticky top-8 mt-16 flex max-w-xs flex-col items-center gap-3 rounded-3xl border border-primary/20 bg-card/80 p-6 text-center shadow-lg supports-backdrop-filter:backdrop-blur-md">
+          <span className="flex size-11 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
+            <Lock size={18} />
+          </span>
+          <div>
+            <p className="text-sm font-semibold">Full analytics is a Pro feature</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Unlock check-in trends, attendance mix, tiers and exports.
+            </p>
+          </div>
+          <Button
+            size="sm"
+            className="rounded-full font-semibold"
+            onClick={() => navigate({ to: '/upgrade' })}
+          >
+            <Sparkles size={13} />
+            Upgrade
+          </Button>
+        </div>
+      </div>
+    </div>
   );
 };
 
@@ -368,6 +398,9 @@ const Analytics: React.FC = () => {
         </Card>
       </div>
 
+      {/* Everything past the four headline cards is premium-only */}
+      <PremiumGate>
+        <div className="flex flex-col gap-5">
       {/* Quick Actions - Mobile Only */}
       {isMobile && (
         <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4">
@@ -401,17 +434,18 @@ const Analytics: React.FC = () => {
           </CardHeader>
           <CardContent className="p-2 md:p-4">
             <ChartContainer config={pillBarConfig} className="w-full !block !aspect-auto" style={{ height: isMobile ? 200 : 260 }}>
-              <BarChart data={weeklyCheckIns} margin={{ top: 24, right: 8, left: -22, bottom: 0 }} barCategoryGap="28%">
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" vertical={false} />
-                  <XAxis dataKey="day" fontSize={10} tickLine={false} axisLine={false} tick={{ fill: 'var(--chart-axis)' }} />
-                  <YAxis fontSize={10} tickLine={false} axisLine={false} tick={{ fill: 'var(--chart-axis)' }} />
-                  <ChartTooltip cursor={{ fill: 'oklch(1 0 0 / 4%)' }} content={<ChartTooltipContent />} />
-                  <Bar dataKey="checkIns" radius={[10, 10, 10, 10]} maxBarSize={38}>
-                    {weeklyCheckIns.map((d) => (
-                      <Cell key={d.day} fill={d.day === peakDay.day ? COLORS.primary : COLORS.barRest} />
-                    ))}
-                  </Bar>
-                </BarChart>
+              <BarChart
+                data={weeklyCheckIns}
+                xKey="day"
+                series={[{
+                  key: 'checkIns',
+                  // Per-category colours pick out the busiest day.
+                  colors: weeklyCheckIns.map((d) => (d.day === peakDay.day ? COLORS.primary : COLORS.barRest)),
+                }]}
+                radius={10}
+                maxBarWidth={38}
+                categoryGap="28%"
+              />
             </ChartContainer>
           </CardContent>
         </Card>
@@ -449,15 +483,20 @@ const Analytics: React.FC = () => {
           </CardHeader>
           <CardContent className="p-2 md:p-4">
             <ChartContainer config={mixConfig} className="w-full !block !aspect-auto" style={{ height: isMobile ? 210 : 260 }}>
-              <BarChart data={monthlyMix} margin={{ top: 8, right: 8, left: -22, bottom: 0 }} barCategoryGap="34%">
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" vertical={false} />
-                  <XAxis dataKey="month" fontSize={10} tickLine={false} axisLine={false} tick={{ fill: 'var(--chart-axis)' }} />
-                  <YAxis fontSize={10} tickLine={false} axisLine={false} tick={{ fill: 'var(--chart-axis)' }} />
-                  <ChartTooltip cursor={{ fill: 'oklch(1 0 0 / 4%)' }} content={<ChartTooltipContent />} />
-                  <Bar dataKey="members" stackId="mix" fill={COLORS.primary} radius={[6, 6, 6, 6]} maxBarSize={34} stroke="var(--card)" strokeWidth={2} />
-                  <Bar dataKey="guests" stackId="mix" fill={COLORS.secondary} radius={[6, 6, 6, 6]} maxBarSize={34} stroke="var(--card)" strokeWidth={2} />
-                  <Bar dataKey="walkIns" stackId="mix" fill={COLORS.muted} radius={[6, 6, 6, 6]} maxBarSize={34} stroke="var(--card)" strokeWidth={2} />
-                </BarChart>
+              <BarChart
+                data={monthlyMix}
+                xKey="month"
+                series={[
+                  { key: 'members', stackId: 'mix' },
+                  { key: 'guests', stackId: 'mix' },
+                  { key: 'walkIns', stackId: 'mix' },
+                ]}
+                radius={6}
+                maxBarWidth={34}
+                categoryGap="34%"
+                grid={{ top: 8 }}
+                segmentBorderColor="var(--card)"
+              />
             </ChartContainer>
           </CardContent>
         </Card>
@@ -572,6 +611,8 @@ const Analytics: React.FC = () => {
           </CardContent>
         </Card>
       </div>
+        </div>
+      </PremiumGate>
     </div>
   );
 };

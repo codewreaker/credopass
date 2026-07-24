@@ -119,8 +119,8 @@ const HeroSpotlight = ({
                     {/* Event info */}
                     <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 mb-1.5">
-                            <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] ${isLive ? 'bg-lime-500 text-black' : 'bg-primary-foreground/10'}`}>
-                                {isLive && <span className="size-1.5 rounded-full bg-black animate-pulse" />}
+                            <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] ${isLive ? 'bg-green-600 text-black' : 'bg-primary-foreground/10'}`}>
+                                {isLive && <span className="size-1.5 rounded-full bg-secondary animate-pulse" />}
                                 {isLive ? 'Live now' : 'Up next'}
                             </span>
                         </div>
@@ -307,16 +307,18 @@ const EventsPage = () => {
         search: { enabled: true, placeholder: 'Search events…', onSearch: setSearchQuery },
     });
 
+    // Read the clock once on mount rather than during render, which isn't pure.
+    const [now] = useState(() => Date.now());
+
     // Next ongoing event, else soonest upcoming scheduled event — feeds the hero spotlight
     const nextEvent = useMemo<EventType | null>(() => {
         const ongoing = events.find((e) => e.status === 'ongoing');
         if (ongoing) return ongoing;
-        const now = Date.now();
         const upcoming = events
             .filter((e) => e.status === 'scheduled' && e.startTime && new Date(e.startTime).getTime() >= now)
             .sort((a, b) => new Date(a.startTime!).getTime() - new Date(b.startTime!).getTime());
         return upcoming[0] ?? events.find((e) => e.status === 'scheduled') ?? null;
-    }, [events]);
+    }, [events, now]);
 
     const heroStats = useMemo(() => ({
         total: events.length,

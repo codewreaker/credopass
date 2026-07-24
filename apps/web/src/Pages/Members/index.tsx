@@ -281,9 +281,12 @@ export default function MembersPage() {
     return counts;
   }, [attendance]);
 
+  // Read the clock once on mount: "now" only decides which side of the split an
+  // event falls on, and re-reading it during render is not a pure operation.
+  const [now] = useState(() => Date.now());
+
   /** Events split into the two things you might want to look at. */
   const { upcomingEvents, pastEvents } = useMemo(() => {
-    const now = Date.now();
     const upcoming: EventType[] = [];
     const past: EventType[] = [];
     for (const event of events) {
@@ -300,7 +303,7 @@ export default function MembersPage() {
       upcomingEvents: upcoming.sort(bySoonest),
       pastEvents: past.sort((a, b) => bySoonest(b, a)),
     };
-  }, [events]);
+  }, [events, now]);
 
   const scopedEvent = useMemo(
     () => events.find((e) => e.id === scope) ?? null,

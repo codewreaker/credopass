@@ -107,9 +107,9 @@ export default defineConfig({
           }
 
 
-          // Recharts
-          if (id.includes('node_modules/recharts')) {
-            return 'recharts-vendor'
+          // ECharts - heavy charting library, kept out of the main bundle
+          if (id.includes('node_modules/echarts') || id.includes('node_modules/zrender')) {
+            return 'echarts-vendor'
           }
 
           // UI and utilities
