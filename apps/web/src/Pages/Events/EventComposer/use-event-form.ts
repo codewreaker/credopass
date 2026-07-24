@@ -15,6 +15,7 @@ export interface EventFormValues {
   location: string;
   capacity: string;
   organizationId: string;
+  allowSelfCheckIn: boolean;
 }
 
 export const STATUS_OPTIONS: { value: EventStatus; label: string }[] = [
@@ -44,6 +45,7 @@ export const eventFormSchema = z
       .refine((val) => !val || (!isNaN(Number(val)) && Number(val) > 0), 'Capacity must be a positive number.')
       .default(''),
     organizationId: z.string().min(1, 'Organization is required.'),
+    allowSelfCheckIn: z.boolean().default(true),
   })
   .superRefine((data, ctx) => {
     if (data.start && data.end && data.end.getTime() <= data.start.getTime()) {
@@ -72,6 +74,7 @@ export const eventToFormValues = (event: EventType): EventFormValues => ({
   location: event.location ?? '',
   capacity: event.capacity != null ? String(event.capacity) : '',
   organizationId: event.organizationId ?? '',
+  allowSelfCheckIn: event.allowSelfCheckIn ?? true,
 });
 
 interface UseEventFormArgs {
@@ -102,6 +105,7 @@ export function useEventForm({ mode, eventId, initialValues, onSaved }: UseEvent
       location: initialValues?.location ?? '',
       capacity: initialValues?.capacity ?? '',
       organizationId: initialValues?.organizationId || activeOrganizationId || '',
+      allowSelfCheckIn: initialValues?.allowSelfCheckIn ?? true,
     } as EventFormValues,
     validators: {
       // @ts-expect-error — zod schema output is narrower than the form values type
@@ -129,6 +133,7 @@ export function useEventForm({ mode, eventId, initialValues, onSaved }: UseEvent
         location: value.location,
         capacity: value.capacity ? parseInt(value.capacity, 10) : null,
         organizationId: value.organizationId,
+        allowSelfCheckIn: value.allowSelfCheckIn,
       };
 
       try {

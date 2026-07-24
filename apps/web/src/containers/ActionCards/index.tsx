@@ -1,8 +1,6 @@
 
 import { useCallback, useMemo } from 'react';
 import {
-    Plus,
-    UserPlus,
     CalendarsIcon,
     Building2
 } from 'lucide-react';
@@ -12,20 +10,6 @@ import { useNavigate } from '@tanstack/react-router';
 
 /** Luma-style action cards (like Invite Guests / Send a Blast / Share Event) */
 const ACTION_CARDS = [
-    {
-        key: 'create',
-        icon: Plus,
-        label: 'Create Event',
-        description: 'Set up a new event',
-        action: 'create-event' as const,
-    },
-    {
-        key: 'user',
-        icon: UserPlus,
-        label: 'Add New User',
-        description: 'View your community',
-        action: 'add-members' as const,
-    },
     {
         key: 'calendar',
         icon: CalendarsIcon,
