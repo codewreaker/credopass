@@ -1,11 +1,11 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { ArrowLeft, CheckIcon, Globe, PencilIcon } from 'lucide-react';
 import { Button } from '@credopass/ui/components/button';
 import { Spinner } from '@credopass/ui/components/spinner';
 import { FieldError } from '@credopass/ui/components/field';
 import { cn } from '@credopass/ui/lib/utils';
-import { CoverPlaceholder } from './fields/cover-placeholder';
+import { EventImage } from './fields/event-image';
 import { DateTimeField } from './fields/date-time-field';
 import { LocationField } from './fields/location-field';
 import { DescriptionField } from './fields/description-field';
@@ -64,6 +64,10 @@ export function EventComposer({ mode, eventId, initialValues }: EventComposerPro
     if (!isEditing) nameInputRef.current?.focus();
   }, [isEditing]);
 
+  // Cover image — preview only for now (no cover column yet); defaults to the
+  // calendar illustration and can be replaced from a file or the camera.
+  const [coverImage, setCoverImage] = useState<string | undefined>(undefined);
+
   return (
     <div className="mx-auto w-full max-w-140 pb-4 md:max-w-160 lg:max-w-3xl">
       <form
@@ -73,7 +77,7 @@ export function EventComposer({ mode, eventId, initialValues }: EventComposerPro
         }}
         className="flex flex-col gap-4"
       >
-        <CoverPlaceholder />
+        <EventImage src={coverImage} onPick={setCoverImage} />
 
         {/* Lime billboard header — org pill, mode label and the event name */}
         <div className="relative overflow-hidden rounded-3xl bg-primary p-5 text-primary-foreground">

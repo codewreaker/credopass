@@ -467,15 +467,15 @@ export default function AttendeesPage() {
     );
   }
 
-  // The whole page flows inside the app shell's own scroll region
-  // (`.page-content`, which is `overflow-y: auto`). We deliberately do NOT open a
-  // second nested scroll container here: an inner `h-full` + `overflow-auto` box
-  // depends on the percentage height resolving through the flex chain, which it
-  // does on desktop but not reliably on mobile — that was why the list wouldn't
-  // scroll on phones. Sticky sub-headers give the same "pinned header" feel
-  // without trapping the scroll.
+  // The header, summary billboard and scope dropdown are fixed; only the list
+  // beneath scrolls (same pattern as the events list). The root fills the app
+  // shell's scroll region (`.page-content`, a flex item with a definite height),
+  // so `h-full` + `min-h-0` resolve and the inner `overflow-auto` region works
+  // on mobile too.
   return (
-    <div className="flex flex-col pb-6">
+    <div className="flex h-full min-h-0 flex-col">
+      {/* Fixed top — header + summary + scope dropdown */}
+      <div className="shrink-0">
       {/* Header */}
       <div className="mb-4 flex items-center justify-between gap-3">
         <div className="min-w-0">
@@ -542,11 +542,9 @@ export default function AttendeesPage() {
         </div>
       </div>
 
-      {/* Scope switcher — a dropdown: All, or pick one event. Sticks to the top
-          of the scroll region so it stays reachable as the list scrolls. Solid
-          background (no backdrop-filter) — a translucent+blur sticky element can
-          stutter/stick the scroll on iOS Safari. */}
-      <div className="sticky top-0 z-10 -mx-1 flex items-center justify-between gap-3 border-b border-border/60 bg-background px-1 py-3">
+      {/* Scope switcher — a dropdown: All, or pick one event. Part of the fixed
+          top; the list below is what scrolls. */}
+      <div className="flex items-center justify-between gap-3 border-b border-border/60 py-3">
         <Select value={scope} onValueChange={(v) => setScope(v ?? 'all')}>
           <SelectTrigger className="h-9 w-full max-w-72 rounded-full text-xs">
             {/* base-ui renders the raw value by default, so map it to the name. */}
@@ -586,35 +584,38 @@ export default function AttendeesPage() {
           {filteredRows.length} shown
         </span>
       </div>
+      </div>
 
-      {/* Member list — flows in the page scroll, no nested scroll container */}
-      {filteredRows.length === 0 ? (
-        <div className="flex min-h-[40vh] items-center justify-center py-8">
-          <EmptyState
-            title={searchQuery ? 'No attendees found' : 'Nobody here yet'}
-            description={
-              searchQuery
-                ? 'Try adjusting your search'
-                : scopedEvent
-                  ? `No one is ${isPastScope ? 'recorded as attending' : 'signed up for'} this event yet.`
-                  : 'Add someone to one of your events to start building your community.'
-            }
-            action={!searchQuery ? { label: 'Add Attendee', onClick: handleCreateUser } : undefined}
-          />
-        </div>
-      ) : (
-        <div className="flex flex-col gap-1.5 pt-3">
-          {filteredRows.map((row) => (
-            <MemberCard
-              key={row.user.id}
-              row={row}
-              onEdit={handleEditUser}
-              onDelete={deleteUser}
-              onView={handleViewUser}
+      {/* Scrolling list — the only scroll region on the page */}
+      <div className="min-h-0 flex-1 overflow-auto pb-4 pt-3">
+        {filteredRows.length === 0 ? (
+          <div className="flex h-full items-center justify-center py-8">
+            <EmptyState
+              title={searchQuery ? 'No attendees found' : 'Nobody here yet'}
+              description={
+                searchQuery
+                  ? 'Try adjusting your search'
+                  : scopedEvent
+                    ? `No one is ${isPastScope ? 'recorded as attending' : 'signed up for'} this event yet.`
+                    : 'Add someone to one of your events to start building your community.'
+              }
+              action={!searchQuery ? { label: 'Add Attendee', onClick: handleCreateUser } : undefined}
             />
-          ))}
-        </div>
-      )}
+          </div>
+        ) : (
+          <div className="flex flex-col gap-1.5">
+            {filteredRows.map((row) => (
+              <MemberCard
+                key={row.user.id}
+                row={row}
+                onEdit={handleEditUser}
+                onDelete={deleteUser}
+                onView={handleViewUser}
+              />
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

@@ -6,6 +6,7 @@ import { SheetDialog } from '@credopass/ui/components/sheet-dialog';
 import { TimelineMarker } from '@credopass/ui/components/timeline';
 import { CalendarDays, CheckIcon, Clock } from 'lucide-react';
 import { cn } from '@credopass/ui/lib/utils';
+import { ClockTimePicker, localTimeZone, zonedParts, zonedTimeToUtc } from './clock-time-picker';
 
 interface DateTimeFieldProps {
   label: string;
@@ -21,27 +22,15 @@ interface DateTimeFieldProps {
   invalid?: boolean;
 }
 
-const applyTime = (date: Date, time: string) => {
-  const [hours, minutes] = time.split(':').map(Number);
-  const next = new Date(date);
-  next.setHours(hours || 0, minutes || 0, 0, 0);
-  return next;
-};
-
-/** Quarter-hour slots across the day — the fast path for picking a time. */
-const TIME_SLOTS = Array.from({ length: 96 }, (_, i) => {
-  const hours = Math.floor(i / 4);
-  const minutes = (i % 4) * 15;
-  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
-});
+const pad = (n: number) => String(n).padStart(2, '0');
 
 type Panel = 'date' | 'time';
 
 /**
  * A Luma-style row — label on the left, date and time chips on the right —
- * that opens a two-step popup: pick the day, then pick the time. They are
- * separate panels rather than a calendar with a time input bolted underneath,
- * so each one gets the whole sheet.
+ * that opens a two-step popup: pick the day, then set the time on a digital,
+ * casio-style clock (hour, minute and timezone). Timezone defaults to the
+ * viewer's own; the chosen wall-clock time is resolved to an absolute instant.
  */
 export function DateTimeField({
   label,
@@ -57,24 +46,44 @@ export function DateTimeField({
   const [panel, setPanel] = useState<Panel>('date');
   // Draft state so closing without confirming leaves the value untouched.
   const [draft, setDraft] = useState<Date | undefined>(value);
-  const [time, setTime] = useState(value ? format(value, 'HH:mm') : '09:00');
+  const [hour, setHour] = useState(value ? value.getHours() : 9);
+  const [minute, setMinute] = useState(value ? value.getMinutes() : 0);
+  const [timeZone, setTimeZone] = useState(localTimeZone());
 
   // Seed the draft on open rather than in an effect — nothing external to sync.
   const openPopup = (initialPanel: Panel) => {
+    const tz = localTimeZone();
+    setTimeZone(tz);
     setDraft(value);
-    setTime(value ? format(value, 'HH:mm') : '09:00');
+    if (value) {
+      const p = zonedParts(value, tz);
+      setHour(p.h);
+      setMinute(p.mi);
+    } else {
+      setHour(9);
+      setMinute(0);
+    }
     setPanel(initialPanel);
     setOpen(true);
   };
 
   const commit = () => {
-    onChange(draft ? applyTime(draft, time) : undefined);
+    if (!draft) {
+      onChange(undefined);
+      setOpen(false);
+      return;
+    }
+    // Interpret the chosen wall-clock time in the selected timezone.
+    const instant = zonedTimeToUtc(draft.getFullYear(), draft.getMonth(), draft.getDate(), hour, minute, timeZone);
+    onChange(instant);
     setOpen(false);
   };
 
   const reset = () => {
     setDraft(undefined);
-    setTime('09:00');
+    setHour(9);
+    setMinute(0);
+    setTimeZone(localTimeZone());
   };
 
   return (
@@ -145,7 +154,7 @@ export function DateTimeField({
           {(
             [
               { key: 'date', icon: CalendarDays, label: draft ? format(draft, 'EEE d MMM') : 'Pick a date' },
-              { key: 'time', icon: Clock, label: time },
+              { key: 'time', icon: Clock, label: `${pad(hour)}:${pad(minute)}` },
             ] as const
           ).map(({ key, icon: Icon, label: chipLabel }) => (
             <button
@@ -183,23 +192,16 @@ export function DateTimeField({
             autoFocus
           />
         ) : (
-          <div className="grid max-h-80 grid-cols-3 gap-1.5 overflow-y-auto overscroll-contain pr-1 sm:grid-cols-4">
-            {TIME_SLOTS.map((slot) => (
-              <button
-                key={slot}
-                type="button"
-                onClick={() => setTime(slot)}
-                className={cn(
-                  'h-10 rounded-full text-[13px] font-medium tabular-nums transition-colors',
-                  slot === time
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground'
-                )}
-              >
-                {slot}
-              </button>
-            ))}
-          </div>
+          <ClockTimePicker
+            hour={hour}
+            minute={minute}
+            timeZone={timeZone}
+            onChange={(next) => {
+              setHour(next.hour);
+              setMinute(next.minute);
+              setTimeZone(next.timeZone);
+            }}
+          />
         )}
       </SheetDialog>
     </>

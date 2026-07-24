@@ -8,6 +8,7 @@ import {
   CalendarPlus,
   CheckIcon,
   Clock,
+  Copy,
   Edit2,
   Globe,
   MapPin,
@@ -24,7 +25,7 @@ import { TimelineMarker } from '@credopass/ui/components/timeline';
 import { GlowingQRCode } from '@credopass/ui/components/glowing-qr-code';
 import { toast } from '@credopass/ui/components/sonner';
 import { cn } from '@credopass/ui/lib/utils';
-import { CoverPlaceholder } from '../EventComposer/fields/cover-placeholder';
+import { EventImage } from '../EventComposer/fields/event-image';
 import { EventDetailsReadonly } from '../EventDetails';
 import { useAttendeeCheckIn } from '../use-attendee-checkin';
 
@@ -151,13 +152,23 @@ export function EventView({ event, variant }: EventViewProps) {
 
   const [checkInOpen, setCheckInOpen] = useState(false);
 
+  const copyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      toast.success('Event link copied');
+    } catch {
+      toast.error('Could not copy the link');
+    }
+  };
+
   const share = async () => {
+    // Native share sheets don't always surface a plain "copy", so if sharing
+    // isn't available (or is dismissed) we fall back to copying the link.
     try {
       if (navigator.share) {
         await navigator.share({ title: event.name, url: shareUrl });
       } else {
-        await navigator.clipboard.writeText(shareUrl);
-        toast.success('Event link copied');
+        await copyLink();
       }
     } catch {
       /* user dismissed the share sheet — nothing to do */
@@ -264,6 +275,9 @@ export function EventView({ event, variant }: EventViewProps) {
               <Button variant="outline" size="sm" className="gap-1.5 rounded-full" onClick={share}>
                 <Share2 size={14} /> Share
               </Button>
+              <Button variant="outline" size="sm" className="gap-1.5 rounded-full" onClick={copyLink}>
+                <Copy size={14} /> Copy link
+              </Button>
             </div>
           </div>
         </div>
@@ -328,7 +342,7 @@ export function EventView({ event, variant }: EventViewProps) {
         </div>
       </div>
 
-      <CoverPlaceholder />
+      <EventImage />
 
       {/* Sticky attendee CTA on the public page */}
       {isPublic && (
