@@ -264,6 +264,18 @@ const Map = forwardRef<MapRef, MapProps>(function Map(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Keep the map sized to its container. maplibre only auto-resizes on window
+  // resize, so a container that grows on its own (a panel opening, a responsive
+  // breakpoint widening the card) would leave the canvas at its initial size and
+  // render blank past that width. A ResizeObserver fixes that.
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!mapInstance || !container) return;
+    const observer = new ResizeObserver(() => mapInstance.resize());
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, [mapInstance]);
+
   // Sync controlled viewport to map
   useEffect(() => {
     if (!mapInstance || !isControlled || !viewport) return;
