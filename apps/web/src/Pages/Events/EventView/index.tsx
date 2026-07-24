@@ -24,7 +24,7 @@ import { TimelineMarker } from '@credopass/ui/components/timeline';
 import { GlowingQRCode } from '@credopass/ui/components/glowing-qr-code';
 import { toast } from '@credopass/ui/components/sonner';
 import { cn } from '@credopass/ui/lib/utils';
-import { CoverPlaceholder } from '../EventComposer/fields/cover-placeholder';
+import { EventImage } from '../EventComposer/fields/event-image';
 import { EventDetailsReadonly } from '../EventDetails';
 import { useAttendeeCheckIn } from '../use-attendee-checkin';
 
@@ -328,7 +328,7 @@ export function EventView({ event, variant }: EventViewProps) {
         </div>
       </div>
 
-      <CoverPlaceholder />
+      <EventImage />
 
       {/* Sticky attendee CTA on the public page */}
       {isPublic && (
