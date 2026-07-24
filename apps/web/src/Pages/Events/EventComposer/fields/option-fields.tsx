@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { LucideIcon } from 'lucide-react';
-import { CheckIcon, PencilIcon, UsersIcon, ActivityIcon } from 'lucide-react';
+import { CheckIcon, PencilIcon, UsersIcon, ActivityIcon, ScanLineIcon } from 'lucide-react';
 import { Button } from '@credopass/ui/components/button';
 import { Input } from '@credopass/ui/components/input';
 import { SheetDialog } from '@credopass/ui/components/sheet-dialog';
@@ -100,6 +100,44 @@ export function CapacityField({
         <p className="mt-2 text-xs text-muted-foreground">Leave blank for unlimited capacity.</p>
       </SheetDialog>
     </>
+  );
+}
+
+/**
+ * Self check-in toggle. Unlike the other option rows this edits a single boolean,
+ * so it flips in place rather than opening a SheetDialog.
+ */
+export function SelfCheckInField({ value, onChange }: { value: boolean; onChange: (allow: boolean) => void }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={value}
+      onClick={() => onChange(!value)}
+      className="flex w-full items-center gap-3 px-3.5 py-3 text-left transition-colors hover:bg-muted/40"
+    >
+      <ScanLineIcon size={16} className="shrink-0 text-muted-foreground" />
+      <span className="flex flex-col">
+        <span className="text-sm">Self check-in</span>
+        <span className="text-xs text-muted-foreground">
+          {value ? 'Attendees can check themselves in' : 'Staff must scan or check in each attendee'}
+        </span>
+      </span>
+      <span
+        aria-hidden
+        className={cn(
+          'ml-auto flex h-5 w-9 shrink-0 items-center rounded-full p-0.5 transition-colors',
+          value ? 'bg-primary' : 'bg-muted-foreground/30',
+        )}
+      >
+        <span
+          className={cn(
+            'size-4 rounded-full bg-background shadow-sm transition-transform',
+            value && 'translate-x-4',
+          )}
+        />
+      </span>
+    </button>
   );
 }
 

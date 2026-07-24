@@ -9,7 +9,7 @@ import { EventImage } from './fields/event-image';
 import { DateTimeField } from './fields/date-time-field';
 import { LocationField } from './fields/location-field';
 import { DescriptionField } from './fields/description-field';
-import { CapacityField, StatusField } from './fields/option-fields';
+import { CapacityField, SelfCheckInField, StatusField } from './fields/option-fields';
 import { OrgField } from './org-field';
 import { DEFAULT_DURATION_MS, useEventForm, type EventFormValues } from './use-event-form';
 
@@ -224,6 +224,9 @@ export function EventComposer({ mode, eventId, initialValues }: EventComposerPro
                   invalid={field.state.meta.isTouched && !field.state.meta.isValid}
                 />
               )}
+            </form.Field>
+            <form.Field name="allowSelfCheckIn">
+              {(field) => <SelfCheckInField value={field.state.value} onChange={field.handleChange} />}
             </form.Field>
             {isEditing && (
               <form.Field name="status">
