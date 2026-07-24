@@ -346,7 +346,14 @@ const Analytics: React.FC = () => {
           {/* Scope: one event vs across the board */}
           <Select value={scope} onValueChange={(v) => setScope(v ?? 'all')}>
             <SelectTrigger className="h-9 w-[180px] rounded-full text-xs">
-              <SelectValue placeholder="All events" />
+              {/* base-ui renders the raw value by default, so map it to the name. */}
+              <SelectValue placeholder="All events">
+                {(value) =>
+                  value && value !== 'all'
+                    ? (scopeEvents.find((e) => e.id === value)?.name ?? 'Event')
+                    : 'All events'
+                }
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectGroup>

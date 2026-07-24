@@ -543,11 +543,20 @@ export default function AttendeesPage() {
       </div>
 
       {/* Scope switcher — a dropdown: All, or pick one event. Sticks to the top
-          of the scroll region so it stays reachable as the list scrolls. */}
-      <div className="sticky top-0 z-10 -mx-1 flex items-center justify-between gap-3 border-b border-border/60 bg-background/90 px-1 py-3 supports-backdrop-filter:backdrop-blur-sm">
+          of the scroll region so it stays reachable as the list scrolls. Solid
+          background (no backdrop-filter) — a translucent+blur sticky element can
+          stutter/stick the scroll on iOS Safari. */}
+      <div className="sticky top-0 z-10 -mx-1 flex items-center justify-between gap-3 border-b border-border/60 bg-background px-1 py-3">
         <Select value={scope} onValueChange={(v) => setScope(v ?? 'all')}>
           <SelectTrigger className="h-9 w-full max-w-72 rounded-full text-xs">
-            <SelectValue placeholder="All attendees" />
+            {/* base-ui renders the raw value by default, so map it to the name. */}
+            <SelectValue placeholder="All attendees">
+              {(value) =>
+                value && value !== 'all'
+                  ? (events.find((e) => e.id === value)?.name ?? 'Event')
+                  : 'All attendees'
+              }
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All attendees</SelectItem>
