@@ -52,3 +52,24 @@ export async function handleAPIErrors(response: Response) {
     throw new Error(`${cause?.detail}`);
   }
 }
+
+import type { AnalyticsRange, AnalyticsResponse } from '@credopass/lib/analytics';
+
+/**
+ * Fetch analytics for a scope (`all` or an event id) and range. The numbers are
+ * fabricated server-side for now; this call is the seam that becomes real when
+ * the analytics generator is swapped for aggregates.
+ */
+export async function fetchAnalytics(
+  scope: string,
+  range: AnalyticsRange,
+  signal?: AbortSignal
+): Promise<AnalyticsResponse> {
+  const params = new URLSearchParams({ scope, range });
+  const response = await fetch(`${getAPIBaseURL()}/analytics?${params.toString()}`, {
+    headers: await authHeaders(),
+    signal,
+  });
+  if (!response.ok) throw new Error(`Failed to fetch analytics (HTTP ${response.status})`);
+  return response.json() as Promise<AnalyticsResponse>;
+}
