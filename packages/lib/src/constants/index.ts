@@ -16,7 +16,7 @@ export const rewardTiers = {
 
 export const NAV_ITEMS = [
   { id: 'events', url: "/events", icon: QrCode, label: "Events", isActive: true },
-  { id: 'members', url: "/members", icon: Users, label: "Members" },
+  { id: 'attendees', url: "/attendees", icon: Users, label: "Attendees" },
   { id: 'analytics', url: "/analytics", icon: ChartNoAxesCombined, label: "Analytics" },
   { id: 'profile', url: "/profile", icon: UserRound, label: "Profile" }
 ] as const;

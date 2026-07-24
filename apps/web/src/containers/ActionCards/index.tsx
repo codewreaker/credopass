@@ -54,7 +54,7 @@ export default function ActionCards() {
                     navigate({ to: '/events/new' });
                     break;
                 case 'add-members':
-                    navigate({ to: '/members/new' });
+                    navigate({ to: '/attendees/new' });
                     break;
                 case 'show-calendar':
                     onToggleCollapse();

@@ -157,6 +157,14 @@ const HeroSpotlight = ({
                             </button>
                             <button
                                 type="button"
+                                onClick={() => navigate({ to: '/attendees', search: { eventId: nextEvent.id } })}
+                                className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-primary-foreground/25 px-4 h-9 text-[13px] font-semibold cursor-pointer transition-colors duration-150 hover:bg-primary-foreground/10"
+                            >
+                                <Users size={14} />
+                                Attendees
+                            </button>
+                            <button
+                                type="button"
                                 onClick={() => navigate({ to: '/events/$eventId', params: { eventId: nextEvent.id } })}
                                 className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-primary-foreground/25 px-4 h-9 text-[13px] font-semibold cursor-pointer transition-colors duration-150 hover:bg-primary-foreground/10"
                             >
@@ -277,9 +285,9 @@ const EventsPage = () => {
         navigate({ to: '/events/$eventId/edit', params: { eventId: event.id } });
     }, [navigate]);
 
-    // Members only exist on an event, so the composer opens already bound to one.
-    const handleAddMember = useCallback((eventId: string) => {
-        navigate({ to: '/members/new', search: { eventId } });
+    // Jump straight to the attendee list for this event.
+    const handleViewAttendees = useCallback((eventId: string) => {
+        navigate({ to: '/attendees', search: { eventId } });
     }, [navigate]);
 
     // Register toolbar context: secondary "Create Event" button + search
@@ -381,7 +389,7 @@ const EventsPage = () => {
                                 onCreateEvent={handleCreateEvent}
                                 onEditEvent={handleEditEvent}
                                 onDeleteEvent={handleDeleteEvent}
-                                onAddMember={handleAddMember}
+                                onViewAttendees={handleViewAttendees}
                                 selectedStatus={selectedStatuses}
                                 timezone={enableTimezone}
                             />

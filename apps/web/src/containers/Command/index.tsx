@@ -51,7 +51,7 @@ const CommandPalette: React.FC<{
 
   const handleNewMember = useCallback(() => {
     onClose();
-    navigate({ to: '/members/new' });
+    navigate({ to: '/attendees/new' });
   }, [onClose, navigate]);
 
   const handleSignIn = useCallback(() => {
@@ -85,7 +85,7 @@ const CommandPalette: React.FC<{
 
   useHotkey('Mod+M', (event) => {
     event.preventDefault();
-    handleNavigate('/members');
+    handleNavigate('/attendees');
   });
 
   useHotkey('Mod+V', (event) => {
@@ -134,7 +134,7 @@ const CommandPalette: React.FC<{
           </CommandItem>
           <CommandItem onSelect={handleNewMember} className="command-palette-item">
             <UserPlus className="command-palette-item-icon" />
-            <span>Register New Member</span>
+            <span>Add Attendee</span>
             <CommandShortcut>{'⌘N'}</CommandShortcut>
           </CommandItem>
           <CommandItem onSelect={handleSignIn} className="command-palette-item">
@@ -151,9 +151,9 @@ const CommandPalette: React.FC<{
             <span>Check-In</span>
             <CommandShortcut>{'⌘I'}</CommandShortcut>
           </CommandItem>
-          <CommandItem onSelect={() => handleNavigate('/members')} className="command-palette-item">
+          <CommandItem onSelect={() => handleNavigate('/attendees')} className="command-palette-item">
             <Users className="command-palette-item-icon" />
-            <span>Members</span>
+            <span>Attendees</span>
             <CommandShortcut>{'⌘M'}</CommandShortcut>
           </CommandItem>
           <CommandItem onSelect={() => handleNavigate('/events')} className="command-palette-item">

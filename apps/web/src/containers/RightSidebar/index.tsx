@@ -108,12 +108,12 @@ export const RightSidebar: React.FC = () => {
               onClick={() => {
                 toggleSidebar('right', false);
                 navigate({
-                  to: '/members/$userId/edit',
+                  to: '/attendees/$userId/edit',
                   params: { userId: viewedItem?.content?.id },
                 });
               }}
             >
-              Edit member
+              Edit attendee
             </Button>
             <SheetClose>
               <Button variant="outline" size="sm" className="rounded-full">Close</Button>
