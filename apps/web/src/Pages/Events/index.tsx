@@ -5,7 +5,7 @@ import type { EventType, Organization } from '@credopass/lib/schemas';
 import { useEventSessionStore } from '@credopass/lib/stores';
 import EventListView from './EventListView';
 import EventCalendar from '@credopass/ui/components/event-calendar';
-import { CalendarPlus, CalendarsIcon, ListFilterPlus, FastForward, MapPin, Users, Clock, ScanLine, ArrowUpRight, Plus, ChevronUp, ChevronDown, Sparkles } from 'lucide-react';
+import { CalendarPlus, CalendarsIcon, FastForward, MapPin, Users, Clock, ScanLine, ArrowUpRight, Plus, ChevronUp, ChevronDown, Sparkles } from 'lucide-react';
 import { useNavigate } from '@tanstack/react-router';
 import { useStatusFilter, useToolbarContext } from '@credopass/lib/hooks';
 export { EVENTS_FILTER_GROUP_COOKIE_NAME, EVENTS_FILTER_ENABLED_COOKIE_NAME } from '@credopass/lib/hooks';
@@ -248,7 +248,6 @@ const EventsPage = () => {
 
 
     const {
-        filterEnabled, setFilterEnabled,
         activeGroup, setActiveGroup,
         selectedStatuses, enableTimezone, toggleTimezone,
         actionsEnabled, toggleActions,
@@ -342,26 +341,21 @@ const EventsPage = () => {
                     </p>
                 </div>
 
-                {/* The Upcoming/Past switch now lives where the action group used
-                    to sit; the action group itself portals up into the top bar. */}
+                {/* The Upcoming/Past switch is always visible now — it lives where
+                    the action group used to sit; the group portals into the top bar. */}
                 <div className="events-header-right">
-                    {filterEnabled && (
-                        <StatusFilterSwitch
-                            activeGroup={activeGroup}
-                            onGroupChange={setActiveGroup}
-                            enableTimezone={enableTimezone}
-                            onToggleTimezone={toggleTimezone}
-                        />
-                    )}
+                    <StatusFilterSwitch
+                        activeGroup={activeGroup}
+                        onGroupChange={setActiveGroup}
+                        enableTimezone={enableTimezone}
+                        onToggleTimezone={toggleTimezone}
+                    />
                 </div>
 
-                {/* Action group — rendered up in the top bar next to Create Event */}
+                {/* Action group — rendered up in the top bar next to Create Event.
+                    The filter show/hide toggle is gone: filters are always shown. */}
                 <ToolbarActionsSlot>
                     <ButtonGroup className="rounded-full border border-border bg-card p-1 gap-0.5">
-                        <Button variant='ghost' title="Toggle filters" className={`relative rounded-full ${filterEnabled ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`} size={'icon-sm'} onClick={() => setFilterEnabled(prev => !prev)}>
-                            {filterEnabled && <span className="absolute top-1 right-1 size-1.5 rounded-full bg-primary" />}
-                            <ListFilterPlus />
-                        </Button>
                         {/* Independent toggle — shows/hides the shortcut cards and
                             has no bearing on which events are listed. */}
                         <Button variant='ghost' aria-pressed={actionsEnabled} title="Toggle shortcuts" className={`relative rounded-full ${actionsEnabled ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`} size={'icon-sm'} onClick={toggleActions}>

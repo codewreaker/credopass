@@ -50,9 +50,29 @@ const offsetLabel = (timeZone: string): string => {
 
 const pad = (n: number) => String(n).padStart(2, '0');
 const wrap = (n: number, max: number) => ((n % max) + max) % max;
+const clamp = (n: number, max: number) => Math.max(0, Math.min(max, n));
 
-/** A single stepper column (hours or minutes) with the casio-LCD digit. */
-function Stepper({ value, onStep, label }: { value: number; onStep: (delta: number) => void; label: string }) {
+/**
+ * One editable LCD digit (hours or minutes): tap to type a value, or use the
+ * chevrons to step. Typed input is filtered to digits and clamped to [0, max].
+ */
+function EditableDigit({
+  value,
+  max,
+  onSet,
+  onStep,
+  label,
+}: {
+  value: number;
+  max: number;
+  onSet: (value: number) => void;
+  onStep: (delta: number) => void;
+  label: string;
+}) {
+  // While focused, `text` holds the raw keystrokes so partial entry feels natural.
+  const [text, setText] = useState<string | null>(null);
+  const display = text ?? pad(value);
+
   return (
     <div className="flex flex-col items-center gap-1.5">
       <button
@@ -63,9 +83,22 @@ function Stepper({ value, onStep, label }: { value: number; onStep: (delta: numb
       >
         <ChevronUp size={18} />
       </button>
-      <span className="w-[1.6em] text-center font-mono text-5xl font-bold leading-none tabular-nums text-primary [text-shadow:0_0_18px_var(--primary)]">
-        {pad(value)}
-      </span>
+      <input
+        inputMode="numeric"
+        aria-label={label}
+        value={display}
+        onFocus={(e) => {
+          setText(String(value));
+          e.currentTarget.select();
+        }}
+        onChange={(e) => {
+          const digits = e.target.value.replace(/\D/g, '').slice(0, 2);
+          setText(digits);
+          if (digits !== '') onSet(clamp(parseInt(digits, 10), max));
+        }}
+        onBlur={() => setText(null)}
+        className="w-[1.7em] rounded-lg bg-transparent text-center font-mono text-5xl font-bold leading-none tabular-nums text-primary caret-primary outline-none [text-shadow:0_0_18px_var(--primary)] focus:bg-primary/10"
+      />
       <button
         type="button"
         aria-label={`Decrease ${label}`}
@@ -109,9 +142,21 @@ export function ClockTimePicker({ hour, minute, timeZone, onChange }: ClockTimeP
       <div className="relative overflow-hidden rounded-3xl border border-border bg-neutral-950 px-4 py-6 shadow-inner">
         <div className="pointer-events-none absolute inset-0 bg-linear-to-br from-primary/5 to-transparent" />
         <div className="relative flex items-center justify-center gap-2">
-          <Stepper value={hour} label="hours" onStep={(d) => set({ hour: wrap(hour + d, 24) })} />
+          <EditableDigit
+            value={hour}
+            max={23}
+            label="hours"
+            onSet={(h) => set({ hour: h })}
+            onStep={(d) => set({ hour: wrap(hour + d, 24) })}
+          />
           <span className="pb-1 font-mono text-4xl font-bold text-primary/60">:</span>
-          <Stepper value={minute} label="minutes" onStep={(d) => set({ minute: wrap(minute + d * 5, 60) })} />
+          <EditableDigit
+            value={minute}
+            max={59}
+            label="minutes"
+            onSet={(m) => set({ minute: m })}
+            onStep={(d) => set({ minute: wrap(minute + d * 5, 60) })}
+          />
         </div>
         <p className="relative mt-3 text-center font-mono text-[11px] uppercase tracking-[0.2em] text-primary/50">
           {offsetLabel(timeZone)} · 24h
@@ -127,7 +172,7 @@ export function ClockTimePicker({ hour, minute, timeZone, onChange }: ClockTimeP
         >
           <Globe size={15} className="shrink-0 text-muted-foreground" />
           <span className="min-w-0 flex-1">
-            <span className="block text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+            <span className="block text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
               Timezone
             </span>
             <span className="block truncate text-sm font-medium">{timeZone.replace(/_/g, ' ')}</span>

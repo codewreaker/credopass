@@ -31,20 +31,18 @@ export function StatusFilterSwitch({
 
   return (
     <div className={cn('flex items-center gap-2', className)}>
-      {/* Segmented slider */}
+      {/* Segmented slider. Equal-width columns (grid) so the thumb lines up with
+          the labels — content-sized buttons let 'Upcoming' spill past the thumb. */}
       <div
         role="radiogroup"
         aria-label="Filter events by timing"
-        className="relative inline-flex items-center rounded-full border border-border bg-card p-1"
+        className="relative grid grid-cols-2 rounded-full border border-border bg-card p-1"
       >
-        {/* Sliding thumb */}
+        {/* Sliding thumb — half the inner width, translated by its own width. */}
         <span
           aria-hidden
-          className="absolute inset-y-1 left-1 rounded-full bg-primary transition-transform duration-200 ease-out"
-          style={{
-            width: `calc((100% - 0.5rem) / ${GROUPS.length})`,
-            transform: `translateX(${activeIndex * 100}%)`,
-          }}
+          className="absolute inset-y-1 left-1 w-[calc(50%-0.25rem)] rounded-full bg-primary transition-transform duration-200 ease-out"
+          style={{ transform: `translateX(${activeIndex * 100}%)` }}
         />
         {GROUPS.map(({ value, label, icon: Icon }) => {
           const active = value === activeGroup;
@@ -56,7 +54,7 @@ export function StatusFilterSwitch({
               aria-checked={active}
               onClick={() => onGroupChange(value)}
               className={cn(
-                'relative z-10 inline-flex h-7 items-center gap-1.5 rounded-full px-3.5 text-[11px] font-semibold transition-colors duration-150',
+                'relative z-10 inline-flex h-7 items-center justify-center gap-1.5 rounded-full px-3.5 text-[11px] font-semibold transition-colors duration-150',
                 active ? 'text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
               )}
             >
