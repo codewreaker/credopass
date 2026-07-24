@@ -30,19 +30,20 @@ type ScannerState = 'starting' | 'scanning' | 'unsupported' | 'denied' | 'error'
  */
 export function QRScanner({ onResult, paused = false, className }: QRScannerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [state, setState] = useState<ScannerState>('starting');
+  // Detect support at mount so we never setState synchronously in an effect.
+  const [state, setState] = useState<ScannerState>(() => (getDetectorCtor() ? 'starting' : 'unsupported'));
+
   // Ref mirrors of props so the scan loop reads the latest without restarting.
   const pausedRef = useRef(paused);
-  pausedRef.current = paused;
   const onResultRef = useRef(onResult);
-  onResultRef.current = onResult;
+  useEffect(() => {
+    pausedRef.current = paused;
+    onResultRef.current = onResult;
+  });
 
   useEffect(() => {
     const Ctor = getDetectorCtor();
-    if (!Ctor) {
-      setState('unsupported');
-      return;
-    }
+    if (!Ctor) return undefined;
 
     let stream: MediaStream | null = null;
     let raf = 0;
