@@ -8,6 +8,7 @@ import {
   CalendarPlus,
   CheckIcon,
   Clock,
+  Copy,
   Edit2,
   Globe,
   MapPin,
@@ -151,13 +152,23 @@ export function EventView({ event, variant }: EventViewProps) {
 
   const [checkInOpen, setCheckInOpen] = useState(false);
 
+  const copyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      toast.success('Event link copied');
+    } catch {
+      toast.error('Could not copy the link');
+    }
+  };
+
   const share = async () => {
+    // Native share sheets don't always surface a plain "copy", so if sharing
+    // isn't available (or is dismissed) we fall back to copying the link.
     try {
       if (navigator.share) {
         await navigator.share({ title: event.name, url: shareUrl });
       } else {
-        await navigator.clipboard.writeText(shareUrl);
-        toast.success('Event link copied');
+        await copyLink();
       }
     } catch {
       /* user dismissed the share sheet — nothing to do */
@@ -263,6 +274,9 @@ export function EventView({ event, variant }: EventViewProps) {
               </Button>
               <Button variant="outline" size="sm" className="gap-1.5 rounded-full" onClick={share}>
                 <Share2 size={14} /> Share
+              </Button>
+              <Button variant="outline" size="sm" className="gap-1.5 rounded-full" onClick={copyLink}>
+                <Copy size={14} /> Copy link
               </Button>
             </div>
           </div>
