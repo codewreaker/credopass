@@ -34,6 +34,8 @@ interface SheetDialogProps {
   children?: React.ReactNode
 }
 
+const NAVBAR_HEIGHT = 128 // px — offset of the bottom so I can tap the button
+
 function SheetDialog({
   open,
   onOpenChange,
@@ -48,8 +50,9 @@ function SheetDialog({
   // Only listen while open — no point tracking the keyboard for a closed popup.
   const { keyboardInset, viewportHeight } = useVisualViewport(open)
 
+
   const style = {
-    "--kb-inset": `${keyboardInset}px`,
+    "--kb-inset": `${keyboardInset + (open ? NAVBAR_HEIGHT : 0)}px`,
     ...(viewportHeight ? { "--vv-height": `${viewportHeight}px` } : {}),
   } as React.CSSProperties
 

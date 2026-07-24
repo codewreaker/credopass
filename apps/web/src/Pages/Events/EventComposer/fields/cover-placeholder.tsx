@@ -14,7 +14,7 @@ export function CoverPlaceholder({ className }: { className?: string }) {
     <div
       aria-hidden
       className={cn(
-        'relative w-full overflow-hidden rounded-3xl border border-border bg-card',
+        'relative w-full overflow-hidden rounded-2xl border border-border bg-card',
         className
       )}
     >

@@ -64,8 +64,6 @@ export function EventComposer({ mode, eventId, initialValues }: EventComposerPro
         }}
         className="flex flex-col gap-4"
       >
-        {/* Decorative cover — no upload behind it, `events` has no cover column */}
-        <CoverPlaceholder />
 
         {/* Lime billboard header — org pill, mode label and the event name */}
         <div className="relative overflow-hidden rounded-3xl bg-primary p-5 text-primary-foreground">
@@ -97,6 +95,8 @@ export function EventComposer({ mode, eventId, initialValues }: EventComposerPro
             </span>
           </div>
 
+          {/* Decorative cover — no upload behind it, `events` has no cover column */}
+          <CoverPlaceholder />
           <form.Field name="name">
             {(field) => {
               const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
