@@ -7,13 +7,12 @@ import {
     ArrowLeft,
     ScanQrCodeIcon,
     Edit2,
+    UserPlus,
 } from 'lucide-react';
 import { useToolbarContext } from '@credopass/lib/hooks';
-import { useLauncher } from '@credopass/lib/stores';
 import './event-detail.css';
 import { EventTicket } from './EventTicket';
 import { EventDetailsReadonly } from './EventDetails';
-import { launchEventForm } from '../../containers/EventForm';
 
 const handleAddToCalendar = (event: EventType) => {
     if (!event) return;
@@ -48,7 +47,6 @@ const handleAddToCalendar = (event: EventType) => {
 function EventDetailPage() {
     const { eventId } = useParams({ from: '/events/$eventId' });
     const navigate = useNavigate();
-    const { openLauncher } = useLauncher();
 
 
     // Event detail page: no search, no secondary action
@@ -76,26 +74,19 @@ function EventDetailPage() {
 
     const handleEdit = () => {
         if (!event) return;
-        const startDate = event.startTime instanceof Date ? event.startTime : undefined;
-        const endDate = event.endTime instanceof Date ? event.endTime : undefined;
-
-        // Launch the shared EventForm via command launcher
-        launchEventForm({
-            initialData: {
-                id: event.id,
-                name: event.name,
-                description: event.description || '',
-                status: event.status,
-                dateTimeRange: { from: startDate, to: endDate },
-                location: event.location || '',
-                capacity: event.capacity?.toString() || '',
-                organizationId: event.organizationId || '',
-            },
-            isEditing: true,
-        }, openLauncher);
+        navigate({ to: '/events/$eventId/edit', params: { eventId } });
     };
 
-    if (isLoading) {
+    // Members only exist on an event, so the composer opens already bound to this one.
+    const handleAddMember = () => navigate({ to: '/members/new', search: { eventId } });
+
+    // `isLoading` only covers the live query settling. A row can also be missing
+    // simply because the collection is mid-refetch (right after creating an
+    // event, for instance), so keep showing the spinner rather than flashing
+    // "Event Not Found" at something that is about to arrive.
+    const isSyncing = isLoading || (!event && eventCollection.utils.isFetching);
+
+    if (isSyncing) {
         return (
             <div className="event-detail-page loading-state">
                 <div className="loading-content">
@@ -131,6 +122,11 @@ function EventDetailPage() {
                 </Button>
 
                 <div className="flex-1" />
+
+                <Button variant="outline" size="sm" onClick={handleAddMember} className="gap-2">
+                    <UserPlus size={14} />
+                    <span className="hidden sm:inline">Add member</span>
+                </Button>
 
                 <Button variant="outline" size="sm" onClick={handleEdit} className="gap-2">
                     <Edit2 size={14} />

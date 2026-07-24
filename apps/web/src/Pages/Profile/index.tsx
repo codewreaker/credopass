@@ -1,12 +1,13 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { LogOut, ShieldCheck, UserRound, ChevronRight, Building2 } from 'lucide-react';
+import { LogOut, ShieldCheck, UserRound, ChevronRight, Building2, Sparkles } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@credopass/ui/components/avatar';
 import { Button } from '@credopass/ui/components/button';
 import { Card } from '@credopass/ui/components/card';
 import { UpgradeCTA } from '@credopass/ui/components/upgrade-cta';
 import { useToolbarContext } from '@credopass/lib/hooks';
 import { supabase } from '../../supabase';
+import { usePremium } from '../../contexts/premium';
 import OrganizationsPage from '../Organizations';
 
 interface SessionInfo {
@@ -17,6 +18,7 @@ interface SessionInfo {
 export default function ProfilePage() {
     const navigate = useNavigate();
     const [session, setSession] = useState<SessionInfo | null>(null);
+    const { isPremium, togglePremium } = usePremium();
 
     useToolbarContext({
         action: null,
@@ -91,13 +93,44 @@ export default function ProfilePage() {
                 </div>
             </Card>
 
-            {/* Pro upsell */}
-            <UpgradeCTA
-                size="lg"
-                title="Go Pro"
-                description="Unlimited events, advanced analytics and priority support."
-                onClick={() => navigate({ to: '/upgrade' })}
-            />
+            {/* Pro upsell — hidden once the account is already premium */}
+            {!isPremium && (
+                <UpgradeCTA
+                    size="lg"
+                    title="Go Pro"
+                    description="Unlimited events, advanced analytics and priority support."
+                    onClick={() => navigate({ to: '/upgrade' })}
+                />
+            )}
+
+            {/* Premium switch. There is no billing backend yet, so this is the
+                only thing standing in for an entitlement — flip it to see the
+                premium experience on any account. */}
+            <Card className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center">
+                <div className="flex min-w-0 flex-1 items-center gap-3.5">
+                    <div className={`flex size-10 shrink-0 items-center justify-center rounded-xl ${isPremium ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
+                        <Sparkles size={16} />
+                    </div>
+                    <div className="min-w-0">
+                        <p className="text-sm font-semibold">Premium features</p>
+                        <p className="text-xs text-muted-foreground">
+                            {isPremium
+                                ? 'Full analytics and exports are unlocked.'
+                                : 'Analytics beyond the headline cards are locked.'}
+                        </p>
+                    </div>
+                </div>
+                <Button
+                    variant={isPremium ? 'outline' : 'default'}
+                    size="sm"
+                    role="switch"
+                    aria-checked={isPremium}
+                    className="shrink-0 rounded-full font-semibold"
+                    onClick={togglePremium}
+                >
+                    {isPremium ? 'Turn off premium' : 'Turn on premium'}
+                </Button>
+            </Card>
 
             {/* Organizations */}
             <div className="flex items-center gap-2 pt-1">

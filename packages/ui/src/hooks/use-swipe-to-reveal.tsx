@@ -3,9 +3,11 @@ import React, {useRef, useCallback, useState} from 'react'
    Swipe-to-reveal hook — left-swipe only, reveals action buttons
    ---------------------------------------------------------------- */
 const SWIPE_THRESHOLD = 60;
-const ACTION_WIDTH = 140; // total width of the revealed action panel
+/** Width of one revealed action button; the panel is this times the action count. */
+const ACTION_BUTTON_WIDTH = 70;
 
-export function useSwipeToReveal() {
+export function useSwipeToReveal(actionCount = 2) {
+    const ACTION_WIDTH = actionCount * ACTION_BUTTON_WIDTH;
     const [offsetX, setOffsetX] = useState(0);
     const [isSwiped, setIsSwiped] = useState(false);
     const startX = useRef(0);
@@ -28,7 +30,7 @@ export function useSwipeToReveal() {
             setOffsetX(-ACTION_WIDTH);
             setIsSwiped(true);
         }
-    }, [isSwiped]);
+    }, [ACTION_WIDTH, isSwiped]);
 
     const onTouchStart = useCallback((e: React.TouchEvent) => {
         const touch = e.touches[0];
@@ -67,7 +69,7 @@ export function useSwipeToReveal() {
             const clampedOffset = Math.min(0, Math.max(-ACTION_WIDTH, diffX));
             setOffsetX(clampedOffset);
         }
-    }, [isSwiped]);
+    }, [ACTION_WIDTH, isSwiped]);
 
     const onTouchEnd = useCallback(() => {
         swiping.current = false;
@@ -80,7 +82,7 @@ export function useSwipeToReveal() {
             setOffsetX(0);
             setIsSwiped(false);
         }
-    }, [offsetX]);
+    }, [ACTION_WIDTH, offsetX]);
 
-    return { offsetX, isSwiped, reset, toggle, onTouchStart, onTouchMove, onTouchEnd };
+    return { offsetX, isSwiped, actionWidth: ACTION_WIDTH, reset, toggle, onTouchStart, onTouchMove, onTouchEnd };
 }

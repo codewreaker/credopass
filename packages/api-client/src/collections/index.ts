@@ -15,6 +15,7 @@ import { createEventMemberCollection } from './event-members';
 export * from './users';
 export * from './organizations';
 export * from './events';
+export * from './persisted-ids';
 export * from './event-members';
 export * from './org-memberships';
 export * from './attendance';
