@@ -423,7 +423,7 @@ const EventsPage = () => {
 
                 {actionsEnabled && <ActionCards />}
                 <Separator className={'my-4 bg-linear-to-r from-transparent via-muted to-transparent'} />
-                <div className={`flex gap-4 md:h-[calc(100vh-274px)] ${actionsEnabled ? 'h-[calc(100vh-420px)]' : 'h-[calc(100vh-320px)]'}`}>
+                <div className={`flex gap-4 md:h-[calc(100vh-274px)] ${actionsEnabled ? 'h-[calc(100vh-400px)]' : 'h-[calc(100vh-350px)]'}`}>
                     <div className='w-full md:w-2/3 md:border-r md:pr-4 min-h-0'>
                         <div className='h-full overflow-auto flex flex-col gap-4'>
                             <HeroSpotlight

@@ -76,7 +76,7 @@ export function EventComposer({ mode, eventId, initialValues }: EventComposerPro
             className="pointer-events-none absolute -right-6 -top-32 size-64 rounded-full border border-primary-foreground/10"
           />
 
-          <div className="relative flex items-center gap-2">
+          <div className="relative flex items-center gap-2 mb-2">
             <Button
               type="button"
               variant="ghost"
