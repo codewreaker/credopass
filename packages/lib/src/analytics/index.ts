@@ -47,11 +47,15 @@ export interface AnalyticsKpis {
   liveNow: number;
 }
 
-/** One point on a labelled time series. */
-export interface SeriesPoint {
+/**
+ * One point on a labelled time series. A `type` alias (not an interface) on
+ * purpose: it keeps an implicit index signature, so arrays of these stay
+ * assignable to the charts' `Record<string, unknown>[]` data prop.
+ */
+export type SeriesPoint = {
   label: string;
   value: number;
-}
+};
 
 /** Registered → checked-in → attended, for the funnel panel. */
 export interface AttendanceFunnel {
