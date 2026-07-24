@@ -4,7 +4,6 @@ import type { EventType } from '../schemas';
 export const EVENTS_FILTER_COOKIE_NAME = 'events_filter_selection';
 export const EVENTS_FILTER_ENABLED_COOKIE_NAME = 'events_filter_enabled';
 export const EVENTS_ACTIONS_ENABLED_COOKIE_NAME = 'events_actions_enabled';
-export const EVENTS_PAST_SUBFILTER_COOKIE_NAME = 'events_past_subfilter';
 
 /**
  * Five status chips was too many, so the filter UI works in two groups.
@@ -123,19 +122,15 @@ export function useStatusFilter() {
     // Showing the shortcut cards has nothing to do with which events are listed,
     // so it owns its own persisted boolean rather than sitting in the filter array.
     const [actionsEnabled, setActionsEnabledState] = useState<boolean>(true);
-    // Secondary layer inside the Past group, so the individual past statuses stay
-    // distinguishable once you are looking at them. `null` means "all of them".
-    const [pastSubFilter, setPastSubFilterState] = useState<EventType['status'] | null>(null);
     const [isInitialized, setIsInitialized] = useState(false);
 
     // Load from IndexedDB on mount
     useEffect(() => {
         const loadFromDB = async () => {
-            const [storedEnabled, storedFilters, storedActions, storedPast] = await Promise.all([
+            const [storedEnabled, storedFilters, storedActions] = await Promise.all([
                 getFromDB<boolean>(EVENTS_FILTER_ENABLED_COOKIE_NAME),
                 getFromDB<unknown>(EVENTS_FILTER_COOKIE_NAME),
                 getFromDB<boolean>(EVENTS_ACTIONS_ENABLED_COOKIE_NAME),
-                getFromDB<EventType['status'] | null>(EVENTS_PAST_SUBFILTER_COOKIE_NAME),
             ]);
 
             if (storedEnabled !== undefined) {
@@ -149,9 +144,6 @@ export function useStatusFilter() {
             } else if (Array.isArray(storedFilters)) {
                 // First run after the split: inherit the old pseudo-status.
                 setActionsEnabledState(storedFilters.includes('actions'));
-            }
-            if (storedPast !== undefined) {
-                setPastSubFilterState(storedPast);
             }
             setIsInitialized(true);
         };
@@ -180,11 +172,6 @@ export function useStatusFilter() {
     const setSelectedFilters = useCallback((values: EventTypeFilters[]) => {
         setSelectedFiltersState(values);
         setToDB(EVENTS_FILTER_COOKIE_NAME, values);
-    }, []);
-
-    const setPastSubFilter = useCallback((value: EventType['status'] | null) => {
-        setPastSubFilterState(value);
-        setToDB(EVENTS_PAST_SUBFILTER_COOKIE_NAME, value);
     }, []);
 
     const handleFilterChange = useCallback((value: EventTypeFilters | EventTypeFilters[]) => {
@@ -228,18 +215,11 @@ export function useStatusFilter() {
         [selectedFilters]
     );
 
-    const isPastVisible = useMemo(() => selectedGroups.includes('past'), [selectedGroups]);
-
     /** The raw statuses the list should render, expanded from the selected groups. */
     const selectedStatuses = useMemo<EventType['status'][]>(() => {
-        const statuses = selectedGroups.flatMap((group) => {
-            if (group === 'past' && pastSubFilter) {
-                return STATUS_GROUPS.past.includes(pastSubFilter) ? [pastSubFilter] : [];
-            }
-            return STATUS_GROUPS[group];
-        });
+        const statuses = selectedGroups.flatMap((group) => STATUS_GROUPS[group]);
         return [...new Set(statuses)];
-    }, [pastSubFilter, selectedGroups]);
+    }, [selectedGroups]);
 
     const enableTimezone = useMemo(() => selectedFilters.includes('timezone'), [selectedFilters]);
 
@@ -251,9 +231,6 @@ export function useStatusFilter() {
         displayedFilterValue,
         selectedGroups,
         selectedStatuses,
-        isPastVisible,
-        pastSubFilter,
-        setPastSubFilter,
         actionsEnabled,
         setActionsEnabled,
         toggleActions,

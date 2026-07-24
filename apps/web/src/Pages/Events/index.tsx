@@ -5,10 +5,9 @@ import type { EventType, Organization } from '@credopass/lib/schemas';
 import { useEventSessionStore } from '@credopass/lib/stores';
 import EventListView from './EventListView';
 import EventCalendar from '@credopass/ui/components/event-calendar';
-import { STATUS_MAPPING } from '@credopass/ui/components/event-row';
 import { CalendarPlus, CalendarsIcon, ListFilterPlus, TimerIcon, FastForward, MapPin, Users, Clock, ScanLine, ArrowUpRight, Plus, ChevronUp, ChevronDown, CalendarClock, History, Sparkles } from 'lucide-react';
 import { useNavigate } from '@tanstack/react-router';
-import { useStatusFilter, useToolbarContext, STATUS_GROUPS } from '@credopass/lib/hooks';
+import { useStatusFilter, useToolbarContext } from '@credopass/lib/hooks';
 import type { EventTypeFilters } from '@credopass/lib/hooks';
 export { EVENTS_FILTER_COOKIE_NAME, EVENTS_FILTER_ENABLED_COOKIE_NAME } from '@credopass/lib/hooks';
 import { ButtonGroup } from '@credopass/ui/components/button-group';
@@ -239,12 +238,6 @@ const UpgradeSpotlight = ({ onUpgrade }: { onUpgrade: () => void }) => (
     </div>
 );
 
-/** Secondary layer: narrow the Past group down to one status. */
-const pastSubFilterOptions = STATUS_GROUPS.past.map((status) => ({
-    value: status,
-    label: STATUS_MAPPING[status].label,
-    icon: STATUS_MAPPING[status].icon,
-}));
 /**
  * EventCalendar is a full blown calendar that can be accessed in the sidebar
  * should we want to make it available in the event view just import it here
@@ -261,7 +254,6 @@ const EventsPage = () => {
         filterEnabled, setFilterEnabled,
         handleFilterChange, displayedFilterValue,
         selectedStatuses, enableTimezone,
-        isPastVisible, pastSubFilter, setPastSubFilter,
         actionsEnabled, toggleActions,
     } = useStatusFilter();
 
@@ -392,34 +384,6 @@ const EventsPage = () => {
                     mode="multiple"
                     className='overflow-x-auto w-100vw py-4 xl:hidden'
                 />}
-
-                {/* Secondary layer: once you are looking at past events, narrow to
-                    one status. Hidden while Past isn't part of the selection. */}
-                {filterEnabled && isPastVisible && (
-                    <div className="flex items-center gap-1.5 overflow-x-auto pb-2 xl:pt-2">
-                        <span className="shrink-0 text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
-                            Past
-                        </span>
-                        <button
-                            type="button"
-                            onClick={() => setPastSubFilter(null)}
-                            className={`inline-flex h-7 shrink-0 items-center rounded-full px-3 text-[11px] font-semibold transition-colors ${pastSubFilter === null ? 'bg-primary/15 text-primary' : 'text-muted-foreground hover:text-foreground'}`}
-                        >
-                            All
-                        </button>
-                        {pastSubFilterOptions.map(({ value, label, icon }) => (
-                            <button
-                                key={value}
-                                type="button"
-                                onClick={() => setPastSubFilter(pastSubFilter === value ? null : value)}
-                                className={`inline-flex h-7 shrink-0 items-center gap-1.5 rounded-full px-3 text-[11px] font-semibold transition-colors ${pastSubFilter === value ? 'bg-primary/15 text-primary' : 'text-muted-foreground hover:text-foreground'}`}
-                            >
-                                {icon}
-                                {label}
-                            </button>
-                        ))}
-                    </div>
-                )}
 
                 {actionsEnabled && <ActionCards />}
                 <Separator className={'my-4 bg-linear-to-r from-transparent via-muted to-transparent'} />

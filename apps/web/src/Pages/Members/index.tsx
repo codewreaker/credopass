@@ -10,7 +10,6 @@ import {
   ChevronRight,
   Edit,
   Eye,
-  LayoutGrid,
   MoreHorizontal,
   Trash2,
   UserPlus,
@@ -31,6 +30,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@credopass/ui/components/dropdown-menu';
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from '@credopass/ui/components/select';
 import { cn } from '@credopass/ui/lib/utils';
 
 /**
@@ -447,28 +455,50 @@ export default function MembersPage() {
     );
   }
 
+  // The whole page flows inside the app shell's own scroll region
+  // (`.page-content`, which is `overflow-y: auto`). We deliberately do NOT open a
+  // second nested scroll container here: an inner `h-full` + `overflow-auto` box
+  // depends on the percentage height resolving through the flex chain, which it
+  // does on desktop but not reliably on mobile — that was why the list wouldn't
+  // scroll on phones. Sticky sub-headers give the same "pinned header" feel
+  // without trapping the scroll.
   return (
-    <div className="flex h-full min-h-0 flex-col">
-      {/* Header + lime billboard summary */}
-      <div className="shrink-0 pb-2">
-        <div className="mb-4 flex items-center justify-between">
-          <div className="min-w-0">
-            <h1 className="text-2xl font-bold tracking-tight text-foreground">Members</h1>
-            <p className="truncate text-sm text-muted-foreground">
-              {scopedEvent
-                ? `${isPastScope ? 'Who attended' : 'Who is signed up for'} “${scopedEvent.name}”`
-                : 'Everyone who has been to one of your programmes'}
-            </p>
-          </div>
-          <Button onClick={handleCreateUser} className="gap-2 rounded-full font-semibold">
-            <UserPlus size={16} />
-            Add Member
-          </Button>
+    <div className="flex flex-col pb-6">
+      {/* Header */}
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Members</h1>
+          <p className="truncate text-sm text-muted-foreground">
+            {scopedEvent
+              ? `${isPastScope ? 'Who attended' : 'Who is signed up for'} this event`
+              : 'Everyone who has been to one of your programmes'}
+          </p>
         </div>
+        <Button onClick={handleCreateUser} className="shrink-0 gap-2 rounded-full font-semibold">
+          <UserPlus size={16} />
+          <span className="hidden sm:inline">Add Member</span>
+        </Button>
+      </div>
 
-        <div className="relative overflow-hidden rounded-2xl bg-primary p-4 text-primary-foreground">
-          <div className="pointer-events-none absolute -right-10 -top-10 size-32 rounded-full border-12 border-primary-foreground/8" />
-          <div className="relative z-10 flex items-center gap-6">
+      {/* Lime billboard summary — the scoped event's name is highlighted here so
+          it's always clear which event the list belongs to. */}
+      <div className="relative overflow-hidden rounded-2xl bg-primary p-4 text-primary-foreground">
+        <div className="pointer-events-none absolute -right-10 -top-10 size-32 rounded-full border-12 border-primary-foreground/8" />
+        <div className="relative z-10 flex flex-col gap-3">
+          {/* Which event am I looking at? */}
+          <span
+            className={cn(
+              'inline-flex w-fit max-w-full items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold',
+              scopedEvent
+                ? 'bg-primary-foreground text-primary'
+                : 'bg-primary-foreground/10 text-primary-foreground'
+            )}
+          >
+            <CalendarClock size={11} className="shrink-0" />
+            <span className="truncate">{scopedEvent ? scopedEvent.name : 'All events'}</span>
+          </span>
+
+          <div className="flex items-center gap-6">
             <div>
               <p className="text-3xl font-bold tabular-nums leading-none tracking-tight">
                 {summary.total}
@@ -500,99 +530,70 @@ export default function MembersPage() {
         </div>
       </div>
 
-      {/* Scope switcher — All, then one chip per event */}
-      <div className="shrink-0 border-b border-border/60 py-3">
-        <div className="flex items-center gap-0.5 overflow-x-auto rounded-full border border-border bg-card p-1">
-          <button
-            type="button"
-            onClick={() => setScope('all')}
-            className={cn(
-              'inline-flex h-7 shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full px-3 text-[11px] font-semibold transition-colors duration-150',
-              scope === 'all'
-                ? 'bg-primary text-primary-foreground'
-                : 'text-muted-foreground hover:text-foreground'
+      {/* Scope switcher — a dropdown: All, or pick one event. Sticks to the top
+          of the scroll region so it stays reachable as the list scrolls. */}
+      <div className="sticky top-0 z-10 -mx-1 flex items-center justify-between gap-3 border-b border-border/60 bg-background/90 px-1 py-3 supports-backdrop-filter:backdrop-blur-sm">
+        <Select value={scope} onValueChange={(v) => setScope(v ?? 'all')}>
+          <SelectTrigger className="h-9 w-full max-w-72 rounded-full text-xs">
+            <SelectValue placeholder="All members" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All members</SelectItem>
+            {upcomingEvents.length > 0 && (
+              <SelectGroup>
+                <SelectLabel>Upcoming</SelectLabel>
+                {upcomingEvents.map((event) => (
+                  <SelectItem key={event.id} value={event.id}>
+                    {event.name}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
             )}
-          >
-            <LayoutGrid size={11} />
-            All
-          </button>
+            {pastEvents.length > 0 && (
+              <SelectGroup>
+                <SelectLabel>Past</SelectLabel>
+                {pastEvents.map((event) => (
+                  <SelectItem key={event.id} value={event.id}>
+                    {event.name}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            )}
+          </SelectContent>
+        </Select>
+        <span className="hidden shrink-0 text-xs tabular-nums text-muted-foreground sm:block">
+          {filteredRows.length} shown
+        </span>
+      </div>
 
-          {upcomingEvents.length > 0 && (
-            <span className="shrink-0 px-2 text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground/70">
-              Upcoming
-            </span>
-          )}
-          {upcomingEvents.map((event) => (
-            <button
-              key={event.id}
-              type="button"
-              onClick={() => setScope(event.id)}
-              className={cn(
-                'inline-flex h-7 max-w-44 shrink-0 cursor-pointer items-center gap-1.5 truncate whitespace-nowrap rounded-full px-3 text-[11px] font-semibold transition-colors duration-150',
-                scope === event.id
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-muted-foreground hover:text-foreground'
-              )}
-            >
-              <CalendarClock size={11} />
-              {event.name}
-            </button>
-          ))}
-
-          {pastEvents.length > 0 && (
-            <span className="shrink-0 px-2 text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground/70">
-              Past
-            </span>
-          )}
-          {pastEvents.map((event) => (
-            <button
-              key={event.id}
-              type="button"
-              onClick={() => setScope(event.id)}
-              className={cn(
-                'inline-flex h-7 max-w-44 shrink-0 cursor-pointer items-center gap-1.5 truncate whitespace-nowrap rounded-full px-3 text-[11px] font-semibold transition-colors duration-150',
-                scope === event.id
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-muted-foreground hover:text-foreground'
-              )}
-            >
-              <CheckCircle2 size={11} />
-              {event.name}
-            </button>
+      {/* Member list — flows in the page scroll, no nested scroll container */}
+      {filteredRows.length === 0 ? (
+        <div className="flex min-h-[40vh] items-center justify-center py-8">
+          <EmptyState
+            title={searchQuery ? 'No members found' : 'Nobody here yet'}
+            description={
+              searchQuery
+                ? 'Try adjusting your search'
+                : scopedEvent
+                  ? `No one is ${isPastScope ? 'recorded as attending' : 'signed up for'} this event yet.`
+                  : 'Add someone to one of your events to start building your community.'
+            }
+            action={!searchQuery ? { label: 'Add Member', onClick: handleCreateUser } : undefined}
+          />
+        </div>
+      ) : (
+        <div className="flex flex-col gap-1.5 pt-3">
+          {filteredRows.map((row) => (
+            <MemberCard
+              key={row.user.id}
+              row={row}
+              onEdit={handleEditUser}
+              onDelete={deleteUser}
+              onView={handleViewUser}
+            />
           ))}
         </div>
-      </div>
-
-      {/* Scrollable member list */}
-      <div className="min-h-0 flex-1 overflow-auto pb-4 pt-3">
-        {filteredRows.length === 0 ? (
-          <div className="flex h-full items-center justify-center">
-            <EmptyState
-              title={searchQuery ? 'No members found' : 'Nobody here yet'}
-              description={
-                searchQuery
-                  ? 'Try adjusting your search'
-                  : scopedEvent
-                    ? `No one is ${isPastScope ? 'recorded as attending' : 'signed up for'} this event yet.`
-                    : 'Add someone to one of your events to start building your community.'
-              }
-              action={!searchQuery ? { label: 'Add Member', onClick: handleCreateUser } : undefined}
-            />
-          </div>
-        ) : (
-          <div className="flex flex-col gap-1.5">
-            {filteredRows.map((row) => (
-              <MemberCard
-                key={row.user.id}
-                row={row}
-                onEdit={handleEditUser}
-                onDelete={deleteUser}
-                onView={handleViewUser}
-              />
-            ))}
-          </div>
-        )}
-      </div>
+      )}
     </div>
   );
 }
