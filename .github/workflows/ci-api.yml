@@ -80,12 +80,12 @@ jobs:
 
       # DB/Supabase-backed integration tests self-skip without the secrets
       # below; set them in repo CI secrets to run the full suite.
-      # - name: Test Core API service
-      #   run: bun nx test coreservice
-      #   env:
-      #     DATABASE_URL: ${{ secrets.DATABASE_URL }}
-      #     SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-      #     SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+      - name: Test Core API service
+        run: bun nx test coreservice
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
 
   # ==========================================================================
   # Job 2: Build application and Docker image, then deploy via Coolify
