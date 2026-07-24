@@ -183,22 +183,137 @@ ${colorConfig
 }
 
 /* -------------------------------------------------------------------------- */
-/*  ECharts host                                                               */
+/*  Option-wide colour token resolution                                        */
 /* -------------------------------------------------------------------------- */
 
-interface EChartProps extends Omit<React.ComponentProps<"div">, "children"> {
-  option: EChartsOption
-  /** Re-applies the option without merging, for series count changes. */
-  replaceMerge?: string[]
+// Colour-bearing keys in an ECharts option (borrowed from shadcn-echarts).
+const COLOR_KEYS = new Set([
+  "color", "color0", "borderColor", "borderColor0", "textBorderColor",
+  "textShadowColor", "backgroundColor", "areaColor", "fillerColor", "shadowColor",
+])
+
+const isPlainObject = (v: unknown): v is Record<string, unknown> =>
+  typeof v === "object" && v !== null && !Array.isArray(v)
+
+const needsResolving = (input: string): boolean => {
+  const n = input.toLowerCase()
+  return n.includes("var(") || n.includes("oklch(") || n.includes("oklab(") || n.includes("color-mix(")
 }
 
 /**
- * Mounts one ECharts instance and keeps it sized to its container. Everything
- * above this is declarative; this is the only place the imperative API is used.
+ * Resolve one CSS colour string to `rgb()/rgba()` by letting the browser compute
+ * it on a throwaway element attached to `scope` — so `var(--token)` resolves in
+ * the chart's own cascade, and `oklch()`/`color-mix()` become canvas-safe rgb.
  */
-function EChart({ option, replaceMerge, className, ...props }: EChartProps) {
+function computeCssColor(value: string, scope: HTMLElement | null): string {
+  if (typeof document === "undefined") return value
+  const host = scope ?? document.body
+  if (!host) return value
+  const el = document.createElement("span")
+  el.style.color = value
+  el.style.position = "absolute"
+  el.style.visibility = "hidden"
+  el.style.pointerEvents = "none"
+  host.appendChild(el)
+  const computed = getComputedStyle(el).color
+  host.removeChild(el)
+  return computed.includes("rgb") ? computed : value
+}
+
+const resolveColorString = (value: string, scope: HTMLElement | null): string =>
+  needsResolving(value) ? computeCssColor(value, scope) : value
+
+/**
+ * Deep-walk an ECharts option, resolving CSS-token colours on known colour keys
+ * and inside gradient `colorStops`, so the canvas renderer (which can't read CSS
+ * variables) paints the right colours. Returns a new tree — never mutates input.
+ */
+export function resolveOptionColorTokens<T>(option: T, scope: HTMLElement | null): T {
+  const transform = (value: unknown): unknown => {
+    if (typeof value === "string") return resolveColorString(value, scope)
+    if (Array.isArray(value)) return value.map(transform)
+    if (isPlainObject(value)) return walk(value)
+    return value
+  }
+
+  const walk = (node: Record<string, unknown>): Record<string, unknown> => {
+    const out: Record<string, unknown> = {}
+    for (const [key, value] of Object.entries(node)) {
+      if (key === "colorStops" && Array.isArray(value)) {
+        out[key] = value.map((stop) =>
+          isPlainObject(stop) && typeof stop.color === "string"
+            ? { ...stop, color: resolveColorString(stop.color, scope) }
+            : stop
+        )
+      } else if (COLOR_KEYS.has(key)) {
+        out[key] = transform(value)
+      } else if (Array.isArray(value)) {
+        out[key] = value.map((item) => (isPlainObject(item) ? walk(item) : item))
+      } else if (isPlainObject(value)) {
+        out[key] = walk(value)
+      } else {
+        out[key] = value
+      }
+    }
+    return out
+  }
+
+  return (isPlainObject(option) ? walk(option) : option) as T
+}
+
+/* -------------------------------------------------------------------------- */
+/*  BaseChart — the ECharts host                                               */
+/* -------------------------------------------------------------------------- */
+
+const hasSeries = (option: EChartsOption): boolean => {
+  const s = (option as Record<string, unknown>).series
+  return Array.isArray(s) ? s.length > 0 : !!s
+}
+
+/** First-frame seed with emptied series data, so bars/lines animate in. */
+function mountSeed(option: EChartsOption): EChartsOption {
+  const record = option as Record<string, unknown>
+  const series = record.series
+  const seed = (s: unknown) => (isPlainObject(s) ? { ...s, data: [] } : s)
+  return {
+    ...record,
+    animation: false,
+    series: Array.isArray(series) ? series.map(seed) : seed(series),
+  } as EChartsOption
+}
+
+export interface BaseChartRef {
+  getEchartsInstance: () => EChartsType | null
+  resize: () => void
+}
+
+export interface BaseChartProps extends Omit<React.ComponentProps<"div">, "children" | "onError"> {
+  option: EChartsOption
+  /** Fixed pixel/CSS height; omit to fill the container (default h-full). */
+  height?: number | string
+  /** Play a one-time entrance animation on first render (default true). */
+  animateOnMount?: boolean
+  notMerge?: boolean
+  /** Re-applies these components without merging, for count changes. */
+  replaceMerge?: string[]
+  /** ECharts event handlers, keyed by event name. */
+  onEvents?: Record<string, (params: unknown) => void>
+}
+
+/**
+ * Mounts one ECharts instance and keeps it sized to its container. Pass any
+ * ECharts `option` — CSS-token colours are resolved to canvas-safe rgb via
+ * `resolveOptionColorTokens`, re-resolved when the theme flips. The higher-level
+ * `AreaChart`/`BarChart` presets build their option and render through this.
+ */
+export const BaseChart = React.forwardRef<BaseChartRef, BaseChartProps>(function BaseChart(
+  { option, height, animateOnMount = true, notMerge = false, replaceMerge, onEvents, className, style, ...props },
+  ref
+) {
   const containerRef = React.useRef<HTMLDivElement>(null)
   const chartRef = React.useRef<EChartsType | null>(null)
+  const mountDoneRef = React.useRef(false)
+  const themeVersion = useThemeVersion()
 
   React.useEffect(() => {
     const element = containerRef.current
@@ -207,27 +322,70 @@ function EChart({ option, replaceMerge, className, ...props }: EChartProps) {
     const chart = echarts.init(element, undefined, { renderer: "canvas" })
     chartRef.current = chart
 
-    // ResizeObserver rather than a window listener: these charts sit in panels
-    // and sidebars that resize without the window ever changing.
+    // ResizeObserver for panel/sidebar resizes; window resize as a fallback.
     const observer = new ResizeObserver(() => chart.resize())
     observer.observe(element)
+    const onResize = () => chart.resize()
+    window.addEventListener("resize", onResize)
 
     return () => {
       observer.disconnect()
+      window.removeEventListener("resize", onResize)
       chart.dispose()
       chartRef.current = null
+      mountDoneRef.current = false
     }
   }, [])
 
   React.useEffect(() => {
-    chartRef.current?.setOption(option, {
-      notMerge: false,
-      replaceMerge: replaceMerge ?? ["series"],
-    })
-  }, [option, replaceMerge])
+    const chart = chartRef.current
+    if (!chart || !onEvents) return undefined
+    for (const [event, handler] of Object.entries(onEvents)) chart.on(event, handler)
+    return () => {
+      for (const event of Object.keys(onEvents)) chart.off(event)
+    }
+  }, [onEvents])
 
-  return <div ref={containerRef} className={cn("h-full w-full", className)} {...props} />
-}
+  React.useEffect(() => {
+    const chart = chartRef.current
+    if (!chart) return undefined
+    const resolved = resolveOptionColorTokens(option, containerRef.current)
+    const apply = () => chart.setOption(resolved, { notMerge, replaceMerge: replaceMerge ?? ["series"] })
+
+    if (animateOnMount && !mountDoneRef.current && hasSeries(resolved)) {
+      chart.setOption(mountSeed(resolved), { notMerge: true })
+      const timer = window.setTimeout(() => {
+        if (chart.isDisposed()) return
+        apply()
+        mountDoneRef.current = true
+      }, 24)
+      return () => window.clearTimeout(timer)
+    }
+
+    mountDoneRef.current = true
+    apply()
+    // themeVersion forces a colour re-resolve + re-apply when the theme flips.
+    return undefined
+  }, [option, notMerge, replaceMerge, animateOnMount, themeVersion])
+
+  React.useImperativeHandle(
+    ref,
+    () => ({
+      getEchartsInstance: () => chartRef.current,
+      resize: () => chartRef.current?.resize(),
+    }),
+    []
+  )
+
+  return (
+    <div
+      ref={containerRef}
+      className={cn("h-full w-full", className)}
+      style={{ ...(height != null ? { height } : {}), ...style }}
+      {...props}
+    />
+  )
+})
 
 /* -------------------------------------------------------------------------- */
 /*  Shared option pieces                                                       */
@@ -256,7 +414,7 @@ interface AxisOptions {
   gridColor?: string
 }
 
-interface BaseChartProps extends AxisOptions {
+interface PresetChartProps extends AxisOptions {
   data: Record<string, unknown>[]
   /** Field holding the category for each row. */
   xKey: string
@@ -380,7 +538,7 @@ function axisCommon(
 /*  Chart types                                                                */
 /* -------------------------------------------------------------------------- */
 
-interface AreaChartProps extends BaseChartProps {
+interface AreaChartProps extends PresetChartProps {
   /** Gradient fill from this colour down to transparent. */
   fillColor?: string
   strokeWidth?: number
@@ -493,10 +651,10 @@ function AreaChart({
     ]
   )
 
-  return <EChart option={option} className={className} />
+  return <BaseChart option={option} className={className} />
 }
 
-interface BarChartProps extends BaseChartProps {
+interface BarChartProps extends PresetChartProps {
   /** Corner radius on each bar (or segment, when stacked). */
   radius?: number
   maxBarWidth?: number
@@ -622,7 +780,7 @@ function BarChart({
     ]
   )
 
-  return <EChart option={option} className={className} />
+  return <BaseChart option={option} className={className} />
 }
 
 /**
@@ -742,6 +900,7 @@ function ChartLegend({
   )
 }
 
+// BaseChart and resolveOptionColorTokens are exported inline above.
 export {
   AreaChart,
   BarChart,
@@ -749,6 +908,5 @@ export {
   ChartLegend,
   ChartLegendContent,
   ChartStyle,
-  EChart,
   useChart,
 }
