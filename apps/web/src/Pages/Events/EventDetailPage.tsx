@@ -8,6 +8,7 @@ import {
     ScanQrCodeIcon,
     Edit2,
     UserPlus,
+    Users,
 } from 'lucide-react';
 import { useToolbarContext } from '@credopass/lib/hooks';
 import './event-detail.css';
@@ -77,8 +78,10 @@ function EventDetailPage() {
         navigate({ to: '/events/$eventId/edit', params: { eventId } });
     };
 
-    // Members only exist on an event, so the composer opens already bound to this one.
-    const handleAddMember = () => navigate({ to: '/members/new', search: { eventId } });
+    // Attendees only exist on an event, so the composer opens already bound to this one.
+    const handleAddAttendee = () => navigate({ to: '/attendees/new', search: { eventId } });
+    // View who's signed up / attended for this event.
+    const handleViewAttendees = () => navigate({ to: '/attendees', search: { eventId } });
 
     // `isLoading` only covers the live query settling. A row can also be missing
     // simply because the collection is mid-refetch (right after creating an
@@ -123,9 +126,14 @@ function EventDetailPage() {
 
                 <div className="flex-1" />
 
-                <Button variant="outline" size="sm" onClick={handleAddMember} className="gap-2">
+                <Button variant="outline" size="sm" onClick={handleViewAttendees} className="gap-2">
+                    <Users size={14} />
+                    <span className="hidden sm:inline">Attendees</span>
+                </Button>
+
+                <Button variant="outline" size="sm" onClick={handleAddAttendee} className="gap-2">
                     <UserPlus size={14} />
-                    <span className="hidden sm:inline">Add member</span>
+                    <span className="hidden sm:inline">Add attendee</span>
                 </Button>
 
                 <Button variant="outline" size="sm" onClick={handleEdit} className="gap-2">

@@ -427,6 +427,8 @@ function AreaChart({
 
   const option = React.useMemo<EChartsOption>(
     () => ({
+      // temporary fix to prevent requestAnimationFrame error that was being cuased
+      animation: false,
       animationDuration: 400,
       grid: {
         top: grid?.top ?? 8,

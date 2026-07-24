@@ -25,7 +25,7 @@ interface EventListViewProps {
     onCreateEvent: () => void;
     onEditEvent: (event: EventWithOrg) => void;
     onDeleteEvent: (eventId: string) => void;
-    onAddMember?: (eventId: string) => void;
+    onViewAttendees?: (eventId: string) => void;
     timezone?: boolean
 }
 
@@ -36,7 +36,7 @@ const EventListView: React.FC<EventListViewProps> = ({
     selectedStatus = [],
     onEditEvent,
     onDeleteEvent,
-    onAddMember,
+    onViewAttendees,
     timezone = false
 }) => {
     const navigate = useNavigate();
@@ -90,7 +90,7 @@ const EventListView: React.FC<EventListViewProps> = ({
                                 onNavigate={handleNavigateToEvent}
                                 onEdit={onEditEvent}
                                 onDelete={onDeleteEvent}
-                                onAddMember={onAddMember}
+                                onViewAttendees={onViewAttendees}
                                 isMobile={isMobile}
                                 timezone={timezone}
                             />

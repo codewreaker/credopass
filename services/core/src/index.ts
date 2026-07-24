@@ -9,6 +9,7 @@ import eventsRoutes from "./routes/events";
 import eventMembersRoutes from "./routes/event-members";
 import attendanceRoutes from "./routes/attendance";
 import loyaltyRoutes from "./routes/loyalty";
+import analyticsRoutes from "./routes/analytics";
 import { createMiddleware } from "hono/factory";
 import { HTTPException } from "hono/http-exception";
 import { isDevelopment } from 'std-env';
@@ -108,6 +109,10 @@ app.get(`${API_BASE_PATH}/openapi.json`, (c) => c.json({
         [`${API_BASE_PATH}/loyalty`]: {
             get: { summary: "Get loyalty data", tags: ["Loyalty"] },
             post: { summary: "Update loyalty", tags: ["Loyalty"] }
+        },
+        // Analytics (fabricated)
+        [`${API_BASE_PATH}/analytics`]: {
+            get: { summary: "Get analytics for a scope + range (scope=all|<eventId>, range=week|month|year)", tags: ["Analytics"] }
         }
     }
 }));
@@ -128,6 +133,9 @@ app.route(`${API_BASE_PATH}/events`, eventsRoutes);
 app.route(`${API_BASE_PATH}/event-members`, eventMembersRoutes);
 app.route(`${API_BASE_PATH}/attendance`, attendanceRoutes);
 app.route(`${API_BASE_PATH}/loyalty`, loyaltyRoutes);
+
+// Analytics (fabricated for now; see services/core/src/analytics)
+app.route(`${API_BASE_PATH}/analytics`, analyticsRoutes);
 
 
 // 404 handler

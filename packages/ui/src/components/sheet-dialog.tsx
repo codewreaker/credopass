@@ -64,7 +64,10 @@ function SheetDialog({
           className="fixed inset-0 z-50 bg-black/70 duration-150 data-closed:fade-out-0 data-open:fade-in-0 data-closed:animate-out data-open:animate-in supports-backdrop-filter:backdrop-blur-xs"
         />
         <div
-          className="fixed inset-0 z-50 flex items-end justify-center pointer-events-none sm:items-center sm:p-4"
+          // Mobile: anchored to the bottom above the keyboard. Desktop: sits a
+          // little above centre rather than dead-centre, which reads better and
+          // leaves room when the sheet grows (calendars, address lists).
+          className="fixed inset-0 z-50 flex items-end justify-center pointer-events-none sm:items-start sm:justify-center sm:p-4 sm:pt-[8vh]"
           style={style}
         >
           <DialogPrimitive.Popup

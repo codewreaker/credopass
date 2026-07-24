@@ -64,7 +64,7 @@ suite("Core API integration (live schema, authenticated)", () => {
       }),
     });
     expect(res.status).toBe(201);
-    const data = await res.json();
+    const data = await body(res);
     expect(data.id).toBeDefined();
     expect(data.plan).toBe("free");
     orgId = data.id;
@@ -81,7 +81,7 @@ suite("Core API integration (live schema, authenticated)", () => {
       }),
     });
     expect(res.status).toBe(201);
-    const data = await res.json();
+    const data = await body(res);
     expect(data.id).toBeDefined();
     userId = data.id;
   });
@@ -104,7 +104,7 @@ suite("Core API integration (live schema, authenticated)", () => {
     });
     if (res.status !== 201) console.error("Create Event Failed:", await res.clone().json());
     expect(res.status).toBe(201);
-    const data = await res.json();
+    const data = await body(res);
     expect(data.organizationId).toBe(orgId);
     eventId = data.id;
   });
@@ -118,7 +118,7 @@ suite("Core API integration (live schema, authenticated)", () => {
       body: JSON.stringify({ eventId, userId, role: "organizer" }),
     });
     expect(res.status).toBe(201);
-    const data = await res.json();
+    const data = await body(res);
     expect(data.eventId).toBe(eventId);
     expect(data.userId).toBe(userId);
     expect(data.role).toBe("organizer");
@@ -127,7 +127,7 @@ suite("Core API integration (live schema, authenticated)", () => {
   it("retrieves the created event", async () => {
     const res = await app.request(`${API_BASE_PATH}/events/${eventId}`, { headers: authHeaders });
     expect(res.status).toBe(200);
-    const data = await res.json();
+    const data = await body(res);
     expect(data.id).toBe(eventId);
   });
 });

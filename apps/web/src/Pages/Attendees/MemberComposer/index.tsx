@@ -26,21 +26,21 @@ const Loading = () => (
   </div>
 );
 
-/** `/members/new` — a blank composer, usually opened from an event. */
+/** `/attendees/new` — a blank composer, usually opened from an event. */
 export function CreateMemberPage() {
   // Composer owns its own submit CTA; nothing for the app toolbar to add.
   useToolbarContext({ action: null, search: { enabled: false, placeholder: '' } });
-  const { eventId } = useSearch({ from: '/members/new' });
+  const { eventId } = useSearch({ from: '/attendees/new' });
   const event = useScopedEvent(eventId);
 
   return <MemberComposer mode="create" eventId={eventId} event={event} />;
 }
 
-/** `/members/$userId/edit` — the same composer, hydrated from the collection. */
+/** `/attendees/$userId/edit` — the same composer, hydrated from the collection. */
 export function EditMemberPage() {
   // Route id keeps the `_` from `$userId_.edit.tsx`, which un-nests this page.
-  const { userId } = useParams({ from: '/members/$userId_/edit' });
-  const { eventId } = useSearch({ from: '/members/$userId_/edit' });
+  const { userId } = useParams({ from: '/attendees/$userId_/edit' });
+  const { eventId } = useSearch({ from: '/attendees/$userId_/edit' });
   const navigate = useNavigate();
   useToolbarContext({ action: null, search: { enabled: false, placeholder: '' } });
 
@@ -65,12 +65,12 @@ export function EditMemberPage() {
   if (!user) {
     return (
       <div className="mx-auto flex w-full max-w-140 flex-col items-center gap-3 py-16 text-center">
-        <h2 className="text-lg font-semibold">Member not found</h2>
+        <h2 className="text-lg font-semibold">Attendee not found</h2>
         <p className="text-sm text-muted-foreground">
-          The member you&apos;re trying to edit doesn&apos;t exist or has been removed.
+          The attendee you&apos;re trying to edit doesn&apos;t exist or has been removed.
         </p>
-        <Button variant="outline" className="rounded-full" onClick={() => navigate({ to: '/members' })}>
-          <ArrowLeft size={16} /> Back to Members
+        <Button variant="outline" className="rounded-full" onClick={() => navigate({ to: '/attendees' })}>
+          <ArrowLeft size={16} /> Back to Attendees
         </Button>
       </div>
     );

@@ -42,13 +42,13 @@ export function MemberComposer({ mode, userId, event, eventId, initialValues }: 
     onSaved: () =>
       scopedEventId
         ? navigate({ to: '/events/$eventId', params: { eventId: scopedEventId } })
-        : navigate({ to: '/members' }),
+        : navigate({ to: '/attendees' }),
   });
 
   const handleBack = () =>
     scopedEventId
       ? navigate({ to: '/events/$eventId', params: { eventId: scopedEventId } })
-      : navigate({ to: '/members' });
+      : navigate({ to: '/attendees' });
 
   return (
     <div className="mx-auto w-full max-w-140 pb-4 md:max-w-160 lg:max-w-3xl">
@@ -242,7 +242,7 @@ export function MemberComposer({ mode, userId, event, eventId, initialValues }: 
                 ) : (
                   <>
                     {scopedEventId ? <UserPlus /> : <CheckIcon />}
-                    {scopedEventId ? 'Add to event' : 'Add member'}
+                    {scopedEventId ? 'Add to event' : 'Add attendee'}
                   </>
                 )}
               </Button>
