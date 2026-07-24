@@ -20,6 +20,7 @@ export const CreateEventSchema = createInsertSchema(events, {
   status: EventStatusEnum,
   capacity: z.number().int().positive().nullable(),
   checkInMethods: z.array(CheckInMethodEnum).min(1),
+  allowSelfCheckIn: z.boolean().default(true),
 }).omit({
   id: true,
   createdAt: true,
@@ -37,6 +38,7 @@ export const InsertEventSchema = createInsertSchema(events, {
   status: EventStatusEnum,
   capacity: z.number().int().positive().nullable(),
   checkInMethods: z.array(CheckInMethodEnum).min(1),
+  allowSelfCheckIn: z.boolean().default(true),
 });
 
 // TypeScript types inferred from Zod schemas

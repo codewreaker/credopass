@@ -144,6 +144,7 @@ export function useEventForm({ mode, eventId, initialValues, onSaved }: UseEvent
                 id,
                 checkInMethods: ['qr', 'manual'],
                 requireCheckOut: false,
+                allowSelfCheckIn: true,
                 deletedAt: null,
                 createdAt: now,
                 updatedAt: now,
