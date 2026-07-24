@@ -227,7 +227,47 @@ export function EventView({ event, variant }: EventViewProps) {
         </div>
       </div>
 
-      <CoverPlaceholder />
+      {/* Shareable pass — borrows the ticket look (perforated stub + QR + code)
+          as one compact accent, not a second card duplicating the meta above. */}
+      <div className="relative overflow-hidden rounded-2xl border-border bg-linear-to-br from-card via-secondary to-primary/10">
+        <div className="pointer-events-none absolute -right-12 -top-12 size-40 rounded-full border-16 border-primary/6" />
+        {/* Notched perforation edge */}
+        <div className="pointer-events-none absolute -left-3 top-1/2 size-6 -translate-y-1/2 rounded-full bg-background" />
+        <div className="pointer-events-none absolute -right-3 top-1/2 size-6 -translate-y-1/2 rounded-full bg-background" />
+
+        <div className="relative flex items-center gap-4 p-5">
+          <GlowingQRCode
+            value={shareUrl}
+            size={92}
+            onClick={isPublic ? () => setCheckInOpen(true) : openCheckinKiosk}
+            ariaLabel={isPublic ? 'Check in to this event' : 'Open the check-in kiosk'}
+          />
+          <div className="min-w-0 flex-1">
+            <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-muted-foreground/70">
+              Check-in code
+            </p>
+            <p className="truncate font-mono text-sm font-black tracking-wide">
+              #{event.id?.slice(0, 12).toUpperCase()}
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {isPublic ? 'Scan or tap to check in.' : 'Scan to open the shareable page.'}
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Button
+                size="sm"
+                className="rounded-full font-semibold"
+                onClick={isPublic ? () => setCheckInOpen(true) : openCheckinKiosk}
+              >
+                {isPublic ? <Ticket size={14} /> : <ScanLine size={14} />}
+                {isPublic ? 'Check-in to Event' : 'Check-in Guests'}
+              </Button>
+              <Button variant="outline" size="sm" className="gap-1.5 rounded-full" onClick={share}>
+                <Share2 size={14} /> Share
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* When */}
       <div className="rounded-2xl border border-border bg-card p-1.5">
@@ -288,47 +328,7 @@ export function EventView({ event, variant }: EventViewProps) {
         </div>
       </div>
 
-      {/* Shareable pass — borrows the ticket look (perforated stub + QR + code)
-          as one compact accent, not a second card duplicating the meta above. */}
-      <div className="relative overflow-hidden rounded-2xl border border-border bg-linear-to-br from-card via-secondary to-primary/10">
-        <div className="pointer-events-none absolute -right-12 -top-12 size-40 rounded-full border-16 border-primary/6" />
-        {/* Notched perforation edge */}
-        <div className="pointer-events-none absolute -left-3 top-1/2 size-6 -translate-y-1/2 rounded-full bg-background" />
-        <div className="pointer-events-none absolute -right-3 top-1/2 size-6 -translate-y-1/2 rounded-full bg-background" />
-
-        <div className="relative flex items-center gap-4 p-5">
-          <GlowingQRCode
-            value={shareUrl}
-            size={92}
-            onClick={isPublic ? () => setCheckInOpen(true) : openCheckinKiosk}
-            ariaLabel={isPublic ? 'Check in to this event' : 'Open the check-in kiosk'}
-          />
-          <div className="min-w-0 flex-1">
-            <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-muted-foreground/70">
-              Check-in code
-            </p>
-            <p className="truncate font-mono text-sm font-black tracking-wide">
-              #{event.id?.slice(0, 12).toUpperCase()}
-            </p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              {isPublic ? 'Scan or tap to check in.' : 'Scan to open the shareable page.'}
-            </p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <Button
-                size="sm"
-                className="rounded-full font-semibold"
-                onClick={isPublic ? () => setCheckInOpen(true) : openCheckinKiosk}
-              >
-                {isPublic ? <Ticket size={14} /> : <ScanLine size={14} />}
-                {isPublic ? 'Check in' : 'Open check-in'}
-              </Button>
-              <Button variant="outline" size="sm" className="gap-1.5 rounded-full" onClick={share}>
-                <Share2 size={14} /> Share
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
+      <CoverPlaceholder />
 
       {/* Sticky attendee CTA on the public page */}
       {isPublic && (
