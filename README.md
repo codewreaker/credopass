@@ -511,6 +511,6 @@ This is a private project. For questions or issues, contact the development team
 
 ### Vector Art
 <a href="https://storyset.com/people">People illustrations by Storyset</a>
-
+<a href="https://storyset.com/event">Event illustrations by Storyset</a>
 
 
