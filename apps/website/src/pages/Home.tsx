@@ -26,6 +26,7 @@ import {
   BarChart3,
 } from 'lucide-react';
 import { ImageWithFallback } from '../components/ImageWithFallback';
+import { JourneyFlow } from '../components/JourneyFlow';
 import { useState, useEffect, useRef, type ReactNode } from 'react';
 
 /* ----------------------------------------------------------------
@@ -108,6 +109,7 @@ export function Home() {
 
             <div className="hidden lg:flex items-center gap-8">
               <a href="#features" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Features</a>
+              <a href="#journey" className="text-sm text-muted-foreground hover:text-foreground transition-colors">How it works</a>
               <a href="#product" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Product</a>
               <a href="#pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Pricing</a>
               <a href="#customers" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Customers</a>
@@ -138,6 +140,7 @@ export function Home() {
           <div className="lg:hidden border-t border-border/40 bg-background/95 backdrop-blur-xl">
             <div className="container mx-auto px-4 py-6 flex flex-col gap-4">
               <a href="#features" className="py-2 text-sm text-muted-foreground hover:text-foreground">Features</a>
+              <a href="#journey" className="py-2 text-sm text-muted-foreground hover:text-foreground">How it works</a>
               <a href="#product" className="py-2 text-sm text-muted-foreground hover:text-foreground">Product</a>
               <a href="#pricing" className="py-2 text-sm text-muted-foreground hover:text-foreground">Pricing</a>
               <a href="#customers" className="py-2 text-sm text-muted-foreground hover:text-foreground">Customers</a>
@@ -393,9 +396,32 @@ export function Home() {
       </section>
 
       {/* ============================================================
+          HOW IT WORKS — persona journeys
+          ============================================================ */}
+      <section id="journey" className="py-12 sm:py-16 lg:py-32 bg-muted/30">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <Reveal>
+            <div className="max-w-2xl mb-10 lg:mb-16">
+              <Badge variant="outline" className="mb-4">How it works</Badge>
+              <h2 className="text-4xl sm:text-5xl font-bold tracking-tighter mb-4">
+                One flow, every attendee
+              </h2>
+              <p className="text-lg text-muted-foreground">
+                Whether you host, walk in off the street, or already use the app — every path leads
+                to a recorded check-in and live analytics.
+              </p>
+            </div>
+          </Reveal>
+          <Reveal delay={80}>
+            <JourneyFlow />
+          </Reveal>
+        </div>
+      </section>
+
+      {/* ============================================================
           PRODUCT SECTIONS
           ============================================================ */}
-      <section id="product" className="py-12 sm:py-16 lg:py-32 bg-muted/30">
+      <section id="product" className="py-12 sm:py-16 lg:py-32">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 flex flex-col gap-16 lg:gap-32">
           {/* Check-In Flow */}
           <Reveal>
