@@ -1,516 +1,249 @@
 # CredoPass
 
-**Event Attendance Management System**
+**Track who _actually_ shows up — not just who signed up.**
 
-CredoPass is a comprehensive attendance tracking platform designed for organizations that meet regularly and need to track who actually shows up. Unlike ticketing systems like EventBrite that manage payments and ticket scanning, CredoPass focuses on detailed attendance tracking—capturing check-in times, check-out times, and actual attendance data that ticketing platforms don't provide.
+CredoPass is an attendance platform for organizations that meet regularly — churches, clubs, meetups, communities. Ticketing tools (EventBrite, Meetup) tell you who *bought in*. CredoPass tells you who *walked in*: a durable, timestamped attendance record for every person at every event, plus the analytics that come from it.
 
-Perfect for churches, book clubs, jazz clubs, recurring meetups, and any organization that needs to:
-- Track attendance without requiring tickets
-- Work alongside existing event systems (EventBrite, Meetup, etc.)
-- Integrate with existing member databases
-- Capture detailed check-in/check-out times
-- Generate attendance analytics and insights
+It runs alongside whatever you already use. No tickets required.
 
 ---
 
-## 📋 Table of Contents
+## Table of contents
 
-- [Features](#-features)
-- [Technology Stack](#-technology-stack)
-- [Project Structure](#-project-structure)
-- [Quick Start](#-quick-start)
-- [Development](#-development)
-- [Key Files & Directories](#-key-files--directories)
-- [Documentation](#-documentation)
-- [Project Status](#-project-status)
-
----
-
-## 🚀 Features
-
-- **Attendance Tracking** - Detailed check-in/check-out times and attendance records
-- **Member Management** - Import and manage your existing member database
-- **Event Management** - Create and schedule recurring or one-time events
-- **Integration Ready** - Works alongside EventBrite, Meetup, and other event platforms
-- **No Tickets Required** - Perfect for free events or paid events managed elsewhere
-- **Loyalty Program** - Reward frequent attendees with points and tiers
-- **Analytics Dashboard** - Attendance trends, no-show rates, and engagement metrics
-- **Offline-First** - Local data sync for check-ins even without internet
-- **Responsive Design** - Mobile-friendly for on-site check-in tablets or phones
+1. [The one big idea](#the-one-big-idea)
+2. [How it works (the 60-second version)](#how-it-works-the-60-second-version)
+3. [System architecture](#system-architecture)
+4. [The request lifecycle](#the-request-lifecycle)
+5. [Auth & multi-tenancy](#auth--multi-tenancy)
+6. [Data model](#data-model)
+7. [Tech stack](#tech-stack)
+8. [Repository map](#repository-map)
+9. [Package guides](#package-guides) ← _the deep dive lives in these_
+10. [Getting started](#getting-started)
+11. [Everyday commands](#everyday-commands)
+12. [Deployment](#deployment)
+13. [Conventions](#conventions)
 
 ---
 
-## 🛠 Technology Stack
+## The one big idea
 
-### Frontend
-- **Framework**: React 19.2.1 (with React Compiler optimization)
-- **Build Tool**: Vite 7.3.0 (Rolldown variant)
-- **Routing**: TanStack Router v1.140.5 (file-based routing)
-- **State Management**: 
-  - Zustand v5.0.9 (global state)
-  - TanStack Query v5.90.12 (server state)
-  - TanStack DB v0.1.60 (offline-first local collections)
-- **UI Components**: shadcn/ui with Base UI React v1.0.0
-- **Styling**: TailwindCSS v4.1.18
-- **Data Visualization**:
-  - AG Grid Community v35.0.0 (data tables)
-  - FullCalendar v6.1.19 (calendar views)
-  - Recharts 3.6.0 (charts & analytics)
-- **Icons**: Lucide React v0.562.0
-- **Layout**: React Grid Layout v2.0.0
+Everyone who touches an event — the organizer, the door staff, a walk-in guest, a returning regular — ends up writing to **the same place**: one `attendance` row per (event, person). That single source of truth is why the dashboard can be trusted.
 
-### Backend
-- **Runtime**: Bun >= 1.3.0
-- **Framework**: Hono v4.10.7 (lightweight web framework)
-- **Database**: PostgreSQL 16 (production) / PGlite (development fallback)
-- **ORM**: Drizzle ORM v0.45.1 with Drizzle Kit v0.31.0
-- **Validation**: Zod v4.3.5 with @hono/zod-validator
-- **Environment**: t3-env v3.10.0
+```mermaid
+flowchart LR
+    O["Organizer"] --> A[("attendance row<br/>attended · time · method")]
+    D["Door staff"] --> A
+    G["Walk-in guest"] --> A
+    M["App regular"] --> A
+    A --> AN["Live analytics"]
+```
 
-### Monorepo & Tooling
-- **Monorepo Manager**: Nx v22.3.3
-- **Package Manager**: Bun (with workspaces)
-- **Linting**: ESLint v9.39.2 with TypeScript ESLint
-- **TypeScript**: v5.9.3
+> **A note on check-in.** `events.checkInMethods` (`qr` / `manual` / `external_auth`) is just config for *which* check-in mechanisms a door offers — a UI setting. The actual record of attendance is the `attendance` row, uniquely keyed on `(eventId, patronId)`. Attendance is always reconstructable from the database.
 
-### Deployment
-- **Frontend**: Vercel (with API proxy rewrites)
-- **Backend**: Google Cloud Run (Docker containers)
-- **Database**: PostgreSQL 16 (Docker Compose for local development)
+## How it works (the 60-second version)
 
----
+1. An **organizer** creates an org, invites a team, and sets up an event (venue, time, capacity, check-in methods).
+2. Every event gets a **shareable link + QR**. The organizer opens the **kiosk** on any phone/tablet.
+3. **Attendees** arrive and are recorded — by QR scan, manual entry, or self-service on a public event page that needs no login or app.
+4. Each check-in writes **one attendance row**. Regulars also earn **loyalty** points/tiers.
+5. **Analytics** update live: who came, when they arrived, trends over time.
 
-## 📁 Project Structure
+The marketing site's [`/how-it-works`](apps/website/src/pages/HowItWorks.tsx) page walks each persona's journey in detail.
+
+## System architecture
+
+CredoPass is an **Nx monorepo** (Bun workspaces): three frontends and one backend, all sharing one schema/type/data core.
+
+```mermaid
+flowchart TD
+    subgraph Frontends
+        Web["apps/web<br/>React · TanStack Router<br/>app.credopass.com"]
+        Mobile["apps/mobile<br/>Expo · React Native"]
+        Site["apps/website<br/>Vite · marketing<br/>credopass.com"]
+    end
+
+    subgraph Shared["Shared packages"]
+        Lib["@credopass/lib<br/>schemas · types · stores · auth"]
+        ApiClient["@credopass/api-client<br/>offline-first collections"]
+        UI["@credopass/ui"]
+        UIM["@credopass/ui-mobile"]
+    end
+
+    subgraph Backend
+        Core["services/core<br/>Hono on Bun · /api/core"]
+        DB[("PostgreSQL<br/>Drizzle ORM")]
+    end
+
+    Supa["Supabase Auth<br/>(JWT / JWKS)"]
+
+    Web --> UI --> Lib
+    Site --> UI
+    Mobile --> UIM
+    Web --> ApiClient
+    Mobile --> ApiClient
+    ApiClient --> Lib
+    ApiClient -->|HTTPS + Bearer JWT| Core
+    Core --> Lib
+    Core --> DB
+    Web -.auth.-> Supa
+    Mobile -.auth.-> Supa
+    Core -.verifies JWT.-> Supa
+```
+
+Everything points inward at `@credopass/lib` — the schema is defined once, and the DB migrations, the API validation, the client collections, and every TypeScript type are all derived from it.
+
+## The request lifecycle
+
+What happens when the app writes data:
+
+```mermaid
+sequenceDiagram
+    participant C as Component
+    participant Col as TanStack DB collection
+    participant Cl as api-client
+    participant API as Hono /api/core
+    participant DB as PostgreSQL
+
+    C->>Col: insert() / update()
+    Col-->>C: optimistic update (instant, offline-safe)
+    Col->>Cl: onInsert handler
+    Cl->>API: POST + Bearer JWT
+    API->>API: verify Supabase JWT (JWKS)
+    API->>API: Zod validate body
+    API->>DB: Drizzle insert
+    DB-->>API: row
+    API-->>Col: server row (ids reconciled)
+    Col-->>C: reactive re-render
+```
+
+## Auth & multi-tenancy
+
+- **Authentication** is **Supabase**. The client holds the session; every API request carries `Authorization: Bearer <jwt>`. The API verifies it against Supabase's JWKS endpoint — no shared secret (see [`services/core`](services/core/README.md)).
+- **The public event surface** (`/api/core/public/*`) is deliberately open — it's how a walk-in guest checks in with no account. It's mounted *before* the auth middleware and can only touch one event id.
+- **Multi-tenancy**: the `organizations` table is the tenant boundary. Users join orgs through `orgMemberships` with a role (`owner`/`admin`/`member`/`viewer`); events carry a team through `eventMembers` (`organizer`/`co-host`/`staff`/`volunteer`). CRUD routes gate on `organizationId`.
+
+## Data model
+
+Seven tables, all keyed off `organizations`. Full column-level detail and the ER diagram live in the **[lib package guide](packages/lib/README.md#the-data-model-7-tables)**.
+
+`organizations` · `orgMemberships` · `users` · `events` · `eventMembers` · `attendance` · `loyalty`
+
+## Tech stack
+
+| Layer | Choice |
+|-------|--------|
+| Monorepo | **Nx** + **Bun** workspaces |
+| Web | **React 19** (React Compiler), **Vite** (rolldown), **TanStack Router/Query/DB**, **Base UI**, **Tailwind v4** |
+| Mobile | **Expo** / **React Native**, React Navigation |
+| Marketing | **Vite** + React, dependency-free History router |
+| Backend | **Hono** on **Bun**, **Drizzle ORM**, **PostgreSQL 16** |
+| Validation | **Zod**, generated from Drizzle via **drizzle-zod** |
+| Auth | **Supabase** (JWT verified via JWKS) |
+| Hosting | Web/site → **Vercel** · API → **Google Cloud Run** |
+
+## Repository map
 
 ```
-credopass-monorepo/
+credopass/
 ├── apps/
-│   └── web/                          # React web application (Vercel)
-│       ├── src/
-│       │   ├── main.tsx              # App entry point (TanStack Router)
-│       │   ├── routes.tsx            # Route tree configuration
-│       │   ├── config.ts             # App configuration
-│       │   ├── components/           # Reusable React components
-│       │   ├── containers/           # Feature containers (EventForm, TopNavBar, etc.)
-│       │   ├── Pages/                # Page components (Home, Members, Events, Analytics)
-│       │   ├── routes/               # Route definitions
-│       │   ├── stores/               # Zustand stores (useAppStore, useLauncherStore)
-│       │   ├── lib/
-│       │   │   ├── utils.ts          # Utility functions
-│       │   │   └── tanstack-db/      # TanStack DB collections (users, events, etc.)
-│       │   └── hooks/                # Custom React hooks
-│       ├── public/                   # Static assets
-│       ├── index.html                # HTML template
-│       ├── vite.config.ts            # Vite configuration (proxy, build)
-│       ├── vercel.json               # Vercel deployment config
-│       ├── tsconfig.json             # TypeScript config
-│       └── project.json              # Nx project configuration
-│
+│   ├── web/         → the product: dashboard, kiosk, public event page   (Vercel)
+│   ├── mobile/      → Expo / React Native companion
+│   └── website/     → marketing site + /how-it-works                     (Vercel)
 ├── services/
-│   └── core/                         # Hono API server (Google Cloud Run)
-│       ├── src/
-│       │   ├── index.ts              # Server entry (Hono + middleware)
-│       │   ├── routes/               # API route handlers
-│       │   │   ├── users.ts          # User CRUD endpoints
-│       │   │   ├── events.ts         # Event management endpoints
-│       │   │   ├── attendance.ts     # Attendance tracking endpoints
-│       │   │   └── loyalty.ts        # Loyalty program endpoints
-│       │   ├── api/                  # API client (type-safe fetch wrapper)
-│       │   │   ├── client.ts         # Base API client
-│       │   │   └── endpoints/        # Endpoint definitions
-│       │   └── db/                   # Database layer
-│       │       ├── client.ts         # DB client (PostgreSQL auto-detect)
-│       │       ├── index.ts          # DB exports
-│       │       └── seed.ts           # Database seeding script
-│       ├── drizzle/                  # Database migrations
-│       ├── Dockerfile                # Multi-stage Docker build
-│       ├── drizzle.config.ts         # Drizzle Kit configuration (points to @credopass/lib schemas)
-│       ├── tsconfig.json             # TypeScript config
-│       └── project.json              # Nx project configuration
-│
+│   └── core/        → Hono API, /api/core                                (Cloud Run)
 ├── packages/
-│   ├── lib/                          # Shared utilities & validation (@credopass/lib)
-│   │   ├── src/
-│   │   │   ├── schemas/              # Single source of truth for schemas
-│   │   │   │   ├── tables/           # Drizzle table definitions
-│   │   │   │   │   ├── users.ts      # Users table schema
-│   │   │   │   │   ├── events.ts     # Events table schema
-│   │   │   │   │   ├── attendance.ts # Attendance table schema
-│   │   │   │   │   ├── loyalty.ts    # Loyalty table schema
-│   │   │   │   │   └── index.ts      # Table exports with relations
-│   │   │   │   ├── user.schema.ts    # Zod schemas generated from Drizzle (Create, Update, Insert)
-│   │   │   │   ├── event.schema.ts   # Event validation schemas (drizzle-zod)
-│   │   │   │   ├── attendance.schema.ts  # Attendance validation schemas
-│   │   │   │   ├── loyalty.schema.ts # Loyalty validation schemas
-│   │   │   │   ├── enums.ts          # Shared Zod enums
-│   │   │   │   └── index.ts          # Barrel exports (tables + schemas)
-│   │   │   ├── hooks/                # Shared React hooks
-│   │   │   │   └── use-cookies.ts
-│   │   │   ├── util/                 # Utility functions
-│   │   │   ├── grid-layout.tsx       # React Grid Layout wrapper (shared component)
-│   │   │   ├── constants.ts          # App constants
-│   │   │   └── index.ts              # Package exports
-│   │   ├── tsconfig.json
-│   │   └── project.json
-│   │
-│   └── ui/                           # Shared UI components (@credopass/ui)
-│       ├── src/
-│       │   ├── components/           # shadcn/ui components
-│       │   │   ├── button.tsx
-│       │   │   ├── card.tsx
-│       │   │   ├── dialog.tsx
-│       │   │   ├── input.tsx
-│       │   │   ├── select.tsx
-│       │   │   ├── chart.tsx         # Recharts integration
-│       │   │   ├── sidebar.tsx
-│       │   │   └── index.ts          # Component exports
-│       │   ├── hooks/                # UI-specific hooks
-│       │   │   └── use-mobile.ts
-│       │   ├── lib/
-│       │   │   └── utils.ts          # cn() helper, etc.
-│       │   └── styles/
-│       │       └── globals.css       # Global styles
-│       ├── components.json           # shadcn/ui config
-│       ├── tailwind.config.ts        # Tailwind configuration
-│       ├── tsconfig.json
-│       └── project.json
-│
-├── docker/
-│   └── docker-compose.yml            # PostgreSQL 16 container setup
-│
-├── tools/                            # DevOps scripts
-│   ├── nm-reset.sh                   # Node modules cleanup
-│   ├── setup-gcp.sh                  # Google Cloud Platform setup
-│   └── setup-vercel.sh               # Vercel setup
-│
-├── nx.json                           # Nx workspace configuration
-├── package.json                      # Root dependencies & scripts
-├── tsconfig.base.json               # Base TypeScript configuration
-├── eslint.config.js                  # ESLint configuration
-├── ARCHITECTURE.md                   # Legacy architecture docs
-├── REFACTORING_SUMMARY.md            # Consolidation notes
-└── README.md                         # This file
+│   ├── lib/         → schemas, types, enums, stores, theme, auth  ← the core
+│   ├── api-client/  → offline-first TanStack DB collections
+│   ├── ui/          → web design system (Base UI + Tailwind)
+│   └── ui-mobile/   → React Native design system
+├── docker/          → Postgres + local orchestration (see docker/README.md)
+├── .github/         → CI/CD workflows (see .github/workflows/README.md)
+└── nx.json, package.json, tsconfig.base.json
 ```
 
----
+## Package guides
 
-## 🚀 Quick Start
+**Start here, then follow your interest.** Each package documents itself in depth:
 
-### Prerequisites
+| Guide | Read it to understand… |
+|-------|------------------------|
+| 🧠 [`packages/lib`](packages/lib/README.md) | The schema-first core: tables, the data model, how types/validation are generated. **The best first read.** |
+| 🔌 [`packages/api-client`](packages/api-client/README.md) | How apps read/write data with offline-first collections. |
+| 🎨 [`packages/ui`](packages/ui/README.md) | The web design system + house style + Base UI conventions. |
+| 📱 [`packages/ui-mobile`](packages/ui-mobile/README.md) | The React Native design system. |
+| 🖥️ [`apps/web`](apps/web/README.md) | Routing, the kiosk, the public event page, screen data flow. |
+| 📲 [`apps/mobile`](apps/mobile/README.md) | Navigation and native check-in. |
+| 🌐 [`apps/website`](apps/website/README.md) | The marketing site + the horizontal-scroll `/how-it-works` page. |
+| ⚙️ [`services/core`](services/core/README.md) | The API: middleware, the CRUD factory, auth, the public surface. |
 
-- **Bun** >= 1.3.0 ([Install Bun](https://bun.sh))
-- **Docker** (for PostgreSQL)
-- **Google Cloud SDK** (for deployment)
+## Getting started
 
-### Installation
+**Prerequisites:** [Bun](https://bun.sh) ≥ 1.3, Docker (for Postgres).
 
 ```bash
-# Clone repository
-git clone <repository-url>
-cd credopass
+bun install                       # install the workspace
+bun run docker:dev                # start PostgreSQL 16 in Docker
+nx run coreservice:migrate        # create the schema
+nx run coreservice:seed           # (optional) sample data
 
-# Install dependencies
-bun install
-
-# Start PostgreSQL database
-bun run postgres:up
-
-# Run database migrations
-nx run coreservice:migrate
-
-# Start development servers (in separate terminals)
-# Terminal 1: Frontend (http://localhost:5173)
-nx run web:serve
-
-# Terminal 2: Backend (http://localhost:3000)
-nx run coreservice:start
+# then, in separate terminals:
+nx run coreservice:start          # API  → http://localhost:8080
+nx run web:serve                  # web  → http://localhost:5000
 ```
 
-### Environment Variables
-
-Create a `.env` file in the root:
+`.env` (repo root):
 
 ```env
-# Database
 DATABASE_URL=postgresql://postgres:Ax!rtrysoph123@localhost:5432/credopass_db
-
-# API Configuration
-API_BASE_URL=http://localhost:3000
-NODE_ENV=development
-
-# Optional: Enable throttle middleware for testing
-THROTTLE=false
+SUPABASE_URL=https://<your-ref>.supabase.co
+# local-dev only — skip JWT verification if you don't have Supabase wired up:
+# AUTH_DISABLED=true
 ```
 
-> **See [docs/SETUP.md](docs/SETUP.md) for detailed setup instructions**
+For the web app to reach a local API, set `VITE_API_URL=http://localhost:8080/api/core`.
 
----
-
-## 💻 Development
-
-### Essential Commands
+## Everyday commands
 
 ```bash
-# Frontend Development
-nx run web:serve              # Start dev server (localhost:5173)
-nx run web:build              # Production build
-nx run web:preview            # Preview production build
+bun start                     # run web + API together (nx run-many)
 
-# Backend Development
-nx run coreservice:start      # Start API server (localhost:3000)
-nx run coreservice:build      # Bundle with Bun
-nx run coreservice:docker:build  # Build Docker image
+nx run web:serve              # web dev server (:5000)
+nx run coreservice:start      # API dev server (:8080, bun --watch)
+nx run website:serve          # marketing site (:4200)
 
-# Database
-bun run postgres:up           # Start PostgreSQL container
-bun run postgres:down         # Stop and remove PostgreSQL
-nx run coreservice:generate   # Generate migration from schema changes
-nx run coreservice:migrate    # Run pending migrations
-nx run coreservice:studio     # Open Drizzle Studio (DB UI)
+nx run coreservice:migrate    # generate + apply migrations
+nx run coreservice:studio     # Drizzle Studio (browse the DB)
+nx run coreservice:seed       # seed data
 
-# Monorepo
-nx graph                      # View dependency graph
-nx affected:test              # Test affected projects
-nx format:write               # Format code
+nx run web:typecheck          # typecheck the web app
+nx affected -t lint test      # lint/test only what changed
+nx graph                      # visualise the dependency graph
 ```
 
-### Development Workflow
+## Deployment
 
-1. **Frontend Changes**: Edit files in `apps/web/src/` → Hot reload on save
-2. **Backend Changes**: Edit files in `services/core/src/` → Auto-restart with `--watch`
-3. **Schema Changes**: Edit `packages/lib/src/schemas/tables/` → Run `nx run coreservice:generate` → Run `nx run coreservice:migrate`
-4. **UI Components**: Edit `packages/ui/src/components/` → Changes reflect in web app
-5. **Validation Schemas**: Edit `packages/lib/src/schemas/*.schema.ts` → Available in both frontend & backend (auto-generated from Drizzle tables)
+```mermaid
+flowchart LR
+    Push["push to main"] --> GH["GitHub Actions"]
+    GH --> V["apps/web + website → Vercel"]
+    GH --> CR["services/core → Cloud Run"]
+    V --> App["app.credopass.com / credopass.com"]
+    CR --> Api["api.credopass.com/api/core"]
+```
 
-### Frontend-Backend Communication
+- **Frontends → Vercel.** `apps/web/vercel.json` proxies `/api/*` to the API and adds security headers; `apps/website/vercel.json` does the SPA fallback + API proxy.
+- **API → Google Cloud Run** via `nx run coreservice:deploy` (Docker build from `services/core/Dockerfile`).
+- CI/CD workflows and required secrets are documented in [`.github/workflows/`](.github/workflows/README.md).
 
-**Development Mode**:
-```
-Frontend (localhost:5173) → Vite Proxy → Backend (localhost:3000)
-```
-- Configured in `apps/web/vite.config.ts`
-- All `/api/*` requests proxied to `http://localhost:3000`
+## Conventions
 
-**Production Mode**:
-```
-Frontend (vercel.app) → Vercel Rewrite → https://api.credopass.com/api/*
-```
-- Configured in `apps/web/vercel.json`
-- API domain set via environment variables
+- **Schema is the source of truth.** Change a table in `packages/lib/src/schemas/tables/`, run `coreservice:migrate`, and types + validation follow. Never hand-write a type that duplicates a table.
+- **Apps don't `fetch`.** Read/write through `@credopass/api-client` collections. The one exception is the token-optional public event page.
+- **Forms are pages, not dialogs.** Use a page or `SheetDialog` for anything with a keyboard; reserve `Dialog` for single-value edits.
+- **Base UI uses render props**, not `asChild` — spread `render={(props) => …}`.
+- **Two design systems on purpose**: `@credopass/ui` (web) and `@credopass/ui-mobile` (native) share intent, not code.
 
 ---
 
-## 📚 Key Files & Directories
-
-| File/Directory | Purpose |
-|----------------|---------|
-| **Frontend** | |
-| `apps/web/src/main.tsx` | React app entry point with TanStack Router setup |
-| `apps/web/src/routes.tsx` | Explicit route tree configuration |
-| `apps/web/src/stores/store.ts` | Zustand stores (useAppStore, useLauncherStore) |
-| `apps/web/src/lib/tanstack-db/` | TanStack DB collections for offline-first data |
-| `apps/web/src/Pages/` | Page components (Home, Members, Events, Analytics, Tables) |
-| `apps/web/src/containers/` | Feature containers (EventForm, TopNavBar, SignInModal, etc.) |
-| `apps/web/vite.config.ts` | Vite build config with proxy and code-splitting |
-| `apps/web/vercel.json` | Vercel deployment with API rewrites & security headers |
-| **Backend** | |
-| `services/core/src/index.ts` | Hono server with CORS, logger, throttle middleware |
-| `services/core/src/routes/` | API route handlers (users, events, attendance, loyalty) |
-| `services/core/src/db/client.ts` | Database client factory (PostgreSQL auto-detect) |
-| `services/core/Dockerfile` | Multi-stage Docker build for Cloud Run |
-| `services/core/drizzle.config.ts` | Drizzle migration configuration (points to lib schemas) |
-| **Shared Packages** | |
-| `packages/lib/src/schemas/tables/` | Drizzle table definitions (single source of truth) |
-| `packages/lib/src/schemas/*.schema.ts` | Zod validation schemas (auto-generated via drizzle-zod) |
-| `packages/lib/src/constants.ts` | Application constants |
-| `packages/ui/src/components/` | shadcn/ui component library |
-| `packages/ui/components.json` | shadcn/ui configuration |
-| **Infrastructure** | |
-| `docker/docker-compose.yml` | PostgreSQL 16 container definition |
-| `nx.json` | Nx workspace configuration & task pipelines |
-| `tsconfig.base.json` | Base TypeScript config with path mappings |
-| `package.json` | Root workspace dependencies & scripts |
-
----
-
-## 📖 Documentation
-
-Comprehensive documentation is available in the `/docs` directory:
-
-- **[Architecture Guide](docs/ARCHITECTURE.md)** - Detailed architectural patterns, routing, state management, API patterns, validation layer
-- **[Setup Guide](docs/SETUP.md)** - Complete setup instructions, environment variables, database configuration, troubleshooting
-- **[Database Guide](docs/DATABASE.md)** - Schema definitions, relationships, migrations, seeding data
-- **[API Reference](docs/API.md)** - Endpoint documentation, request/response examples
-- **[Deployment Guide](docs/DEPLOYMENT.md)** - Build processes, Vercel deployment, Docker & Cloud Run, production migrations
-
----
-
-## 📊 Project Status
-
-**Current Phase**: Post-Refactoring Development
-
-### What Problem Does CredoPass Solve?
-
-**The Gap**: EventBrite and similar platforms handle ticket sales and scanning, but don't provide:
-- Detailed attendance data (who actually showed up vs. who bought tickets)
-- Check-in and check-out timestamps
-- Attendance tracking for free/non-ticketed events
-- Integration with your existing member database
-
-**The Solution**: CredoPass fills this gap by focusing exclusively on attendance tracking. Use EventBrite for ticketing, use CredoPass for knowing who attended and when.
-
-### Recent Changes (Schema Consolidation)
-
-The project recently underwent schema consolidation to eliminate duplication and establish a single source of truth:
-
-✅ **Completed**:
-- Moved Drizzle table definitions from `services/core/src/db/schema/` to `packages/lib/src/schemas/tables/`
-- Integrated `drizzle-zod` to auto-generate Zod validation schemas from Drizzle tables
-- Eliminated manual schema duplication (was maintaining 2 separate definitions per entity)
-- Updated Zod version from v4.1.13 to v4.3.5 across all packages
-- All routes now import schemas directly from `@credopass/lib/schemas`
-- Drizzle config updated to use shared schema location
-
-**Benefits**:
-- **No More Drift**: Schema changes in one place automatically propagate to validation
-- **Less Code**: Removed ~400 lines of duplicate schema definitions
-- **Type Safety**: Drizzle tables generate both Zod schemas and TypeScript types
-- **Better DX**: Add a field once, get DB schema + validation + types automatically
-
-### Architecture Benefits
-
-- **Simpler Structure**: Fewer packages = easier navigation
-- **Type Safety**: End-to-end TypeScript with Zod validation
-- **Modern Stack**: React 19, Hono, Drizzle, Bun, TanStack ecosystem
-- **Developer Experience**: Fast builds (Bun), hot reload (Vite), excellent tooling (Nx, Drizzle Studio)
-- **Offline-First**: TanStack DB collections for local data persistence
-- **Clean Separation**: Clear boundaries between apps, services, and packages
-
----
-
-## 🏗 Architecture Overview
-
-### State Management Strategy
-
-1. **Global UI State** (Zustand):
-   - `useAppStore`: Sidebar state, action events
-   - `useLauncherStore`: Modal launcher state
-
-2. **Server State** (TanStack Query):
-   - Automatic caching and invalidation
-   - Used implicitly by TanStack DB collections
-
-3. **Local-First Data** (TanStack DB):
-   - Collections: users, events, attendance, loyalty
-   - Syncs with backend API via collections
-   - Enables offline functionality
-
-### Request Flow
-
-```
-User Interaction
-    ↓
-React Component
-    ↓
-TanStack Query/DB → API Client → Hono Server
-                                     ↓
-                                 Zod Validation
-                                     ↓
-                                 Drizzle ORM
-                                     ↓
-                                 PostgreSQL
-```
-
-### Validation Layer (Single Source of Truth)
-
-**Architecture**:
-- **Drizzle Tables** (`packages/lib/src/schemas/tables/`): Database schema definitions (PostgreSQL)
-- **Zod Schemas** (`packages/lib/src/schemas/*.schema.ts`): Auto-generated via `drizzle-zod` with custom refinements
-- Both exported from `@credopass/lib/schemas` for use across frontend and backend
-
-**Workflow**:
-1. Edit Drizzle table definition in `packages/lib/src/schemas/tables/users.ts`
-2. Zod schemas in `packages/lib/src/schemas/user.schema.ts` auto-update via `drizzle-zod`
-3. Generate migration: `nx run coreservice:generate`
-4. Apply migration: `nx run coreservice:migrate`
-5. TypeScript types and validation automatically available everywhere
-
-**Example**:
-```typescript
-// packages/lib/src/schemas/tables/users.ts (Source of Truth)
-export const users = pgTable('users', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  email: text('email').notNull().unique(),
-  firstName: text('firstName').notNull(),
-  // ...
-});
-
-// packages/lib/src/schemas/user.schema.ts (Auto-generated + Refinements)
-import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
-import { users } from './tables/users';
-
-export const UserSchema = createSelectSchema(users);
-export const CreateUserSchema = createInsertSchema(users, {
-  email: z.string().email(), // Custom refinement
-  firstName: z.string().min(1, 'Required'),
-}).omit({ id: true, createdAt: true, updatedAt: true });
-```
-
-### Database Client Auto-Detection
-
-The backend automatically detects the environment:
-- **Production**: Uses PostgreSQL via `DATABASE_URL`
-- **Development Fallback**: Uses PGlite if PostgreSQL unavailable
-
----
-
-## 🚢 Deployment
-
-### Frontend (Vercel)
-
-```bash
-# Automatic deployment on push to main branch
-# Or manual deployment:
-vercel deploy
-```
-
-Configuration: `apps/web/vercel.json`
-
-### Backend (Google Cloud Run)
-
-```bash
-# Deploy to Cloud Run
-nx run coreservice:deploy
-
-# Or manually:
-cd services/core
-gcloud run deploy credopass-api \
-  --source . \
-  --region us-central1 \
-  --allow-unauthenticated
-```
-
-> **See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for complete deployment instructions**
-
----
-
-## 📝 License
-
-See [LICENSE](LICENSE) file for details.
-
----
-
-## 🤝 Contributing
-
-This is a private project. For questions or issues, contact the development team.
-
----
-
-**Built with ❤️ for organizations that value attendance insights**
-
-
-### Vector Art
-<a href="https://storyset.com/people">People illustrations by Storyset</a>
-<a href="https://storyset.com/event">Event illustrations by Storyset</a>
-
-
+<sub>Built for organizations that value attendance insight. · People & event illustrations by [Storyset](https://storyset.com).</sub>

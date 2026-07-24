@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { ImageWithFallback } from '../components/ImageWithFallback';
 import { JourneyFlow } from '../components/JourneyFlow';
+import { navigate } from '../App';
 import { useState, useEffect, useRef, type ReactNode } from 'react';
 
 /* ----------------------------------------------------------------
@@ -109,7 +110,7 @@ export function Home() {
 
             <div className="hidden lg:flex items-center gap-8">
               <a href="#features" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Features</a>
-              <a href="#journey" className="text-sm text-muted-foreground hover:text-foreground transition-colors">How it works</a>
+              <a href="/how-it-works" onClick={(e) => { e.preventDefault(); navigate('/how-it-works'); }} className="text-sm text-muted-foreground hover:text-foreground transition-colors">How it works</a>
               <a href="#product" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Product</a>
               <a href="#pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Pricing</a>
               <a href="#customers" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Customers</a>
@@ -140,7 +141,7 @@ export function Home() {
           <div className="lg:hidden border-t border-border/40 bg-background/95 backdrop-blur-xl">
             <div className="container mx-auto px-4 py-6 flex flex-col gap-4">
               <a href="#features" className="py-2 text-sm text-muted-foreground hover:text-foreground">Features</a>
-              <a href="#journey" className="py-2 text-sm text-muted-foreground hover:text-foreground">How it works</a>
+              <a href="/how-it-works" onClick={(e) => { e.preventDefault(); navigate('/how-it-works'); }} className="py-2 text-sm text-muted-foreground hover:text-foreground">How it works</a>
               <a href="#product" className="py-2 text-sm text-muted-foreground hover:text-foreground">Product</a>
               <a href="#pricing" className="py-2 text-sm text-muted-foreground hover:text-foreground">Pricing</a>
               <a href="#customers" className="py-2 text-sm text-muted-foreground hover:text-foreground">Customers</a>
@@ -414,6 +415,14 @@ export function Home() {
           </Reveal>
           <Reveal delay={80}>
             <JourneyFlow />
+          </Reveal>
+          <Reveal delay={160}>
+            <div className="mt-10 flex justify-center">
+              <Button variant="outline" size="lg" className="text-base h-12 px-8 border-border/60 hover:border-primary/40" onClick={() => navigate('/how-it-works')}>
+                Walk every journey in detail
+                <ArrowRight className="ml-2 w-5 h-5" />
+              </Button>
+            </div>
           </Reveal>
         </div>
       </section>
