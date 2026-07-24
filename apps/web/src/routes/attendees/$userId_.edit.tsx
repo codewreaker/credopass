@@ -1,9 +1,9 @@
-import { EditMemberPage } from '../../Pages/Members/MemberComposer'
+import { EditMemberPage } from '../../Pages/Attendees/MemberComposer'
 import { createFileRoute } from '@tanstack/react-router'
 import type { MemberComposerSearch } from './new'
 
-// Edit Member route - same composer as /members/new, hydrated from the collection
-export const Route = createFileRoute('/members/$userId_/edit')({
+// Edit Attendee route - same composer as /attendees/new, hydrated from the collection
+export const Route = createFileRoute('/attendees/$userId_/edit')({
   component: EditMemberPage,
   validateSearch: (search: Record<string, unknown>): MemberComposerSearch => ({
     eventId: typeof search.eventId === 'string' ? search.eventId : undefined,

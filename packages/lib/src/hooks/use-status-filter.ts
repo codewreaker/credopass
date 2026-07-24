@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { EventType } from '../schemas';
 
-export const EVENTS_FILTER_COOKIE_NAME = 'events_filter_selection';
+export const EVENTS_FILTER_GROUP_COOKIE_NAME = 'events_filter_group';
 export const EVENTS_FILTER_ENABLED_COOKIE_NAME = 'events_filter_enabled';
 export const EVENTS_ACTIONS_ENABLED_COOKIE_NAME = 'events_actions_enabled';
+export const EVENTS_TIMEZONE_ENABLED_COOKIE_NAME = 'events_timezone_enabled';
 
 /**
- * Five status chips was too many, so the filter UI works in two groups.
+ * The list shows one of two groups at a time — a plain Upcoming ⇄ Past switch.
  * This is a grouping in the filtering layer only — rows keep their per-status
  * badge, icon and colour from STATUS_MAPPING, which is deliberately untouched.
  */
@@ -20,13 +21,7 @@ export const STATUS_GROUPS: Record<EventStatusGroup, EventType['status'][]> = {
 
 export const STATUS_GROUP_KEYS = Object.keys(STATUS_GROUPS) as EventStatusGroup[];
 
-/** Everything the chip row can hold: the two groups plus standalone toggles. */
-export type EventTypeFilters = EventStatusGroup | 'timezone';
-
-/** Toggles that ride along in the same array but are not status filters. */
-const TOGGLE_FILTERS: EventTypeFilters[] = ['timezone'];
-
-const DEFAULT_FILTERS: EventTypeFilters[] = ['upcoming'];
+const DEFAULT_GROUP: EventStatusGroup = 'upcoming';
 const DB_NAME = 'credopass_settings';
 const STORE_NAME = 'filters';
 const DB_VERSION = 1;
@@ -40,31 +35,23 @@ const groupForStatus = (status: string): EventStatusGroup | null => {
 };
 
 /**
- * Persisted selections predate the grouping: they hold raw statuses, and used to
- * hold the pseudo-status 'actions' (which never belonged in the filter array at
- * all). Fold old entries into their group, drop anything we no longer recognise,
- * and fall back to the defaults if nothing survives.
+ * Older builds persisted an array of raw statuses (and the pseudo-status
+ * 'actions') under a different key. Coerce whatever we find into a single group
+ * so upgrading users don't land on an empty list.
  */
-export const migrateStoredFilters = (stored: unknown): EventTypeFilters[] => {
-    if (!Array.isArray(stored)) return DEFAULT_FILTERS;
-
-    const migrated = new Set<EventTypeFilters>();
-    for (const entry of stored) {
-        if (typeof entry !== 'string') continue;
-        if (entry === 'timezone') {
-            migrated.add('timezone');
-        } else if (STATUS_GROUP_KEYS.includes(entry as EventStatusGroup)) {
-            migrated.add(entry as EventStatusGroup);
-        } else {
-            const group = groupForStatus(entry);
-            if (group) migrated.add(group);
-        }
-        // 'actions' and anything else stale is intentionally dropped.
+export const migrateStoredGroup = (stored: unknown): EventStatusGroup => {
+    if (typeof stored === 'string' && STATUS_GROUP_KEYS.includes(stored as EventStatusGroup)) {
+        return stored as EventStatusGroup;
     }
-
-    const result = [...migrated];
-    // A selection of only toggles would list nothing, so treat it as "no selection".
-    return result.some((f) => !TOGGLE_FILTERS.includes(f)) ? result : DEFAULT_FILTERS;
+    if (Array.isArray(stored)) {
+        for (const entry of stored) {
+            if (typeof entry !== 'string') continue;
+            if (STATUS_GROUP_KEYS.includes(entry as EventStatusGroup)) return entry as EventStatusGroup;
+            const group = groupForStatus(entry);
+            if (group) return group;
+        }
+    }
+    return DEFAULT_GROUP;
 };
 
 // IndexedDB helper functions
@@ -118,33 +105,29 @@ const setToDB = async <T>(key: string, value: T): Promise<void> => {
 
 export function useStatusFilter() {
     const [filterEnabled, setFilterEnabledState] = useState<boolean>(true);
-    const [selectedFilters, setSelectedFiltersState] = useState<EventTypeFilters[]>(DEFAULT_FILTERS);
+    // The list shows exactly one group at a time — a binary Upcoming ⇄ Past switch.
+    const [activeGroup, setActiveGroupState] = useState<EventStatusGroup>(DEFAULT_GROUP);
     // Showing the shortcut cards has nothing to do with which events are listed,
-    // so it owns its own persisted boolean rather than sitting in the filter array.
+    // so it owns its own persisted boolean.
     const [actionsEnabled, setActionsEnabledState] = useState<boolean>(true);
+    // Timezone annotation on rows — an independent toggle, not a status filter.
+    const [enableTimezone, setEnableTimezoneState] = useState<boolean>(false);
     const [isInitialized, setIsInitialized] = useState(false);
 
     // Load from IndexedDB on mount
     useEffect(() => {
         const loadFromDB = async () => {
-            const [storedEnabled, storedFilters, storedActions] = await Promise.all([
+            const [storedEnabled, storedGroup, storedActions, storedTimezone] = await Promise.all([
                 getFromDB<boolean>(EVENTS_FILTER_ENABLED_COOKIE_NAME),
-                getFromDB<unknown>(EVENTS_FILTER_COOKIE_NAME),
+                getFromDB<unknown>(EVENTS_FILTER_GROUP_COOKIE_NAME),
                 getFromDB<boolean>(EVENTS_ACTIONS_ENABLED_COOKIE_NAME),
+                getFromDB<boolean>(EVENTS_TIMEZONE_ENABLED_COOKIE_NAME),
             ]);
 
-            if (storedEnabled !== undefined) {
-                setFilterEnabledState(storedEnabled);
-            }
-            if (storedFilters !== undefined) {
-                setSelectedFiltersState(migrateStoredFilters(storedFilters));
-            }
-            if (storedActions !== undefined) {
-                setActionsEnabledState(storedActions);
-            } else if (Array.isArray(storedFilters)) {
-                // First run after the split: inherit the old pseudo-status.
-                setActionsEnabledState(storedFilters.includes('actions'));
-            }
+            if (storedEnabled !== undefined) setFilterEnabledState(storedEnabled);
+            if (storedGroup !== undefined) setActiveGroupState(migrateStoredGroup(storedGroup));
+            if (storedActions !== undefined) setActionsEnabledState(storedActions);
+            if (storedTimezone !== undefined) setEnableTimezoneState(storedTimezone);
             setIsInitialized(true);
         };
 
@@ -169,72 +152,39 @@ export function useStatusFilter() {
 
     const toggleActions = useCallback(() => setActionsEnabled((prev) => !prev), [setActionsEnabled]);
 
-    const setSelectedFilters = useCallback((values: EventTypeFilters[]) => {
-        setSelectedFiltersState(values);
-        setToDB(EVENTS_FILTER_COOKIE_NAME, values);
+    const setActiveGroup = useCallback((group: EventStatusGroup) => {
+        setActiveGroupState(group);
+        setToDB(EVENTS_FILTER_GROUP_COOKIE_NAME, group);
     }, []);
 
-    const handleFilterChange = useCallback((value: EventTypeFilters | EventTypeFilters[]) => {
-        const values = Array.isArray(value) ? value : [value];
-        const toggles = TOGGLE_FILTERS.filter((t) => values.includes(t));
-        const groups = values.filter((v): v is EventStatusGroup =>
-            STATUS_GROUP_KEYS.includes(v as EventStatusGroup)
-        );
-        const clickedAll = values.includes('all' as EventTypeFilters);
-        const wasAllMode = STATUS_GROUP_KEYS.every((g) => selectedFilters.includes(g));
+    const setEnableTimezone = useCallback((value: boolean | ((prev: boolean) => boolean)) => {
+        setEnableTimezoneState((prev) => {
+            const next = typeof value === 'function' ? value(prev) : value;
+            setToDB(EVENTS_TIMEZONE_ENABLED_COOKIE_NAME, next);
+            return next;
+        });
+    }, []);
 
-        // In all-mode the chips display ['all', ...toggles], so anything the user
-        // hits arrives alongside 'all'. An emission without 'all' therefore means
-        // "All" itself was clicked, and there is nothing to isolate to.
-        if (wasAllMode && !clickedAll) return;
+    const toggleTimezone = useCallback(() => setEnableTimezone((prev) => !prev), [setEnableTimezone]);
 
-        let nextGroups: EventStatusGroup[];
-        if (wasAllMode) {
-            // Isolate to what was clicked; no group means a toggle was hit, so the
-            // group selection stays as it was.
-            nextGroups = groups.length > 0 ? groups : STATUS_GROUP_KEYS;
-        } else if (clickedAll) {
-            nextGroups = STATUS_GROUP_KEYS;
-        } else {
-            nextGroups = groups;
-        }
-
-        // Toggles never gate the list; carry them through the group change.
-        setSelectedFilters([...nextGroups, ...toggles]);
-    }, [selectedFilters, setSelectedFilters]);
-
-    // Swap the groups for 'all' when both are active, so the "All" chip highlights
-    const displayedFilterValue = useMemo((): (EventTypeFilters | 'all')[] => {
-        const isAllMode = STATUS_GROUP_KEYS.every((g) => selectedFilters.includes(g));
-        if (!isAllMode) return selectedFilters;
-        return ['all', ...selectedFilters.filter((f) => TOGGLE_FILTERS.includes(f))];
-    }, [selectedFilters]);
-
-    const selectedGroups = useMemo(
-        () => selectedFilters.filter((f): f is EventStatusGroup => STATUS_GROUP_KEYS.includes(f as EventStatusGroup)),
-        [selectedFilters]
+    /** The raw statuses the list should render, expanded from the active group. */
+    const selectedStatuses = useMemo<EventType['status'][]>(
+        () => STATUS_GROUPS[activeGroup],
+        [activeGroup]
     );
-
-    /** The raw statuses the list should render, expanded from the selected groups. */
-    const selectedStatuses = useMemo<EventType['status'][]>(() => {
-        const statuses = selectedGroups.flatMap((group) => STATUS_GROUPS[group]);
-        return [...new Set(statuses)];
-    }, [selectedGroups]);
-
-    const enableTimezone = useMemo(() => selectedFilters.includes('timezone'), [selectedFilters]);
 
     return {
         filterEnabled,
         setFilterEnabled,
-        selectedFilters,
-        handleFilterChange,
-        displayedFilterValue,
-        selectedGroups,
+        activeGroup,
+        setActiveGroup,
         selectedStatuses,
         actionsEnabled,
         setActionsEnabled,
         toggleActions,
         enableTimezone,
+        setEnableTimezone,
+        toggleTimezone,
         isInitialized,
     };
 }

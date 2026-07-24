@@ -5,20 +5,20 @@ import type { EventType, Organization } from '@credopass/lib/schemas';
 import { useEventSessionStore } from '@credopass/lib/stores';
 import EventListView from './EventListView';
 import EventCalendar from '@credopass/ui/components/event-calendar';
-import { CalendarPlus, CalendarsIcon, ListFilterPlus, TimerIcon, FastForward, MapPin, Users, Clock, ScanLine, ArrowUpRight, Plus, ChevronUp, ChevronDown, CalendarClock, History, Sparkles } from 'lucide-react';
+import { CalendarPlus, CalendarsIcon, ListFilterPlus, FastForward, MapPin, Users, Clock, ScanLine, ArrowUpRight, Plus, ChevronUp, ChevronDown, Sparkles } from 'lucide-react';
 import { useNavigate } from '@tanstack/react-router';
 import { useStatusFilter, useToolbarContext } from '@credopass/lib/hooks';
-import type { EventTypeFilters } from '@credopass/lib/hooks';
-export { EVENTS_FILTER_COOKIE_NAME, EVENTS_FILTER_ENABLED_COOKIE_NAME } from '@credopass/lib/hooks';
+export { EVENTS_FILTER_GROUP_COOKIE_NAME, EVENTS_FILTER_ENABLED_COOKIE_NAME } from '@credopass/lib/hooks';
 import { ButtonGroup } from '@credopass/ui/components/button-group';
 import { getGreeting } from '@credopass/lib/utils';
 import { handleCollectionDeleteById } from '@credopass/api-client/collections';
-import { ChipFilter, divider, type ChipFilterOption } from '@credopass/ui/components/chip-filter';
 
 
 import './events.css';
 import { RightSidebarTrigger } from '../../containers/RightSidebar';
 import ActionCards from '../../containers/ActionCards';
+import { ToolbarActionsSlot } from '../../containers/TopNavBar/toolbar-slot';
+import { StatusFilterSwitch } from './StatusFilterSwitch';
 import { Separator } from '@credopass/ui/components/separator';
 import { useIsMobile } from '@credopass/ui/hooks/use-mobile';
 import { Button } from '@credopass/ui/components/button';
@@ -157,6 +157,14 @@ const HeroSpotlight = ({
                             </button>
                             <button
                                 type="button"
+                                onClick={() => navigate({ to: '/attendees', search: { eventId: nextEvent.id } })}
+                                className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-primary-foreground/25 px-4 h-9 text-[13px] font-semibold cursor-pointer transition-colors duration-150 hover:bg-primary-foreground/10"
+                            >
+                                <Users size={14} />
+                                Attendees
+                            </button>
+                            <button
+                                type="button"
                                 onClick={() => navigate({ to: '/events/$eventId', params: { eventId: nextEvent.id } })}
                                 className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-primary-foreground/25 px-4 h-9 text-[13px] font-semibold cursor-pointer transition-colors duration-150 hover:bg-primary-foreground/10"
                             >
@@ -190,17 +198,6 @@ const HeroSpotlight = ({
     );
 };
 
-/**
- * Two status chips instead of five. The grouping lives in the filter layer only —
- * rows keep their own per-status badge and colour from STATUS_MAPPING.
- */
-const statusFilterOptions = [
-    { value: 'all', label: 'All' },
-    { value: 'upcoming', label: 'Upcoming', icon: <CalendarClock size={14} className="text-primary/80" /> },
-    { value: 'past', label: 'Past', icon: <History size={14} className="text-muted-foreground" /> },
-    divider,
-    { value: 'timezone', label: 'Timezone', icon: <TimerIcon /> },
-] as ChipFilterOption<EventTypeFilters>[];
 
 /**
  * Upgrade prompt as a list card rather than top-bar chrome. It borrows the
@@ -252,8 +249,8 @@ const EventsPage = () => {
 
     const {
         filterEnabled, setFilterEnabled,
-        handleFilterChange, displayedFilterValue,
-        selectedStatuses, enableTimezone,
+        activeGroup, setActiveGroup,
+        selectedStatuses, enableTimezone, toggleTimezone,
         actionsEnabled, toggleActions,
     } = useStatusFilter();
 
@@ -288,9 +285,9 @@ const EventsPage = () => {
         navigate({ to: '/events/$eventId/edit', params: { eventId: event.id } });
     }, [navigate]);
 
-    // Members only exist on an event, so the composer opens already bound to one.
-    const handleAddMember = useCallback((eventId: string) => {
-        navigate({ to: '/members/new', search: { eventId } });
+    // Jump straight to the attendee list for this event.
+    const handleViewAttendees = useCallback((eventId: string) => {
+        navigate({ to: '/attendees', search: { eventId } });
     }, [navigate]);
 
     // Register toolbar context: secondary "Create Event" button + search
@@ -345,22 +342,23 @@ const EventsPage = () => {
                     </p>
                 </div>
 
-                {/* Inline chip filters — share the header row on wide screens */}
-                {filterEnabled && (
-                    <div className="hidden xl:block flex-1 min-w-0 px-2">
-                        <ChipFilter
-                            options={statusFilterOptions}
-                            value={displayedFilterValue as EventTypeFilters[]}
-                            onValueChange={handleFilterChange}
-                            mode="multiple"
-                            className='overflow-x-auto justify-center'
-                        />
-                    </div>
-                )}
-
+                {/* The Upcoming/Past switch now lives where the action group used
+                    to sit; the action group itself portals up into the top bar. */}
                 <div className="events-header-right">
+                    {filterEnabled && (
+                        <StatusFilterSwitch
+                            activeGroup={activeGroup}
+                            onGroupChange={setActiveGroup}
+                            enableTimezone={enableTimezone}
+                            onToggleTimezone={toggleTimezone}
+                        />
+                    )}
+                </div>
+
+                {/* Action group — rendered up in the top bar next to Create Event */}
+                <ToolbarActionsSlot>
                     <ButtonGroup className="rounded-full border border-border bg-card p-1 gap-0.5">
-                        <Button variant='ghost' className={`relative rounded-full ${filterEnabled ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`} size={'icon-sm'} onClick={() => setFilterEnabled(prev => !prev)}>
+                        <Button variant='ghost' title="Toggle filters" className={`relative rounded-full ${filterEnabled ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`} size={'icon-sm'} onClick={() => setFilterEnabled(prev => !prev)}>
                             {filterEnabled && <span className="absolute top-1 right-1 size-1.5 rounded-full bg-primary" />}
                             <ListFilterPlus />
                         </Button>
@@ -372,19 +370,10 @@ const EventsPage = () => {
                         </Button>
                         <RightSidebarTrigger icon={<CalendarsIcon />} />
                     </ButtonGroup>
-                </div>
+                </ToolbarActionsSlot>
             </div>
 
             <div className="events-content">
-                {/* Chip Filter for Status — below header on narrow screens */}
-                {filterEnabled && <ChipFilter
-                    options={statusFilterOptions}
-                    value={displayedFilterValue as EventTypeFilters[]}
-                    onValueChange={handleFilterChange}
-                    mode="multiple"
-                    className='overflow-x-auto w-100vw py-4 xl:hidden'
-                />}
-
                 {actionsEnabled && <ActionCards />}
                 <Separator className={'my-4 bg-linear-to-r from-transparent via-muted to-transparent'} />
                 <div className={`flex gap-4 md:h-[calc(100vh-274px)] ${actionsEnabled ? 'h-[calc(100vh-400px)]' : 'h-[calc(100vh-350px)]'}`}>
@@ -400,7 +389,7 @@ const EventsPage = () => {
                                 onCreateEvent={handleCreateEvent}
                                 onEditEvent={handleEditEvent}
                                 onDeleteEvent={handleDeleteEvent}
-                                onAddMember={handleAddMember}
+                                onViewAttendees={handleViewAttendees}
                                 selectedStatus={selectedStatuses}
                                 timezone={enableTimezone}
                             />

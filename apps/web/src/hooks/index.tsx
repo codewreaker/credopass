@@ -42,11 +42,11 @@ export const useCommandPallete = () => {
                         break;
                     case 'n':
                         e.preventDefault();
-                        navigate({ to: '/members/new' });
+                        navigate({ to: '/attendees/new' });
                         break;
                     case 'm':
                         e.preventDefault();
-                        navigate({ to: '/members' });
+                        navigate({ to: '/attendees' });
                         break;
                     case 'v':
                         e.preventDefault();

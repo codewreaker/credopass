@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { useLiveQuery } from '@tanstack/react-db';
-import { useNavigate } from '@tanstack/react-router';
+import { useNavigate, useSearch } from '@tanstack/react-router';
 import { getCollections } from '@credopass/api-client/collections';
 import type { AttendanceType, EventMember, EventType, UserType } from '@credopass/lib/schemas';
 import {
@@ -209,7 +209,7 @@ const MemberCard: React.FC<{
 
 const asArray = <T,>(data: unknown): T[] => (Array.isArray(data) ? (data as T[]) : []);
 
-export default function MembersPage() {
+export default function AttendeesPage() {
   const {
     users: userCollection,
     events: eventCollection,
@@ -223,11 +223,23 @@ export default function MembersPage() {
   const { data: eventMembersData } = useLiveQuery((q) => q.from({ eventMemberCollection }));
 
   const [searchQuery, setSearchQuery] = useState<string>('');
-  /** 'all' or an event id. */
-  const [scope, setScope] = useState<string>('all');
 
   const isError = userCollection.utils.isError;
   const navigate = useNavigate();
+
+  // Scope lives in the URL so an event's attendee list is shareable and the
+  // back button works (the event row / hero card link straight to ?eventId=).
+  const { eventId: scopeParam } = useSearch({ from: '/attendees/' });
+  const scope = scopeParam ?? 'all';
+  const setScope = useCallback(
+    (next: string) =>
+      navigate({
+        to: '/attendees',
+        search: next === 'all' ? {} : { eventId: next },
+        replace: true,
+      }),
+    [navigate]
+  );
 
   const users = useMemo(() => asArray<UserType>(usersData), [usersData]);
   const events = useMemo(() => asArray<EventType>(eventsData), [eventsData]);
@@ -235,9 +247,9 @@ export default function MembersPage() {
   const eventMembers = useMemo(() => asArray<EventMember>(eventMembersData), [eventMembersData]);
 
   const handleCreateUser = useCallback(() => {
-    // Members are added onto an event; without a scope the composer asks for one.
+    // Attendees are added onto an event; without a scope the composer asks for one.
     navigate({
-      to: '/members/new',
+      to: '/attendees/new',
       search: scope === 'all' ? {} : { eventId: scope },
     });
   }, [navigate, scope]);
@@ -245,7 +257,7 @@ export default function MembersPage() {
   const handleEditUser = useCallback(
     (user: UserType) => {
       navigate({
-        to: '/members/$userId/edit',
+        to: '/attendees/$userId/edit',
         params: { userId: user.id },
         search: scope === 'all' ? {} : { eventId: scope },
       });
@@ -266,8 +278,8 @@ export default function MembersPage() {
 
   // Toolbar owns search — no in-page search bar needed
   useToolbarContext({
-    action: { icon: UserPlus, label: 'Add Person', onClick: handleCreateUser },
-    search: { enabled: true, placeholder: 'Search members...', onSearch: setSearchQuery },
+    action: { icon: UserPlus, label: 'Add Attendee', onClick: handleCreateUser },
+    search: { enabled: true, placeholder: 'Search attendees...', onSearch: setSearchQuery },
   });
 
   const deleteUser = useCallback(
@@ -447,8 +459,8 @@ export default function MembersPage() {
       <div className="flex h-full items-center justify-center p-8">
         <EmptyState
           error
-          title="Error Loading Members"
-          description={`An error occurred while fetching members: ${userCollection.utils.lastError}`}
+          title="Error Loading Attendees"
+          description={`An error occurred while fetching attendees: ${userCollection.utils.lastError}`}
           action={{ label: 'Retry', onClick: userCollection.utils.refetch }}
         />
       </div>
@@ -467,7 +479,7 @@ export default function MembersPage() {
       {/* Header */}
       <div className="mb-4 flex items-center justify-between gap-3">
         <div className="min-w-0">
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">Members</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Attendees</h1>
           <p className="truncate text-sm text-muted-foreground">
             {scopedEvent
               ? `${isPastScope ? 'Who attended' : 'Who is signed up for'} this event`
@@ -476,7 +488,7 @@ export default function MembersPage() {
         </div>
         <Button onClick={handleCreateUser} className="shrink-0 gap-2 rounded-full font-semibold">
           <UserPlus size={16} />
-          <span className="hidden sm:inline">Add Member</span>
+          <span className="hidden sm:inline">Add Attendee</span>
         </Button>
       </div>
 
@@ -531,14 +543,23 @@ export default function MembersPage() {
       </div>
 
       {/* Scope switcher — a dropdown: All, or pick one event. Sticks to the top
-          of the scroll region so it stays reachable as the list scrolls. */}
-      <div className="sticky top-0 z-10 -mx-1 flex items-center justify-between gap-3 border-b border-border/60 bg-background/90 px-1 py-3 supports-backdrop-filter:backdrop-blur-sm">
+          of the scroll region so it stays reachable as the list scrolls. Solid
+          background (no backdrop-filter) — a translucent+blur sticky element can
+          stutter/stick the scroll on iOS Safari. */}
+      <div className="sticky top-0 z-10 -mx-1 flex items-center justify-between gap-3 border-b border-border/60 bg-background px-1 py-3">
         <Select value={scope} onValueChange={(v) => setScope(v ?? 'all')}>
           <SelectTrigger className="h-9 w-full max-w-72 rounded-full text-xs">
-            <SelectValue placeholder="All members" />
+            {/* base-ui renders the raw value by default, so map it to the name. */}
+            <SelectValue placeholder="All attendees">
+              {(value) =>
+                value && value !== 'all'
+                  ? (events.find((e) => e.id === value)?.name ?? 'Event')
+                  : 'All attendees'
+              }
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All members</SelectItem>
+            <SelectItem value="all">All attendees</SelectItem>
             {upcomingEvents.length > 0 && (
               <SelectGroup>
                 <SelectLabel>Upcoming</SelectLabel>
@@ -570,7 +591,7 @@ export default function MembersPage() {
       {filteredRows.length === 0 ? (
         <div className="flex min-h-[40vh] items-center justify-center py-8">
           <EmptyState
-            title={searchQuery ? 'No members found' : 'Nobody here yet'}
+            title={searchQuery ? 'No attendees found' : 'Nobody here yet'}
             description={
               searchQuery
                 ? 'Try adjusting your search'
@@ -578,7 +599,7 @@ export default function MembersPage() {
                   ? `No one is ${isPastScope ? 'recorded as attending' : 'signed up for'} this event yet.`
                   : 'Add someone to one of your events to start building your community.'
             }
-            action={!searchQuery ? { label: 'Add Member', onClick: handleCreateUser } : undefined}
+            action={!searchQuery ? { label: 'Add Attendee', onClick: handleCreateUser } : undefined}
           />
         </div>
       ) : (
