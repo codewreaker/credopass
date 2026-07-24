@@ -1,0 +1,17 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="64" height="64" rx="14" fill="#D4FF00"/>
+  <g fill="#0A0A0A">
+    <!-- top-left finder -->
+    <path d="M14 14h14v14H14V14Zm4 4v6h6v-6h-6Z"/>
+    <!-- top-right finder -->
+    <path d="M36 14h14v14H36V14Zm4 4v6h6v-6h-6Z"/>
+    <!-- bottom-left finder -->
+    <path d="M14 36h14v14H14V36Zm4 4v6h6v-6h-6Z"/>
+    <!-- data modules -->
+    <rect x="36" y="36" width="5" height="5" rx="1"/>
+    <rect x="45" y="36" width="5" height="5" rx="1"/>
+    <rect x="36" y="45" width="5" height="5" rx="1"/>
+    <rect x="45" y="45" width="5" height="5" rx="1"/>
+    <rect x="40.5" y="40.5" width="5" height="5" rx="1"/>
+  </g>
+</svg>

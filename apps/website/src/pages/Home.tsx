@@ -27,6 +27,8 @@ import {
 } from 'lucide-react';
 import { ImageWithFallback } from '../components/ImageWithFallback';
 import { JourneyFlow } from '../components/JourneyFlow';
+import { navigate } from '../App';
+import { PERSONAS } from './HowItWorks';
 import { useState, useEffect, useRef, type ReactNode } from 'react';
 
 /* ----------------------------------------------------------------
@@ -109,7 +111,7 @@ export function Home() {
 
             <div className="hidden lg:flex items-center gap-8">
               <a href="#features" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Features</a>
-              <a href="#journey" className="text-sm text-muted-foreground hover:text-foreground transition-colors">How it works</a>
+              <a href="/how-it-works" onClick={(e) => { e.preventDefault(); navigate('/how-it-works'); }} className="text-sm text-muted-foreground hover:text-foreground transition-colors">How it works</a>
               <a href="#product" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Product</a>
               <a href="#pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Pricing</a>
               <a href="#customers" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Customers</a>
@@ -140,7 +142,7 @@ export function Home() {
           <div className="lg:hidden border-t border-border/40 bg-background/95 backdrop-blur-xl">
             <div className="container mx-auto px-4 py-6 flex flex-col gap-4">
               <a href="#features" className="py-2 text-sm text-muted-foreground hover:text-foreground">Features</a>
-              <a href="#journey" className="py-2 text-sm text-muted-foreground hover:text-foreground">How it works</a>
+              <a href="/how-it-works" onClick={(e) => { e.preventDefault(); navigate('/how-it-works'); }} className="py-2 text-sm text-muted-foreground hover:text-foreground">How it works</a>
               <a href="#product" className="py-2 text-sm text-muted-foreground hover:text-foreground">Product</a>
               <a href="#pricing" className="py-2 text-sm text-muted-foreground hover:text-foreground">Pricing</a>
               <a href="#customers" className="py-2 text-sm text-muted-foreground hover:text-foreground">Customers</a>
@@ -318,35 +320,61 @@ export function Home() {
       </Reveal>
 
       {/* ============================================================
-          HOW IT WORKS - 3 steps
+          HOW IT WORKS — featured persona journeys (links to /how-it-works)
           ============================================================ */}
-      <section className="py-12 sm:py-16 lg:py-28 border-y border-border/40 bg-muted/30">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="py-12 sm:py-16 lg:py-28 border-y border-border/40 bg-muted/30 relative overflow-hidden">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-200 h-96 bg-primary/5 rounded-full blur-[128px] pointer-events-none" />
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative">
           <Reveal>
             <div className="max-w-2xl mx-auto text-center mb-10 lg:mb-16 flex flex-col gap-4">
-              <Badge variant="outline" className="w-fit mx-auto">How It Works</Badge>
-              <h2 className="text-4xl sm:text-5xl font-bold tracking-tighter">Three steps. That's it.</h2>
+              <Badge variant="outline" className="w-fit mx-auto">How it works</Badge>
+              <h2 className="text-4xl sm:text-5xl font-bold tracking-tighter text-balance">Built for everyone at your event</h2>
+              <p className="text-lg text-muted-foreground">
+                Organizer, steward, walk-in guest or regular — every role follows one clean path to a recorded check-in.
+                Pick a role to walk its journey.
+              </p>
             </div>
           </Reveal>
 
-          <div className="grid md:grid-cols-3 gap-6 lg:gap-12 max-w-5xl mx-auto">
-            {[
-              { step: '01', icon: QrCode, title: 'Create an Event', desc: 'Set up your event in seconds. A unique QR code is generated automatically.' },
-              { step: '02', icon: Smartphone, title: 'Members Scan', desc: 'Attendees scan the QR code on arrival. No app download required.' },
-              { step: '03', icon: BarChart3, title: 'Get Insights', desc: 'Real-time analytics show who attended, when they arrived, and engagement trends.' },
-            ].map((item, i) => (
-              <Reveal key={item.step} delay={i * 150}>
-                <div className="relative flex flex-col items-center text-center gap-4">
-                  <div className="text-6xl sm:text-7xl font-black tracking-tighter text-primary/10 select-none">{item.step}</div>
-                  <div className="w-14 h-14 bg-primary/10 border border-primary/20 rounded-2xl flex items-center justify-center -mt-8">
-                    <item.icon className="w-6 h-6 text-primary" />
-                  </div>
-                  <h3 className="text-xl font-bold tracking-tight">{item.title}</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">{item.desc}</p>
-                </div>
-              </Reveal>
-            ))}
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5 max-w-6xl mx-auto">
+            {PERSONAS.map((p, i) => {
+              const Icon = p.icon;
+              return (
+                <Reveal key={p.id} delay={i * 80}>
+                  <button
+                    onClick={() => navigate('/how-it-works', p.id)}
+                    className={`group text-left w-full h-full rounded-2xl border p-6 flex flex-col gap-4 transition-all duration-300 hover:-translate-y-1 ${
+                      p.accent
+                        ? 'border-primary/40 bg-primary/5 hover:shadow-[0_16px_48px_-16px_rgba(212,255,0,0.3)]'
+                        : 'border-border/50 bg-card hover:border-primary/30'
+                    }`}
+                  >
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${p.accent ? 'bg-primary text-primary-foreground' : 'bg-primary/10 text-primary'}`}>
+                      <Icon className="w-6 h-6" />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <h3 className="text-lg font-bold tracking-tight">{p.name}</h3>
+                      <p className="text-xs font-medium uppercase tracking-wider text-primary">{p.tag}</p>
+                    </div>
+                    <p className="text-sm text-muted-foreground leading-relaxed flex-1">{p.blurb}</p>
+                    <span className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground/80 group-hover:text-primary transition-colors">
+                      Walk the journey
+                      <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                    </span>
+                  </button>
+                </Reveal>
+              );
+            })}
           </div>
+
+          <Reveal delay={160}>
+            <div className="mt-10 flex justify-center">
+              <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 text-base h-12 px-8 shadow-[0_0_24px_rgba(212,255,0,0.2)]" onClick={() => navigate('/how-it-works')}>
+                See how CredoPass works
+                <ArrowRight className="ml-2 w-5 h-5" />
+              </Button>
+            </div>
+          </Reveal>
         </div>
       </section>
 
@@ -414,6 +442,14 @@ export function Home() {
           </Reveal>
           <Reveal delay={80}>
             <JourneyFlow />
+          </Reveal>
+          <Reveal delay={160}>
+            <div className="mt-10 flex justify-center">
+              <Button variant="outline" size="lg" className="text-base h-12 px-8 border-border/60 hover:border-primary/40" onClick={() => navigate('/how-it-works')}>
+                Walk every journey in detail
+                <ArrowRight className="ml-2 w-5 h-5" />
+              </Button>
+            </div>
           </Reveal>
         </div>
       </section>

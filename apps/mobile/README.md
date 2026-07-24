@@ -1,96 +1,52 @@
-# Mobile App Setup
+# `mobile` — CredoPass Mobile App
 
-## API Configuration
+> The on-the-go companion. An [Expo](https://expo.dev) / React Native app for running check-in from a phone and managing events in the field.
 
-The mobile app is configured to use the shared `@credopass/api-client` package for all API calls.
+**Nx project:** `mobile` · **Depends on:** `@credopass/api-client`, `@credopass/lib`, `@credopass/ui-mobile`, `expo`, `react-native`.
 
-### Environment Setup
+---
 
-1. **Copy the environment template:**
-   ```bash
-   cp .env.example .env
-   ```
+## Architecture
 
-2. **Update the API URL in `.env`:**
-   ```bash
-   # For local development (use your machine's IP, not localhost)
-   API_URL=http://192.168.1.100:3000/api/core
-   
-   # For production
-   # API_URL=https://api.credopass.app/api/core
-   ```
+Same data brain as the web app (`@credopass/api-client` collections, `@credopass/lib` schemas) with a native shell.
 
-3. **Or configure in `app.json`:**
-   ```json
-   {
-     "expo": {
-       "extra": {
-         "apiUrl": "http://192.168.1.100:3000/api/core"
-       }
-     }
-   }
-   ```
-
-### Why use IP address instead of localhost?
-
-When developing on a physical device or emulator, `localhost` refers to the device itself, not your development machine. Use your computer's local IP address instead:
-
-- **macOS/Linux:** Run `ifconfig | grep "inet "` to find your IP
-- **Windows:** Run `ipconfig` to find your IPv4 address
-
-### API Client Initialization
-
-The API client is automatically configured on app startup in [app.tsx](src/app.tsx):
-
-```tsx
-import Constants from 'expo-constants';
-import { configureAPIClient } from '@credopass/api-client';
-
-const API_BASE_URL = Constants.expoConfig?.extra?.apiUrl || 'http://localhost:3000/api/core';
-
-configureAPIClient({ baseURL: API_BASE_URL });
+```mermaid
+flowchart TD
+    Root["RootNavigator"] --> Tabs["BottomTabNavigator"]
+    Tabs --> Home["Home"]
+    Tabs --> Events["EventsStack"]
+    Tabs --> CheckIn["CheckInStack"]
+    Tabs --> Members["MembersStack"]
+    Tabs --> Analytics["Analytics"]
+    CheckIn --> Scan["QRScannerScreen<br/>(expo camera)"]
+    CheckIn --> Manual["ManualSignInScreen"]
+    Screens["All screens"] --> Col["@credopass/api-client<br/>collections"]
+    Col --> API["/api/core"]
 ```
 
-### Usage in Components
+## Structure
 
-After initialization, use TanStack DB collections as normal:
+| Path | What |
+|------|------|
+| `src/app.tsx` / `src/app/App.tsx` | Entry point. Calls `configureAPIClient()` with the API URL from `expoConfig.extra.apiUrl`. |
+| `src/navigation/` | React Navigation stacks: `RootNavigator`, `BottomTabNavigator`, `EventsStack`, `CheckInStack`, `MembersStack`. |
+| `src/screens/` | Screens grouped by feature: `Home`, `Events`, `CheckIn`, `Members`, `Organizations`, `Analytics`, `Tables`. |
+| `src/components/` | App-level components (`layout/`, `org-selector/`). |
+| `src/hooks/` | Native hooks: `use-biometrics`, `use-camera`. |
 
-```tsx
-import { getCollections } from '@credopass/api-client/collections';
-import { useLiveQuery } from '@tanstack/react-db';
+## Building blocks
 
-function EventsList() {
-  const { events: eventCollection } = getCollections();
-  const { data: events } = useLiveQuery((q) => q.from({ eventCollection }));
-  
-  return (
-    <FlatList
-      data={events}
-      renderItem={({ item }) => <EventRow event={item} />}
-    />
-  );
-}
-```
+- **UI** from `@credopass/ui-mobile` (native components + theme tokens).
+- **Data** from `@credopass/api-client` — the exact same offline-first collections the web app uses.
+- **Camera / QR** via Expo + `use-camera`; biometric unlock via `use-biometrics`.
 
-## Running the App
+## Running
 
 ```bash
-# iOS
-bun run ios
-
-# Android
-bun run android
-
-# Or use Nx
-nx run mobile:ios
-nx run mobile:android
+# From the repo root (Expo / Metro)
+nx run mobile:start      # or: cd apps/mobile && bunx expo start
 ```
 
-## Environment Variables Priority
+Set the API URL in Expo config (`extra.apiUrl`); it defaults to `http://localhost:3000/api/core`.
 
-The app checks for API URL in this order:
-
-1. `Constants.expoConfig?.extra?.apiUrl` (from app.json)
-2. Fallback: `http://localhost:3000/api/core`
-
-Choose the method that works best for your workflow. `app.json` is simpler for quick changes, while environment variables are better for managing multiple environments.
+> Some navigation/provider wiring is still marked `TODO` in `src/app.tsx` — this app trails the web app in maturity.
