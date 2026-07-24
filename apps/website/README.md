@@ -20,7 +20,7 @@ No router dependency. `src/App.tsx` holds a ~30-line History-API router (`usePat
 
 ## The `/how-it-works` page
 
-The centerpiece. Each persona (Organizer, Door Team, Walk-in Guest, Regular) is a **pinned horizontal-scroll track**: as you scroll vertically, the panels translate sideways and parallax layers drift at different rates.
+The centerpiece. Each persona (Organizer, Steward, Walk-in Guest, Regular) is a **pinned horizontal-scroll track**: as you scroll vertically, the panels translate sideways and parallax layers drift at different rates.
 
 - `src/components/HorizontalStory.tsx` — the reusable scroll engine. A tall section with a `sticky` viewport; vertical scroll progress (0→1) maps to a horizontal `translate3d` of the track. Honours `prefers-reduced-motion` by collapsing to a plain sideways-scroll strip.
 - `src/pages/HowItWorks.tsx` — persona data + panels + the "under the hood" data-flow finale.

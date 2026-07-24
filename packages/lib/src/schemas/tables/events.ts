@@ -22,6 +22,10 @@ export const events = pgTable('events', {
   // Check-in configuration
   checkInMethods: text('checkInMethods').array().notNull().default(['qr']), // ['qr', 'manual', 'external_auth']
   requireCheckOut: boolean('requireCheckOut').notNull().default(false), // Track check-out times
+  // When true, attendees may check themselves in from the public event page
+  // (their pass QR flips attended=true). When false, only a staff scan / manual
+  // check-in at the kiosk can mark them attended — self check-in just registers.
+  allowSelfCheckIn: boolean('allowSelfCheckIn').notNull().default(true),
   
   // Schedule
   startTime: timestamp('startTime', { mode: 'date', withTimezone: true }).notNull(),

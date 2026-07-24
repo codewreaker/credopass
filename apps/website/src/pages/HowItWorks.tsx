@@ -43,7 +43,7 @@ interface Step {
   detail?: string;
 }
 
-interface Persona {
+export interface Persona {
   id: string;
   name: string;
   tag: string;
@@ -53,7 +53,7 @@ interface Persona {
   steps: Step[];
 }
 
-const PERSONAS: Persona[] = [
+export const PERSONAS: Persona[] = [
   {
     id: 'organizer',
     name: 'The Organizer',
@@ -95,10 +95,10 @@ const PERSONAS: Persona[] = [
     ],
   },
   {
-    id: 'door-team',
-    name: 'The Door Team',
+    id: 'steward',
+    name: 'The Steward',
     tag: 'Staff · Volunteer',
-    blurb: 'Boots on the ground — turns a queue into clean attendance data.',
+    blurb: 'Front of house — turns a queue into clean attendance data.',
     icon: ClipboardCheck,
     steps: [
       {
@@ -416,7 +416,14 @@ function StoryNav() {
 
           <div className="hidden md:flex items-center gap-6">
             {PERSONAS.map((p) => (
-              <a key={p.id} href={`#${p.id}`} className="text-sm text-muted-foreground hover:text-foreground transition-colors">{p.name}</a>
+              <a
+                key={p.id}
+                href={`#${p.id}`}
+                onClick={(e) => { e.preventDefault(); navigate('/how-it-works', p.id); }}
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {p.name}
+              </a>
             ))}
           </div>
 
@@ -453,7 +460,7 @@ function Hero() {
             <span className="font-medium">How CredoPass works</span>
           </div>
           <h1 className="text-5xl sm:text-6xl lg:text-7xl font-extrabold tracking-tighter leading-[1.02] text-balance">
-            Four people. One{' '}
+            Every role. One{' '}
             <span className="relative inline-block">
               <span className="text-primary">attendance record</span>
               <svg className="absolute -bottom-2 left-0 w-full" viewBox="0 0 300 12" fill="none" aria-hidden="true">
@@ -462,7 +469,7 @@ function Hero() {
             </span>
           </h1>
           <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl leading-relaxed">
-            CredoPass turns everyone who touches your event — the organizer, the door team, the walk-in guest,
+            CredoPass turns everyone who touches your event — the organizer, the steward, the walk-in guest,
             the regular — into the same clean, durable data. Scroll each journey sideways to see exactly how.
           </p>
 
@@ -474,6 +481,7 @@ function Hero() {
                 <a
                   key={p.id}
                   href={`#${p.id}`}
+                  onClick={(e) => { e.preventDefault(); navigate('/how-it-works', p.id); }}
                   className="group inline-flex items-center gap-2 pl-2.5 pr-4 py-2 rounded-full border border-border/60 bg-card hover:border-primary/40 hover:bg-primary/[0.04] transition-colors"
                 >
                   <span className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">

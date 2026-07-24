@@ -28,12 +28,12 @@ It runs alongside whatever you already use. No tickets required.
 
 ## The one big idea
 
-Everyone who touches an event — the organizer, the door staff, a walk-in guest, a returning regular — ends up writing to **the same place**: one `attendance` row per (event, person). That single source of truth is why the dashboard can be trusted.
+Everyone who touches an event — the organizer, the steward, a walk-in guest, a returning regular — ends up writing to **the same place**: one `attendance` row per (event, person). That single source of truth is why the dashboard can be trusted.
 
 ```mermaid
 flowchart LR
     O["Organizer"] --> A[("attendance row<br/>attended · time · method")]
-    D["Door staff"] --> A
+    D["Steward"] --> A
     G["Walk-in guest"] --> A
     M["App regular"] --> A
     A --> AN["Live analytics"]
