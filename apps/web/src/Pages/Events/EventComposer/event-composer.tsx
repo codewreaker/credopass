@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { ArrowLeft, CheckIcon, Globe, PencilIcon } from 'lucide-react';
 import { Button } from '@credopass/ui/components/button';
@@ -55,6 +56,14 @@ export function EventComposer({ mode, eventId, initialValues }: EventComposerPro
       ? navigate({ to: '/events/$eventId', params: { eventId } })
       : navigate({ to: '/events' });
 
+  // Focus the name field on a fresh create. The `autoFocus` attribute doesn't
+  // fire reliably for an input mounted through a route/Suspense boundary, so
+  // drive it explicitly once on mount.
+  const nameInputRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (!isEditing) nameInputRef.current?.focus();
+  }, [isEditing]);
+
   return (
     <div className="mx-auto w-full max-w-140 pb-4 md:max-w-160 lg:max-w-3xl">
       <form
@@ -103,10 +112,10 @@ export function EventComposer({ mode, eventId, initialValues }: EventComposerPro
               return (
                 <div className="relative mt-4">
                   <input
+                    ref={nameInputRef}
                     id={field.name}
                     name={field.name}
                     type="text"
-                    autoFocus
                     autoComplete="off"
                     placeholder="Event Name"
                     value={field.state.value}
