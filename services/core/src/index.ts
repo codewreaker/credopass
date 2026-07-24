@@ -10,6 +10,7 @@ import eventMembersRoutes from "./routes/event-members";
 import attendanceRoutes from "./routes/attendance";
 import loyaltyRoutes from "./routes/loyalty";
 import analyticsRoutes from "./routes/analytics";
+import publicRoutes from "./routes/public";
 import { createMiddleware } from "hono/factory";
 import { HTTPException } from "hono/http-exception";
 import { isDevelopment } from 'std-env';
@@ -119,6 +120,11 @@ app.get(`${API_BASE_PATH}/openapi.json`, (c) => c.json({
 
 // Health check
 app.get(`${API_BASE_PATH}/health`, (c) => c.json({ status: "ok", timestamp: Date.now() }));
+
+// Public, token-optional surface for the attendee-facing event page. Mounted
+// BEFORE the auth middleware so a shared event link/QR works with no JWT. It is
+// deliberately narrow: read one event, or register/check-in for that one event.
+app.route(`${API_BASE_PATH}/public`, publicRoutes);
 
 // Authentication: every API route below requires a verified Supabase JWT
 app.use(`${API_BASE_PATH}/*`, createAuthMiddleware());

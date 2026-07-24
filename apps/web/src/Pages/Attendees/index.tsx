@@ -367,6 +367,16 @@ export default function AttendeesPage() {
         result.push(withCounts(user, 'signed-up', { role: membership.role }));
       }
 
+      // Self-registrations: an attendance row with attended=false is an RSVP for
+      // an event that hasn't happened for them yet.
+      for (const record of attendance) {
+        if (record.attended || seen.has(record.patronId)) continue;
+        const user = usersById.get(record.patronId);
+        if (!user) continue;
+        seen.add(record.patronId);
+        result.push(withCounts(user, 'signed-up'));
+      }
+
       // Anyone else on the books, so the page never hides people entirely.
       for (const user of users) {
         if (seen.has(user.id)) continue;
@@ -401,13 +411,21 @@ export default function AttendeesPage() {
       );
     }
 
-    // Walk-ins: checked in without ever being signed up.
+    // Everyone with an attendance row who wasn't in the co-organiser sign-up list:
+    // walk-ins who checked in, and self-registrations (attended=false). Their
+    // standing mirrors the sign-up branch — an unattended row reads as "signed up"
+    // before the event and "no-show" once it's over.
     for (const [patronId, record] of attendanceForEvent) {
       if (seen.has(patronId)) continue;
       const user = usersById.get(patronId);
       if (!user) continue;
+      const standing: Standing = record.attended
+        ? 'attended'
+        : isPastScope
+          ? 'no-show'
+          : 'signed-up';
       result.push(
-        withCounts(user, record.attended ? 'attended' : 'no-show', {
+        withCounts(user, standing, {
           checkInTime: record.checkInTime,
         })
       );

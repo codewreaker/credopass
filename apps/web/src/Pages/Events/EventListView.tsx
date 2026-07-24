@@ -27,6 +27,10 @@ interface EventListViewProps {
     onDeleteEvent: (eventId: string) => void;
     onViewAttendees?: (eventId: string) => void;
     timezone?: boolean
+    /** Which group the switch is on — lets the empty state nudge to the other one. */
+    activeGroup?: 'upcoming' | 'past';
+    /** Jump to the past-events group (B8: don't strand a user whose events are all past). */
+    onShowPast?: () => void;
 }
 
 
@@ -37,7 +41,9 @@ const EventListView: React.FC<EventListViewProps> = ({
     onEditEvent,
     onDeleteEvent,
     onViewAttendees,
-    timezone = false
+    timezone = false,
+    activeGroup,
+    onShowPast,
 }) => {
     const navigate = useNavigate();
     const isMobile = useIsMobile();
@@ -49,9 +55,12 @@ const EventListView: React.FC<EventListViewProps> = ({
         return getGroupedEventsData<EventWithOrg>(groupedMap, selectedStatus);
     }, [events, selectedStatus]);
 
-    // The hero spotlight already handles the "no upcoming events" message, so the
-    // illustrated empty state only appears when there are no events at all.
-    const hasOngoingOrUpcoming = useMemo(() => events.length > 0, [events]);
+    // Nothing in the *current* group. Two shapes: no events at all (create your
+    // first), or events exist but they're all in the other group — most often a
+    // brand-new/returning host whose events are all in the past (B8).
+    const nothingInGroup = grouped.length === 0;
+    const hasAnyEvents = events.length > 0;
+    const canGuideToPast = nothingInGroup && hasAnyEvents && activeGroup === 'upcoming' && !!onShowPast;
 
     const handleNavigateToEvent = useCallback((eventId: string) => {
         navigate({ to: '/events/$eventId', params: { eventId } });
@@ -61,12 +70,21 @@ const EventListView: React.FC<EventListViewProps> = ({
     // (past/completed events don't count toward having "active" events)
     return (
         <div className="event-list">
-            {!hasOngoingOrUpcoming && (<div className="flex items-center justify-center py-0">
+            {nothingInGroup && !hasAnyEvents && (<div className="flex items-center justify-center py-0">
                 <EmptyState
                     iconUrl={randomizeImage()}
-                    title="You have no upcoming events"
-                    description="Create a new event to get started."
+                    title="You have no events yet"
+                    description="Create your first event and start checking people in within minutes."
                     action={{ label: 'Create Event', onClick: onCreateEvent }}
+                />
+            </div>)}
+            {canGuideToPast && (<div className="flex items-center justify-center py-0">
+                <EmptyState
+                    iconUrl={randomizeImage()}
+                    title="Nothing coming up"
+                    description="You don’t have any upcoming events — but your past events are all here. Review who showed up, or plan the next one."
+                    action={{ label: 'View past events', onClick: onShowPast! }}
+                    secondaryAction={{ label: 'Create event', onClick: onCreateEvent }}
                 />
             </div>)}
             {grouped.map(([statusLabel, eventsData]: [EventType['status'], EventWithOrg[]]) => (

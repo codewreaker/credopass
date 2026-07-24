@@ -25,6 +25,11 @@ import type { MiddlewareHandler } from 'hono';
 // Paths served without a token (docs + health probes)
 const PUBLIC_SUFFIXES = ['/health', '/docs', '/openapi.json'];
 
+// The token-optional public event surface (mounted before this middleware in
+// index.ts). This prefix check is defence-in-depth: even if route ordering
+// changes, anything under `/public/` stays reachable without a JWT.
+const PUBLIC_PREFIX = '/api/core/public/';
+
 export function createAuthMiddleware(): MiddlewareHandler {
   if (process.env.AUTH_DISABLED === 'true') {
     console.warn(
@@ -50,7 +55,10 @@ export function createAuthMiddleware(): MiddlewareHandler {
   };
 
   return createMiddleware(async (c, next) => {
-    if (PUBLIC_SUFFIXES.some((s) => c.req.path.endsWith(s))) {
+    if (
+      c.req.path.includes(PUBLIC_PREFIX) ||
+      PUBLIC_SUFFIXES.some((s) => c.req.path.endsWith(s))
+    ) {
       return next();
     }
 

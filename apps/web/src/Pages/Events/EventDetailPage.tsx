@@ -24,7 +24,7 @@ function EventDetailPage() {
     search: { enabled: false, placeholder: '' },
   });
 
-  return <EventViewPage eventId={eventId} variant="detail" />;
+  return <EventViewPage eventId={eventId} />;
 }
 
 export default EventDetailPage;

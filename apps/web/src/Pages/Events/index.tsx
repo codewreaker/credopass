@@ -386,6 +386,8 @@ const EventsPage = () => {
                                 onViewAttendees={handleViewAttendees}
                                 selectedStatus={selectedStatuses}
                                 timezone={enableTimezone}
+                                activeGroup={activeGroup}
+                                onShowPast={() => setActiveGroup('past')}
                             />
                             {!isPremium && (
                                 <UpgradeSpotlight onUpgrade={() => navigate({ to: '/upgrade' })} />

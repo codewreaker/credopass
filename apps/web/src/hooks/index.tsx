@@ -86,10 +86,17 @@ export const useCommandPallete = () => {
  * `?manual=true` — skips the auto sign-in and sees the full page, which
  * still exposes "Continue as guest" as an explicit button.
  */
-export function useGuestAutoLogin(manual: boolean, supabase:any, signInAsGuest:any) {
+export function useGuestAutoLogin(manual: boolean, supabase:any, signInAsGuest:any, redirectTo?: string) {
   const [isAutoSigningIn, setIsAutoSigningIn] = useState(!manual)
   const navigate = useNavigate()
   const hasRun = useRef(false)
+
+  // Return the private route the guard sent us back from, else the events home.
+  // Guarded to same-origin relative paths so `redirect` can't bounce elsewhere.
+  const destination = (): string => {
+    if (redirectTo && redirectTo.startsWith('/') && !redirectTo.startsWith('//')) return redirectTo
+    return '/events'
+  }
 
   useEffect(() => {
     if (manual || hasRun.current) return
@@ -102,7 +109,7 @@ export function useGuestAutoLogin(manual: boolean, supabase:any, signInAsGuest:a
     async function run() {
       const { data } = await supabase.auth.getSession()
       if (data.session) {
-        navigate({ to: '/events' })
+        (navigate as any)({ to: destination() })
         return
       }
 
@@ -115,7 +122,7 @@ export function useGuestAutoLogin(manual: boolean, supabase:any, signInAsGuest:a
         return
       }
 
-      navigate({ to: '/events' })
+      navigate({ to: destination() })
     }
 
     run()

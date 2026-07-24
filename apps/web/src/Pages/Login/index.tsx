@@ -41,9 +41,13 @@ const EntryPassCard = () => (
 )
 
 export default function LoginPage() {
-  const { manual, view, out } = useSearch({ from: '/login' })
+  const { manual, view, out, redirect } = useSearch({ from: '/login' })
   const navigate = useNavigate({ from: '/login' })
   const [hasSession, setHasSession] = useState(false)
+
+  // Where to land after auth: the private route the guard sent us back from
+  // (same-origin relative paths only), else the events home.
+  const destination = (redirect && redirect.startsWith('/') && !redirect.startsWith('//')) ? redirect : '/events'
 
   useEffect(() => {
     let cancelled = false
@@ -53,13 +57,26 @@ export default function LoginPage() {
     return () => { cancelled = true }
   }, [])
 
+  // Manual sign-in (email / GitHub) path: when a real session appears, honour
+  // the redirect target. The shared sign-in buttons navigate to /events on their
+  // own; this overrides that to the intended destination when one was requested.
+  useEffect(() => {
+    if (!manual || destination === '/events') return
+    const { data: sub } = supabaseInstance.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session) {
+        (navigate as any)({ to: destination, replace: true })
+      }
+    })
+    return () => sub.subscription.unsubscribe()
+  }, [manual, destination, navigate])
+
   const showEmailForm = () =>
     navigate({ search: (prev) => ({ ...prev, view: 'email' }), replace: true })
 
   const showOptions = () =>
     navigate({ search: (prev) => ({ ...prev, view: 'social' }), replace: true })
 
-  const isAutoSigningIn = useGuestAutoLogin(manual, supabaseInstance, signInAsGuest)
+  const isAutoSigningIn = useGuestAutoLogin(manual, supabaseInstance, signInAsGuest, destination)
 
   if (isAutoSigningIn) {
     return (
@@ -91,7 +108,7 @@ export default function LoginPage() {
         />
       }
       showClose={hasSession}
-      onClose={() => navigate({ to: '/events' })}
+      onClose={() => (navigate as any)({ to: destination })}
       footerText={`© ${new Date().getFullYear()} CredoPass · Built for live events`}
     >
       {view === 'email' ? (

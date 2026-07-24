@@ -5,7 +5,7 @@ import { useToolbarContext } from '@credopass/lib/hooks';
 import type { EventType, User, UserType } from '@credopass/lib/schemas';
 import { getCollections } from '@credopass/api-client/collections';
 import { useIsMobile } from '@credopass/ui/hooks/use-mobile';
-import { QrCodeIcon, ArrowLeft, ScanLine, UserRoundPlus, Bug, Trash2 } from 'lucide-react';
+import { QrCodeIcon, ArrowLeft, ScanLine, UserRoundPlus, Bug, Trash2, CalendarCheck, Users } from 'lucide-react';
 import { Button } from '@credopass/ui/components/button';
 import { GlowingQRCode } from '@credopass/ui/components/glowing-qr-code';
 import { SheetDialog } from '@credopass/ui/components/sheet-dialog';
@@ -159,6 +159,30 @@ const CheckInPage: React.FC = () => {
 
   const ev = event as EventType;
 
+  // Once an event is over, the kiosk stops offering a live check-in and points
+  // the organiser at the attendance summary instead (B4 / §3.5).
+  if (ev.status === 'completed' || ev.status === 'cancelled') {
+    return (
+      <div className="checkin-page flex h-full flex-col items-center justify-center p-6">
+        <EmptyState
+          icon={<CalendarCheck className="size-16 text-primary" />}
+          title={ev.status === 'cancelled' ? 'This event was cancelled' : 'This event has ended'}
+          description={
+            ev.status === 'cancelled'
+              ? 'Check-in is closed. You can still review who was signed up.'
+              : 'Check-in is closed. Review who attended and who didn’t in the attendance summary.'
+          }
+          action={{
+            label: 'View attendance summary',
+            icon: <Users className="h-5 w-5" />,
+            onClick: () => navigate({ to: '/attendees', search: { eventId } }),
+          }}
+          secondaryAction={{ label: 'Back to event', onClick: () => navigate({ to: '/events/$eventId', params: { eventId } }) }}
+        />
+      </div>
+    );
+  }
+
   if (successUser) {
     return <SuccessCheckInScreen user={successUser} checkInCount={checkInCount} eventName={ev.name} />;
   }
@@ -214,6 +238,7 @@ const CheckInPage: React.FC = () => {
           <QRScanner
             onResult={handleScan}
             onDecodeError={(m) => setLastDecodeError(m)}
+            onUseManual={() => setManualOpen(true)}
             paused={!!successUser}
             className="aspect-square w-full"
           />
