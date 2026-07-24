@@ -13,6 +13,7 @@ import { NAV_ITEMS } from "@credopass/lib/constants";
 import { useTheme } from "@credopass/lib/theme";
 import { useCommandPallete } from "../hooks";
 import { PremiumProvider } from "../contexts/premium";
+import { ToolbarSlotProvider } from "../containers/TopNavBar/toolbar-slot";
 
 // Routes that render standalone without the app shell
 const STANDALONE_ROUTES = ['/login', '/upgrade'];
@@ -51,7 +52,7 @@ export function RootLayout() {
   }
 
   return (
-    <>
+    <ToolbarSlotProvider>
       <div className="app-container">
         <div className="app-layout">
           <LeftSidebar
@@ -83,6 +84,6 @@ export function RootLayout() {
         <ModalPortal />
       </div>
       <Toaster position="top-center" richColors theme={theme} />
-    </>
+    </ToolbarSlotProvider>
   );
 }

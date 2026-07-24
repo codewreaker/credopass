@@ -175,6 +175,16 @@
   flex-shrink: 0;
 }
 
+/* Portal target for page-owned toolbar buttons. Empty until a page fills it. */
+.topbar-extra-actions {
+  display: flex;
+  align-items: center;
+}
+
+.topbar-extra-actions:empty {
+  display: none;
+}
+
 /* Plus button -- primary accent, opens command palette */
 .topbar-plus-btn {
   display: inline-flex;
