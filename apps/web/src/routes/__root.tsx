@@ -16,7 +16,7 @@ import { PremiumProvider } from "../contexts/premium";
 import { ToolbarSlotProvider } from "../containers/TopNavBar/toolbar-slot";
 
 // Routes that render standalone without the app shell
-const STANDALONE_ROUTES = ['/login', '/upgrade'];
+const STANDALONE_ROUTES = ['/login', '/upgrade', '/e/'];
 
 export const Route = createRootRoute({
   component: RootRoute,

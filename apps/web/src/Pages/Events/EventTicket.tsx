@@ -94,25 +94,29 @@ const TicketDivider = () => (
     </div>
 );
 
-export const EventTicket: FC<{ 
-    ticketEvent: EventType; eventImage?: string, 
+export const EventTicket: FC<{
+    ticketEvent: EventType; eventImage?: string,
     onTicketDownload: (event: EventType) => void,
     onCheckin: () => void;
-}> = ({ ticketEvent, eventImage, onTicketDownload, onCheckin }) => {
+    /** Value encoded into the ticket QR — the event's shareable link. */
+    qrValue?: string;
+}> = ({ ticketEvent, eventImage, onTicketDownload, onCheckin, qrValue }) => {
     const [isDownloading, setIsDownloading] = useState(false);
     const ticketRef = useRef<HTMLDivElement>(null);
 
     const startDate = ticketEvent.startTime instanceof Date ? ticketEvent.startTime : null;
     const endDate = ticketEvent.endTime instanceof Date ? ticketEvent.endTime : null;
 
-    const timestamp = useMemo(()=>(new Date()),[]);
-
-    // Generate QR code data
-    const qrData = JSON.stringify({
-        eventId: ticketEvent.id,
-        checkIn: true,
-        timestamp
-    });
+    // The QR encodes the shareable event link (scanning opens the public page).
+    // Fall back to the origin-relative path when no explicit value is passed.
+    const qrData = useMemo(
+        () =>
+            qrValue ??
+            (typeof window !== 'undefined'
+                ? `${window.location.origin}/e/${ticketEvent.id}`
+                : `/e/${ticketEvent.id}`),
+        [qrValue, ticketEvent.id]
+    );
 
     // Download ticket as PNG
     const handleDownload = useCallback(async () => {
