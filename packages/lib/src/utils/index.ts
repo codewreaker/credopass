@@ -5,7 +5,6 @@
 
 
 import { rewardTiers, type Tier } from "../constants";
-export * from './qr-code';
 export * from './events';
 export * from './date';
 export * from './formatting';
