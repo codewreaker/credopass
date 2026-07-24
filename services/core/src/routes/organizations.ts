@@ -22,6 +22,8 @@ organizationsRouter.route('/', createCrudRoute({
   sortField: organizations.createdAt,
   allowedFilters: ['plan', 'slug'],
   uniqueFields: ['slug'],
+  // keeping the vars so we can see what options are available
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   transformBody: ({ plan, stripeCustomerId, stripeSubscriptionId, ...rest }) => rest,
 }));
 
