@@ -5,6 +5,7 @@ import { Button } from '@credopass/ui/components/button';
 import { Card, CardAction, CardFooter, CardHeader, CardTitle } from '@credopass/ui/components/card';
 import { MapWithMarker } from '@credopass/ui/components/map-with-marker';
 import { Navigation } from 'lucide-react';
+import { useGeocodedLocation } from './use-geocoded-location';
 
 interface EventDetailsReadonlyProps {
     event: EventType;
@@ -12,6 +13,10 @@ interface EventDetailsReadonlyProps {
 }
 
 export const EventDetailsReadonly: FC<EventDetailsReadonlyProps> = ({ event, className }) => {
+    // Events store a free-text address and no coordinates, so the map has to
+    // resolve it. Cached per address string inside the hook.
+    const geocode = useGeocodedLocation(event.location);
+
     const handleNavigate = () => {
         if (!event.location) return;
         
@@ -39,7 +44,22 @@ export const EventDetailsReadonly: FC<EventDetailsReadonlyProps> = ({ event, cla
     // is all it needs.
     return (
         <Card className={`p-2 ${className ?? ''}`} size='sm'>
-            <MapWithMarker className="relative z-20 w-full h-[32vh] min-h-60 lg:h-[42vh]" />
+            <MapWithMarker
+                className="relative z-20 w-full h-[32vh] min-h-60 lg:h-[42vh]"
+                points={
+                    geocode.status === 'ready'
+                        ? [{ id: event.id, name: event.location, lng: geocode.place.lng, lat: geocode.place.lat }]
+                        : []
+                }
+                loading={geocode.status === 'loading'}
+                emptyLabel={
+                    !event.location
+                        ? 'No location set'
+                        : geocode.status === 'notfound'
+                          ? `Couldn’t place “${event.location}” on the map`
+                          : 'Map unavailable'
+                }
+            />
             <CardHeader>
                 <CardAction>
                     <Badge variant="secondary">location</Badge>

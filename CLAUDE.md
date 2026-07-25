@@ -44,10 +44,26 @@ packages/ui-mobile    React Native design system
 | Marketing pages | `apps/website/src/pages/` (router in `apps/website/src/App.tsx`) |
 | Mobile screens/nav | `apps/mobile/src/screens/`, `apps/mobile/src/navigation/` |
 
+## Running the app (agents: read this)
+
+**Always start the stack with `bun start` in the terminal, in the foreground, and leave it visible.** The
+maintainer watches that output to see which services are up and to read logs. Do not launch `bun`/`vite`
+detached, backgrounded, or in a subshell — a hidden server is one nobody can monitor, and a second copy
+racing the maintainer's own on the same ports produces confusing, hard-to-attribute failures.
+
+Two corollaries worth knowing:
+
+- **Never hand-roll `bun src/index.ts` for the API.** `NODE_ENV` would be unset, so `isDevelopment`
+  (`std-env`) is false and `services/core/src/index.ts` takes the *production* CORS branch, which
+  allow-lists only `app.credopass.com` / `credopass.com`. The browser then blocks `localhost:5000` with
+  a CORS error. The Nx target sets `NODE_ENV=development` for exactly this reason.
+- **`nx run coreservice:migrate` writes to the remote Supabase instance** in `services/core/.env` —
+  there is no local database. Treat every migration as production-adjacent and confirm before running it.
+
 ## Commands
 
 ```bash
-bun start                     # web + API together
+bun start                     # web + API together — the default way to run the app
 nx run web:serve              # web  → :5000
 nx run coreservice:start      # API  → :8080 (bun --watch)
 nx run website:serve          # site → :4200

@@ -202,6 +202,10 @@ const CheckInPage: React.FC = () => {
   // the first read, so coerce rather than trusting `instanceof Date`.
   const startDate = ev.startTime ? new Date(ev.startTime) : null;
 
+  // Event cover photo. `events` has no image column yet, so this is always null
+  // today — the cast is the single seam the future field plugs into.
+  const coverUrl = (ev as EventType & { imageUrl?: string | null }).imageUrl ?? null;
+
   // Once an event is over, the kiosk stops offering a live check-in and points
   // the organiser at the attendance summary instead (B4 / §3.5).
   if (ev.status === 'completed' || ev.status === 'cancelled') {
@@ -392,20 +396,41 @@ const CheckInPage: React.FC = () => {
           </div>
 
           <div className="relative z-10 flex min-h-0 flex-1 flex-col items-center justify-center gap-6 lg:flex-row lg:gap-14">
-            {/* Dark frame around the code's white quiet zone — the same
-                primary-foreground-on-lime lockup the auth billboard uses, and it
-                keeps the QR's contrast off the lime for reliable scanning. */}
-            <div className="shrink-0 rounded-3xl bg-primary-foreground p-4 shadow-2xl md:p-6">
-              <GlowingQRCode
-                value={shareUrl}
-                size={maxQrSize}
-                showGlow={false}
-                ariaLabel="Event check-in QR"
+            {/* Glass panel, then the rotating lime ring, then the code. The glass
+                is what makes the glow legible: a lime ring straight onto the lime
+                billboard would be invisible, but against a dark translucent panel
+                it reads clearly, and the blur keeps the decorative rings showing
+                faintly through. The QR keeps its own white quiet zone so scanning
+                is unaffected by any of it. */}
+            <div className="relative shrink-0 rounded-[2rem] bg-primary-foreground/25 p-5 shadow-2xl ring-1 ring-primary-foreground/15 backdrop-blur-xl md:p-7">
+              <div
+                aria-hidden
+                className="pointer-events-none absolute inset-0 rounded-[2rem] bg-linear-to-br from-primary-foreground/10 to-transparent"
               />
+              <div className="maximised-qr-glow relative">
+                <GlowingQRCode
+                  value={shareUrl}
+                  size={maxQrSize}
+                  showGlow={false}
+                  ariaLabel="Event check-in QR"
+                  className="rounded-[1.35rem] bg-primary-foreground"
+                />
+              </div>
             </div>
 
             {/* Event details */}
             <div className="min-w-0 max-w-lg text-center lg:text-left">
+              {/* TODO(event-image): the cover slot. Renders nothing until events
+                  carry an `imageUrl` — see the TODO in EventComposer for the
+                  schema/storage/API work. The layout already reserves the room, so
+                  landing that column is a one-line change to `coverUrl` above. */}
+              {coverUrl && (
+                <img
+                  src={coverUrl}
+                  alt=""
+                  className="mb-5 h-40 w-full max-w-lg rounded-2xl object-cover ring-1 ring-primary-foreground/15 md:h-48"
+                />
+              )}
               <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-primary-foreground/60">
                 {ev.status === 'ongoing' ? 'Checking in now' : 'Check in here'}
               </p>

@@ -7,6 +7,7 @@ import { Map, MapMarker, MarkerContent } from '@credopass/ui/components/map';
 import type { MapViewport } from '@credopass/ui/components/map';
 import { cn } from '@credopass/ui/lib/utils';
 import { MAPBOX_ACCESS_TOKEN } from '../../../../config';
+import { useGeocodedLocation } from '../../use-geocoded-location';
 
 interface LocationFieldProps {
   value: string;
@@ -58,11 +59,29 @@ export function LocationField({ value, onChange, invalid }: LocationFieldProps) 
   const [pickerKey, setPickerKey] = useState(0);
 
   // Seed the draft on open rather than in an effect — nothing external to sync.
+  // The pin and viewport are reset too: they used to survive the popup closing, so
+  // reopening it showed the *previous* address's preview map until you happened to
+  // pick something new — the map looked stuck on one location.
   const openPopup = () => {
     setDraft(value);
+    setCoordinates(null);
+    setViewport(DEFAULT_VIEWPORT);
     setPickerKey((k) => k + 1);
     setOpen(true);
   };
+
+  // With the pin reset on open, an event that already has a location would show
+  // "pick an address" over an empty panel. Geocoding the saved value means the
+  // preview opens on the real place — and on the *current* event's place, which is
+  // the whole point of clearing the stale pin.
+  const savedGeocode = useGeocodedLocation(open && !coordinates ? value : null);
+  const savedPin: [number, number] | null =
+    savedGeocode.status === 'ready' ? [savedGeocode.place.lng, savedGeocode.place.lat] : null;
+
+  const pin = coordinates ?? savedPin;
+  // Let the user's own panning win once they've moved the map; otherwise follow
+  // whichever pin is current.
+  const pinViewport = coordinates ? viewport : savedPin ? { center: savedPin, zoom: 15 } : viewport;
 
   const handleRetrieve = (response: any) => {
     setDraft(parseAddress(response));
@@ -120,10 +139,10 @@ export function LocationField({ value, onChange, invalid }: LocationFieldProps) 
           showRecent
         />
 
-        {coordinates ? (
+        {pin ? (
           <div className="h-44 w-full overflow-hidden rounded-xl border border-border">
-            <Map viewport={viewport} onViewportChange={setViewport}>
-              <MapMarker longitude={coordinates[0]} latitude={coordinates[1]}>
+            <Map viewport={pinViewport} onViewportChange={setViewport}>
+              <MapMarker longitude={pin[0]} latitude={pin[1]}>
                 <MarkerContent>
                   <div className="size-4 rounded-full border-2 border-white bg-primary shadow-lg" />
                 </MarkerContent>
@@ -132,7 +151,9 @@ export function LocationField({ value, onChange, invalid }: LocationFieldProps) 
           </div>
         ) : (
           <p className="rounded-xl border border-dashed border-border px-3 py-6 text-center text-xs text-muted-foreground">
-            Pick an address to preview it on the map.
+            {savedGeocode.status === 'loading'
+              ? 'Locating the current address…'
+              : 'Pick an address to preview it on the map.'}
           </p>
         )}
       </SheetDialog>
