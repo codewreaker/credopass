@@ -18,6 +18,8 @@ export interface PublicEvent {
   endTime: Date | null;
   capacity: number | null;
   status: EventType['status'];
+  /** When false, only a host scan / kiosk can mark a guest attended. */
+  allowSelfCheckIn: boolean;
   organizationId: string | null;
   organizationName: string | null;
 }

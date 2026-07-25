@@ -1,11 +1,11 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { eq, useLiveQuery } from '@tanstack/react-db';
 import { useParams, useNavigate } from '@tanstack/react-router';
 import { useToolbarContext } from '@credopass/lib/hooks';
 import type { EventType, User, UserType } from '@credopass/lib/schemas';
 import { getCollections } from '@credopass/api-client/collections';
 import { useIsMobile } from '@credopass/ui/hooks/use-mobile';
-import { QrCodeIcon, ArrowLeft, ScanLine, UserRoundPlus, Bug, Trash2, CalendarCheck, Users } from 'lucide-react';
+import { QrCodeIcon, ArrowLeft, ScanLine, UserRoundPlus, Bug, Trash2, CalendarCheck, Users, Maximize2, Minimize2, MapPin } from 'lucide-react';
 import { Button } from '@credopass/ui/components/button';
 import { GlowingQRCode } from '@credopass/ui/components/glowing-qr-code';
 import { SheetDialog } from '@credopass/ui/components/sheet-dialog';
@@ -20,6 +20,7 @@ import { QRScanner } from './components/QRScanner';
 import ManualSignInForm from './ManualSignInForm';
 import SuccessCheckInScreen from './SuccessCheckInScreen';
 import { useAttendeeCheckIn } from '../Events/use-attendee-checkin';
+import CredoPassLogoIcon from '../../containers/LeftSidebar/brand-icon';
 
 type KioskMode = 'display' | 'scan';
 
@@ -73,10 +74,48 @@ const CheckInPage: React.FC = () => {
   const [checkInCount, setCheckInCount] = useState(0);
   const [successUser, setSuccessUser] = useState<Partial<User> | null>(null);
 
+  const [maximised, setMaximised] = useState(false);
+
   const shareUrl = useMemo(
     () => (typeof window !== 'undefined' ? `${window.location.origin}/e/${eventId}` : `/e/${eventId}`),
     [eventId]
   );
+
+  // Maximise fills the *app window* only — deliberately no `requestFullscreen()`.
+  // Taking over the whole screen is the OS's business and the user's choice; they
+  // can hit F11 (or the browser's own control) on top of this if they want it.
+  const enterMaximised = useCallback(() => setMaximised(true), []);
+  const exitMaximised = useCallback(() => setMaximised(false), []);
+
+  useEffect(() => {
+    if (!maximised) return;
+    const onKey = (e: globalThis.KeyboardEvent) => {
+      if (e.key === 'Escape') exitMaximised();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [maximised, exitMaximised]);
+
+  // Size the maximised QR off the shorter viewport edge so it stays square and
+  // fully visible — recomputed on resize, since a door tablet gets rotated. The
+  // wide breakpoint puts the details beside the code rather than under it, so it
+  // gets a smaller share; the cap stops it ballooning on a desktop monitor.
+  const [maxQrSize, setMaxQrSize] = useState(320);
+  useEffect(() => {
+    if (!maximised) return;
+    const fit = () => {
+      const short = Math.min(window.innerWidth, window.innerHeight);
+      const share = window.innerWidth >= 1024 ? 0.5 : 0.62;
+      setMaxQrSize(Math.round(Math.max(200, Math.min(short * share, 460))));
+    };
+    fit();
+    window.addEventListener('resize', fit);
+    window.addEventListener('orientationchange', fit);
+    return () => {
+      window.removeEventListener('resize', fit);
+      window.removeEventListener('orientationchange', fit);
+    };
+  }, [maximised]);
 
   const celebrate = useCallback((user: Partial<User>) => {
     setSuccessUser(user);
@@ -159,6 +198,14 @@ const CheckInPage: React.FC = () => {
 
   const ev = event as EventType;
 
+  // Collections synced from PostgREST can hand back timestamps as ISO strings on
+  // the first read, so coerce rather than trusting `instanceof Date`.
+  const startDate = ev.startTime ? new Date(ev.startTime) : null;
+
+  // Event cover photo. `events` has no image column yet, so this is always null
+  // today — the cast is the single seam the future field plugs into.
+  const coverUrl = (ev as EventType & { imageUrl?: string | null }).imageUrl ?? null;
+
   // Once an event is over, the kiosk stops offering a live check-in and points
   // the organiser at the attendance summary instead (B4 / §3.5).
   if (ev.status === 'completed' || ev.status === 'cancelled') {
@@ -217,7 +264,7 @@ const CheckInPage: React.FC = () => {
               )}
             >
               {m === 'display' ? <QrCodeIcon size={14} /> : <ScanLine size={14} />}
-              {m === 'display' ? 'Event QR' : 'Scan'}
+              {m === 'display' ? 'Event QR' : 'Scan passes'}
             </button>
           ))}
         </div>
@@ -233,6 +280,9 @@ const CheckInPage: React.FC = () => {
                 Attendees scan with their phone to view the event and check in.
               </p>
             </div>
+            <Button variant="outline" size="sm" className="gap-1.5 rounded-full" onClick={enterMaximised}>
+              <Maximize2 size={14} /> Maximise
+            </Button>
           </div>
         ) : (
           <QRScanner
@@ -313,6 +363,113 @@ const CheckInPage: React.FC = () => {
           </div>
         )}
       </SheetDialog>
+
+      {/* Door-tablet mode — a CredoPass billboard, not a bare QR. Same lime panel,
+          logo lockup and decorative rings as the auth screen, so anyone walking up
+          to the tablet can tell what they're scanning and who it belongs to.
+          Stacks on a phone / portrait; goes side-by-side once there's width. */}
+      {maximised && (
+        <div
+          className="fixed inset-0 z-50 flex flex-col bg-primary text-primary-foreground p-6 md:p-10"
+          role="dialog"
+          aria-modal="true"
+          aria-label={`${event.name} check-in QR`}
+        >
+          <div aria-hidden className="pointer-events-none absolute -right-24 -top-24 size-72 rounded-full border-28 border-primary-foreground/8" />
+          <div aria-hidden className="pointer-events-none absolute -left-20 -bottom-16 size-64 rounded-full border-22 border-primary-foreground/6" />
+
+          {/* Brand lockup + exit */}
+          <div className="relative z-10 flex shrink-0 items-center gap-2.5">
+            <div className="flex size-9 items-center justify-center rounded-xl bg-primary-foreground text-primary">
+              <CredoPassLogoIcon className="size-8 bg-transparent! text-primary!" />
+            </div>
+            <span className="text-[15px] font-semibold tracking-tight">CredoPass</span>
+            <div className="flex-1" />
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-1.5 rounded-full text-primary-foreground/80 hover:bg-primary-foreground/10 hover:text-primary-foreground"
+              onClick={exitMaximised}
+            >
+              <Minimize2 size={15} /> Minimise
+            </Button>
+          </div>
+
+          <div className="relative z-10 flex min-h-0 flex-1 flex-col items-center justify-center gap-6 lg:flex-row lg:gap-14">
+            {/* Glass panel, then the rotating lime ring, then the code. The glass
+                is what makes the glow legible: a lime ring straight onto the lime
+                billboard would be invisible, but against a dark translucent panel
+                it reads clearly, and the blur keeps the decorative rings showing
+                faintly through. The QR keeps its own white quiet zone so scanning
+                is unaffected by any of it. */}
+            <div className="relative shrink-0 rounded-[2rem] bg-primary-foreground/25 p-5 shadow-2xl ring-1 ring-primary-foreground/15 backdrop-blur-xl md:p-7">
+              <div
+                aria-hidden
+                className="pointer-events-none absolute inset-0 rounded-[2rem] bg-linear-to-br from-primary-foreground/10 to-transparent"
+              />
+              <div className="maximised-qr-glow relative">
+                <GlowingQRCode
+                  value={shareUrl}
+                  size={maxQrSize}
+                  showGlow={false}
+                  ariaLabel="Event check-in QR"
+                  className="rounded-[1.35rem] bg-primary-foreground"
+                />
+              </div>
+            </div>
+
+            {/* Event details */}
+            <div className="min-w-0 max-w-lg text-center lg:text-left">
+              {/* TODO(event-image): the cover slot. Renders nothing until events
+                  carry an `imageUrl` — see the TODO in EventComposer for the
+                  schema/storage/API work. The layout already reserves the room, so
+                  landing that column is a one-line change to `coverUrl` above. */}
+              {coverUrl && (
+                <img
+                  src={coverUrl}
+                  alt=""
+                  className="mb-5 h-40 w-full max-w-lg rounded-2xl object-cover ring-1 ring-primary-foreground/15 md:h-48"
+                />
+              )}
+              <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-primary-foreground/60">
+                {ev.status === 'ongoing' ? 'Checking in now' : 'Check in here'}
+              </p>
+              <h2 className="mt-2 text-3xl font-semibold leading-[1.08] tracking-tight md:text-4xl lg:text-5xl">
+                {event.name}
+              </h2>
+
+              <div className="mt-5 flex flex-wrap items-center justify-center gap-2 lg:justify-start">
+                {startDate && (
+                  <span className="inline-flex items-center gap-2 rounded-full bg-primary-foreground/10 px-3.5 py-1.5 text-[13px] font-medium">
+                    <CalendarCheck size={14} />
+                    {startDate.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' })}
+                    {' · '}
+                    {startDate.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}
+                  </span>
+                )}
+                {event.location && (
+                  <span className="inline-flex min-w-0 items-center gap-2 rounded-full bg-primary-foreground/10 px-3.5 py-1.5 text-[13px] font-medium">
+                    <MapPin size={14} className="shrink-0" />
+                    <span className="truncate">{event.location}</span>
+                  </span>
+                )}
+                <span className="inline-flex items-center gap-2 rounded-full bg-primary-foreground px-3.5 py-1.5 text-[13px] font-bold text-primary">
+                  <Users size={14} />
+                  <span className="tabular-nums">{checkInCount}</span> checked in
+                </span>
+              </div>
+
+              <p className="mt-6 text-base font-medium text-primary-foreground/70 md:text-lg">
+                Scan this code with your phone camera to register and get your pass.
+              </p>
+            </div>
+          </div>
+
+          <p className="relative z-10 shrink-0 pt-4 text-center text-[11px] text-primary-foreground/45">
+            Press Esc to minimise · credopass.com
+          </p>
+        </div>
+      )}
     </div>
   );
 };

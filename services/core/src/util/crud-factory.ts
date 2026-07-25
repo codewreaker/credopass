@@ -16,6 +16,22 @@ export type CrudOptions<T extends PgTable> = {
   requireOrganizationId?: boolean;
 };
 
+/**
+ * `JSON.stringify(new Error('boom'))` is `{}` — every non-enumerable field is
+ * dropped — so returning a caught error verbatim shipped an empty object to the
+ * client and left it with nothing to display. Pull the useful parts out by hand.
+ * `detail`/`code`/`constraint` are what the Postgres driver attaches.
+ */
+const serialiseError = (error: unknown) => {
+  const e = error as any;
+  return {
+    message: e?.message ?? String(error),
+    detail: e?.detail ?? e?.cause?.message ?? undefined,
+    code: e?.code ?? undefined,
+    constraint: e?.constraint ?? undefined,
+  };
+};
+
 export function createCrudRoute<T extends PgTable>(options: CrudOptions<T>) {
   const router = new Hono();
   const { 
@@ -141,11 +157,11 @@ export function createCrudRoute<T extends PgTable>(options: CrudOptions<T>) {
 
       return c.json(result[0], 201);
     } catch (error) {
-      console.log('// POST / - Create', error);
+      console.error('// POST / - Create', error);
       if (error instanceof z.ZodError) {
         return c.json({ error: 'Validation failed', details: error.issues }, 400);
       }
-      return c.json({ error }, 500);
+      return c.json({ error: serialiseError(error) }, 500);
     }
   });
 
@@ -197,12 +213,11 @@ export function createCrudRoute<T extends PgTable>(options: CrudOptions<T>) {
       //@ts-ignore todo investigate
       return c.json(result[0]);
     } catch (error) {
-      console.log('// PUT /:id - Update', error);
+      console.error('// PUT /:id - Update', error);
       if (error instanceof z.ZodError) {
         return c.json({ error: 'Validation failed', details: error.issues }, 400);
       }
-      console.error('Error updating record:', error);
-      return c.json({ error }, 500);
+      return c.json({ error: serialiseError(error) }, 500);
     }
   });
 

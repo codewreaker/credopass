@@ -40,8 +40,12 @@ const CheckInHeader: React.FC<CheckInHeaderProps> = ({
         <ArrowLeft size={16} />
       </Button>
 
-      {/* Event info */}
+      {/* Event info. The eyebrow names the job this screen does — organisers
+          "check in guests" here; attendees "check in to event" on the public page. */}
       <div className="flex-1 min-w-0">
+        <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
+          Check in guests
+        </p>
         <div className="flex items-center gap-2">
           <h1 className="text-base md:text-lg font-semibold tracking-tight truncate">{eventName}</h1>
           {eventStatus && (

@@ -18,11 +18,12 @@ It runs alongside whatever you already use. No tickets required.
 6. [Data model](#data-model)
 7. [Tech stack](#tech-stack)
 8. [Repository map](#repository-map)
-9. [Package guides](#package-guides) ← _the deep dive lives in these_
-10. [Getting started](#getting-started)
-11. [Everyday commands](#everyday-commands)
-12. [Deployment](#deployment)
-13. [Conventions](#conventions)
+9. [Project status](#project-status) ← _**what's left before MVP**_
+10. [Package guides](#package-guides) ← _the deep dive lives in these_
+11. [Getting started](#getting-started)
+12. [Everyday commands](#everyday-commands)
+13. [Deployment](#deployment)
+14. [Conventions](#conventions)
 
 ---
 
@@ -121,7 +122,8 @@ sequenceDiagram
 
 - **Authentication** is **Supabase**. The client holds the session; every API request carries `Authorization: Bearer <jwt>`. The API verifies it against Supabase's JWKS endpoint — no shared secret (see [`services/core`](services/core/README.md)).
 - **The public event surface** (`/api/core/public/*`) is deliberately open — it's how a walk-in guest checks in with no account. It's mounted *before* the auth middleware and can only touch one event id.
-- **Multi-tenancy**: the `organizations` table is the tenant boundary. Users join orgs through `orgMemberships` with a role (`owner`/`admin`/`member`/`viewer`); events carry a team through `eventMembers` (`organizer`/`co-host`/`staff`/`volunteer`). CRUD routes gate on `organizationId`.
+- **Multi-tenancy** (**designed, not yet enforced**): the `organizations` table is the intended tenant boundary. Users join orgs through `orgMemberships` with a role (`owner`/`admin`/`member`/`viewer`); events carry a team through `eventMembers` (`organizer`/`co-host`/`staff`/`volunteer`).
+  > ⚠️ **Today the boundary is not enforced.** CRUD routes do not filter by the caller — `organizationId` is an optional client-supplied query filter — and RLS policies are dev-permissive. Every signed-in user sees every organisation's data. Read **[docs/MULTI-TENANCY.md](docs/MULTI-TENANCY.md)** before building anything that assumes isolation.
 
 ## Data model
 
@@ -161,6 +163,13 @@ credopass/
 ├── .github/         → CI/CD workflows (see .github/workflows/README.md)
 └── nx.json, package.json, tsconfig.base.json
 ```
+
+## Project status
+
+| Document | Read it to understand… |
+|---|---|
+| 📋 [**MVP readiness**](docs/MVP-READINESS.md) | A forensic snapshot of what works, what's a shell, and the distance to a usable product. **Start here if you're wondering "what's left?"** |
+| 🔐 [**Multi-tenancy plan**](docs/MULTI-TENANCY.md) | Why every user currently shares one workspace, and the ordered refactor to give each their own. The one P0. |
 
 ## Package guides
 

@@ -18,7 +18,9 @@ export const CreateEventSchema = createInsertSchema(events, {
   name: z.string().min(1),
   location: z.string().min(1),
   status: EventStatusEnum,
-  capacity: z.number().int().positive().nullable(),
+  // `.nullish()`, not `.nullable()` — capacity is a nullable column, so omitting
+  // it entirely has to be legal. `.nullable()` alone still demands the key.
+  capacity: z.number().int().positive().nullish(),
   checkInMethods: z.array(CheckInMethodEnum).min(1),
   allowSelfCheckIn: z.boolean().default(true),
 }).omit({
@@ -36,7 +38,9 @@ export const InsertEventSchema = createInsertSchema(events, {
   name: z.string().min(1),
   location: z.string().min(1),
   status: EventStatusEnum,
-  capacity: z.number().int().positive().nullable(),
+  // `.nullish()`, not `.nullable()` — capacity is a nullable column, so omitting
+  // it entirely has to be legal. `.nullable()` alone still demands the key.
+  capacity: z.number().int().positive().nullish(),
   checkInMethods: z.array(CheckInMethodEnum).min(1),
   allowSelfCheckIn: z.boolean().default(true),
 });

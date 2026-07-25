@@ -390,3 +390,51 @@
     gap: 1rem;
   }
 }
+
+/* ================================================================
+   MAXIMISED QR — glow ring
+
+   The shared GlowingQRCode draws its ring inside its own footprint, where the
+   QR's white quiet zone covers it at display scale. The door screen wants that
+   effect actually visible, so the ring is drawn here instead — same rotating
+   lime conic gradient, wrapped around the code and sitting on the dark glass
+   panel, which is what gives the lime something to glow against.
+
+   The angle is animated rather than the element: rotating a rounded rectangle
+   would swing its corners around, whereas spinning the gradient inside a static
+   box is the effect we want.
+   ================================================================ */
+
+@property --credo-glow-angle {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+
+.maximised-qr-glow {
+  position: relative;
+  border-radius: 1.5rem;
+  padding: 3px;
+  background:
+    conic-gradient(
+      from var(--credo-glow-angle),
+      transparent,
+      var(--primary),
+      transparent 25%
+    ),
+    /* Floor under the gradient so the ring never fully disappears. */
+    linear-gradient(var(--primary-foreground), var(--primary-foreground));
+  animation: credo-glow-spin 8s linear infinite;
+}
+
+@keyframes credo-glow-spin {
+  to {
+    --credo-glow-angle: 360deg;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .maximised-qr-glow {
+    animation: none;
+  }
+}
