@@ -160,7 +160,17 @@ export function useEventForm({ mode, eventId, initialValues, onSaved }: UseEvent
         // only an optimistic key — resolve the persisted one before navigating.
         onSaved?.(isEditing ? id : resolvePersistedEventId(id));
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : 'An unexpected error occurred.');
+        // TanStack DB rejects with whatever the mutation handler threw, which is
+        // not always an `Error` — and an `Error` with a blank message would
+        // toast an empty string. Only trust a message that has content.
+        const message =
+          error instanceof Error && error.message
+            ? error.message
+            : typeof error === 'string' && error
+              ? error
+              : `Could not ${isEditing ? 'update' : 'create'} the event. Please try again.`;
+        console.error('[event-form] save failed', error);
+        toast.error(message);
       } finally {
         setIsMutating(false);
       }

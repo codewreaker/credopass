@@ -98,7 +98,7 @@ export function createEventCollection(queryClient: QueryClient) {
           headers: await authHeaders({ 'Content-Type': 'application/json' }),
           body: JSON.stringify(modified),
         });
-        if (!response.ok) throw new Error('Failed to update event');
+        await handleAPIErrors(response);
       },
 
       // Handle DELETE
@@ -110,7 +110,7 @@ export function createEventCollection(queryClient: QueryClient) {
           method: 'DELETE',
           headers: await authHeaders(),
         });
-        if (!response.ok) throw new Error('Failed to delete event');
+        await handleAPIErrors(response);
       },
     })
   );

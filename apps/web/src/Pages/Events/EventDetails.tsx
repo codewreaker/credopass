@@ -33,9 +33,13 @@ export const EventDetailsReadonly: FC<EventDetailsReadonlyProps> = ({ event, cla
         }
     };
 
+    // Concrete heights, not `lg:h-full` → `lg:flex-1`: that chain resolves to 0
+    // whenever an ancestor has no definite height, which made the map vanish
+    // entirely at `lg`. `Map` already carries a ResizeObserver, so a real height
+    // is all it needs.
     return (
-        <Card className={`p-2 lg:h-full lg:flex lg:flex-col ${className ?? ''}`} size='sm'>
-            <MapWithMarker className="relative z-20 w-full h-[32vh] lg:h-auto lg:flex-1 lg:min-h-[40vh]" />
+        <Card className={`p-2 ${className ?? ''}`} size='sm'>
+            <MapWithMarker className="relative z-20 w-full h-[32vh] min-h-60 lg:h-[42vh]" />
             <CardHeader>
                 <CardAction>
                     <Badge variant="secondary">location</Badge>

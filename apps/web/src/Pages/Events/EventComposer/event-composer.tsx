@@ -66,6 +66,14 @@ export function EventComposer({ mode, eventId, initialValues }: EventComposerPro
 
   // Cover image — preview only for now (no cover column yet); defaults to the
   // calendar illustration and can be replaced from a file or the camera.
+  // TODO(event-image): persist the pick instead of holding a blob URL. Needs, in
+  // order: (1) schema — `events.imageUrl text` plus optional `imageKey` /
+  // `imageWidth` / `imageHeight` metadata; (2) storage — a signed upload to an
+  // S3 or Supabase Storage bucket, with Postgres holding only the URL and
+  // metadata, never bytes; (3) API — an upload endpoint (or direct Supabase
+  // Storage upload) and `imageUrl` carried on every event payload, public one
+  // included; (4) UI — upload on pick, save the returned URL with the event, and
+  // render it on the EventView billboard and the event row's date-icon slot.
   const [coverImage, setCoverImage] = useState<string | undefined>(undefined);
 
   return (

@@ -1,11 +1,11 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { eq, useLiveQuery } from '@tanstack/react-db';
 import { useParams, useNavigate } from '@tanstack/react-router';
 import { useToolbarContext } from '@credopass/lib/hooks';
 import type { EventType, User, UserType } from '@credopass/lib/schemas';
 import { getCollections } from '@credopass/api-client/collections';
 import { useIsMobile } from '@credopass/ui/hooks/use-mobile';
-import { QrCodeIcon, ArrowLeft, ScanLine, UserRoundPlus, Bug, Trash2, CalendarCheck, Users } from 'lucide-react';
+import { QrCodeIcon, ArrowLeft, ScanLine, UserRoundPlus, Bug, Trash2, CalendarCheck, Users, Maximize2, Minimize2 } from 'lucide-react';
 import { Button } from '@credopass/ui/components/button';
 import { GlowingQRCode } from '@credopass/ui/components/glowing-qr-code';
 import { SheetDialog } from '@credopass/ui/components/sheet-dialog';
@@ -73,10 +73,42 @@ const CheckInPage: React.FC = () => {
   const [checkInCount, setCheckInCount] = useState(0);
   const [successUser, setSuccessUser] = useState<Partial<User> | null>(null);
 
+  const [maximised, setMaximised] = useState(false);
+
   const shareUrl = useMemo(
     () => (typeof window !== 'undefined' ? `${window.location.origin}/e/${eventId}` : `/e/${eventId}`),
     [eventId]
   );
+
+  // Maximise fills the *app window* only — deliberately no `requestFullscreen()`.
+  // Taking over the whole screen is the OS's business and the user's choice; they
+  // can hit F11 (or the browser's own control) on top of this if they want it.
+  const enterMaximised = useCallback(() => setMaximised(true), []);
+  const exitMaximised = useCallback(() => setMaximised(false), []);
+
+  useEffect(() => {
+    if (!maximised) return;
+    const onKey = (e: globalThis.KeyboardEvent) => {
+      if (e.key === 'Escape') exitMaximised();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [maximised, exitMaximised]);
+
+  // Size the maximised QR off the shorter viewport edge so it stays square and
+  // fully visible — recomputed on resize, since a door tablet gets rotated.
+  const [maxQrSize, setMaxQrSize] = useState(320);
+  useEffect(() => {
+    if (!maximised) return;
+    const fit = () => setMaxQrSize(Math.round(Math.min(window.innerWidth, window.innerHeight) * 0.62));
+    fit();
+    window.addEventListener('resize', fit);
+    window.addEventListener('orientationchange', fit);
+    return () => {
+      window.removeEventListener('resize', fit);
+      window.removeEventListener('orientationchange', fit);
+    };
+  }, [maximised]);
 
   const celebrate = useCallback((user: Partial<User>) => {
     setSuccessUser(user);
@@ -217,7 +249,7 @@ const CheckInPage: React.FC = () => {
               )}
             >
               {m === 'display' ? <QrCodeIcon size={14} /> : <ScanLine size={14} />}
-              {m === 'display' ? 'Event QR' : 'Scan'}
+              {m === 'display' ? 'Event QR' : 'Scan passes'}
             </button>
           ))}
         </div>
@@ -233,6 +265,9 @@ const CheckInPage: React.FC = () => {
                 Attendees scan with their phone to view the event and check in.
               </p>
             </div>
+            <Button variant="outline" size="sm" className="gap-1.5 rounded-full" onClick={enterMaximised}>
+              <Maximize2 size={14} /> Maximise
+            </Button>
           </div>
         ) : (
           <QRScanner
@@ -313,6 +348,31 @@ const CheckInPage: React.FC = () => {
           </div>
         )}
       </SheetDialog>
+
+      {/* Door-tablet mode: the QR at whatever size the screen allows, nothing else.
+          `min()` against both axes keeps it square and fully visible in either
+          orientation without the code overflowing a short landscape viewport. */}
+      {maximised && (
+        <div
+          className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-6 bg-background p-6"
+          role="dialog"
+          aria-modal="true"
+          aria-label={`${event.name} check-in QR`}
+        >
+          <GlowingQRCode
+            value={shareUrl}
+            size={maxQrSize}
+            ariaLabel="Event check-in QR"
+          />
+          <div className="text-center">
+            <p className="text-2xl font-bold tracking-tight">{event.name}</p>
+            <p className="mt-1 text-sm text-muted-foreground">Scan with your phone to check in</p>
+          </div>
+          <Button variant="outline" className="gap-1.5 rounded-full" onClick={exitMaximised}>
+            <Minimize2 size={15} /> Minimise
+          </Button>
+        </div>
+      )}
     </div>
   );
 };

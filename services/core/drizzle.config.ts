@@ -4,7 +4,8 @@
 // ============================================================================
 
 import { defineConfig } from 'drizzle-kit';
-console.log(`Drizzle Config - Using`, process.env.DATABASE_URL)
+// Presence only — the URL carries the DB password, so never print its value.
+console.log(`Drizzle Config - DATABASE_URL ${process.env.DATABASE_URL ? '✓' : '✗ missing'}`);
 
 export default defineConfig({
   schema: '../../packages/lib/src/schemas/tables/index.ts',

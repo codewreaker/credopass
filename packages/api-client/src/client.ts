@@ -43,14 +43,48 @@ export async function authHeaders(
   };
 }
 
+/**
+ * Turn a failed response into an `Error` with a message worth showing a user.
+ *
+ * The API answers with several shapes — `{ error: 'Validation failed', details }`
+ * (400), `{ error: { message, detail } }` (500), `{ message }` (Hono
+ * HTTPException), or plain text — so probe them in order and always fall back to
+ * the HTTP status. Reading one specific shape is what surfaced a literal
+ * "undefined" in the toast whenever the server sent any of the others.
+ */
 export async function handleAPIErrors(response: Response) {
-  if (!response.ok) {
-    const { error: { cause } } = (await response.json()) as any;
-    console.error('======API Error======');
-    console.error(cause?.stack);
-    console.error('======API Error======');
-    throw new Error(`${cause?.detail}`);
+  if (response.ok) return;
+
+  const raw = await response.text();
+  let body: any;
+  try {
+    body = JSON.parse(raw);
+  } catch {
+    body = undefined;
   }
+
+  const { error } = body ?? {};
+  const zodIssues = Array.isArray(body?.details)
+    ? body.details
+        .map((issue: any) => `${issue.path?.join('.') || 'value'}: ${issue.message}`)
+        .join('; ')
+    : undefined;
+
+  const message =
+    // Postgres / driver errors serialise their useful text under these keys
+    error?.cause?.detail ??
+    error?.detail ??
+    error?.message ??
+    (typeof error === 'string' ? error : undefined) ??
+    body?.message ??
+    (raw.trim() && !body ? raw.trim() : undefined) ??
+    `Request failed (HTTP ${response.status})`;
+
+  console.error('======API Error======');
+  console.error(`${response.status} ${response.url}`, body ?? raw);
+  console.error('======API Error======');
+
+  throw new Error(zodIssues ? `${message} — ${zodIssues}` : message);
 }
 
 import type { AnalyticsRange, AnalyticsResponse } from '@credopass/lib/analytics';

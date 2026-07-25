@@ -9,13 +9,11 @@ import {
   CalendarPlus,
   CheckIcon,
   Clock,
-  Copy,
   Edit2,
   Globe,
   MapPin,
   ScanLine,
   Share2,
-  Ticket,
   Users,
 } from 'lucide-react';
 import { format } from 'date-fns/format';
@@ -29,6 +27,7 @@ import { cn } from '@credopass/ui/lib/utils';
 import { supabase } from '../../../supabase';
 import { EventDetailsReadonly } from '../EventDetails';
 import { usePublicAttend, type PublicEvent } from '../use-public-event';
+import { EventQrPoster, EventQrPosterButton, useEventQrPoster } from './event-qr-poster';
 
 /**
  * The fields the shared `EventView` renders. `EventType` (organiser, from the
@@ -123,17 +122,18 @@ const STATUS_STYLE: Record<EventType['status'], string> = {
 };
 
 /**
- * The public-page primary action follows event state (§3.5): register ahead of
- * time, check in while it's live, nothing once it's over. This one rule makes
- * the register-vs-checkin split legible and stops offering check-in on a
- * finished event (B4).
+ * The public-page primary action is **always register** — signing up never marks
+ * anyone attended, which is the whole point of `attendance` being a real arrival
+ * record rather than a UI flag. Checking in happens afterwards, on the pass
+ * screen, and only when the organiser allows self check-in.
+ *
+ * State still gates the CTA at one end: a finished event offers nothing (B4).
  */
 type PublicCta =
-  | { kind: 'register' | 'checkin'; label: string }
+  | { kind: 'register'; label: string }
   | { kind: 'ended'; label: string };
 
 const publicCtaFor = (status: EventType['status']): PublicCta => {
-  if (status === 'ongoing') return { kind: 'checkin', label: 'Check in' };
   if (status === 'completed' || status === 'cancelled') return { kind: 'ended', label: 'This event has ended' };
   return { kind: 'register', label: 'Register' };
 };
@@ -187,9 +187,9 @@ export function EventView({ event, variant, orgName }: EventViewProps) {
   const cta = publicCtaFor(event.status);
   const isEnded = event.status === 'completed' || event.status === 'cancelled';
 
-  // The public check-in/register sheet, opened in whichever mode the state implies.
+  // The public register sheet. It always registers first, then shows the pass.
   const [attendOpen, setAttendOpen] = useState(false);
-  const attendMode = cta.kind === 'checkin' ? 'checkin' : 'register';
+  const { open: posterOpen, setOpen: setPosterOpen, openPoster } = useEventQrPoster();
 
   const copyLink = async () => {
     try {
@@ -226,7 +226,7 @@ export function EventView({ event, variant, orgName }: EventViewProps) {
         onClick: () => navigate({ to: '/attendees', search: { eventId: event.id } }),
       }
     : {
-        label: 'Check-in Guests',
+        label: 'Check in guests',
         icon: <ScanLine size={14} />,
         onClick: openCheckinKiosk,
       };
@@ -260,7 +260,7 @@ export function EventView({ event, variant, orgName }: EventViewProps) {
             {!isEnded && (
               <Button variant="outline" size="sm" className="gap-2 rounded-full" onClick={openCheckinKiosk}>
                 <ScanLine size={14} />
-                <span className="hidden sm:inline">Check-in</span>
+                <span className="hidden sm:inline">Check in guests</span>
               </Button>
             )}
             <Button variant="outline" size="sm" className="gap-2 rounded-full" onClick={() => navigate({ to: '/events/$eventId/edit', params: { eventId: event.id } })}>
@@ -307,7 +307,7 @@ export function EventView({ event, variant, orgName }: EventViewProps) {
             value={shareUrl}
             size={92}
             onClick={isPublic ? (isEnded ? undefined : openAttend) : openCheckinKiosk}
-            ariaLabel={isPublic ? 'Register or check in to this event' : 'Open the check-in kiosk'}
+            ariaLabel={isPublic ? 'Register for this event' : 'Open the check-in kiosk'}
           />
           <div className="min-w-0 flex-1">
             <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-muted-foreground/70">
@@ -320,16 +320,14 @@ export function EventView({ event, variant, orgName }: EventViewProps) {
               {isPublic
                 ? isEnded
                   ? 'This event has ended.'
-                  : cta.kind === 'checkin'
-                    ? 'Scan or tap to check in.'
-                    : 'Scan or tap to register.'
+                  : 'Scan or tap to register.'
                 : 'Scan to open the shareable page.'}
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
               {isPublic ? (
                 !isEnded && (
                   <Button size="sm" className="rounded-full font-semibold" onClick={openAttend}>
-                    {cta.kind === 'checkin' ? <Ticket size={14} /> : <CalendarCheck size={14} />}
+                    <CalendarCheck size={14} />
                     {cta.label}
                   </Button>
                 )
@@ -339,12 +337,12 @@ export function EventView({ event, variant, orgName }: EventViewProps) {
                   {organiserPassPrimary.label}
                 </Button>
               )}
+              {/* Share already falls back to copying, so a separate "Copy link"
+                  was dead weight — the slot now carries the printable poster QR. */}
               <Button variant="outline" size="sm" className="gap-1.5 rounded-full" onClick={share}>
                 <Share2 size={14} /> Share
               </Button>
-              <Button variant="outline" size="sm" className="gap-1.5 rounded-full" onClick={copyLink}>
-                <Copy size={14} /> Copy link
-              </Button>
+              <EventQrPosterButton onClick={openPoster} />
             </div>
           </div>
         </div>
@@ -422,7 +420,7 @@ export function EventView({ event, variant, orgName }: EventViewProps) {
                 <CalendarPlus /> Add to calendar
               </Button>
               <Button className="h-12 flex-2 rounded-full font-semibold" onClick={openAttend}>
-                {cta.kind === 'checkin' ? <Ticket /> : <CalendarCheck />}
+                <CalendarCheck />
                 {cta.label}
               </Button>
             </>
@@ -435,37 +433,45 @@ export function EventView({ event, variant, orgName }: EventViewProps) {
           open={attendOpen}
           onOpenChange={setAttendOpen}
           event={event as PublicEvent}
-          mode={attendMode}
         />
       )}
+
+      <EventQrPoster
+        open={posterOpen}
+        onOpenChange={setPosterOpen}
+        eventName={event.name}
+        shareUrl={shareUrl}
+      />
     </div>
   );
 }
 
 /**
- * Self register / check-in against the token-optional public endpoint. Collects
- * name + email (soft-prefilled from a signed-in session where possible, M5) and,
- * on success, shows the personal pass QR the host scanner reads.
+ * The attendee's self-service flow: **register → pass → (optional) check in**.
+ *
+ * Submitting always registers (attended=false) and never checks anyone in — an
+ * `attendance` row means someone actually turned up, so it can't be a side effect
+ * of filling in a form on the sofa the night before. From the pass screen the
+ * guest may then check *themselves* in, but only if the organiser enabled
+ * `allowSelfCheckIn`; otherwise the pass is there for a host to scan.
  */
 function AttendeeSelfServiceDialog({
   open,
   onOpenChange,
   event,
-  mode,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   event: PublicEvent;
-  mode: 'register' | 'checkin';
 }) {
   const { attend, isSubmitting } = usePublicAttend();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [ticketId, setTicketId] = useState<string | null>(null);
-  const [done, setDone] = useState<'registered' | 'checkin' | null>(null);
+  const [attended, setAttended] = useState(false);
 
-  const isCheckin = mode === 'checkin';
+  const selfCheckInAllowed = event.allowSelfCheckIn !== false;
 
   // Soft prefill (M5): a signed-in, non-anonymous session already knows who this
   // is — carry their email/name into the form so returning attendees barely type.
@@ -491,37 +497,54 @@ function AttendeeSelfServiceDialog({
 
   const canSubmit = firstName.trim().length > 1 && lastName.trim().length > 1 && /.+@.+\..+/.test(email);
 
+  /** Step 1 — always an RSVP. Never flips `attended`. */
   const submit = async () => {
     if (!canSubmit) return;
-    const result = await attend(event.id, { firstName, lastName, email }, mode, 'manual');
+    const result = await attend(event.id, { firstName, lastName, email }, 'register', 'manual');
     if (!result) return;
     setTicketId(result.userId);
-    setDone(isCheckin ? 'checkin' : 'registered');
-    if (isCheckin) {
-      toast.success(result.alreadyExisted && result.attended ? 'You were already checked in' : "You're checked in!");
-    } else {
-      toast.success(result.alreadyExisted ? "You're on the list" : "You're registered — see you there!");
-    }
+    // A returning guest may already have been checked in on a previous visit —
+    // trust the server's answer rather than assuming a fresh RSVP.
+    setAttended(result.attended);
+    toast.success(result.alreadyExisted ? "You're on the list" : "You're registered — see you there!");
+  };
+
+  /** Step 2 — optional, and only offered when the organiser allows it. */
+  const checkInNow = async () => {
+    const result = await attend(event.id, { firstName, lastName, email }, 'checkin', 'manual');
+    if (!result) return;
+    setAttended(result.attended);
+    toast.success(result.alreadyExisted && result.attended ? 'You were already checked in' : "You're checked in!");
   };
 
   // The personal pass the host scanner reads to confirm attendance.
   const ticketValue = ticketId ? `${event.id}:${ticketId}` : '';
 
-  const title = ticketId ? 'Your pass' : isCheckin ? 'Check in' : 'Register';
-
   return (
     <SheetDialog
       open={open}
       onOpenChange={onOpenChange}
-      title={title}
+      title={ticketId ? 'Your pass' : 'Register'}
       footer={
         ticketId ? (
-          <Button size="sm" className="rounded-full px-4" onClick={() => onOpenChange(false)}>
-            Done
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant={selfCheckInAllowed && !attended ? 'outline' : 'default'}
+              size="sm"
+              className="rounded-full px-4"
+              onClick={() => onOpenChange(false)}
+            >
+              Done
+            </Button>
+            {selfCheckInAllowed && !attended && (
+              <Button size="sm" className="rounded-full px-4" disabled={isSubmitting} onClick={checkInNow}>
+                <CheckIcon /> Check in to event
+              </Button>
+            )}
+          </div>
         ) : (
           <Button size="sm" className="rounded-full px-4" disabled={!canSubmit || isSubmitting} onClick={submit}>
-            {isCheckin ? <CheckIcon /> : <CalendarCheck />} {isCheckin ? 'Check in' : 'Register'}
+            <CalendarCheck /> Register
           </Button>
         )
       }
@@ -531,13 +554,15 @@ function AttendeeSelfServiceDialog({
         <div className="flex flex-col items-center gap-3 py-2 text-center">
           <GlowingQRCode value={ticketValue} size={200} ariaLabel="Your event pass" />
           <p className="text-sm font-medium">
-            {done === 'registered'
-              ? 'Save your pass — show this at the door to check in.'
-              : 'Show this to the host to confirm your attendance.'}
+            {attended
+              ? "You're checked in — enjoy the event."
+              : selfCheckInAllowed
+                ? 'Save your pass. Check in below when you arrive, or let a host scan it.'
+                : 'Save your pass — a host will scan it to check you in.'}
           </p>
           <p className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-            {done === 'registered' ? <CalendarCheck size={12} /> : <Clock size={12} />}
-            {done === 'registered' ? 'Registered' : 'Checked in just now'}
+            {attended ? <Clock size={12} /> : <CalendarCheck size={12} />}
+            {attended ? 'Checked in just now' : 'Registered'}
           </p>
         </div>
       ) : (
@@ -548,9 +573,7 @@ function AttendeeSelfServiceDialog({
           </div>
           <Input type="email" inputMode="email" placeholder="you@email.com" value={email} onChange={(e) => setEmail(e.target.value)} className="h-11 rounded-xl" />
           <p className="px-1 text-xs text-muted-foreground">
-            {isCheckin
-              ? `We record your attendance for “${event.name}”.`
-              : `Let the host know you’re coming to “${event.name}”. You’ll get a pass to check in at the door.`}
+            {`Let the host know you’re coming to “${event.name}”. You’ll get a pass to check in at the door.`}
           </p>
         </>
       )}

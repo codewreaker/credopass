@@ -50,6 +50,9 @@ function toPublicEvent(event: EventRow, organizationName: string | null) {
     endTime: event.endTime,
     capacity: event.capacity,
     status: deriveStatus(event.startTime, event.endTime, event.status),
+    // Decides whether the public pass screen offers a "Check in to event"
+    // button or tells the guest a host will scan them in.
+    allowSelfCheckIn: event.allowSelfCheckIn ?? true,
     organizationId: event.organizationId,
     organizationName,
   };
