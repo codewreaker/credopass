@@ -5,7 +5,7 @@ import { useToolbarContext } from '@credopass/lib/hooks';
 import type { EventType, User, UserType } from '@credopass/lib/schemas';
 import { getCollections } from '@credopass/api-client/collections';
 import { useIsMobile } from '@credopass/ui/hooks/use-mobile';
-import { QrCodeIcon, ArrowLeft, ScanLine, UserRoundPlus, Bug, Trash2, CalendarCheck, Users, Maximize2, Minimize2 } from 'lucide-react';
+import { QrCodeIcon, ArrowLeft, ScanLine, UserRoundPlus, Bug, Trash2, CalendarCheck, Users, Maximize2, Minimize2, MapPin } from 'lucide-react';
 import { Button } from '@credopass/ui/components/button';
 import { GlowingQRCode } from '@credopass/ui/components/glowing-qr-code';
 import { SheetDialog } from '@credopass/ui/components/sheet-dialog';
@@ -20,6 +20,7 @@ import { QRScanner } from './components/QRScanner';
 import ManualSignInForm from './ManualSignInForm';
 import SuccessCheckInScreen from './SuccessCheckInScreen';
 import { useAttendeeCheckIn } from '../Events/use-attendee-checkin';
+import CredoPassLogoIcon from '../../containers/LeftSidebar/brand-icon';
 
 type KioskMode = 'display' | 'scan';
 
@@ -96,11 +97,17 @@ const CheckInPage: React.FC = () => {
   }, [maximised, exitMaximised]);
 
   // Size the maximised QR off the shorter viewport edge so it stays square and
-  // fully visible — recomputed on resize, since a door tablet gets rotated.
+  // fully visible — recomputed on resize, since a door tablet gets rotated. The
+  // wide breakpoint puts the details beside the code rather than under it, so it
+  // gets a smaller share; the cap stops it ballooning on a desktop monitor.
   const [maxQrSize, setMaxQrSize] = useState(320);
   useEffect(() => {
     if (!maximised) return;
-    const fit = () => setMaxQrSize(Math.round(Math.min(window.innerWidth, window.innerHeight) * 0.62));
+    const fit = () => {
+      const short = Math.min(window.innerWidth, window.innerHeight);
+      const share = window.innerWidth >= 1024 ? 0.5 : 0.62;
+      setMaxQrSize(Math.round(Math.max(200, Math.min(short * share, 460))));
+    };
     fit();
     window.addEventListener('resize', fit);
     window.addEventListener('orientationchange', fit);
@@ -190,6 +197,10 @@ const CheckInPage: React.FC = () => {
   }
 
   const ev = event as EventType;
+
+  // Collections synced from PostgREST can hand back timestamps as ISO strings on
+  // the first read, so coerce rather than trusting `instanceof Date`.
+  const startDate = ev.startTime ? new Date(ev.startTime) : null;
 
   // Once an event is over, the kiosk stops offering a live check-in and points
   // the organiser at the attendance summary instead (B4 / §3.5).
@@ -349,28 +360,89 @@ const CheckInPage: React.FC = () => {
         )}
       </SheetDialog>
 
-      {/* Door-tablet mode: the QR at whatever size the screen allows, nothing else.
-          `min()` against both axes keeps it square and fully visible in either
-          orientation without the code overflowing a short landscape viewport. */}
+      {/* Door-tablet mode — a CredoPass billboard, not a bare QR. Same lime panel,
+          logo lockup and decorative rings as the auth screen, so anyone walking up
+          to the tablet can tell what they're scanning and who it belongs to.
+          Stacks on a phone / portrait; goes side-by-side once there's width. */}
       {maximised && (
         <div
-          className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-6 bg-background p-6"
+          className="fixed inset-0 z-50 flex flex-col bg-primary text-primary-foreground p-6 md:p-10"
           role="dialog"
           aria-modal="true"
           aria-label={`${event.name} check-in QR`}
         >
-          <GlowingQRCode
-            value={shareUrl}
-            size={maxQrSize}
-            ariaLabel="Event check-in QR"
-          />
-          <div className="text-center">
-            <p className="text-2xl font-bold tracking-tight">{event.name}</p>
-            <p className="mt-1 text-sm text-muted-foreground">Scan with your phone to check in</p>
+          <div aria-hidden className="pointer-events-none absolute -right-24 -top-24 size-72 rounded-full border-28 border-primary-foreground/8" />
+          <div aria-hidden className="pointer-events-none absolute -left-20 -bottom-16 size-64 rounded-full border-22 border-primary-foreground/6" />
+
+          {/* Brand lockup + exit */}
+          <div className="relative z-10 flex shrink-0 items-center gap-2.5">
+            <div className="flex size-9 items-center justify-center rounded-xl bg-primary-foreground text-primary">
+              <CredoPassLogoIcon className="size-8 bg-transparent! text-primary!" />
+            </div>
+            <span className="text-[15px] font-semibold tracking-tight">CredoPass</span>
+            <div className="flex-1" />
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-1.5 rounded-full text-primary-foreground/80 hover:bg-primary-foreground/10 hover:text-primary-foreground"
+              onClick={exitMaximised}
+            >
+              <Minimize2 size={15} /> Minimise
+            </Button>
           </div>
-          <Button variant="outline" className="gap-1.5 rounded-full" onClick={exitMaximised}>
-            <Minimize2 size={15} /> Minimise
-          </Button>
+
+          <div className="relative z-10 flex min-h-0 flex-1 flex-col items-center justify-center gap-6 lg:flex-row lg:gap-14">
+            {/* Dark frame around the code's white quiet zone — the same
+                primary-foreground-on-lime lockup the auth billboard uses, and it
+                keeps the QR's contrast off the lime for reliable scanning. */}
+            <div className="shrink-0 rounded-3xl bg-primary-foreground p-4 shadow-2xl md:p-6">
+              <GlowingQRCode
+                value={shareUrl}
+                size={maxQrSize}
+                showGlow={false}
+                ariaLabel="Event check-in QR"
+              />
+            </div>
+
+            {/* Event details */}
+            <div className="min-w-0 max-w-lg text-center lg:text-left">
+              <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-primary-foreground/60">
+                {ev.status === 'ongoing' ? 'Checking in now' : 'Check in here'}
+              </p>
+              <h2 className="mt-2 text-3xl font-semibold leading-[1.08] tracking-tight md:text-4xl lg:text-5xl">
+                {event.name}
+              </h2>
+
+              <div className="mt-5 flex flex-wrap items-center justify-center gap-2 lg:justify-start">
+                {startDate && (
+                  <span className="inline-flex items-center gap-2 rounded-full bg-primary-foreground/10 px-3.5 py-1.5 text-[13px] font-medium">
+                    <CalendarCheck size={14} />
+                    {startDate.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' })}
+                    {' · '}
+                    {startDate.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}
+                  </span>
+                )}
+                {event.location && (
+                  <span className="inline-flex min-w-0 items-center gap-2 rounded-full bg-primary-foreground/10 px-3.5 py-1.5 text-[13px] font-medium">
+                    <MapPin size={14} className="shrink-0" />
+                    <span className="truncate">{event.location}</span>
+                  </span>
+                )}
+                <span className="inline-flex items-center gap-2 rounded-full bg-primary-foreground px-3.5 py-1.5 text-[13px] font-bold text-primary">
+                  <Users size={14} />
+                  <span className="tabular-nums">{checkInCount}</span> checked in
+                </span>
+              </div>
+
+              <p className="mt-6 text-base font-medium text-primary-foreground/70 md:text-lg">
+                Scan this code with your phone camera to register and get your pass.
+              </p>
+            </div>
+          </div>
+
+          <p className="relative z-10 shrink-0 pt-4 text-center text-[11px] text-primary-foreground/45">
+            Press Esc to minimise · credopass.com
+          </p>
         </div>
       )}
     </div>

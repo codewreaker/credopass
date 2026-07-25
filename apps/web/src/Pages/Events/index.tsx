@@ -100,17 +100,17 @@ const HeroSpotlight = ({
             className={`relative overflow-hidden rounded-2xl bg-primary text-primary-foreground p-5 lg:p-6 shrink-0${nextEvent ? ' cursor-pointer' : ''}`}
             {...(nextEvent
                 ? {
-                      role: 'button',
-                      tabIndex: 0,
-                      'aria-label': `Open ${nextEvent.name}`,
-                      onClick: openNextEvent,
-                      onKeyDown: (e: KeyboardEvent) => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                              e.preventDefault();
-                              openNextEvent();
-                          }
-                      },
-                  }
+                    role: 'button',
+                    tabIndex: 0,
+                    'aria-label': `Open ${nextEvent.name}`,
+                    onClick: openNextEvent,
+                    onKeyDown: (e: KeyboardEvent) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            openNextEvent();
+                        }
+                    },
+                }
                 : {})}
         >
             <div className="pointer-events-none absolute -right-14 -top-14 size-44 rounded-full border-[18px] border-primary-foreground/6" />
@@ -231,9 +231,6 @@ const UpgradeSpotlight = ({ onUpgrade }: { onUpgrade: () => void }) => (
     <div className="relative overflow-hidden rounded-2xl border border-primary/20 bg-card p-5 shrink-0">
         <div className="pointer-events-none absolute -right-14 -top-14 size-44 rounded-full border-18 border-primary/6" />
         <div className="relative z-10 flex flex-col gap-4 md:flex-row md:items-center md:gap-6">
-            <div className="hidden size-16 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground md:flex">
-                <Sparkles size={24} />
-            </div>
             <div className="min-w-0 flex-1">
                 <span className="mb-1.5 inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-primary">
                     <Sparkles size={10} />
@@ -245,15 +242,15 @@ const UpgradeSpotlight = ({ onUpgrade }: { onUpgrade: () => void }) => (
                 <p className="text-[13px] font-medium text-muted-foreground">
                     Export reports, dig into attendance trends and drop the event cap.
                 </p>
-                <button
-                    type="button"
-                    onClick={onUpgrade}
-                    className="mt-4 inline-flex h-9 cursor-pointer items-center gap-2 whitespace-nowrap rounded-full bg-primary px-4 text-[13px] font-semibold text-primary-foreground transition-transform duration-150 hover:scale-[1.02] active:scale-[0.98]"
-                >
-                    Upgrade
-                    <ArrowUpRight size={14} />
-                </button>
             </div>
+            <button
+                type="button"
+                onClick={onUpgrade}
+                className="mt-4 inline-flex h-9 cursor-pointer items-center gap-2 whitespace-nowrap rounded-full bg-primary px-4 text-[13px] font-semibold text-primary-foreground transition-transform duration-150 hover:scale-[1.02] active:scale-[0.98]"
+            >
+                Upgrade
+                <ArrowUpRight size={14} />
+            </button>
         </div>
     </div>
 );
