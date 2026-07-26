@@ -11,8 +11,18 @@
 
 export const PROBLEM_CONTENT_TYPE = 'application/problem+json';
 
-/** Base URI for the `type` field. Resolves to human documentation. */
-const TYPE_BASE = 'https://credopass.com/problems';
+/**
+ * Base URI for the `type` field.
+ *
+ * Per RFC 9457 this is an IDENTIFIER, not a link that has to work: clients
+ * compare it, they do not fetch it. A page there is a courtesy, not a
+ * requirement, so nothing is broken while `/problems/*` 404s.
+ *
+ * It points at `app.credopass.com` because that is the application;
+ * `credopass.com` is the marketing site and should not be answering for API
+ * error semantics. Override with PROBLEM_TYPE_BASE if the docs move.
+ */
+const TYPE_BASE = process.env.PROBLEM_TYPE_BASE ?? 'https://app.credopass.com/problems';
 
 /**
  * Stable machine-readable error codes. Adding one is additive; changing the

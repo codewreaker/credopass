@@ -76,7 +76,11 @@ if (existsSync(envPath)) {
 step(3, 'Starting Postgres and MinIO');
 
 try {
-  await $`docker compose -f ${REPO}/docker/docker-compose.dev.yml up -d --wait credopass-postgres credopass-minio credopass-minio-init`.quiet();
+  // `--wait` covers only the long-running services. `credopass-minio-init` is a
+  // one-shot job that creates the bucket and exits 0 — and compose treats an
+  // exited container as a --wait failure, so it is started separately.
+  await $`docker compose -f ${REPO}/docker/docker-compose.dev.yml up -d --wait credopass-postgres credopass-minio`.quiet();
+  await $`docker compose -f ${REPO}/docker/docker-compose.dev.yml up -d credopass-minio-init`.quiet();
   ok('postgres :5432, minio :9000 (console :9001)');
 } catch (e) {
   fail(`compose failed: ${e}`);
@@ -95,14 +99,27 @@ try {
 // ---------------------------------------------------------------------------
 step(5, 'Applying migrations to the LOCAL database');
 
-// Deliberately overrides DATABASE_URL: `setup` must never be able to migrate a
+// Deliberately overrides DATABASE_URL: `setup` must never be able to touch a
 // remote instance, whatever happens to be in .env.
 const LOCAL_DB = 'postgresql://postgres:Ax!rtrysoph123@localhost:5432/credopass_db';
+
+// NON-DESTRUCTIVE on purpose. `setup` is a command people re-run — after a
+// `bun install`, after pulling main, when something feels off — and one that
+// silently wipes the database you were working in is a trap. It migrates; if
+// that fails it points at db:reset, which destroys data only when you ask.
 try {
-  await $`bunx drizzle-kit migrate`.cwd(ROOT).env({ ...process.env, DATABASE_URL: LOCAL_DB }).quiet();
+  await $`bunx drizzle-kit migrate`
+    .cwd(ROOT)
+    .env({ ...process.env, DATABASE_URL: LOCAL_DB })
+    .quiet();
   ok('migrations applied to localhost:5432/credopass_db');
-} catch (e) {
-  warn(`migrate failed — run it yourself with DATABASE_URL set locally. ${e}`);
+} catch {
+  warn(
+    'migrate failed. Usually this means the database has tables but no\n' +
+      '     migration journal (created with `drizzle-kit push`).\n' +
+      '     Diagnose:  nx run coreservice:db:status\n' +
+      '     Fix:       nx run coreservice:db:reset   ← DESTROYS local data'
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -124,5 +141,6 @@ Next:
   nx run coreservice:docs                Scalar docs + API client
   nx run coreservice:token               mint a JWT to paste into Scalar
   nx run coreservice:verify              lint + typecheck + unit tests
-  nx run coreservice:test:adversarial    tenancy suite (red until Phase 1 lands)
+  nx run coreservice:test:integration     services against real Postgres
+  nx run coreservice:test:adversarial    tenancy suite (red until the endpoints land)
 `);

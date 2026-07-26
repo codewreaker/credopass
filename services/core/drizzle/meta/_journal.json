@@ -43,6 +43,13 @@
       "when": 1785027659653,
       "tag": "0005_memberships_account_subject",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1785094695562,
+      "tag": "0006_event_status_facts",
+      "breakpoints": true
     }
   ]
 }

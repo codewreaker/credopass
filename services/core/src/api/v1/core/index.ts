@@ -14,7 +14,9 @@ import { OpenAPIHono, z } from '@hono/zod-openapi';
 import { Scalar } from '@scalar/hono-api-reference';
 import { defineRoute, problemResponse } from '../../../http/define-route';
 import { ProblemError, problem, PROBLEM_CONTENT_TYPE } from '../../../http/problem';
+import { isDevelopment } from 'std-env';
 import { isDBConnected } from '../../../db/client';
+import { checkSchema } from '../../../db/schema-check';
 import { me } from './me';
 import { organizations } from './organizations';
 
@@ -84,6 +86,10 @@ const ReadySchema = z
   .object({
     db: z.boolean(),
     storage: z.boolean(),
+    /** False when migrations have not been applied to this database. */
+    schema: z.boolean(),
+    /** Named so an operator can see WHICH migration is missing, not just that one is. */
+    missingTables: z.array(z.string()),
   })
   .openapi('Readiness');
 
@@ -114,7 +120,20 @@ v1.openapi(
     if (!db) {
       throw new ProblemError(503 as 500, 'internal_error', 'Database unreachable');
     }
-    return c.json({ db, storage }, 200);
+
+    const schema = await checkSchema().catch(() => ({ ok: false, missing: ['(check failed)'] }));
+
+    // A reachable database with the wrong schema is NOT ready. Reporting 200
+    // here would let a deploy go live and then 500 on every real request.
+    if (!schema.ok) {
+      throw new ProblemError(
+        503 as 500,
+        'internal_error',
+        `Migrations not applied. Missing: ${schema.missing.join(', ')}`
+      );
+    }
+
+    return c.json({ db, storage, schema: schema.ok, missingTables: schema.missing }, 200);
   }
 );
 
@@ -191,8 +210,21 @@ v1.onError((err, c) => {
       'Content-Type': PROBLEM_CONTENT_TYPE,
     });
   }
+
   console.error('Unhandled error:', err);
-  const wrapped = problem.internal();
+
+  // In development, put the actual cause in `detail`. A bare `internal_error`
+  // gives the caller nothing to act on — the most common cause by far is a
+  // missing table because DATABASE_URL points at a database the migrations have
+  // not been applied to, and that is a one-line fix once you can see it.
+  //
+  // Never in production: driver messages carry table names, column names and
+  // occasionally fragments of the data.
+  const detail = isDevelopment
+    ? `${(err as Error).name}: ${(err as Error).message}`
+    : undefined;
+
+  const wrapped = problem.internal(detail);
   return c.json(wrapped.toBody(c.req.path), 500, {
     'Content-Type': PROBLEM_CONTENT_TYPE,
   });

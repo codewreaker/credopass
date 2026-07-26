@@ -50,11 +50,22 @@
           },
           "storage": {
             "type": "boolean"
+          },
+          "schema": {
+            "type": "boolean"
+          },
+          "missingTables": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
           "db",
-          "storage"
+          "storage",
+          "schema",
+          "missingTables"
         ]
       },
       "Problem": {

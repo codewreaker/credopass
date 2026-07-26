@@ -236,6 +236,45 @@ Prefer a desktop app? Export the spec and import it into [Scalar](https://scalar
 nx run coreservice:openapi:export     # writes services/core/openapi.json
 ```
 
+### Standing up the database
+
+Three containers, all managed by nx — you shouldn't need raw `docker` commands.
+
+| Container | Port | What for |
+|---|---|---|
+| `credopass-postgres` | 5432 | Your dev database (`credopass_db`) |
+| `credopass-minio` | 9000 / 9001 | S3-compatible storage for event covers and avatars |
+| `credopass-postgres-test` | 55432 | Throwaway database for the test suites — truncated between runs |
+
+```bash
+nx run coreservice:dev:up      # postgres + minio (+ creates the media bucket)
+nx run coreservice:db:status   # does this database match the code?
+nx run coreservice:db:reset    # drop everything and rebuild from migrations
+nx run coreservice:seed        # sample data
+nx run coreservice:dev:down    # stop everything
+nx run coreservice:dev:logs
+```
+
+**Start here if anything looks wrong:**
+
+```bash
+nx run coreservice:db:status
+```
+
+It prints the host, the tables, the RLS policies and — the part that matters — whether the migration journal agrees with the migrations on disk. It exits non-zero and tells you the fix if not.
+
+**The failure worth knowing about.** A database created with `drizzle-kit push` has tables but an *empty migration journal*. It looks fine and is unusable: `drizzle-kit migrate` then tries to `CREATE TABLE` over the top and fails. `db:status` detects exactly this; `db:reset` fixes it.
+
+```bash
+nx run coreservice:db:reset
+```
+
+`db:reset` drops the `public`, `app` and `drizzle` schemas and replays every committed migration. It **refuses to run against any host that isn't localhost** — it's destructive by design, and a typo in `DATABASE_URL` must not be able to take out a live instance.
+
+A healthy local database has **13 tables, 12 RLS policies, 7 migrations recorded**, and a `credopass_api` role with `bypassrls: false`.
+
+**Which database am I pointed at?** `services/core/.env` → `DATABASE_URL`. Local is the default. The remote Supabase instance has *not* been migrated for the rebuild, so pointing at it makes `/api/v1/core` return 500 on everything. The API says so at boot rather than leaving you to guess.
+
 ### Checking your work
 
 ```bash

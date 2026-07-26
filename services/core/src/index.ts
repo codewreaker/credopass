@@ -17,6 +17,7 @@ import { isDevelopment } from 'std-env';
 import { createAuthMiddleware } from "./middleware/auth";
 import { v1, V1_BASE_PATH } from "./api/v1/core";
 import { assertRouteRegistryComplete, getRouteDeclarations } from "./http/route-registry";
+import { reportSchemaAtBoot } from "./db/schema-check";
 
 const THROTTLE_DELAY = process.env.THROTTLE_DELAY ? Number(process.env.THROTTLE_DELAY) : 0;
 
@@ -176,6 +177,10 @@ app.onError((err, c) => {
 // ---------------------------------------------------------------------------
 assertRouteRegistryComplete();
 console.log(`🔒 Route registry: ${getRouteDeclarations().length} route(s), all declared`);
+
+// Non-fatal: report a schema/DATABASE_URL mismatch loudly at boot rather than
+// as an opaque 500 on every authenticated request.
+void reportSchemaAtBoot();
 
 // Start server
 const port = Number(process.env.PORT) || 3000;

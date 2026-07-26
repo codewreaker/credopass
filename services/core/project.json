@@ -107,7 +107,11 @@
     "dev:up": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "docker compose -f ../../docker/docker-compose.dev.yml up -d --wait credopass-postgres credopass-minio credopass-minio-init",
+        "commands": [
+          "docker compose -f ../../docker/docker-compose.dev.yml up -d --wait credopass-postgres credopass-minio",
+          "docker compose -f ../../docker/docker-compose.dev.yml up -d credopass-minio-init"
+        ],
+        "parallel": false,
         "cwd": "{projectRoot}"
       }
     },
@@ -115,6 +119,20 @@
       "executor": "nx:run-commands",
       "options": {
         "command": "docker compose -f ../../docker/docker-compose.dev.yml --profile test --profile services down",
+        "cwd": "{projectRoot}"
+      }
+    },
+    "db:reset": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun run scripts/db-reset.ts",
+        "cwd": "{projectRoot}"
+      }
+    },
+    "db:status": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun run scripts/db-status.ts",
         "cwd": "{projectRoot}"
       }
     },
