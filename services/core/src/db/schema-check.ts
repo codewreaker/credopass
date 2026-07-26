@@ -29,6 +29,7 @@ const REQUIRED_TABLES = [
   'event_grants',
   'attendance',
   'passes',
+  'device_tokens',
 ] as const;
 
 export interface SchemaStatus {

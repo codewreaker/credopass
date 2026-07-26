@@ -23,6 +23,7 @@ import { eventRoutes } from './events';
 import { peopleRoutes } from './people';
 import { attendanceRoutes } from './attendance';
 import { publicRoutes } from './public';
+import { deviceRoutes } from './devices';
 
 export const V1_BASE_PATH = '/api/v1/core';
 
@@ -150,6 +151,7 @@ v1.route('/', eventRoutes);
 v1.route('/', peopleRoutes);
 v1.route('/', attendanceRoutes);
 v1.route('/', publicRoutes);
+v1.route('/', deviceRoutes);
 
 // ---------------------------------------------------------------------------
 // The contract itself

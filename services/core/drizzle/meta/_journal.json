@@ -15,6 +15,13 @@
       "when": 1785100297831,
       "tag": "0001_rls",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1785108371344,
+      "tag": "0002_device_tokens",
+      "breakpoints": true
     }
   ]
 }

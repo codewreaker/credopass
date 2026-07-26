@@ -15,6 +15,7 @@
 import { relations } from 'drizzle-orm';
 import { accounts } from './accounts';
 import { attendance } from './attendance';
+import { deviceTokens } from './device-tokens';
 import { eventGrants } from './event-grants';
 import { events } from './events';
 import { identities } from './identities';
@@ -27,6 +28,7 @@ import { people } from './people';
 
 export { accounts } from './accounts';
 export { attendance } from './attendance';
+export { deviceTokens } from './device-tokens';
 export { eventGrants } from './event-grants';
 export { events } from './events';
 export { identities } from './identities';
@@ -123,6 +125,14 @@ export const eventGrantsRelations = relations(eventGrants, ({ one }) => ({
   account: one(accounts, { fields: [eventGrants.accountId], references: [accounts.id] }),
 }));
 
+export const deviceTokensRelations = relations(deviceTokens, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [deviceTokens.organizationId],
+    references: [organizations.id],
+  }),
+  event: one(events, { fields: [deviceTokens.eventId], references: [events.id] }),
+}));
+
 export const passesRelations = relations(passes, ({ one }) => ({
   event: one(events, { fields: [passes.eventId], references: [events.id] }),
   person: one(people, { fields: [passes.personId], references: [people.id] }),
@@ -167,6 +177,7 @@ export const schema = {
   eventGrants,
   attendance,
   passes,
+  deviceTokens,
   accountsRelations,
   identitiesRelations,
   organizationsRelations,
@@ -176,6 +187,7 @@ export const schema = {
   attendanceRelations,
   eventGrantsRelations,
   passesRelations,
+  deviceTokensRelations,
   invitationsRelations,
   orgIdentityProvidersRelations,
   orgDomainsRelations,
