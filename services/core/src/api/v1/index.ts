@@ -1,0 +1,166 @@
+/**
+ * The `/api/v1` surface. docs/API-FIRST-REBUILD.md §5.
+ *
+ * Phase 0 mounts the skeleton only: ops endpoints, the generated OpenAPI
+ * document and Scalar. Phases 1-6 add the real routes; every one of them goes
+ * through `defineRoute`, so the document and the authorization registry stay in
+ * step with the code by construction.
+ *
+ * `/api/core/*` is untouched and keeps serving the current web app. It starts
+ * answering 308 in Phase 3, once nothing calls it.
+ */
+
+import { OpenAPIHono, z } from '@hono/zod-openapi';
+import { Scalar } from '@scalar/hono-api-reference';
+import { defineRoute, problemResponse } from '../../http/define-route';
+import { ProblemError, problem, PROBLEM_CONTENT_TYPE } from '../../http/problem';
+import { isDBConnected } from '../../db/client';
+
+export const V1_BASE_PATH = '/api/v1';
+
+const VERSION = process.env.npm_package_version ?? '0.0.1';
+const COMMIT = process.env.GIT_COMMIT ?? 'unknown';
+
+/**
+ * `defaultHook` turns every Zod validation failure into problem+json. Without
+ * it, zod-openapi emits its own shape and the API would have two error formats
+ * — the thing §5.0 exists to prevent.
+ */
+export const v1 = new OpenAPIHono({
+  defaultHook: (result, c) => {
+    if (result.success) return;
+    const err = problem.badRequest(
+      'validation_failed',
+      'The request did not match the expected schema.',
+      result.error.issues.map((i) => ({
+        path: i.path.join('.') || '(root)',
+        message: i.message,
+      }))
+    );
+    return c.json(err.toBody(c.req.path), 400, {
+      'Content-Type': PROBLEM_CONTENT_TYPE,
+    });
+  },
+});
+
+// Every response carries the API version (§5.0).
+v1.use('*', async (c, next) => {
+  await next();
+  c.header('X-API-Version', 'v1');
+});
+
+// ---------------------------------------------------------------------------
+// Ops (§5.11)
+// ---------------------------------------------------------------------------
+
+const HealthSchema = z
+  .object({
+    status: z.literal('ok'),
+    version: z.string(),
+    commit: z.string(),
+  })
+  .openapi('Health');
+
+v1.openapi(
+  defineRoute({
+    method: 'get',
+    path: '/health',
+    scope: 'public',
+    summary: 'Liveness probe',
+    tags: ['Ops'],
+    responses: {
+      200: {
+        description: 'The service is running',
+        content: { 'application/json': { schema: HealthSchema } },
+      },
+    },
+  }),
+  (c) => c.json({ status: 'ok' as const, version: VERSION, commit: COMMIT })
+);
+
+const ReadySchema = z
+  .object({
+    db: z.boolean(),
+    storage: z.boolean(),
+  })
+  .openapi('Readiness');
+
+v1.openapi(
+  defineRoute({
+    method: 'get',
+    path: '/health/ready',
+    scope: 'public',
+    summary: 'Readiness probe — real dependency checks',
+    tags: ['Ops'],
+    responses: {
+      200: {
+        description: 'All dependencies reachable',
+        content: { 'application/json': { schema: ReadySchema } },
+      },
+      503: problemResponse('A dependency is unreachable'),
+    },
+  }),
+  async (c) => {
+    const db = await isDBConnected().catch(() => false);
+    // Storage lands in Phase 6 (§9.1); reporting `true` before it exists would
+    // make this probe a lie, so it reports the absence honestly.
+    const storage = false;
+    if (!db) {
+      const err = new ProblemError(503 as 500, 'internal_error', 'Database unreachable');
+      return c.json(err.toBody(c.req.path), 503, {
+        'Content-Type': PROBLEM_CONTENT_TYPE,
+      });
+    }
+    return c.json({ db, storage });
+  }
+);
+
+// ---------------------------------------------------------------------------
+// The contract itself
+// ---------------------------------------------------------------------------
+
+export const OPENAPI_DOC_PATH = `${V1_BASE_PATH}/openapi.json`;
+
+v1.doc31('/openapi.json', (c) => ({
+  openapi: '3.1.0',
+  info: {
+    title: 'CredoPass API',
+    version: 'v1',
+    description:
+      'Attendance platform API. Every capability of CredoPass is reachable here; ' +
+      'the web console is a rendering client over these endpoints.',
+  },
+  servers: [{ url: new URL(V1_BASE_PATH, c.req.url).toString().replace(/\/$/, '') }],
+}));
+
+v1.get(
+  '/docs',
+  Scalar({
+    url: OPENAPI_DOC_PATH,
+    pageTitle: 'CredoPass API',
+  })
+);
+
+/**
+ * Errors thrown anywhere under /api/v1 leave as problem+json. Routes and
+ * services throw `ProblemError`; nothing else constructs an error body.
+ */
+v1.onError((err, c) => {
+  if (err instanceof ProblemError) {
+    return c.json(err.toBody(c.req.path), err.status as 400, {
+      'Content-Type': PROBLEM_CONTENT_TYPE,
+    });
+  }
+  console.error('Unhandled error:', err);
+  const wrapped = problem.internal();
+  return c.json(wrapped.toBody(c.req.path), 500, {
+    'Content-Type': PROBLEM_CONTENT_TYPE,
+  });
+});
+
+v1.notFound((c) => {
+  const err = problem.notFound();
+  return c.json(err.toBody(c.req.path), 404, {
+    'Content-Type': PROBLEM_CONTENT_TYPE,
+  });
+});

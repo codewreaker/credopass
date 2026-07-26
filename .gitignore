@@ -45,7 +45,10 @@ Thumbs.db
 .nx/workspace-data
 
 **/data/credopass/*
-**/drizzle/
+# Migrations are tracked on purpose: every schema change must be reviewable, and
+# a migration nobody can read is a migration nobody can audit. See
+# docs/API-FIRST-REBUILD.md §9.4. Drizzle's local scratch output stays ignored.
+**/drizzle/**/*.timestamp*
 vite.config.*.timestamp*
 vitest.config.*.timestamp*
 

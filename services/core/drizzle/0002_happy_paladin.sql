@@ -1,0 +1,1 @@
+ALTER TABLE "events" ADD COLUMN "allowSelfCheckIn" boolean DEFAULT true NOT NULL;

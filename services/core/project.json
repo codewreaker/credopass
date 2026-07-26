@@ -63,7 +63,28 @@
     "test": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "bun test",
+        "command": "bun test src/test/*.test.ts",
+        "cwd": "{projectRoot}"
+      }
+    },
+    "test:adversarial": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun test src/test/adversarial",
+        "cwd": "{projectRoot}"
+      }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tsc --noEmit -p .",
+        "cwd": "{projectRoot}"
+      }
+    },
+    "verify:public-access": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "./sql/verify-public-access.sh",
         "cwd": "{projectRoot}"
       }
     }

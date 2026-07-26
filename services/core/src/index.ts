@@ -15,6 +15,8 @@ import { createMiddleware } from "hono/factory";
 import { HTTPException } from "hono/http-exception";
 import { isDevelopment } from 'std-env';
 import { createAuthMiddleware } from "./middleware/auth";
+import { v1, V1_BASE_PATH } from "./api/v1";
+import { assertRouteRegistryComplete, getRouteDeclarations } from "./http/route-registry";
 
 const THROTTLE_DELAY = process.env.THROTTLE_DELAY ? Number(process.env.THROTTLE_DELAY) : 0;
 
@@ -121,6 +123,15 @@ app.get(`${API_BASE_PATH}/openapi.json`, (c) => c.json({
 // Health check
 app.get(`${API_BASE_PATH}/health`, (c) => c.json({ status: "ok", timestamp: Date.now() }));
 
+// ---------------------------------------------------------------------------
+// /api/v1 — the API-first surface (docs/API-FIRST-REBUILD.md).
+//
+// Mounted BEFORE the /api/core auth middleware so the two surfaces are fully
+// independent: v1 brings its own auth, its own error envelope and its own
+// generated contract. /api/core is untouched and keeps serving today's web app.
+// ---------------------------------------------------------------------------
+app.route(V1_BASE_PATH, v1);
+
 // Public, token-optional surface for the attendee-facing event page. Mounted
 // BEFORE the auth middleware so a shared event link/QR works with no JWT. It is
 // deliberately narrow: read one event, or register/check-in for that one event.
@@ -156,6 +167,15 @@ app.onError((err, c) => {
     console.error("Server error:", err);
     return c.json({ error: "Internal server error" }, 500);
 });
+
+// ---------------------------------------------------------------------------
+// Boot assertion (§6.4). A route that failed to declare its scope or permission
+// crashes the service HERE, before it can serve a single request. This is the
+// mechanism that stops a forgotten declaration from becoming a silent leak —
+// test T25 asserts it fires.
+// ---------------------------------------------------------------------------
+assertRouteRegistryComplete();
+console.log(`🔒 Route registry: ${getRouteDeclarations().length} route(s), all declared`);
 
 // Start server
 const port = Number(process.env.PORT) || 3000;
