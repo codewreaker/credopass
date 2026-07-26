@@ -283,3 +283,135 @@ export async function getPerson(db: Database, ctx: TenantContext, personId: stri
     },
   };
 }
+
+
+// ---------------------------------------------------------------------------
+// Writes (§5.5)
+// ---------------------------------------------------------------------------
+
+export interface CreatePersonInput {
+  id?: string;
+  firstName: string;
+  lastName: string;
+  email?: string | null;
+  phone?: string | null;
+  notes?: string | null;
+}
+
+/**
+ * Add someone to the roll.
+ *
+ * Email uniqueness is PER ORGANISATION, case-insensitive, ignoring soft-deleted
+ * rows — the constraint the database enforces. Two organisations may both have
+ * john@gmail.com, and neither can see the other's row (T20).
+ */
+export async function createPerson(
+  db: Database,
+  ctx: TenantContext,
+  input: CreatePersonInput
+): Promise<{ id: string; firstName: string; lastName: string; email: string | null; phone: string | null }> {
+  if (input.email) {
+    const [clash] = await db
+      .select({ id: people.id })
+      .from(people)
+      .where(
+        and(
+          eq(people.organizationId, ctx.organizationId),
+          sql`lower(${people.email}) = ${input.email.toLowerCase()}`,
+          isNull(people.deletedAt)
+        )
+      )
+      .limit(1);
+    if (clash) {
+      throw problem.conflict(ProblemCode.EMAIL_TAKEN, 'Someone with that email is already on this roll.');
+    }
+  }
+
+  const [row] = await db
+    .insert(people)
+    .values({
+      ...(input.id ? { id: input.id } : {}),
+      organizationId: ctx.organizationId,
+      firstName: input.firstName,
+      lastName: input.lastName,
+      email: input.email ?? null,
+      phone: input.phone ?? null,
+      notes: input.notes ?? null,
+      // NEVER set account_id here. That is set only by claiming a verified
+      // email (D17) — adding someone to a roll must not link them to an
+      // account they have not proved they own.
+    })
+    .returning({
+      id: people.id,
+      firstName: people.firstName,
+      lastName: people.lastName,
+      email: people.email,
+      phone: people.phone,
+    });
+
+  return row;
+}
+
+export type UpdatePersonInput = Partial<Omit<CreatePersonInput, 'id'>>;
+
+export async function updatePerson(
+  db: Database,
+  ctx: TenantContext,
+  personId: string,
+  patch: UpdatePersonInput,
+  now: Date = new Date()
+) {
+  await getPerson(db, ctx, personId);
+
+  if (patch.email) {
+    const [clash] = await db
+      .select({ id: people.id })
+      .from(people)
+      .where(
+        and(
+          eq(people.organizationId, ctx.organizationId),
+          sql`lower(${people.email}) = ${patch.email.toLowerCase()}`,
+          sql`${people.id} <> ${personId}`,
+          isNull(people.deletedAt)
+        )
+      )
+      .limit(1);
+    if (clash) {
+      throw problem.conflict(ProblemCode.EMAIL_TAKEN, 'Someone with that email is already on this roll.');
+    }
+  }
+
+  await db
+    .update(people)
+    .set({
+      ...(patch.firstName !== undefined ? { firstName: patch.firstName } : {}),
+      ...(patch.lastName !== undefined ? { lastName: patch.lastName } : {}),
+      ...(patch.email !== undefined ? { email: patch.email } : {}),
+      ...(patch.phone !== undefined ? { phone: patch.phone } : {}),
+      ...(patch.notes !== undefined ? { notes: patch.notes } : {}),
+      updatedAt: now,
+    })
+    .where(and(eq(people.id, personId), eq(people.organizationId, ctx.organizationId)));
+
+  return getPerson(db, ctx, personId);
+}
+
+/**
+ * SOFT delete, always.
+ *
+ * Attendance history must survive removing someone from a roll — the record of
+ * who was in the room on a given night is the product. A hard delete would
+ * cascade it away.
+ */
+export async function deletePerson(
+  db: Database,
+  ctx: TenantContext,
+  personId: string,
+  now: Date = new Date()
+): Promise<void> {
+  await getPerson(db, ctx, personId);
+  await db
+    .update(people)
+    .set({ deletedAt: now, updatedAt: now })
+    .where(and(eq(people.id, personId), eq(people.organizationId, ctx.organizationId)));
+}

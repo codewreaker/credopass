@@ -47,20 +47,6 @@ export interface ListEventsInput {
   cursor?: string;
 }
 
-/**
- * The door code the UI already shows as `#F6F82EC3–09D`.
- *
- * Derived from the id rather than stored, which is a deliberate interim: §3.2
- * wants a real collision-checked `short_code` column, and that arrives with the
- * events rewrite in Phase 3. Deriving it here at least means ONE implementation
- * instead of the client's — a code that is read aloud at a door must not differ
- * between two screens.
- */
-export const shortCodeFor = (id: string): string => {
-  const hex = id.replace(/-/g, '').toUpperCase();
-  return `${hex.slice(0, 8)}-${hex.slice(8, 11)}`;
-};
-
 const clampLimit = (limit?: number): number => Math.min(Math.max(limit ?? 50, 1), 200);
 
 /**
@@ -133,7 +119,7 @@ const toSummary = (
     // The client currently joins this against a full org cache (§10.1). It is
     // one row; the server has it already.
     organizationName: row.organizations?.name ?? '',
-    shortCode: shortCodeFor(e.id),
+    shortCode: e.shortCode,
     counts: counts.get(e.id) ?? { registered: 0, attended: 0 },
     cancellationReason: e.cancellationReason,
   };
@@ -352,4 +338,198 @@ export async function calendarMonth(
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([date, events]) => ({ date, events })),
   };
+}
+
+
+// ---------------------------------------------------------------------------
+// Writes (§5.3)
+// ---------------------------------------------------------------------------
+
+export interface CreateEventInput {
+  /** Client-suppliable (D11). Honouring it removes the dangling-FK class of bug. */
+  id?: string;
+  name: string;
+  description?: string | null;
+  startAt: Date;
+  /** Optional — defaults to start + 1h, so no READER ever has to guess (D2). */
+  endAt?: Date | null;
+  timezone?: string;
+  locationText: string;
+  capacity?: number | null;
+  enforceCapacity?: boolean;
+  checkInMethods?: string[];
+  requireCheckOut?: boolean;
+  allowSelfCheckIn?: boolean;
+}
+
+const HOUR_MS = 60 * 60 * 1000;
+
+/**
+ * A collision-checked door code.
+ *
+ * Read aloud at a door, so it uses the same unambiguous alphabet as a pairing
+ * code. Retried on collision rather than trusted to be unique: 27^8 is a large
+ * space, but "large" is not "guaranteed", and the column is UNIQUE.
+ */
+const CODE_ALPHABET = '234679ACDEFGHJKMNPQRTUVWXYZ';
+
+async function allocateShortCode(db: Database): Promise<string> {
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const code = Array.from(
+      { length: 8 },
+      () => CODE_ALPHABET[Math.floor(Math.random() * CODE_ALPHABET.length)]
+    ).join('');
+    const [clash] = await db
+      .select({ id: events.id })
+      .from(events)
+      .where(eq(events.shortCode, code))
+      .limit(1);
+    if (!clash) return code;
+  }
+  throw problem.internal('Could not allocate a unique short code.');
+}
+
+/**
+ * `end_at` is NOT NULL in the schema, so the "no end time ⇒ assume an hour"
+ * rule becomes a WRITE-time default. The old version applied it at read time,
+ * in the browser, which meant every reader re-implemented it and could disagree.
+ */
+const resolveEndAt = (startAt: Date, endAt?: Date | null): Date => {
+  const end = endAt ?? new Date(startAt.getTime() + HOUR_MS);
+  if (end.getTime() <= startAt.getTime()) {
+    throw problem.badRequest(
+      ProblemCode.VALIDATION_FAILED,
+      'The event must end after it starts.'
+    );
+  }
+  return end;
+};
+
+export async function createEvent(
+  db: Database,
+  ctx: TenantContext,
+  input: CreateEventInput,
+  now: Date = new Date()
+): Promise<EventSummary> {
+  const endAt = resolveEndAt(input.startAt, input.endAt);
+
+  const [row] = await db
+    .insert(events)
+    .values({
+      ...(input.id ? { id: input.id } : {}),
+      // From the CONTEXT, never the body. A client that sends another org's id
+      // is ignored rather than obeyed (T5).
+      organizationId: ctx.organizationId,
+      name: input.name,
+      description: input.description ?? null,
+      startAt: input.startAt,
+      endAt,
+      timezone: input.timezone ?? 'UTC',
+      locationText: input.locationText,
+      capacity: input.capacity ?? null,
+      enforceCapacity: input.enforceCapacity ?? false,
+      shortCode: await allocateShortCode(db),
+      ...(input.checkInMethods ? { checkInMethods: input.checkInMethods } : {}),
+      ...(input.requireCheckOut !== undefined ? { requireCheckOut: input.requireCheckOut } : {}),
+      ...(input.allowSelfCheckIn !== undefined ? { allowSelfCheckIn: input.allowSelfCheckIn } : {}),
+    })
+    .returning({ id: events.id });
+
+  return getEvent(db, ctx, row.id, now);
+}
+
+export type UpdateEventInput = Partial<Omit<CreateEventInput, 'id'>>;
+
+export async function updateEvent(
+  db: Database,
+  ctx: TenantContext,
+  eventId: string,
+  patch: UpdateEventInput,
+  now: Date = new Date()
+): Promise<EventSummary> {
+  // Reuses the scoped lookup, so another tenant's event is a 404 before
+  // anything is written.
+  const existing = await getEvent(db, ctx, eventId, now);
+
+  const startAt = patch.startAt ?? new Date(existing.startAt);
+  const endAt =
+    patch.endAt !== undefined || patch.startAt !== undefined
+      ? resolveEndAt(startAt, patch.endAt ?? (patch.startAt ? null : new Date(existing.endAt)))
+      : undefined;
+
+  await db
+    .update(events)
+    .set({
+      ...(patch.name !== undefined ? { name: patch.name } : {}),
+      ...(patch.description !== undefined ? { description: patch.description } : {}),
+      ...(patch.startAt !== undefined ? { startAt } : {}),
+      ...(endAt ? { endAt } : {}),
+      ...(patch.timezone !== undefined ? { timezone: patch.timezone } : {}),
+      ...(patch.locationText !== undefined ? { locationText: patch.locationText } : {}),
+      ...(patch.capacity !== undefined ? { capacity: patch.capacity } : {}),
+      ...(patch.enforceCapacity !== undefined ? { enforceCapacity: patch.enforceCapacity } : {}),
+      ...(patch.checkInMethods !== undefined ? { checkInMethods: patch.checkInMethods } : {}),
+      ...(patch.requireCheckOut !== undefined ? { requireCheckOut: patch.requireCheckOut } : {}),
+      ...(patch.allowSelfCheckIn !== undefined ? { allowSelfCheckIn: patch.allowSelfCheckIn } : {}),
+      updatedAt: now,
+    })
+    .where(and(eq(events.id, eventId), eq(events.organizationId, ctx.organizationId)));
+
+  return getEvent(db, ctx, eventId, now);
+}
+
+/**
+ * Cancel. Idempotent, and NEVER deletes.
+ *
+ * A cancelled event keeps its attendance rows (you have to tell those people),
+ * keeps its URL resolving so a printed poster reads "cancelled" rather than
+ * 404ing, refuses new check-ins, and stays in the organiser's history (D2).
+ */
+export async function cancelEvent(
+  db: Database,
+  ctx: TenantContext,
+  eventId: string,
+  reason?: string,
+  now: Date = new Date()
+): Promise<EventSummary> {
+  const existing = await getEvent(db, ctx, eventId, now);
+
+  if (existing.status !== 'cancelled') {
+    await db
+      .update(events)
+      .set({ cancelledAt: now, cancellationReason: reason ?? null, updatedAt: now })
+      .where(and(eq(events.id, eventId), eq(events.organizationId, ctx.organizationId)));
+  }
+
+  return getEvent(db, ctx, eventId, now);
+}
+
+/**
+ * Soft delete. Refuses once anyone has registered — deleting then would destroy
+ * the attendance record the product exists to keep. Cancel instead.
+ */
+export async function deleteEvent(
+  db: Database,
+  ctx: TenantContext,
+  eventId: string,
+  now: Date = new Date()
+): Promise<void> {
+  await getEvent(db, ctx, eventId, now);
+
+  const [{ n }] = await db
+    .select({ n: sql<number>`count(*)::int` })
+    .from(attendance)
+    .where(eq(attendance.eventId, eventId));
+
+  if (Number(n) > 0) {
+    throw problem.conflict(
+      ProblemCode.CONFLICT,
+      `${n} person(s) have registered. Cancel the event instead of deleting it.`
+    );
+  }
+
+  await db
+    .update(events)
+    .set({ deletedAt: now, updatedAt: now })
+    .where(and(eq(events.id, eventId), eq(events.organizationId, ctx.organizationId)));
 }

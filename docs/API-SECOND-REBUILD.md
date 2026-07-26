@@ -5,7 +5,7 @@
 >
 > Part 1 tells you what the API now is. Part 2 is the work.
 
-**Status:** ready to build · **Date:** 2026-07-27
+**Status:** ready to build · **Date:** 2026-07-27 · **API surface:** 45 operations
 **Companion docs:** [`API-FIRST-REBUILD.md`](API-FIRST-REBUILD.md) (the original plan) ·
 [`REBUILD-LOG.md`](REBUILD-LOG.md) (what was actually built, and what broke)
 
@@ -107,7 +107,7 @@ Things that will surprise you:
   delegating management of an event.
 - **All columns are snake_case in the DB**, camelCase in TypeScript. The API speaks camelCase.
 
-## 1.5 Every endpoint that exists (38 operations)
+## 1.5 Every endpoint that exists (45 operations)
 
 Marked: 👤 account JWT · 📟 device token · 🔓 none · 🎫 pass token in URL
 
@@ -130,20 +130,27 @@ Marked: 👤 account JWT · 📟 device token · 🔓 none · 🎫 pass token in
 | 👤 | `DELETE /organizations/{id}/invitations/{invitationId}` | |
 | 👤 | `POST /invitations/{token}/accept` | Requires a **verified** matching email |
 
-### Events (read only — see §1.6)
+### Events
 | | Endpoint | Notes |
 |---|---|---|
 | 👤 | `GET /events` | `?group=upcoming\|past&status=&from=&to=&q=&cursor=&limit=` — derived status, counts, org name |
 | 👤 | `GET /events/summary` | `{ total, upcoming, ongoing, next }` — the hero |
 | 👤 | `GET /events/calendar?month=YYYY-MM` | days → events |
 | 👤 | `GET /events/{id}` | |
+| 👤 | `POST /events` | `endAt` optional → start + 1h at write time. Client id honoured (D11) |
+| 👤 | `PATCH /events/{id}` | Moving `startAt` preserves duration |
+| 👤 | `POST /events/{id}/cancel` | Idempotent. Keeps rows, URL and history |
+| 👤 | `DELETE /events/{id}` | Soft. **409 once anyone has registered** — cancel instead |
 
-### People (read only — see §1.6)
+### People
 | | Endpoint | Notes |
 |---|---|---|
 | 👤 | `GET /people` | `?q=&eventId=&standing=&cursor=` — `standing` and `eventsAttended` **pre-computed** |
 | 👤 | `GET /people/summary?eventId=` | The billboard tiles |
 | 👤 | `GET /people/{id}` | + lifetime stats |
+| 👤 | `POST /people` | Email unique **per org** → 409 `email_taken` |
+| 👤 | `PATCH /people/{id}` | |
+| 👤 | `DELETE /people/{id}` | Soft — attendance history survives |
 
 ### Attendance
 | | Endpoint | Notes |
@@ -181,8 +188,6 @@ Marked: 👤 account JWT · 📟 device token · 🔓 none · 🎫 pass token in
 
 | Missing | Consequence for the UI |
 |---|---|
-| `POST /events`, `PATCH /events/{id}`, `DELETE`, `POST /events/{id}/cancel` | **The event composer cannot save.** Build the form; wire it when the endpoint lands. |
-| `POST /people`, `PATCH /people/{id}`, `DELETE` | Same for the attendee composer. |
 | `PATCH /me` | The account page can display but not edit the profile. |
 | `GET /me/tickets`, `POST /me/claim`, `POST /me/upgrade` | The personal-scope screens cannot be built yet. |
 | `GET /analytics/overview`, `/export` | **`/analytics` has no data source at all.** |
@@ -191,8 +196,8 @@ Marked: 👤 account JWT · 📟 device token · 🔓 none · 🎫 pass token in
 | `POST /uploads`, media | No event cover images. |
 | Email (`NotificationService`) | Pass URLs are returned in the response and **not emailed**. The UI must show the URL. |
 
-**Sequence this correctly:** the event and person write endpoints are the biggest blocker. Either build
-them first, or build the forms with the network call stubbed behind a single function.
+**Event and person writes now exist** — both composers can be built end to end. The remaining gaps
+above are real but none of them block the core console.
 
 ## 1.7 Conventions the UI must follow
 
@@ -245,9 +250,9 @@ Legend — **Broken**: imports deleted modules · **Rewire**: works conceptually
 | **Onboarding** | `/onboarding` | **New** | §2.2 |
 | Events list | `/events` | Broken | §2.3 |
 | Event detail | `/events/$eventId` | Broken | §2.4 |
-| Event composer | `/events/new`, `/events/$id/edit` | Broken | Form can be built; **save has no endpoint** (§1.6) |
+| Event composer | `/events/new`, `/events/$id/edit` | Broken | `POST`/`PATCH /events` exist. Wire fully. |
 | Attendees | `/attendees` | Broken | §2.5 |
-| Attendee composer | `/attendees/new`, `/$id/edit` | Broken | Same blocker as the event composer |
+| Attendee composer | `/attendees/new`, `/$id/edit` | Broken | `POST`/`PATCH /people` exist. Wire fully. |
 | Kiosk | `/checkin/$eventId` | Broken | §2.6 |
 | Public event | `/e/$eventId` | Broken | §2.7 |
 | **Pass** | `/p/$token` | **New** | §2.8 |
@@ -281,8 +286,8 @@ the product for every new user*. This is the first thing to build.
 └──────────────────────────────────────────────┘
 ┌─ Step 3 (skippable) ─────────────────────────┐
 │  Create your first event.                    │
-│  BLOCKED: POST /events does not exist.       │
-│  Ship steps 1–2; add this when it lands.     │
+│  [ Name ] [ When ] [ Where ]                 │
+│  POST /events  → then offer the share link   │
 └──────────────────────────────────────────────┘
 ```
 
@@ -325,7 +330,7 @@ not Upcoming. It is not going to happen. This is deliberate.
 | Check-in code `#F6F82EC3–09D` | `Event.shortCode` — a real code, read aloud at doors |
 | Counts | `Event.counts.{registered,attended}` |
 | Event share QR | `{origin}/e/{id}` — **unchanged** |
-| Attendee pass QR | ⚠️ endpoint not built; use the URL from `register` |
+| Attendee pass QR | `POST /events/{id}/register` returns `pass.url` |
 | Add to calendar | ⚠️ blocked — no ICS endpoint |
 | Map | ⚠️ blocked — geocoding is server-side but not populated |
 | Cover photo | ⚠️ blocked — no media endpoints |
@@ -468,6 +473,9 @@ screen.
 | `GET /people` | `/attendees` |
 | `GET /people/summary` | `/attendees` billboard |
 | `GET /people/{id}` | Attendee profile sidebar |
+| `POST /events` · `PATCH /events/{id}` | Event composer |
+| `POST /events/{id}/cancel` · `DELETE /events/{id}` | Event row menu |
+| `POST /people` · `PATCH /people/{id}` · `DELETE /people/{id}` | Attendee composer, row menu |
 | `POST /events/{id}/register` | `/events/$id` "Add attendee" |
 | `POST /events/{id}/check-in` | Kiosk — all three paths |
 | `POST /events/{id}/check-out` | Kiosk, when `requireCheckOut` |
@@ -524,8 +532,8 @@ Delete, do not comment out.
 5. **Public surface: `/e/$id` and `/p/$token`.** The attendee half of the product, which has never
    properly existed.
 6. **Account page.**
-7. **Composers.** Blocked on write endpoints — build the forms, stub the call.
-8. **Analytics.** Blocked entirely. Honest empty state.
+7. **Composers.** Fully wireable — create, edit, cancel, delete for both events and people.
+8. **Analytics.** Blocked entirely — no endpoint. Honest empty state.
 
 ---
 
@@ -588,7 +596,6 @@ tool.
 
 | Item | Blocks | Notes |
 |---|---|---|
-| **Event & person write endpoints** | Both composers, onboarding step 3 | **Highest priority.** The UI cannot create anything. |
 | `NotificationService` (Resend) | Emailed passes, invitations | Until then the UI must show URLs on screen |
 | `PATCH /me` | Account → Profile editing | Small |
 | `/me/tickets`, `/me/claim` | The personal scope | The attendee's own view across orgs |

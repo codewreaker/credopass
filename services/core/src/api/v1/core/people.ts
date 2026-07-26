@@ -156,3 +156,129 @@ peopleRoutes.openapi(
     return c.json(await People.getPerson(db, c.get('tenant'), c.req.valid('param').id), 200);
   }
 );
+
+
+// ---------------------------------------------------------------------------
+// Writes (§5.5)
+// ---------------------------------------------------------------------------
+
+const PersonBody = z.object({
+  id: z.string().uuid().optional(),
+  firstName: z.string().min(1).max(100),
+  lastName: z.string().min(1).max(100),
+  email: z.string().email().nullish(),
+  phone: z.string().max(50).nullish(),
+  notes: z.string().max(5000).nullish(),
+});
+
+const PersonSchema = z
+  .object({
+    id: z.string().uuid(),
+    firstName: z.string(),
+    lastName: z.string(),
+    email: z.string().nullable(),
+    phone: z.string().nullable(),
+  })
+  .openapi('PersonCreated');
+
+peopleRoutes.openapi(
+  defineRoute({
+    method: 'post',
+    path: '/people',
+    scope: 'organization',
+    permission: 'person:create',
+    summary: 'Add someone to the roll',
+    tags: ['People'],
+    security: [{ bearerAuth: [] }],
+    middleware: [requirePermission('person:create')] as const,
+    request: { body: { content: { 'application/json': { schema: PersonBody } } } },
+    responses: {
+      201: { description: 'Created', content: { 'application/json': { schema: PersonSchema } } },
+      400: problemResponse('Invalid body'),
+      403: problemResponse('Insufficient role'),
+      409: problemResponse('That email is already on this roll'),
+    },
+  }),
+  async (c) => {
+    const db = await getDatabase();
+    const person = await People.createPerson(db, c.get('tenant'), c.req.valid('json'));
+    return c.json(person, 201);
+  }
+);
+
+peopleRoutes.openapi(
+  defineRoute({
+    method: 'patch',
+    path: '/people/{id}',
+    scope: 'organization',
+    permission: 'person:update',
+    summary: 'Update someone on the roll',
+    tags: ['People'],
+    security: [{ bearerAuth: [] }],
+    middleware: [requirePermission('person:update')] as const,
+    request: {
+      params: z.object({ id: z.string().uuid() }),
+      body: { content: { 'application/json': { schema: PersonBody.partial().omit({ id: true }) } } },
+    },
+    responses: {
+      200: {
+        description: 'Updated',
+        content: {
+          'application/json': {
+            schema: z.object({
+              id: z.string().uuid(),
+              firstName: z.string(),
+              lastName: z.string(),
+              email: z.string().nullable(),
+              phone: z.string().nullable(),
+              notes: z.string().nullable(),
+              createdAt: z.string(),
+              stats: z.object({
+                eventsAttended: z.number().int(),
+                eventsRegistered: z.number().int(),
+              }),
+            }),
+          },
+        },
+      },
+      400: problemResponse('Invalid body'),
+      403: problemResponse('Insufficient role'),
+      404: problemResponse('Not found, or in another organization'),
+      409: problemResponse('That email is already on this roll'),
+    },
+  }),
+  async (c) => {
+    const db = await getDatabase();
+    const person = await People.updatePerson(
+      db,
+      c.get('tenant'),
+      c.req.valid('param').id,
+      c.req.valid('json')
+    );
+    return c.json(person, 200);
+  }
+);
+
+peopleRoutes.openapi(
+  defineRoute({
+    method: 'delete',
+    path: '/people/{id}',
+    scope: 'organization',
+    permission: 'person:delete',
+    summary: 'Remove from the roll. Soft — attendance history survives.',
+    tags: ['People'],
+    security: [{ bearerAuth: [] }],
+    middleware: [requirePermission('person:delete')] as const,
+    request: { params: z.object({ id: z.string().uuid() }) },
+    responses: {
+      204: { description: 'Removed' },
+      403: problemResponse('Insufficient role'),
+      404: problemResponse('Not found, or in another organization'),
+    },
+  }),
+  async (c) => {
+    const db = await getDatabase();
+    await People.deletePerson(db, c.get('tenant'), c.req.valid('param').id);
+    return c.body(null, 204);
+  }
+);
