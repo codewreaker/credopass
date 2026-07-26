@@ -41,8 +41,6 @@ type ScopeDeclaration =
   | { scope: 'organization'; permission: Permission }
   | { scope: Exclude<RouteScope, 'organization'>; permission?: never };
 
-export type DefineRouteConfig = RouteConfig & ScopeDeclaration;
-
 /**
  * Build a route config, recording its authorization contract as a side effect.
  *
@@ -51,8 +49,17 @@ export type DefineRouteConfig = RouteConfig & ScopeDeclaration;
  * and a permission on a public route does not compile either. The boot
  * assertion (§6.4) stays as the runtime backstop for anything that reaches the
  * registry another way — a cast, a dynamically built route, a future refactor.
+ *
+ * The generics mirror `createRoute`'s exactly, and are load-bearing: they carry
+ * the request/response schema types through to the handler so `c.req.valid()`
+ * stays typed. Returning a plain `RouteConfig` here would widen everything to
+ * `never` at the call site — a wrapper that silently costs you type safety is
+ * worse than no wrapper.
  */
-export function defineRoute(config: DefineRouteConfig): RouteConfig {
+export function defineRoute<
+  P extends string,
+  R extends Omit<RouteConfig, 'path'> & { path: P },
+>(config: R & ScopeDeclaration): ReturnType<typeof createRoute<P, R>> {
   const { scope, permission, ...routeConfig } = config;
 
   declareRoute({
@@ -63,5 +70,5 @@ export function defineRoute(config: DefineRouteConfig): RouteConfig {
     ...(routeConfig.summary ? { summary: routeConfig.summary } : {}),
   });
 
-  return createRoute(routeConfig);
+  return createRoute(routeConfig as unknown as R);
 }

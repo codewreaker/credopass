@@ -81,20 +81,47 @@ export const requireCaller = createMiddleware<{ Variables: CallerVars }>(async (
  * The tenant NEVER comes from a body or query parameter. That is rule 1, and
  * it is the reason T5 passes.
  */
-export const requireTenant = createMiddleware<{ Variables: CallerVars }>(async (c, next) => {
+export interface TenantOptions {
+  /**
+   * Name of a path parameter carrying the organisation id, e.g. `id` for
+   * `/organizations/{id}/members`.
+   *
+   * This does NOT weaken rule 1. The rule is that a tenant id must be validated
+   * against the caller's memberships before it means anything — which happens
+   * below, identically, whichever place the id came from. What the rule forbids
+   * is trusting an id from a request BODY, where it would silently override the
+   * org the caller actually authenticated for.
+   *
+   * Without this, `GET /organizations/{id}` would 400 for anyone in more than
+   * one organisation unless they also sent a header naming the org already in
+   * the URL.
+   */
+  fromPathParam?: string;
+}
+
+export const requireTenant = (options: TenantOptions = {}) =>
+  createMiddleware<{ Variables: CallerVars }>(async (c, next) => {
   const caller = c.get('caller');
   if (!caller) throw problem.unauthenticated();
 
-  const requested = c.req.header('X-Organization-Id');
+  const fromPath = options.fromPathParam ? c.req.param(options.fromPathParam) : undefined;
+  const requested = fromPath ?? c.req.header('X-Organization-Id');
   const active = caller.memberships;
 
   let membership;
 
   if (requested) {
     membership = active.find((m) => m.organizationId === requested);
-    // 403 not 404: the caller knows this org exists — they named it. What they
-    // are being told is that they are not in it.
     if (!membership) {
+      // A header naming someone else's org is a 403: the caller asserted a
+      // tenant and is being told they are not in it (T2).
+      //
+      // A PATH naming someone else's org is a 404: the resource is addressed
+      // directly, and confirming it exists would leak that another tenant owns
+      // it (T3, §5.0 "not-found vs forbidden").
+      if (fromPath) {
+        throw problem.notFound(ProblemCode.NOT_FOUND, 'Organization not found.');
+      }
       throw problem.forbidden(
         ProblemCode.NOT_A_MEMBER,
         'You are not a member of that organization.'

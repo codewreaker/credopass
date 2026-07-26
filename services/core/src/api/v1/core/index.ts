@@ -16,6 +16,7 @@ import { defineRoute, problemResponse } from '../../../http/define-route';
 import { ProblemError, problem, PROBLEM_CONTENT_TYPE } from '../../../http/problem';
 import { isDBConnected } from '../../../db/client';
 import { me } from './me';
+import { organizations } from './organizations';
 
 export const V1_BASE_PATH = '/api/v1/core';
 
@@ -106,13 +107,14 @@ v1.openapi(
     // Storage lands in Phase 6 (§9.1); reporting `true` before it exists would
     // make this probe a lie, so it reports the absence honestly.
     const storage = false;
+
+    // An unreachable database is a 503 through the same problem+json envelope
+    // as everything else — a readiness probe that answers in a bespoke shape is
+    // one more thing for an operator to learn.
     if (!db) {
-      const err = new ProblemError(503 as 500, 'internal_error', 'Database unreachable');
-      return c.json(err.toBody(c.req.path), 503, {
-        'Content-Type': PROBLEM_CONTENT_TYPE,
-      });
+      throw new ProblemError(503 as 500, 'internal_error', 'Database unreachable');
     }
-    return c.json({ db, storage });
+    return c.json({ db, storage }, 200);
   }
 );
 
@@ -120,6 +122,7 @@ v1.openapi(
 // Identity — the account scope (§5.1)
 // ---------------------------------------------------------------------------
 v1.route('/', me);
+v1.route('/', organizations);
 
 // ---------------------------------------------------------------------------
 // The contract itself

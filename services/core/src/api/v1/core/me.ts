@@ -66,12 +66,15 @@ me.openapi(
   }),
   (c) => {
     const caller = c.get('caller');
-    return c.json({
-      id: caller.accountId,
-      email: caller.email,
-      displayName: caller.displayName,
-      isGuest: caller.isGuest,
-    });
+    return c.json(
+      {
+        id: caller.accountId,
+        email: caller.email,
+        displayName: caller.displayName,
+        isGuest: caller.isGuest,
+      },
+      200
+    );
   }
 );
 
@@ -134,6 +137,6 @@ me.openapi(
       activeOrganization: active,
       membership: active ? { role: active.role, permissions } : null,
       needsOnboarding: organizations.length === 0,
-    });
+    }, 200);
   }
 );

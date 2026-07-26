@@ -20,7 +20,12 @@ The repo is being rebuilt API-first. The plan is [`docs/API-FIRST-REBUILD.md`](d
 
 The `/core` suffix is there because more services will sit beside it later (`/api/v1/billing`, …). Code lives in `services/core/src/api/v1/core/`.
 
-Phase 0 is done (skeleton, error format, route registry, tenancy types, tests). **Phase 1 is next** — identity and tenancy.
+Phase 0 is done. **Phase 1 is mostly done**: `accounts` / `identities` / `people` / `invitations` / SSO tables, RLS policies, issuer registry, auth + tenant middleware, `/me`, `/me/context`, organizations, members, invitations.
+
+**Still open in Phase 1:**
+- The API connects as `postgres`, which bypasses RLS — so the policies in `drizzle/0004_rls_tenancy.sql` are currently inert on the API path. Switching `DATABASE_URL` to `credopass_api` requires wiring `SET LOCAL app.account_id` per transaction first, or every query returns nothing.
+- No data migration from `users` → `accounts` + `people` yet.
+- The web app still talks to `/api/core`.
 
 ## What this is
 
@@ -118,7 +123,8 @@ Rebuild-specific — everything is an nx target, don't hand-roll shell commands:
 nx run coreservice:setup             # one-command fresh-clone setup
 nx run coreservice:verify            # lint + typecheck + test (run before saying "done")
 nx run coreservice:test              # unit + structural — no DB, must always pass
-nx run coreservice:test:adversarial  # 47 tenancy tests — starts its own DB; red until Phase 1
+nx run coreservice:test:integration  # services against real Postgres; starts its own DB
+nx run coreservice:test:adversarial  # 47 tenancy tests; red until the endpoints they guard exist
 nx run coreservice:typecheck
 
 nx run coreservice:dev:up            # postgres + MinIO

@@ -22,14 +22,23 @@ import { provisionedBy } from './enums';
 export const orgMemberships = pgTable('org_memberships', {
   id: uuid('id').primaryKey().defaultRandom(),
   
-  // Foreign keys
-  userId: uuid('userId').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  // Foreign keys.
+  //
+  // `userId` became NULLABLE in Phase 1: a membership now belongs to an
+  // `account`, and new memberships have no `users` row at all. Existing rows
+  // keep theirs until Phase 3 drops the column.
+  userId: uuid('userId').references(() => users.id, { onDelete: 'cascade' }),
   organizationId: uuid('organizationId').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
-  
-  // Role within the organization
-  role: text('role', { 
-    enum: ['owner', 'admin', 'member', 'viewer'] 
-  }).notNull().default('member'),
+
+  // Role within the organization.
+  //
+  // `organizer` and `checkin` are the Phase 1 vocabulary (§6.2). `member` is
+  // retained ONLY so existing rows still validate; nothing writes it any more,
+  // and IdentityService.normaliseRole maps it to `organizer` on read. It goes
+  // when the column becomes a real org_role enum in Phase 3.
+  role: text('role', {
+    enum: ['owner', 'admin', 'organizer', 'checkin', 'viewer', 'member'],
+  }).notNull().default('viewer'),
   
   // --------------------------------------------------------------------------
   // Rebuild columns (Phase 1). Additive: the legacy columns above stay until

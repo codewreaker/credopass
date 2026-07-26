@@ -78,6 +78,17 @@
         "cwd": "{projectRoot}"
       }
     },
+    "test:integration": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "docker compose -f ../../docker/docker-compose.dev.yml --profile test up -d --wait credopass-postgres-test",
+          "TEST_DATABASE_URL=${TEST_DATABASE_URL:-postgresql://postgres:postgres@localhost:55432/credopass_test} bun test src/test/integration"
+        ],
+        "parallel": false,
+        "cwd": "{projectRoot}"
+      }
+    },
     "typecheck": {
       "executor": "nx:run-commands",
       "options": {

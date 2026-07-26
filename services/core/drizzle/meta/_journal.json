@@ -36,6 +36,13 @@
       "when": 1785026019441,
       "tag": "0004_rls_tenancy",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1785027659653,
+      "tag": "0005_memberships_account_subject",
+      "breakpoints": true
     }
   ]
 }
