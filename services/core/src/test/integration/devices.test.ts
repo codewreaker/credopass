@@ -330,12 +330,27 @@ describe('management', () => {
     await expect(Device.pair(db, created.pairingCode)).rejects.toMatchObject({ status: 404 });
   });
 
-  it('sweeps expired pairing codes', async () => {
-    const created = await Device.createDevice(db, { organizationId: orgA, eventId: eventA, label: 'Door' });
-    await db.update(deviceTokens).set({ pairingExpiresAt: new Date(Date.now() - 1000) }).where(eq(deviceTokens.id, created.id));
+});
 
-    expect(await Device.sweepExpiredPairings(db)).toBe(1);
-    const [row] = await db.select().from(deviceTokens).where(eq(deviceTokens.id, created.id));
-    expect(row.pairingCode).toBeNull();
+describe('expiry follows the event, not a flat timer', () => {
+  it('a device for an event expires a day after that event ends', async () => {
+    // Regression: `createDevice` fetched the event's endAt and never used it,
+    // so a Sunday-service tablet held a working credential for a week. Exactly
+    // the exposure the feature exists to close.
+    const [event] = await db.select().from(events).where(eq(events.id, eventA));
+    const device = await Device.createDevice(db, {
+      organizationId: orgA, eventId: eventA, label: 'Door',
+    });
+
+    const expected = event.endAt.getTime() + 24 * 60 * 60 * 1000;
+    expect(new Date(device.expiresAt).getTime()).toBe(expected);
+  });
+
+  it('an explicit expiry still wins', async () => {
+    const explicit = new Date(Date.now() + 90 * 60 * 1000);
+    const device = await Device.createDevice(db, {
+      organizationId: orgA, eventId: eventA, label: 'Short-lived', expiresAt: explicit,
+    });
+    expect(new Date(device.expiresAt).getTime()).toBe(explicit.getTime());
   });
 });

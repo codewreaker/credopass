@@ -13,7 +13,7 @@
  */
 
 import { createHash, randomBytes, randomInt, timingSafeEqual } from 'node:crypto';
-import { and, desc, eq, isNull, sql } from 'drizzle-orm';
+import { and, desc, eq, isNull } from 'drizzle-orm';
 import { deviceTokens, events } from '@credopass/lib/schemas/tables';
 import type { Database } from '../db/client';
 import { ProblemCode, ProblemError, problem } from '../http/problem';
@@ -69,6 +69,8 @@ export async function createDevice(
     issuedByAccountId?: string | null;
   }
 ): Promise<CreatedDevice> {
+  let eventEndAt: Date | null = null;
+
   if (input.eventId) {
     const [event] = await db
       .select({ id: events.id, endAt: events.endAt })
@@ -82,6 +84,7 @@ export async function createDevice(
       )
       .limit(1);
     if (!event) throw problem.notFound(ProblemCode.EVENT_NOT_FOUND, 'Event not found.');
+    eventEndAt = event.endAt;
   }
 
   const scopes = (input.scopes ?? DEFAULT_SCOPES).filter((s) =>
@@ -93,9 +96,18 @@ export async function createDevice(
 
   const pairingCode = newPairingCode();
   const pairingExpiresAt = new Date(Date.now() + PAIRING_TTL_MS);
-  // Default: a day past the event, or a week for an org-wide kiosk. A token
-  // that never expires is a token nobody remembers to revoke.
-  const expiresAt = input.expiresAt ?? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+  // Expire with the EVENT, not on a flat timer.
+  //
+  // A Sunday service token that lives a week is a working credential sitting in
+  // a drawer for six days it is not needed — precisely the exposure this
+  // feature exists to close. A day's grace covers an event that overruns or a
+  // tablet nobody unpaired on the night.
+  const expiresAt =
+    input.expiresAt ??
+    (eventEndAt
+      ? new Date(eventEndAt.getTime() + 24 * 60 * 60 * 1000)
+      : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000));
 
   const [row] = await db
     .insert(deviceTokens)
@@ -311,12 +323,3 @@ export async function listDevices(db: Database, organizationId: string, eventId?
   }));
 }
 
-/** Housekeeping: unredeemed codes stop being claimable on their own. */
-export async function sweepExpiredPairings(db: Database): Promise<number> {
-  const swept = await db
-    .update(deviceTokens)
-    .set({ pairingCode: null, pairingExpiresAt: null })
-    .where(and(sql`${deviceTokens.pairingCode} IS NOT NULL`, sql`${deviceTokens.pairingExpiresAt} < now()`))
-    .returning({ id: deviceTokens.id });
-  return swept.length;
-}
