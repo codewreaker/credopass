@@ -8,8 +8,14 @@
     "scope:api"
   ],
   "targets": {
-    "lint": {
-      "executor": "@nx/eslint:lint"
+    "setup": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "bun run scripts/setup.ts"
+        ],
+        "cwd": "{projectRoot}"
+      }
     },
     "start": {
       "executor": "nx:run-commands",
@@ -18,99 +24,20 @@
         "cwd": "{projectRoot}"
       }
     },
-    "build": {
+    "db": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "bun build ./src/index.ts --outdir ../../dist/{projectRoot} --target bun",
-        "cwd": "{projectRoot}"
-      }
-    },
-    "migrate": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "drizzle-kit generate && drizzle-kit migrate",
-        "cwd": "{projectRoot}"
-      }
-    },
-    "migrate:people": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "bun run scripts/migrate-users-to-people.ts",
+        "command": "bun run scripts/db.ts",
         "cwd": "{projectRoot}"
       }
     },
     "seed": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "bun src/db/seed.ts",
+        "command": "bun run scripts/db.ts seed",
         "cwd": "{projectRoot}"
       }
     },
-    "docker:build": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "docker compose -f ../../docker/docker-compose.dev.yml up --build -d core",
-        "cwd": "{projectRoot}"
-      }
-    },
-    "deploy": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "gcloud run deploy credopass-api --source ../.. --region us-central1",
-        "cwd": "{projectRoot}"
-      }
-    },
-    "studio": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "drizzle-kit studio",
-        "cwd": "{projectRoot}"
-      }
-    },
-    "test": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "bun test src/test/*.test.ts",
-        "cwd": "{projectRoot}"
-      }
-    },
-    "test:adversarial": {
-      "executor": "nx:run-commands",
-      "options": {
-        "commands": [
-          "docker compose -f ../../docker/docker-compose.dev.yml --profile test up -d --wait credopass-postgres-test",
-          "TEST_DATABASE_URL=${TEST_DATABASE_URL:-postgresql://postgres:postgres@localhost:55432/credopass_test} bun test src/test/adversarial"
-        ],
-        "parallel": false,
-        "cwd": "{projectRoot}"
-      }
-    },
-    "test:integration": {
-      "executor": "nx:run-commands",
-      "options": {
-        "commands": [
-          "docker compose -f ../../docker/docker-compose.dev.yml --profile test up -d --wait credopass-postgres-test",
-          "TEST_DATABASE_URL=${TEST_DATABASE_URL:-postgresql://postgres:postgres@localhost:55432/credopass_test} bun test src/test/integration"
-        ],
-        "parallel": false,
-        "cwd": "{projectRoot}"
-      }
-    },
-    "typecheck": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "tsc --noEmit -p .",
-        "cwd": "{projectRoot}"
-      }
-    },
-    "verify:public-access": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "./sql/verify-public-access.sh",
-        "cwd": "{projectRoot}"
-      }
-    },
-
     "dev:up": {
       "executor": "nx:run-commands",
       "options": {
@@ -129,20 +56,6 @@
         "cwd": "{projectRoot}"
       }
     },
-    "db:reset": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "bun run scripts/db-reset.ts",
-        "cwd": "{projectRoot}"
-      }
-    },
-    "db:status": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "bun run scripts/db-status.ts",
-        "cwd": "{projectRoot}"
-      }
-    },
     "dev:logs": {
       "executor": "nx:run-commands",
       "options": {
@@ -150,13 +63,55 @@
         "cwd": "{projectRoot}"
       }
     },
-
-    "openapi:export": {
+    "verify": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "bun run scripts/export-openapi.ts",
+        "commands": [
+          "nx run coreservice:lint",
+          "nx run coreservice:typecheck",
+          "nx run coreservice:test"
+        ],
+        "parallel": false
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun test src/test/*.test.ts",
         "cwd": "{projectRoot}"
       }
+    },
+    "test:integration": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "docker compose -f ../../docker/docker-compose.dev.yml --profile test up -d --wait credopass-postgres-test",
+          "TEST_DATABASE_URL=${TEST_DATABASE_URL:-postgresql://postgres:postgres@localhost:55432/credopass_test} bun test src/test/integration"
+        ],
+        "parallel": false,
+        "cwd": "{projectRoot}"
+      }
+    },
+    "test:adversarial": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "docker compose -f ../../docker/docker-compose.dev.yml --profile test up -d --wait credopass-postgres-test",
+          "TEST_DATABASE_URL=${TEST_DATABASE_URL:-postgresql://postgres:postgres@localhost:55432/credopass_test} bun test src/test/adversarial"
+        ],
+        "parallel": false,
+        "cwd": "{projectRoot}"
+      }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tsc --noEmit -p .",
+        "cwd": "{projectRoot}"
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
     },
     "docs": {
       "executor": "nx:run-commands",
@@ -172,24 +127,31 @@
         "cwd": "{projectRoot}"
       }
     },
-
-    "verify": {
+    "openapi:export": {
       "executor": "nx:run-commands",
       "options": {
-        "commands": [
-          "nx run coreservice:lint",
-          "nx run coreservice:typecheck",
-          "nx run coreservice:test"
-        ],
-        "parallel": false
+        "command": "bun run scripts/export-openapi.ts",
+        "cwd": "{projectRoot}"
       }
     },
-    "setup": {
+    "studio": {
       "executor": "nx:run-commands",
       "options": {
-        "commands": [
-          "bun run scripts/setup.ts"
-        ],
+        "command": "drizzle-kit studio",
+        "cwd": "{projectRoot}"
+      }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun build ./src/index.ts --outdir ../../dist/{projectRoot} --target bun",
+        "cwd": "{projectRoot}"
+      }
+    },
+    "deploy": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "gcloud run deploy credopass-api --source ../.. --region us-central1",
         "cwd": "{projectRoot}"
       }
     }

@@ -334,3 +334,31 @@ flowchart LR
 ---
 
 <sub>Built for organizations that value attendance insight. · People & event illustrations by [Storyset](https://storyset.com).</sub>
+
+
+### UI REWIRING
+ We are finally here we made it. You have done a great job rewiring the whole API. 
+ Now majority of the UI exists, however with the multi-tenancy features and new 
+ features addedd, we now have a lot to be integrated into the UI and workflow
+
+ ## TASK
+
+ Analyse all the changes, rewrites and changes you have done so far:
+ - create a forensic breakdown of all the missing UI-screens, workflows and missing pages
+ - We need a new on-boarding set of UIs for new users
+ - We need a detailed 'Account' page which allows user to do all the new cool things that have been added. The Account management etc
+ - Ensure every endpoint is being used through the UI, in other words if an end-point exists, there has to be a feature that uses it
+ - Strip out any unecessary dead code that is no longer valid due to this rewrite
+ !!IMPORTANT The REBUILD-LOG can give some more insight
+
+ ### DELIVERY
+ API-SECOND_REBUILD
+ Your delivery should be a detailed plan that
+ 1 - shows all that you accomplished in API-FIRST-REBUILD and whats next
+ 2 - A DETAILED UI PLAN that addresses all the things I stated in the task
+
+ I am to basically dump your new delivery into another agent and it should give him all 
+ the necessary context to first know all the API changes that have occured and inmplement the UI-REWIRING
+ to connect to these new API and feature and workflows that have become possible
+
+ A secondary part of the plan which should inform the agent of potential next

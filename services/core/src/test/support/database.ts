@@ -67,6 +67,18 @@ export function getTestDatabase(): Promise<TestDatabase> {
 
   instance = (async () => {
     const url = await resolveUrl();
+
+    // Point the APPLICATION at the test database too.
+    //
+    // Route-level tests call the real handlers, which call `getDatabase()`,
+    // which reads DATABASE_URL. Without this the fixtures write to the test
+    // database and the handlers read the DEV one — every request 404s and the
+    // reason is invisible. Worse, a write-path test would mutate real dev data.
+    //
+    // `getDatabase()` is lazy and memoised, so this must happen before the
+    // first request — which it does, because every suite awaits this first.
+    process.env.DATABASE_URL = url;
+
     const pool = new Pool({ connectionString: url });
     const db = drizzle(pool);
 

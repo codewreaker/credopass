@@ -21,6 +21,8 @@ import { me } from './me';
 import { organizations } from './organizations';
 import { eventRoutes } from './events';
 import { peopleRoutes } from './people';
+import { attendanceRoutes } from './attendance';
+import { publicRoutes } from './public';
 
 export const V1_BASE_PATH = '/api/v1/core';
 
@@ -146,6 +148,8 @@ v1.route('/', me);
 v1.route('/', organizations);
 v1.route('/', eventRoutes);
 v1.route('/', peopleRoutes);
+v1.route('/', attendanceRoutes);
+v1.route('/', publicRoutes);
 
 // ---------------------------------------------------------------------------
 // The contract itself
