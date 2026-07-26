@@ -37,3 +37,18 @@ export const provisionedBy = pgEnum('provisioned_by', ['manual', 'jit', 'scim'])
 
 /** Which kind of identity provider issued an identity. */
 export const identityProviderKind = pgEnum('identity_provider_kind', ['oidc', 'saml']);
+
+/**
+ * Attendance state (D8). Replaces the `attended` boolean AND the render-time
+ * no-show inference — `no_show` is now a written fact, set once when an event
+ * closes, so it can be corrected and audited.
+ */
+export const attendanceState = pgEnum('attendance_state', [
+  'registered',
+  'attended',
+  'no_show',
+  'cancelled',
+]);
+
+/** How a check-in happened. `external_auth` is deliberately absent (D-I: rejected). */
+export const checkInMethod = pgEnum('check_in_method', ['qr', 'manual', 'self', 'pass']);

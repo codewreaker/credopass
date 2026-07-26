@@ -19,6 +19,8 @@ import { isDBConnected } from '../../../db/client';
 import { checkSchema } from '../../../db/schema-check';
 import { me } from './me';
 import { organizations } from './organizations';
+import { eventRoutes } from './events';
+import { peopleRoutes } from './people';
 
 export const V1_BASE_PATH = '/api/v1/core';
 
@@ -142,6 +144,8 @@ v1.openapi(
 // ---------------------------------------------------------------------------
 v1.route('/', me);
 v1.route('/', organizations);
+v1.route('/', eventRoutes);
+v1.route('/', peopleRoutes);
 
 // ---------------------------------------------------------------------------
 // The contract itself

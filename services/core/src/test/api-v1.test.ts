@@ -145,10 +145,5 @@ describe('mounting', () => {
     expect(res.status).toBe(200);
   });
 
-  it('leaves /api/core untouched — Phase 0 is additive', async () => {
-    const { app, API_BASE_PATH } = await import('../index');
-    expect(API_BASE_PATH).toBe('/api/core');
-    const res = await app.request(`${API_BASE_PATH}/health`);
-    expect(res.status).toBe(200);
-  });
+
 });

@@ -26,6 +26,9 @@ const REQUIRED_TABLES = [
   'organizations',
   'org_memberships',
   'events',
+  'event_grants',
+  'attendance',
+  'passes',
 ] as const;
 
 export interface SchemaStatus {

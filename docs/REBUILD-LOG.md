@@ -280,15 +280,68 @@ Local now: **13 tables, 12 RLS policies, 7 migrations recorded**, `credopass_api
 
 ---
 
+### Read paths
+
+`EventService` and `PeopleService` now decide everything the screens used to compute in the browser:
+the status badge, the upcoming/past split, the hero spotlight, the calendar rail, `standing`,
+`eventsAttended`, per-event counts.
+
+`GET /events` · `/events/summary` · `/events/calendar` · `/events/{id}` ·
+`/people` · `/people/summary` · `/people/{id}` — **23 operations** in the spec.
+
+The rule worth keeping: **`group=past` is applied after status derivation, not as
+`WHERE startTime < now()`.** A cancelled *future* event belongs in "past" — it is not going to
+happen. A naive timestamp filter gets that wrong, and it is the kind of wrong nobody notices until an
+organiser asks why a cancelled event is still in their upcoming list.
+
+### `users` → `accounts` + `people`, imported
+
+`scripts/migrate-users-to-people.ts` (D10 — a scripted import, not a dual-write apparatus).
+
+The interesting part is that it is **not one-to-one**. `users` is global with a globally unique
+email; `people` is tenant-scoped. So one user becomes one person **per organisation they have a
+footprint in**, worked out from memberships *and* attendance — not guessed. A user who attends events
+at two churches becomes two people, and neither church can see the other's row. That is the split
+doing its job (T20).
+
+Accounts are created only for users with a membership: an account is someone who signs *in*, and
+minting one for every attendee would fill the identity table with rows no token will ever resolve to.
+
+Idempotent — re-running creates nothing. Ran against local: **25 accounts, 25 people, 150 attendance
+rows linked**.
+
+### Two bugs worth remembering
+
+**1. `= ANY(${array})` does not bind an array.** Drizzle's `sql` template binds a JS array as a
+single scalar, producing `ANY(($1))`, which fails at runtime. Use `inArray`.
+
+**2. A correlated subquery silently matched the wrong column.** `${people.id}` renders as a bare
+`"id"` — and inside `FROM attendance a` that resolves to `attendance.id`. A valid column, so Postgres
+accepted it happily and every lifetime count came back 0. Fixed by writing the outer reference out in
+full as `"people"."id"`.
+
+The second is the more dangerous shape: no error, no warning, just quietly wrong numbers. Worth a
+look wherever a correlated subquery references an outer table.
+
+### One adversarial test flipped — and that is an improvement
+
+T18 (`/events/{id}/stream` → 404) went from pass to fail. It was passing because the route did not
+exist, so *everything* 404'd. Now `/events/*` requires auth and correctly answers 401. The test wants
+"404 for another tenant's event", which needs a real token the fixtures cannot mint yet.
+
+It was a false positive. It has stopped lying.
+
+---
+
 ## Where things stand
 
 | | |
 |---|---|
 | Unit + structural tests | **68 passing** |
-| Integration tests (real Postgres) | **16 passing** |
-| Adversarial tenancy tests | **11 / 50** — the rest need Phase 2+ endpoints |
-| Migrations | 7, replayed from empty and verified |
-| API operations | 16 |
+| Integration tests (real Postgres) | **37 passing** |
+| Adversarial tenancy tests | **10 / 50** — the rest need Phase 2+ endpoints |
+| Migrations | 8, replayed from empty and verified |
+| API operations | 23 |
 
 **Reading the adversarial number correctly:** those 39 failures are the plan working. The tests were
 written before the code they guard, so they go green as phases land. A green adversarial suite today
@@ -315,7 +368,7 @@ would mean the tests were too weak.
 | −1 · Revoke public DB access | ✅ Done, verified |
 | 0 · Foundations | ✅ Done |
 | 1 · Identity + tenancy | 🟡 Endpoints done; RLS cutover, data migration, client rewiring open |
-| 2 · Events + people reads | 🟡 deriveStatus done; EventService/PeopleService and endpoints next |
+| 2 · Events + people reads | ✅ Done (client rewiring deferred to Phase 3) |
 | 3 · Writes, passes, email, delete local-first | ⬜ |
 | 4 · Domain events + live kiosk | ⬜ |
 | 5 · Recurrence | ⬜ |

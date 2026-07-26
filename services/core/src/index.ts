@@ -1,200 +1,82 @@
-import { Hono } from "hono";
-import { cors } from "hono/cors";
-import { logger } from "hono/logger";
-import { swaggerUI } from "@hono/swagger-ui";
-import usersRoutes from "./routes/users";
-import organizationsRoutes from "./routes/organizations";
-import orgMembershipsRoutes from "./routes/org-memberships";
-import eventsRoutes from "./routes/events";
-import eventMembersRoutes from "./routes/event-members";
-import attendanceRoutes from "./routes/attendance";
-import loyaltyRoutes from "./routes/loyalty";
-import analyticsRoutes from "./routes/analytics";
-import publicRoutes from "./routes/public";
-import { createMiddleware } from "hono/factory";
-import { HTTPException } from "hono/http-exception";
+/**
+ * CredoPass API.
+ *
+ * One surface: `/api/v1/core`. The old `/api/core` CRUD layer is gone, along
+ * with the tables it served — `users`, `event_members`, `loyalty` — and the
+ * TanStack DB collections that cached them in the browser.
+ *
+ * Everything the product can do is reachable here with curl, and the OpenAPI
+ * document at /api/v1/core/openapi.json is the contract.
+ */
+
+import { Hono } from 'hono';
+import { cors } from 'hono/cors';
+import { logger } from 'hono/logger';
 import { isDevelopment } from 'std-env';
-import { createAuthMiddleware } from "./middleware/auth";
-import { v1, V1_BASE_PATH } from "./api/v1/core";
-import { assertRouteRegistryComplete, getRouteDeclarations } from "./http/route-registry";
-import { reportSchemaAtBoot } from "./db/schema-check";
+import { v1, V1_BASE_PATH } from './api/v1/core';
+import { assertRouteRegistryComplete, getRouteDeclarations } from './http/route-registry';
+import { reportSchemaAtBoot } from './db/schema-check';
 
-const THROTTLE_DELAY = process.env.THROTTLE_DELAY ? Number(process.env.THROTTLE_DELAY) : 0;
-
-// Create Hono app
 export const app = new Hono();
 
-// Export API Base URL for testing and client usage consistency
-export const API_BASE_PATH = "/api/core";
+app.use('*', logger());
 
-// Middleware
-app.use("*", logger());
-
-// CORS configuration
 if (isDevelopment) {
-    console.log("⚙️  CORS: Development mode - allowing all origins");
-    // Development: Allow all origins
-    app.use("*", cors());
-
-    // Apply throttle to API routes if THROTTLE_DELAY env var is set in dev mode
-    if (THROTTLE_DELAY > 0) {
-        // Throttle middleware for testing purposes
-        const throttleMiddleware = (delayMs = 500) => createMiddleware(async (c, next) => {
-            await new Promise(resolve => setTimeout(resolve, delayMs));
-            await next();
-        });
-
-        app.use(`${API_BASE_PATH}/*`, throttleMiddleware(THROTTLE_DELAY));
-    }
+  console.log('⚙️  CORS: development — all origins allowed');
+  app.use('*', cors());
 } else {
-    console.log("⚙️  CORS: Production mode - restricting origins");
-    // Production: Restrict origins
-    app.use("*", cors({
-        origin: [
-            "https://app.credopass.com",
-            "https://credopass.com"
-        ],
-        credentials: true,
-    }));
+  console.log('⚙️  CORS: production — allow-list only');
+  app.use(
+    '*',
+    cors({
+      // `app.credopass.com` is the product. `credopass.com` is the marketing
+      // site and does not call the API.
+      origin: ['https://app.credopass.com'],
+      credentials: true,
+    })
+  );
 }
 
-// Swagger UI documentation
-app.get(`${API_BASE_PATH}/docs`, swaggerUI({
-    url: `${API_BASE_PATH}/openapi.json`,
-}));
-
-// OpenAPI spec endpoint (you can expand this with your full API spec)
-app.get(`${API_BASE_PATH}/openapi.json`, (c) => c.json({
-    openapi: "3.0.0",
-    info: {
-        title: "CredoPass Core API",
-        version: "2.0.0",
-        description: "Multi-tenant attendance tracking platform API",
-    },
-    servers: [
-        { url: isDevelopment ? "http://localhost:3000" : "https://api.credopass.com" }
-    ],
-    paths: {
-        [`${API_BASE_PATH}/health`]: {
-            get: {
-                summary: "Health check",
-                responses: { "200": { description: "Service is healthy" } }
-            }
-        },
-        // Organizations (multi-tenancy)
-        [`${API_BASE_PATH}/organizations`]: {
-            get: { summary: "List organizations", tags: ["Organizations"] },
-            post: { summary: "Create organization", tags: ["Organizations"] }
-        },
-        [`${API_BASE_PATH}/org-memberships`]: {
-            get: { summary: "List org memberships", tags: ["Organizations"] },
-            post: { summary: "Invite user to org", tags: ["Organizations"] }
-        },
-        // Users
-        [`${API_BASE_PATH}/users`]: {
-            get: { summary: "Get users", tags: ["Users"] },
-            post: { summary: "Create user", tags: ["Users"] }
-        },
-        // Events
-        [`${API_BASE_PATH}/events`]: {
-            get: { summary: "Get events (filter by organizationId)", tags: ["Events"] },
-            post: { summary: "Create event", tags: ["Events"] }
-        },
-        [`${API_BASE_PATH}/event-members`]: {
-            get: { summary: "List event members", tags: ["Events"] },
-            post: { summary: "Add member to event", tags: ["Events"] }
-        },
-        // Attendance
-        [`${API_BASE_PATH}/attendance`]: {
-            get: { summary: "Get attendance records", tags: ["Attendance"] },
-            post: { summary: "Record attendance", tags: ["Attendance"] }
-        },
-        // Loyalty
-        [`${API_BASE_PATH}/loyalty`]: {
-            get: { summary: "Get loyalty data", tags: ["Loyalty"] },
-            post: { summary: "Update loyalty", tags: ["Loyalty"] }
-        },
-        // Analytics (fabricated)
-        [`${API_BASE_PATH}/analytics`]: {
-            get: { summary: "Get analytics for a scope + range (scope=all|<eventId>, range=week|month|year)", tags: ["Analytics"] }
-        }
-    }
-}));
-
-// Health check
-app.get(`${API_BASE_PATH}/health`, (c) => c.json({ status: "ok", timestamp: Date.now() }));
-
-// ---------------------------------------------------------------------------
-// /api/v1 — the API-first surface (docs/API-FIRST-REBUILD.md).
-//
-// Mounted BEFORE the /api/core auth middleware so the two surfaces are fully
-// independent: v1 brings its own auth, its own error envelope and its own
-// generated contract. /api/core is untouched and keeps serving today's web app.
-// ---------------------------------------------------------------------------
 app.route(V1_BASE_PATH, v1);
 
-// Public, token-optional surface for the attendee-facing event page. Mounted
-// BEFORE the auth middleware so a shared event link/QR works with no JWT. It is
-// deliberately narrow: read one event, or register/check-in for that one event.
-app.route(`${API_BASE_PATH}/public`, publicRoutes);
+app.get('/', (c) =>
+  c.json({
+    name: 'CredoPass API',
+    docs: `${V1_BASE_PATH}/docs`,
+    openapi: `${V1_BASE_PATH}/openapi.json`,
+  })
+);
 
-// Authentication: every API route below requires a verified Supabase JWT
-app.use(`${API_BASE_PATH}/*`, createAuthMiddleware());
-
-// API routes - Multi-tenancy
-app.route(`${API_BASE_PATH}/organizations`, organizationsRoutes);
-app.route(`${API_BASE_PATH}/org-memberships`, orgMembershipsRoutes);
-
-// API routes - Core resources
-app.route(`${API_BASE_PATH}/users`, usersRoutes);
-app.route(`${API_BASE_PATH}/events`, eventsRoutes);
-app.route(`${API_BASE_PATH}/event-members`, eventMembersRoutes);
-app.route(`${API_BASE_PATH}/attendance`, attendanceRoutes);
-app.route(`${API_BASE_PATH}/loyalty`, loyaltyRoutes);
-
-// Analytics (fabricated for now; see services/core/src/analytics)
-app.route(`${API_BASE_PATH}/analytics`, analyticsRoutes);
-
-
-// 404 handler
-app.notFound((c) => c.json({ error: "Not found" }, 404));
-
-// Error handler
-app.onError((err, c) => {
-    // Auth failures (and other HTTP exceptions) keep their status, e.g. 401
-    if (err instanceof HTTPException) {
-        return err.getResponse();
-    }
-    console.error("Server error:", err);
-    return c.json({ error: "Internal server error" }, 500);
-});
+app.notFound((c) =>
+  c.json(
+    {
+      type: 'https://app.credopass.com/problems/not_found',
+      title: 'Not Found',
+      status: 404,
+      code: 'not_found',
+      detail: `Nothing at ${c.req.path}. The API is served under ${V1_BASE_PATH}.`,
+    },
+    404,
+    { 'Content-Type': 'application/problem+json' }
+  )
+);
 
 // ---------------------------------------------------------------------------
-// Boot assertion (§6.4). A route that failed to declare its scope or permission
-// crashes the service HERE, before it can serve a single request. This is the
-// mechanism that stops a forgotten declaration from becoming a silent leak —
-// test T25 asserts it fires.
+// Boot assertions (§6.4). A route that failed to declare its scope or
+// permission crashes the service HERE, before it serves a single request.
 // ---------------------------------------------------------------------------
 assertRouteRegistryComplete();
 console.log(`🔒 Route registry: ${getRouteDeclarations().length} route(s), all declared`);
 
-// Non-fatal: report a schema/DATABASE_URL mismatch loudly at boot rather than
-// as an opaque 500 on every authenticated request.
+// Non-fatal: a schema/DATABASE_URL mismatch is reported loudly at boot rather
+// than as an opaque 500 on every request.
 void reportSchemaAtBoot();
 
-// Start server
 const port = Number(process.env.PORT) || 3000;
 
-console.log(`\n🔧 [server.ts] Attempting to start server on port ${port}`);
-console.log(`   PORT env: ${process.env.PORT || 'not set (using default 3000)'}`);
-console.log(`📦 Mode: ${isDevelopment ? "development" : "production"}`);
-// Presence-only env check (never log values) so a misconfigured deploy is obvious.
+console.log(`📦 Mode: ${isDevelopment ? 'development' : 'production'}`);
 const envStatus = (name: string) => `${name}=${process.env[name] ? '✓' : '✗ missing'}`;
 console.log(`🔑 Env: ${['SUPABASE_URL', 'DATABASE_URL'].map(envStatus).join('  ')}`);
+console.log(`🚀 http://localhost:${port}${V1_BASE_PATH}/docs`);
 
-export default {
-    port,
-    fetch: app.fetch,
-};
-
-console.log(`🚀 [server.ts] Server successfully started on http://localhost:${port}`);
+export default { port, fetch: app.fetch };

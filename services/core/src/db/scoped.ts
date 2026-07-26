@@ -1,5 +1,5 @@
 /**
- * The tenant-scoped repository layer. docs/API-FIRST-REBUILD.md §7.1.
+ * The tenant-scoped repository layer. docs/API-FIRST-REBUILD.md §7.1
  *
  * Every tenant-scoped table is reachable ONLY through this function, and this
  * function takes a `TenantContext` it cannot fabricate. That makes "the tenant
@@ -8,42 +8,49 @@
  *
  * Layer 1 of two. RLS (§7.2) re-checks the same predicate independently inside
  * Postgres, so a bug here does not become a leak on its own.
- *
- * Unused in Phase 0 by design — it lands with the tables it will guard, and
- * Phase 1 rewires the routes onto it. The tables below are the CURRENT schema;
- * Phase 1 replaces `users` with `accounts` + `people` and adds the rest.
  */
 
 import { and, eq, isNull, type SQL } from 'drizzle-orm';
 import {
   attendance,
+  eventGrants,
   events,
-  eventMembers,
-  loyalty,
+  invitations,
+  orgDomains,
+  orgIdentityProviders,
   orgMemberships,
   organizations,
+  passes,
+  people,
 } from '@credopass/lib/schemas/tables';
 import type { TenantContext } from '../tenancy/context';
 import type { Database } from './client';
 
 /**
- * Tables carrying their own `organizationId`. `attendance` keeps it
- * denormalised deliberately — it turns each RLS policy into a single column
- * comparison instead of a join, which matters when the policy runs per row.
+ * Tables carrying their own `organization_id`.
+ *
+ * `attendance`, `event_grants` and `passes` keep it denormalised deliberately:
+ * it turns each RLS policy into a single column comparison instead of a join,
+ * which matters when the policy runs per row.
  */
 const ORG_SCOPED = {
   events,
   attendance,
+  people,
+  passes,
+  eventGrants,
+  invitations,
   orgMemberships,
-  loyalty,
+  orgIdentityProviders,
+  orgDomains,
 } as const;
 
 export type ScopedTable = keyof typeof ORG_SCOPED;
 
 /**
- * Build the tenant predicate for a table. Exported so services can compose it
- * into larger queries without hand-writing `eq(x.organizationId, ...)` — which
- * is the line that gets forgotten.
+ * The tenant predicate for a table. Exported so services can compose it into
+ * larger queries without hand-writing `eq(x.organizationId, …)` — which is the
+ * line that gets forgotten.
  */
 export function tenantWhere(ctx: TenantContext, table: ScopedTable): SQL {
   return eq(ORG_SCOPED[table].organizationId, ctx.organizationId);
@@ -51,43 +58,36 @@ export function tenantWhere(ctx: TenantContext, table: ScopedTable): SQL {
 
 /**
  * The scoped accessor. Each method returns a query already constrained to the
- * caller's organization; there is no way to obtain an unconstrained one from
- * here.
+ * caller's organisation; there is no way to obtain an unconstrained one here.
  */
 export function scoped(db: Database, ctx: TenantContext) {
+  const org = ctx.organizationId;
+
   return {
     events: () =>
-      db.select().from(events).where(
-        and(eq(events.organizationId, ctx.organizationId), isNull(events.deletedAt))
-      ),
+      db.select().from(events).where(and(eq(events.organizationId, org), isNull(events.deletedAt))),
+
+    people: () =>
+      db.select().from(people).where(and(eq(people.organizationId, org), isNull(people.deletedAt))),
 
     attendance: () =>
-      db.select().from(attendance).where(eq(attendance.organizationId, ctx.organizationId)),
+      db.select().from(attendance).where(eq(attendance.organizationId, org)),
 
-    orgMemberships: () =>
-      db.select().from(orgMemberships).where(eq(orgMemberships.organizationId, ctx.organizationId)),
+    passes: () => db.select().from(passes).where(eq(passes.organizationId, org)),
 
-    loyalty: () =>
-      db.select().from(loyalty).where(eq(loyalty.organizationId, ctx.organizationId)),
+    eventGrants: () => db.select().from(eventGrants).where(eq(eventGrants.organizationId, org)),
 
-    /**
-     * The organization itself — by id, so the caller can only ever read the one
-     * they are scoped to.
-     */
-    organization: () =>
-      db.select().from(organizations).where(eq(organizations.id, ctx.organizationId)),
+    invitations: () => db.select().from(invitations).where(eq(invitations.organizationId, org)),
 
-    /**
-     * `event_members` has no `organizationId` column today, so it is scoped
-     * through its event. Phase 1 replaces it with `event_grants`, which carries
-     * a denormalised `organization_id` precisely so this join goes away (§3.2).
-     */
-    eventMembers: () =>
-      db
-        .select()
-        .from(eventMembers)
-        .innerJoin(events, eq(eventMembers.eventId, events.id))
-        .where(eq(events.organizationId, ctx.organizationId)),
+    members: () => db.select().from(orgMemberships).where(eq(orgMemberships.organizationId, org)),
+
+    identityProviders: () =>
+      db.select().from(orgIdentityProviders).where(eq(orgIdentityProviders.organizationId, org)),
+
+    domains: () => db.select().from(orgDomains).where(eq(orgDomains.organizationId, org)),
+
+    /** The organisation itself — by id, so only the one in scope. */
+    organization: () => db.select().from(organizations).where(eq(organizations.id, org)),
   };
 }
 

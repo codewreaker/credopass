@@ -32,6 +32,13 @@
         "cwd": "{projectRoot}"
       }
     },
+    "migrate:people": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun run scripts/migrate-users-to-people.ts",
+        "cwd": "{projectRoot}"
+      }
+    },
     "seed": {
       "executor": "nx:run-commands",
       "options": {

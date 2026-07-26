@@ -265,9 +265,10 @@ describe('deleteOrganization', () => {
     await db.insert(events).values({
       organizationId: org.id,
       name: 'A meeting',
-      startTime: new Date(),
-      endTime: new Date(Date.now() + 3_600_000),
-      location: 'Hall',
+      startAt: new Date(),
+      endAt: new Date(Date.now() + 3_600_000),
+      locationText: 'Hall',
+      shortCode: crypto.randomUUID().slice(0, 12),
     });
 
     await expect(Membership.deleteOrganization(db, org.id)).rejects.toThrow(/still has 1 event/);
