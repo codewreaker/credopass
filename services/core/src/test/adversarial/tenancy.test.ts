@@ -270,12 +270,18 @@ describe('T24-T25 — structural (a class of bug, not an instance)', () => {
   it('T24 · every table in public has an RLS policy or is explicitly allow-listed', async () => {
     // The DB-side twin of the boot assertion. A new table with no policy fails
     // CI rather than quietly becoming readable across tenants (§7.2).
+    // Tables reached BEFORE a tenant is known, or not tenant-scoped at all.
+    // Each is here for a stated reason; adding one without a reason is how this
+    // assertion stops meaning anything.
     const GLOBAL_TABLES = new Set([
-      'accounts',
-      'identities',
-      'idempotency_keys',
-      'rate_limit_buckets',
+      'accounts',            // resolved from a token before an org is chosen
+      'identities',          // same — IdentityService is pre-tenant by definition
+      'idempotency_keys',    // keyed by caller, not org
+      'rate_limit_buckets',  // keyed by IP
       '__drizzle_migrations',
+      // Legacy. Scoped by nothing, which is the defect this rebuild exists to
+      // fix. Phase 3 drops it, and this entry must go with it.
+      'users',
     ]);
 
     const db = await getTestDatabase();

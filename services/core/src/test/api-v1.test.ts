@@ -4,7 +4,7 @@
  */
 
 import { describe, expect, it } from 'bun:test';
-import { v1, V1_BASE_PATH } from '../api/v1';
+import { v1, V1_BASE_PATH } from '../api/v1/core';
 import { expectMatchesContract, openApiDocument } from './contract';
 import { getRouteDeclarations } from '../http/route-registry';
 import { PROBLEM_CONTENT_TYPE } from '../http/problem';
@@ -32,6 +32,21 @@ describe('ops endpoints (§5.11)', () => {
     const res = await v1.request('/docs');
     expect(res.status).toBe(200);
     expect(res.headers.get('content-type')).toContain('text/html');
+  });
+
+  // Regression: mounting an authenticated sub-app at '/' with a `use('*')`
+  // wildcard put auth on the ops endpoints. A 401 from /health takes the
+  // service out of the load balancer, so this is worth an explicit test.
+  it('ops and docs endpoints stay reachable with NO Authorization header', async () => {
+    for (const path of ['/health', '/openapi.json', '/docs']) {
+      const res = await v1.request(path);
+      expect(res.status, `${path} must not require a token`).not.toBe(401);
+    }
+  });
+
+  it('/me DOES require a token', async () => {
+    const res = await v1.request('/me');
+    expect(res.status).toBe(401);
   });
 });
 

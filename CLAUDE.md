@@ -16,7 +16,9 @@ The repo is being rebuilt API-first. The plan is [`docs/API-FIRST-REBUILD.md`](d
 | Surface | Status | Use for |
 |---|---|---|
 | `/api/core/*` | The old one. Still serves the live web app. Untouched. | Nothing new. It gets deleted in Phase 3. |
-| `/api/v1/*` | The new one. Skeleton only so far. | All new endpoints. |
+| `/api/v1/core/*` | The new one. | All new endpoints. |
+
+The `/core` suffix is there because more services will sit beside it later (`/api/v1/billing`, …). Code lives in `services/core/src/api/v1/core/`.
 
 Phase 0 is done (skeleton, error format, route registry, tenancy types, tests). **Phase 1 is next** — identity and tenancy.
 
@@ -110,17 +112,24 @@ nx run web:typecheck
 nx affected -t lint test      # only what changed
 ```
 
-Rebuild-specific:
+Rebuild-specific — everything is an nx target, don't hand-roll shell commands:
 
 ```bash
+nx run coreservice:setup             # one-command fresh-clone setup
+nx run coreservice:verify            # lint + typecheck + test (run before saying "done")
 nx run coreservice:test              # unit + structural — no DB, must always pass
-nx run coreservice:test:adversarial  # the 47 tenancy tests — needs Docker, red until Phase 1
+nx run coreservice:test:adversarial  # 47 tenancy tests — starts its own DB; red until Phase 1
 nx run coreservice:typecheck
-nx run coreservice:verify:public-access   # is the DB publicly readable? exits 1 if yes
 
-# Supporting containers
-docker compose -f docker/docker-compose.dev.yml up -d                    # postgres + MinIO
-docker compose -f docker/docker-compose.dev.yml --profile test up -d     # throwaway test DB
+nx run coreservice:dev:up            # postgres + MinIO
+nx run coreservice:dev:down          # stop everything
+nx run coreservice:dev:logs
+
+nx run coreservice:docs              # open Scalar (docs + API client)
+nx run coreservice:token             # mint a JWT for the Scalar auth box
+nx run coreservice:openapi:export    # write openapi.json for desktop clients
+
+nx run coreservice:verify:public-access   # is the DB publicly readable? exits 1 if yes
 ```
 
 Verify a change compiles with `nx run <project>:typecheck` / `nx run <project>:build`. The web app has no top-level `typecheck` script that always passes standalone — prefer `nx run web:build` or `nx run website:build` to confirm.

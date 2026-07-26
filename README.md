@@ -188,29 +188,68 @@ credopass/
 
 ## Getting started
 
-**Prerequisites:** [Bun](https://bun.sh) ≥ 1.3, Docker (for Postgres).
+**Prerequisites:** [Bun](https://bun.sh) ≥ 1.3 and Docker Desktop (running).
 
 ```bash
-bun install                       # install the workspace
-bun run docker:dev                # start PostgreSQL 16 in Docker
-nx run coreservice:migrate        # create the schema
-nx run coreservice:seed           # (optional) sample data
-
-# then, in separate terminals:
-nx run coreservice:start          # API  → http://localhost:8080
-nx run web:serve                  # web  → http://localhost:5000
+bun install
+nx run coreservice:setup
 ```
 
-`.env` (repo root):
+`setup` does everything: checks your tools, creates `services/core/.env` from the template, starts Postgres + MinIO + the throwaway test database, applies migrations locally, and generates `openapi.json`. It never touches a remote database and never overwrites an existing `.env`. Re-run it any time.
+
+Then fill in two values in `services/core/.env`:
 
 ```env
-DATABASE_URL=postgresql://postgres:Ax!rtrysoph123@localhost:5432/credopass_db
 SUPABASE_URL=https://<your-ref>.supabase.co
-# local-dev only — skip JWT verification if you don't have Supabase wired up:
-# AUTH_DISABLED=true
+SUPABASE_ANON_KEY=<the anon key>
 ```
 
-For the web app to reach a local API, set `VITE_API_URL=http://localhost:8080/api/core`.
+And run it:
+
+```bash
+bun start        # web + API together
+```
+
+| What | Where |
+|---|---|
+| Web app | http://localhost:5000 (AirPlay often takes 5000 — check the terminal, it's usually 5001) |
+| API (new) | http://localhost:8080/api/v1/core |
+| API (old) | http://localhost:8080/api/core |
+| **API docs + client** | **http://localhost:8080/api/v1/core/docs** |
+
+For the web app to reach a local API, set `VITE_API_URL=http://localhost:8080/api/core` in `apps/web/.env`.
+
+### Exploring the API
+
+The API is the product, so there's a full client built into the docs page:
+
+```bash
+nx run coreservice:docs     # opens Scalar — browse endpoints and send real requests
+nx run coreservice:token    # mint a JWT, paste it into Scalar's auth box
+```
+
+Every endpoint has a "Test Request" panel that hits your local server. Your token persists across reloads.
+
+Prefer a desktop app? Export the spec and import it into [Scalar](https://scalar.com/download), Postman, or Insomnia:
+
+```bash
+nx run coreservice:openapi:export     # writes services/core/openapi.json
+```
+
+### Checking your work
+
+```bash
+nx run coreservice:verify             # lint + typecheck + unit tests — all must pass
+nx run coreservice:test:adversarial   # tenancy suite (starts its own database)
+```
+
+The adversarial suite is **expected to fail** right now — it's 47 tests written ahead of the code they guard, and they go green as the [API-first rebuild](docs/API-FIRST-REBUILD.md) lands. Everything else must be green.
+
+### Stopping
+
+```bash
+nx run coreservice:dev:down    # stops all containers
+```
 
 ## Everyday commands
 

@@ -15,7 +15,7 @@ import { createMiddleware } from "hono/factory";
 import { HTTPException } from "hono/http-exception";
 import { isDevelopment } from 'std-env';
 import { createAuthMiddleware } from "./middleware/auth";
-import { v1, V1_BASE_PATH } from "./api/v1";
+import { v1, V1_BASE_PATH } from "./api/v1/core";
 import { assertRouteRegistryComplete, getRouteDeclarations } from "./http/route-registry";
 
 const THROTTLE_DELAY = process.env.THROTTLE_DELAY ? Number(process.env.THROTTLE_DELAY) : 0;

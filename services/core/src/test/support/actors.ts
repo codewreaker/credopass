@@ -11,7 +11,7 @@
  * make it pass early.
  */
 
-import { v1, V1_BASE_PATH } from '../../api/v1';
+import { v1, V1_BASE_PATH } from '../../api/v1/core';
 import { expectMatchesContract } from '../contract';
 
 export interface Actor {

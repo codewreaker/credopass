@@ -19,7 +19,7 @@ import { PERMISSIONS, ROLE_PERMISSIONS } from '../authz/permissions';
 
 // Importing the API registers its routes as a side effect. Snapshot them at
 // module load — BEFORE any beforeEach clears the registry, which is global.
-import '../api/v1';
+import '../api/v1/core';
 const LIVE_ROUTES = getRouteDeclarations();
 
 describe('route registry — the boot assertion (T25)', () => {

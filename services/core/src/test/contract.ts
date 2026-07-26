@@ -14,7 +14,7 @@
 
 import Ajv2020 from 'ajv/dist/2020';
 import addFormats from 'ajv-formats';
-import { v1, V1_BASE_PATH } from '../api/v1';
+import { v1, V1_BASE_PATH } from '../api/v1/core';
 
 let documentPromise: Promise<any> | null = null;
 

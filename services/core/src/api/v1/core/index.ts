@@ -12,11 +12,12 @@
 
 import { OpenAPIHono, z } from '@hono/zod-openapi';
 import { Scalar } from '@scalar/hono-api-reference';
-import { defineRoute, problemResponse } from '../../http/define-route';
-import { ProblemError, problem, PROBLEM_CONTENT_TYPE } from '../../http/problem';
-import { isDBConnected } from '../../db/client';
+import { defineRoute, problemResponse } from '../../../http/define-route';
+import { ProblemError, problem, PROBLEM_CONTENT_TYPE } from '../../../http/problem';
+import { isDBConnected } from '../../../db/client';
+import { me } from './me';
 
-export const V1_BASE_PATH = '/api/v1';
+export const V1_BASE_PATH = '/api/v1/core';
 
 const VERSION = process.env.npm_package_version ?? '0.0.1';
 const COMMIT = process.env.GIT_COMMIT ?? 'unknown';
@@ -116,10 +117,29 @@ v1.openapi(
 );
 
 // ---------------------------------------------------------------------------
+// Identity — the account scope (§5.1)
+// ---------------------------------------------------------------------------
+v1.route('/', me);
+
+// ---------------------------------------------------------------------------
 // The contract itself
 // ---------------------------------------------------------------------------
 
 export const OPENAPI_DOC_PATH = `${V1_BASE_PATH}/openapi.json`;
+
+/**
+ * Declares HOW to authenticate. Which routes require it is decided per-route by
+ * `defineRoute`'s scope, not here — this only gives the docs page a token box
+ * and tells any generated client what header to send.
+ */
+v1.openAPIRegistry.registerComponent('securitySchemes', 'bearerAuth', {
+  type: 'http',
+  scheme: 'bearer',
+  bearerFormat: 'JWT',
+  description:
+    'Supabase-issued JWT, or a kiosk device token. Get one with: ' +
+    'nx run coreservice:token',
+});
 
 v1.doc31('/openapi.json', (c) => ({
   openapi: '3.1.0',
@@ -133,11 +153,28 @@ v1.doc31('/openapi.json', (c) => ({
   servers: [{ url: new URL(V1_BASE_PATH, c.req.url).toString().replace(/\/$/, '') }],
 }));
 
+/**
+ * Scalar — reference docs AND the API client, on one page.
+ *
+ * Every endpoint has a "Test Request" panel that sends a real request to this
+ * server, so you can exercise the API without Postman, curl or the web app.
+ * `authentication` pre-fills the bearer token box, so a token pasted once is
+ * reused for every request in the session.
+ *
+ * For the standalone desktop client, import the spec URL printed by
+ * `nx run coreservice:openapi:export`.
+ */
 v1.get(
   '/docs',
   Scalar({
     url: OPENAPI_DOC_PATH,
-    pageTitle: 'CredoPass API',
+    pageTitle: 'CredoPass API — docs & client',
+    // Persist what you type between reloads; without this every page refresh
+    // loses the token and the request bodies you were mid-way through.
+    persistAuth: true,
+    hideClientButton: false,
+    defaultHttpClient: { targetKey: 'shell', clientKey: 'curl' },
+    authentication: { preferredSecurityScheme: 'bearerAuth' },
   })
 );
 

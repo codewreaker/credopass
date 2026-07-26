@@ -70,7 +70,11 @@
     "test:adversarial": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "bun test src/test/adversarial",
+        "commands": [
+          "docker compose -f ../../docker/docker-compose.dev.yml --profile test up -d --wait credopass-postgres-test",
+          "TEST_DATABASE_URL=${TEST_DATABASE_URL:-postgresql://postgres:postgres@localhost:55432/credopass_test} bun test src/test/adversarial"
+        ],
+        "parallel": false,
         "cwd": "{projectRoot}"
       }
     },
@@ -85,6 +89,71 @@
       "executor": "nx:run-commands",
       "options": {
         "command": "./sql/verify-public-access.sh",
+        "cwd": "{projectRoot}"
+      }
+    },
+
+    "dev:up": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "docker compose -f ../../docker/docker-compose.dev.yml up -d --wait credopass-postgres credopass-minio credopass-minio-init",
+        "cwd": "{projectRoot}"
+      }
+    },
+    "dev:down": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "docker compose -f ../../docker/docker-compose.dev.yml --profile test --profile services down",
+        "cwd": "{projectRoot}"
+      }
+    },
+    "dev:logs": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "docker compose -f ../../docker/docker-compose.dev.yml logs -f",
+        "cwd": "{projectRoot}"
+      }
+    },
+
+    "openapi:export": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun run scripts/export-openapi.ts",
+        "cwd": "{projectRoot}"
+      }
+    },
+    "docs": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "open http://localhost:8080/api/v1/core/docs || echo 'Open http://localhost:8080/api/v1/core/docs'",
+        "cwd": "{projectRoot}"
+      }
+    },
+    "token": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun run scripts/dev-token.ts",
+        "cwd": "{projectRoot}"
+      }
+    },
+
+    "verify": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "nx run coreservice:lint",
+          "nx run coreservice:typecheck",
+          "nx run coreservice:test"
+        ],
+        "parallel": false
+      }
+    },
+    "setup": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "bun run scripts/setup.ts"
+        ],
         "cwd": "{projectRoot}"
       }
     }
