@@ -1,12 +1,12 @@
 import { useState } from 'react'
-import { ArrowLeft, CheckCircle2, Star, BarChart3, Users, Shield, Loader2, Sparkles } from 'lucide-react'
+import { ArrowLeft, CheckCircle2, History, BarChart3, Users, Shield, Loader2, Sparkles } from 'lucide-react'
 import { Button } from '@credopass/ui/components/button'
 import { Input } from '@credopass/ui/components/input'
 import { useNavigate } from '@tanstack/react-router'
 import { AuthScreen } from '../../containers/AuthScreen'
 
 const UPGRADE_BENEFITS = [
-  { icon: Star,      text: 'Earn loyalty points at every event' },
+  { icon: History,   text: 'Keep every check-in on your record' },
   { icon: BarChart3, text: 'Full attendance history across all events' },
   { icon: Users,     text: 'Member profile visible to organizers' },
   { icon: Shield,    text: 'Secure account — your data, always' },
@@ -22,12 +22,12 @@ const MembershipCardPreview = ({ email }: { email: string }) => (
     <p className="text-lg font-semibold tracking-tight truncate">{email || 'you@example.com'}</p>
     <div className="flex items-center justify-between mt-4">
       <div>
-        <p className="text-[9px] font-bold uppercase tracking-[0.14em] opacity-60">Points</p>
-        <p className="text-xl font-bold tabular-nums leading-tight">0 → ∞</p>
+        <p className="text-[9px] font-bold uppercase tracking-[0.14em] opacity-60">Events</p>
+        <p className="text-xl font-bold tabular-nums leading-tight">0</p>
       </div>
       <div className="text-right">
-        <p className="text-[9px] font-bold uppercase tracking-[0.14em] opacity-60">Tier</p>
-        <p className="text-xl font-bold leading-tight">Bronze</p>
+        <p className="text-[9px] font-bold uppercase tracking-[0.14em] opacity-60">Since</p>
+        <p className="text-xl font-bold leading-tight">Today</p>
       </div>
     </div>
   </div>
@@ -79,7 +79,7 @@ export default function UpgradePage() {
   return (
     <AuthScreen
       headline={<>Keep everything<br />you&rsquo;ve earned.</>}
-      subcopy="You’re in guest mode. Create a free account to save your check-ins and start climbing the loyalty tiers."
+      subcopy="You’re in guest mode. Create a free account to save your check-ins and keep your attendance history."
       features={UPGRADE_BENEFITS}
       billboardCard={<MembershipCardPreview email={email} />}
       billboardMaskSrc="/empty-state-two.svg"

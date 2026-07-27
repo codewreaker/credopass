@@ -1,24 +1,11 @@
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
-import { eq, useLiveQuery } from '@tanstack/react-db';
-import { getCollections } from '@credopass/api-client/collections';
-import type { EventType, UserType } from '@credopass/lib/schemas';
+import { useEvent, usePerson } from '@credopass/api-client';
 import { useToolbarContext } from '@credopass/lib/hooks';
 import { Button } from '@credopass/ui/components/button';
 import { ArrowLeft } from 'lucide-react';
 import { MemberComposer } from './member-composer';
-import { userToFormValues } from './use-member-form';
-
-/** Looks up the event a member is being scoped to, if there is one. */
-function useScopedEvent(eventId?: string) {
-  const { events: eventCollection } = getCollections();
-  const { data } = useLiveQuery((q) =>
-    q
-      .from({ eventCollection })
-      .where(({ eventCollection }) => eq(eventCollection.id, eventId ?? ''))
-      .findOne()
-  );
-  return eventId ? ((data as EventType | undefined) ?? null) : null;
-}
+import { personToFormValues } from './use-member-form';
+import { errorMessage, isNotFound } from '../../../lib/errors';
 
 const Loading = () => (
   <div className="flex min-h-40 items-center justify-center">
@@ -31,12 +18,12 @@ export function CreateMemberPage() {
   // Composer owns its own submit CTA; nothing for the app toolbar to add.
   useToolbarContext({ action: null, search: { enabled: false, placeholder: '' } });
   const { eventId } = useSearch({ from: '/attendees/new' });
-  const event = useScopedEvent(eventId);
+  const { data: event } = useEvent(eventId);
 
-  return <MemberComposer mode="create" eventId={eventId} event={event} />;
+  return <MemberComposer mode="create" eventId={eventId} event={event ?? null} />;
 }
 
-/** `/attendees/$userId/edit` — the same composer, hydrated from the collection. */
+/** `/attendees/$userId/edit` — the same composer, hydrated from `GET /people/{id}`. */
 export function EditMemberPage() {
   // Route id keeps the `_` from `$userId_.edit.tsx`, which un-nests this page.
   const { userId } = useParams({ from: '/attendees/$userId_/edit' });
@@ -44,30 +31,21 @@ export function EditMemberPage() {
   const navigate = useNavigate();
   useToolbarContext({ action: null, search: { enabled: false, placeholder: '' } });
 
-  const { users: userCollection, eventMembers: eventMemberCollection } = getCollections();
-  const { data: user, isLoading } = useLiveQuery((q) =>
-    q
-      .from({ userCollection })
-      .where(({ userCollection }) => eq(userCollection.id, userId))
-      .findOne()
-  );
-
-  const { data: memberships } = useLiveQuery((q) =>
-    q
-      .from({ eventMemberCollection })
-      .where(({ eventMemberCollection }) => eq(eventMemberCollection.userId, userId))
-  );
-
-  const event = useScopedEvent(eventId);
+  const { data: person, isLoading, error } = usePerson(userId);
+  const { data: event } = useEvent(eventId);
 
   if (isLoading) return <Loading />;
 
-  if (!user) {
+  if (!person) {
     return (
       <div className="mx-auto flex w-full max-w-140 flex-col items-center gap-3 py-16 text-center">
-        <h2 className="text-lg font-semibold">Attendee not found</h2>
+        <h2 className="text-lg font-semibold">
+          {isNotFound(error) ? 'Attendee not found' : 'Could not load this attendee'}
+        </h2>
         <p className="text-sm text-muted-foreground">
-          The attendee you&apos;re trying to edit doesn&apos;t exist or has been removed.
+          {isNotFound(error)
+            ? "The attendee you're trying to edit doesn't exist or has been removed."
+            : errorMessage(error)}
         </p>
         <Button variant="outline" className="rounded-full" onClick={() => navigate({ to: '/attendees' })}>
           <ArrowLeft size={16} /> Back to Attendees
@@ -76,19 +54,15 @@ export function EditMemberPage() {
     );
   }
 
-  const currentRole = eventId
-    ? (Array.isArray(memberships) ? memberships : []).find((m) => m.eventId === eventId)?.role
-    : undefined;
-
   return (
     <MemberComposer
-      // Remount once the user resolves so the form seeds from real values.
-      key={user.id}
+      // Remount once the person resolves so the form seeds from real values.
+      key={person.id}
       mode="edit"
-      userId={userId}
+      personId={userId}
       eventId={eventId}
-      event={event}
-      initialValues={userToFormValues(user as UserType, currentRole ?? 'staff')}
+      event={event ?? null}
+      initialValues={personToFormValues(person)}
     />
   );
 }

@@ -1,26 +1,28 @@
 import { useNavigate } from '@tanstack/react-router';
-import { ArrowLeft, CalendarHeart, CheckIcon, Mail, PencilIcon, Phone, ScanLine, Star, UserPlus } from 'lucide-react';
+import { ArrowLeft, CalendarHeart, CheckIcon, History, Mail, PencilIcon, Phone, ScanLine, StickyNote, UserPlus } from 'lucide-react';
 import { Button } from '@credopass/ui/components/button';
 import { Spinner } from '@credopass/ui/components/spinner';
 import { FieldError } from '@credopass/ui/components/field';
+import { toast } from '@credopass/ui/components/sonner';
 import { cn } from '@credopass/ui/lib/utils';
-import type { EventType } from '@credopass/lib/schemas';
-import { RoleField } from './fields/role-field';
+import type { Event } from '@credopass/api-client';
 import { TextField } from './fields/text-field';
 import { useMemberForm, type MemberFormValues } from './use-member-form';
 
 interface MemberComposerProps {
   mode: 'create' | 'edit';
-  userId?: string;
-  /** Members are added onto an event, so the composer is scoped by one. */
-  event?: EventType | null;
+  personId?: string;
+  /** When set, the person is registered onto this event as well as added. */
+  event?: Event | null;
   eventId?: string;
   initialValues?: Partial<MemberFormValues>;
 }
 
+// Loyalty is gone — the table was deleted. What an attendee actually gets is a
+// durable record of having turned up.
 const PERKS = [
   { icon: ScanLine, label: 'QR check-in' },
-  { icon: Star, label: 'Earn points' },
+  { icon: History, label: 'Attendance history' },
   { icon: CalendarHeart, label: 'Event invites' },
 ] as const;
 
@@ -29,20 +31,37 @@ const PERKS = [
  * a lime billboard carrying the identity, granular SheetDialog popups for every
  * other field, and a sticky full-width submit.
  */
-export function MemberComposer({ mode, userId, event, eventId, initialValues }: MemberComposerProps) {
+export function MemberComposer({ mode, personId, event, eventId, initialValues }: MemberComposerProps) {
   const navigate = useNavigate();
   const isEditing = mode === 'edit';
   const scopedEventId = eventId ?? event?.id;
 
   const { form, isMutating } = useMemberForm({
     mode,
-    userId,
+    personId,
     eventId: scopedEventId,
     initialValues,
-    onSaved: () =>
-      scopedEventId
+    onSaved: (_savedId, passUrl) => {
+      // Registering hands back a pass URL and there is no email service, so the
+      // organiser has to be told the link exists before we leave the page.
+      if (passUrl) {
+        toast('Their pass link', {
+          description: passUrl,
+          duration: 12_000,
+          action: {
+            label: 'Copy',
+            onClick: () => {
+              navigator.clipboard.writeText(passUrl).catch(() => {
+                toast.error('Could not copy the link');
+              });
+            },
+          },
+        });
+      }
+      return scopedEventId
         ? navigate({ to: '/events/$eventId', params: { eventId: scopedEventId } })
-        : navigate({ to: '/attendees' }),
+        : navigate({ to: '/attendees' });
+    },
   });
 
   const handleBack = () =>
@@ -179,21 +198,33 @@ export function MemberComposer({ mode, userId, event, eventId, initialValues }: 
                 );
               }}
             </form.Field>
+            <form.Field name="notes">
+              {(field) => {
+                const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
+                return (
+                  <TextField
+                    label="Notes"
+                    icon={StickyNote}
+                    optional
+                    placeholder="Anything worth remembering"
+                    value={field.state.value}
+                    onChange={field.handleChange}
+                    invalid={isInvalid}
+                    errors={field.state.meta.errors}
+                  />
+                );
+              }}
+            </form.Field>
           </div>
         </div>
 
-        {/* Event membership */}
-        {scopedEventId && (
-          <div className="flex flex-col gap-1.5">
-            <span className="px-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-              On this event
-            </span>
-            <div className="overflow-hidden rounded-2xl border border-border bg-card">
-              <form.Field name="role">
-                {(field) => <RoleField value={field.state.value} onChange={field.handleChange} />}
-              </form.Field>
-            </div>
-          </div>
+        {/* What adding them to an event actually does */}
+        {scopedEventId && !isEditing && (
+          <p className="rounded-2xl border border-border bg-card px-3.5 py-3 text-xs text-muted-foreground">
+            They will be <span className="font-medium text-foreground">registered</span> for
+            {event ? ` “${event.name}”` : ' this event'} and get a pass. Registering is not
+            checking in — that happens at the door.
+          </p>
         )}
 
         {/* Perks strip — only worth showing for someone brand new */}

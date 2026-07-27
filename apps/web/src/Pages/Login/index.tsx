@@ -18,7 +18,7 @@ import { AuthScreen } from '../../containers/AuthScreen'
 const FEATURES = [
   { icon: Zap,           text: 'QR check-in from any device in seconds' },
   { icon: CheckCircle2,  text: 'Real-time attendance tracking' },
-  { icon: BarChart3,     text: 'Member loyalty & analytics dashboard' },
+  { icon: BarChart3,     text: 'Attendance history for every member' },
   { icon: CalendarCheck, text: 'Works alongside Eventbrite & Meetup' },
 ] as const
 
@@ -92,7 +92,7 @@ export default function LoginPage() {
   return (
     <AuthScreen
       headline={<>Know who<br />actually shows up.</>}
-      subcopy="Attendance, membership and loyalty for live events — without the ticketing overhead."
+      subcopy="Attendance and membership for live events — without the ticketing overhead."
       features={FEATURES}
       billboardCard={<EntryPassCard />}
       billboardMaskSrc="/login-cuate.svg"

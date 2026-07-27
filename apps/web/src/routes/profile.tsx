@@ -1,9 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router";
-import ProfilePage from "../Pages/Profile";
-import { requireAuth } from "../lib/auth-guard";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
-// Profile route - account settings, sign out, and organizations
+// Profile folded into the Account page. Keep old links working.
 export const Route = createFileRoute('/profile')({
-  beforeLoad: requireAuth,
-  component: ProfilePage,
+  beforeLoad: () => {
+    throw redirect({ to: '/account', search: { tab: 'profile' } });
+  },
 })

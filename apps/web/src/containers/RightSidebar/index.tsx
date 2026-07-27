@@ -17,7 +17,7 @@ import {
 } from "@credopass/ui/components/sheet";
 
 import { Button } from "@credopass/ui/components/button"
-import { Avatar, AvatarFallback, AvatarImage } from "@credopass/ui/components/avatar"
+import { Avatar, AvatarFallback } from "@credopass/ui/components/avatar"
 
 import './style.css';
 
@@ -66,7 +66,7 @@ export const RightSidebar: React.FC = () => {
 
     switch (viewedItem.id) {
       case 'profile':
-        return "Member profile";
+        return "Attendee profile";
       case 'calendar':
         return "Calendar";
       default:
@@ -76,7 +76,7 @@ export const RightSidebar: React.FC = () => {
 
   const getSidebarDescription = () => {
     if (!viewedItem) {
-      return "Overview of loyalty status and upcoming events.";
+      return "Your events at a glance.";
     }
 
     switch (viewedItem.id) {
@@ -85,7 +85,7 @@ export const RightSidebar: React.FC = () => {
       case 'calendar':
         return "View your upcoming events at a glance.";
       default:
-        return "Overview of loyalty status and upcoming events.";
+        return "Your events at a glance.";
     }
   };
 
@@ -136,17 +136,18 @@ export const RightSidebar: React.FC = () => {
           {viewedItem?.id === 'profile' && viewedItem?.content ? (
             <div className="flex items-center gap-3 min-w-0 pr-8">
               <Avatar className="size-9 shrink-0">
-                <AvatarImage src={viewedItem.content.avatarUrl} alt="" />
                 <AvatarFallback className="text-xs font-semibold bg-primary/10 text-primary">
                   {`${(viewedItem.content.firstName || ' ')[0] ?? ''}${(viewedItem.content.lastName || ' ')[0] ?? ''}`.trim().toUpperCase() || 'U'}
                 </AvatarFallback>
               </Avatar>
               <div className="min-w-0">
                 <SheetTitle className="text-sm font-semibold truncate">
-                  {`${viewedItem.content.firstName || ''} ${viewedItem.content.lastName || ''}`.trim() || 'Member'}
+                  {`${viewedItem.content.firstName || ''} ${viewedItem.content.lastName || ''}`.trim() || 'Attendee'}
                 </SheetTitle>
+                {/* `standing` comes off the row already decided — attended,
+                    no-show, signed-up or member. Never re-derived here. */}
                 <SheetDescription className="text-xs capitalize">
-                  {(viewedItem.content.tier || 'bronze')} member
+                  {viewedItem.content.standing ?? 'attendee'}
                 </SheetDescription>
               </div>
             </div>
