@@ -50,7 +50,7 @@ EXPOSE 8080
 
 # Health check endpoint
 HEALTHCHECK --interval=60s --timeout=3s --start-period=5s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:8080/api/core/health || exit 1
+    CMD wget --no-verbose --tries=1 --spider http://localhost:8080/api/v1/core/health || exit 1
 
 # Start the server
 CMD ["bun", "run", "services/core/index.js"]
