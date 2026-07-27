@@ -44,6 +44,12 @@ export const queryKeys = {
   person: (organizationId: OrgId, id: string) =>
     ['org', organizationId ?? null, 'people', 'detail', id] as const,
 
+  analytics: (organizationId: OrgId, scope: string, range: string) =>
+    ['org', organizationId ?? null, 'analytics', scope, range] as const,
+
+  // The catalogue is the same for everyone, so it sits outside the org prefix.
+  plans: () => ['plans'] as const,
+
   publicEvent: (id: string) => ['public', 'events', id] as const,
   pass: (token: string) => ['pass', token] as const,
 } as const;

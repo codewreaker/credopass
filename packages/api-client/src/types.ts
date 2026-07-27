@@ -115,6 +115,30 @@ export type CheckInState = ApiResponse<'/events/{id}/checkin-state', 'get'>;
 export type CloseResult = ApiResponse<'/events/{id}/close', 'post'>;
 
 // ============================================================================
+// Analytics
+// ============================================================================
+
+/**
+ * Check `fabricated` before rendering any of this. It is true while the figures
+ * are placeholders, and the server is the only thing that decides — a client
+ * that hard-codes "sample data" into its banner will still be lying on the day
+ * the numbers become real.
+ */
+export type Analytics = components['schemas']['Analytics'];
+export type AnalyticsQuery = ApiQuery<'/analytics/overview', 'get'>;
+export type AnalyticsRange = NonNullable<AnalyticsQuery['range']>;
+export type StatTile = Analytics['stats'][number];
+export type SeriesPoint = Analytics['attendanceTrend'][number];
+
+// ============================================================================
+// Billing
+// ============================================================================
+
+export type Plan = components['schemas']['Plan'];
+export type PlanId = Plan['id'];
+export type PlanChange = components['schemas']['PlanChange'];
+
+// ============================================================================
 // Public / pass
 // ============================================================================
 

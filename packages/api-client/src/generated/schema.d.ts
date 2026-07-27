@@ -2491,6 +2491,186 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/analytics/overview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Attendance analytics for the organization, or for one event
+         * @description Figures are currently FABRICATED — deterministic placeholders behind the real contract. `fabricated` is true while that is the case; clients must label the data.
+         */
+        get: {
+            parameters: {
+                query?: {
+                    scope?: string;
+                    range?: "week" | "month" | "year";
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Analytics payload */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Analytics"];
+                    };
+                };
+                /** @description Invalid query */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["Problem"];
+                    };
+                };
+                /** @description Insufficient role */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["Problem"];
+                    };
+                };
+                /** @description No such event in this organization */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["Problem"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/plans": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The plan catalogue — names, prices and limits */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Every plan on offer */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Plan"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/organizations/{id}/plan": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Set an organization's plan
+         * @description NO PAYMENT IS TAKEN. Billing is not wired up (D15), so this grants the entitlement directly and is restricted to owners. Send no card details — the body is a plan id.
+         */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        plan: "free" | "starter" | "pro" | "enterprise";
+                    };
+                };
+            };
+            responses: {
+                /** @description Plan changed (or already on it — this is idempotent) */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["PlanChange"];
+                    };
+                };
+                /** @description Unknown plan */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["Problem"];
+                    };
+                };
+                /** @description Not an owner of this organization */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["Problem"];
+                    };
+                };
+                /** @description Not found, or not yours */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["Problem"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -2675,6 +2855,104 @@ export interface components {
                 checkInTime: string | null;
             };
             canSelfCheckIn: boolean;
+        };
+        Analytics: {
+            scope: string;
+            /** @enum {string} */
+            range: "week" | "month" | "year";
+            generatedAt: string;
+            scopeLabel: string;
+            fabricated: boolean;
+            kpis: {
+                avgAttendanceRate: number;
+                avgAttendanceChange: number;
+                totalCheckIns: number;
+                uniqueAttendees: number;
+                noShowRate: number;
+                repeatRate: number;
+                newVsReturning: {
+                    new: number;
+                    returning: number;
+                };
+                liveNow: number;
+            };
+            stats: {
+                id: string;
+                label: string;
+                value: string;
+                change: string;
+                /** @enum {string} */
+                trend: "up" | "down";
+            }[];
+            attendanceTrend: {
+                label: string;
+                value: number;
+            }[];
+            checkInsSeries: {
+                label: string;
+                value: number;
+            }[];
+            attendanceMix: {
+                label: string;
+                members: number;
+                guests: number;
+                walkIns: number;
+            }[];
+            arrivalsByHour: {
+                label: string;
+                value: number;
+            }[];
+            checkInMethods: {
+                method: string;
+                label: string;
+                value: number;
+            }[];
+            funnel: {
+                registered: number;
+                checkedIn: number;
+                attended: number;
+            };
+            dwell: {
+                avgMinutes: number;
+                medianMinutes: number;
+            };
+            topEvents: {
+                name: string;
+                attendees: number;
+                fillRate: number;
+                trend: string;
+            }[];
+            recentActivity: {
+                action: string;
+                time: string;
+                highlight: boolean;
+            }[];
+            goal: {
+                value: number;
+                target: number;
+            };
+        };
+        Plan: {
+            /** @enum {string} */
+            id: "free" | "starter" | "pro" | "enterprise";
+            name: string;
+            tagline: string;
+            priceMonthly: number | null;
+            /** @enum {string} */
+            currency: "GBP";
+            ownedOrgLimit: number;
+            fullAnalytics: boolean;
+            features: string[];
+        };
+        PlanChange: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            slug: string;
+            /** @enum {string} */
+            plan: "free" | "starter" | "pro" | "enterprise";
+            /** @enum {string} */
+            previousPlan: "free" | "starter" | "pro" | "enterprise";
         };
     };
     responses: never;

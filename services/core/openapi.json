@@ -807,6 +807,432 @@
           "attendance",
           "canSelfCheckIn"
         ]
+      },
+      "Analytics": {
+        "type": "object",
+        "properties": {
+          "scope": {
+            "type": "string"
+          },
+          "range": {
+            "type": "string",
+            "enum": [
+              "week",
+              "month",
+              "year"
+            ]
+          },
+          "generatedAt": {
+            "type": "string"
+          },
+          "scopeLabel": {
+            "type": "string"
+          },
+          "fabricated": {
+            "type": "boolean"
+          },
+          "kpis": {
+            "type": "object",
+            "properties": {
+              "avgAttendanceRate": {
+                "type": "number"
+              },
+              "avgAttendanceChange": {
+                "type": "number"
+              },
+              "totalCheckIns": {
+                "type": "number"
+              },
+              "uniqueAttendees": {
+                "type": "number"
+              },
+              "noShowRate": {
+                "type": "number"
+              },
+              "repeatRate": {
+                "type": "number"
+              },
+              "newVsReturning": {
+                "type": "object",
+                "properties": {
+                  "new": {
+                    "type": "number"
+                  },
+                  "returning": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "new",
+                  "returning"
+                ]
+              },
+              "liveNow": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "avgAttendanceRate",
+              "avgAttendanceChange",
+              "totalCheckIns",
+              "uniqueAttendees",
+              "noShowRate",
+              "repeatRate",
+              "newVsReturning",
+              "liveNow"
+            ]
+          },
+          "stats": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "value": {
+                  "type": "string"
+                },
+                "change": {
+                  "type": "string"
+                },
+                "trend": {
+                  "type": "string",
+                  "enum": [
+                    "up",
+                    "down"
+                  ]
+                }
+              },
+              "required": [
+                "id",
+                "label",
+                "value",
+                "change",
+                "trend"
+              ]
+            }
+          },
+          "attendanceTrend": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "label": {
+                  "type": "string"
+                },
+                "value": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "label",
+                "value"
+              ]
+            }
+          },
+          "checkInsSeries": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "label": {
+                  "type": "string"
+                },
+                "value": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "label",
+                "value"
+              ]
+            }
+          },
+          "attendanceMix": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "label": {
+                  "type": "string"
+                },
+                "members": {
+                  "type": "number"
+                },
+                "guests": {
+                  "type": "number"
+                },
+                "walkIns": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "label",
+                "members",
+                "guests",
+                "walkIns"
+              ]
+            }
+          },
+          "arrivalsByHour": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "label": {
+                  "type": "string"
+                },
+                "value": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "label",
+                "value"
+              ]
+            }
+          },
+          "checkInMethods": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "method": {
+                  "type": "string"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "value": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "method",
+                "label",
+                "value"
+              ]
+            }
+          },
+          "funnel": {
+            "type": "object",
+            "properties": {
+              "registered": {
+                "type": "number"
+              },
+              "checkedIn": {
+                "type": "number"
+              },
+              "attended": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "registered",
+              "checkedIn",
+              "attended"
+            ]
+          },
+          "dwell": {
+            "type": "object",
+            "properties": {
+              "avgMinutes": {
+                "type": "number"
+              },
+              "medianMinutes": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "avgMinutes",
+              "medianMinutes"
+            ]
+          },
+          "topEvents": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "attendees": {
+                  "type": "number"
+                },
+                "fillRate": {
+                  "type": "number"
+                },
+                "trend": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "name",
+                "attendees",
+                "fillRate",
+                "trend"
+              ]
+            }
+          },
+          "recentActivity": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "action": {
+                  "type": "string"
+                },
+                "time": {
+                  "type": "string"
+                },
+                "highlight": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "action",
+                "time",
+                "highlight"
+              ]
+            }
+          },
+          "goal": {
+            "type": "object",
+            "properties": {
+              "value": {
+                "type": "number"
+              },
+              "target": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "value",
+              "target"
+            ]
+          }
+        },
+        "required": [
+          "scope",
+          "range",
+          "generatedAt",
+          "scopeLabel",
+          "fabricated",
+          "kpis",
+          "stats",
+          "attendanceTrend",
+          "checkInsSeries",
+          "attendanceMix",
+          "arrivalsByHour",
+          "checkInMethods",
+          "funnel",
+          "dwell",
+          "topEvents",
+          "recentActivity",
+          "goal"
+        ]
+      },
+      "Plan": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "enum": [
+              "free",
+              "starter",
+              "pro",
+              "enterprise"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "tagline": {
+            "type": "string"
+          },
+          "priceMonthly": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "currency": {
+            "type": "string",
+            "enum": [
+              "GBP"
+            ]
+          },
+          "ownedOrgLimit": {
+            "type": "integer"
+          },
+          "fullAnalytics": {
+            "type": "boolean"
+          },
+          "features": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "tagline",
+          "priceMonthly",
+          "currency",
+          "ownedOrgLimit",
+          "fullAnalytics",
+          "features"
+        ]
+      },
+      "PlanChange": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "plan": {
+            "type": "string",
+            "enum": [
+              "free",
+              "starter",
+              "pro",
+              "enterprise"
+            ]
+          },
+          "previousPlan": {
+            "type": "string",
+            "enum": [
+              "free",
+              "starter",
+              "pro",
+              "enterprise"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "slug",
+          "plan",
+          "previousPlan"
+        ]
       }
     },
     "parameters": {}
@@ -4234,6 +4660,200 @@
           },
           "410": {
             "description": "Expired or revoked",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/analytics/overview": {
+      "get": {
+        "summary": "Attendance analytics for the organization, or for one event",
+        "description": "Figures are currently FABRICATED — deterministic placeholders behind the real contract. `fabricated` is true while that is the case; clients must label the data.",
+        "tags": [
+          "Analytics"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "default": "all"
+            },
+            "required": false,
+            "name": "scope",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "week",
+                "month",
+                "year"
+              ],
+              "default": "month"
+            },
+            "required": false,
+            "name": "range",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Analytics payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Analytics"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid query",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient role",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such event in this organization",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/plans": {
+      "get": {
+        "summary": "The plan catalogue — names, prices and limits",
+        "tags": [
+          "Billing"
+        ],
+        "responses": {
+          "200": {
+            "description": "Every plan on offer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Plan"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/organizations/{id}/plan": {
+      "put": {
+        "summary": "Set an organization's plan",
+        "description": "NO PAYMENT IS TAKEN. Billing is not wired up (D15), so this grants the entitlement directly and is restricted to owners. Send no card details — the body is a plan id.",
+        "tags": [
+          "Billing"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "plan": {
+                    "type": "string",
+                    "enum": [
+                      "free",
+                      "starter",
+                      "pro",
+                      "enterprise"
+                    ]
+                  }
+                },
+                "required": [
+                  "plan"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Plan changed (or already on it — this is idempotent)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanChange"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unknown plan",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not an owner of this organization",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found, or not yours",
             "content": {
               "application/problem+json": {
                 "schema": {
