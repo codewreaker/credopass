@@ -1,21 +1,18 @@
 /**
- * `TenantContext` unit tests (§7.1, §6.3). No database — these are about the
- * shape of authority, not about rows.
+ * `TenantContext` unit tests (§7.1). No database — these are about the shape of
+ * authority, not about rows.
+ *
+ * Two describe blocks used to live here and are gone with what they guarded:
+ * event grants (a per-event role map nothing ever populated) and device-token
+ * scope intersection (D24 — a door is a person holding the `checkin` role now).
  */
 
 import { describe, expect, it } from 'bun:test';
-import {
-  can,
-  canOnEvent,
-  createTenantContext,
-  type TenantContext,
-} from '../tenancy/context';
+import { can, createTenantContext, type TenantContext } from '../tenancy/context';
 import type { Permission } from '../authz/permissions';
 
 const ORG = '11111111-1111-1111-1111-111111111111';
 const ACCOUNT = '22222222-2222-2222-2222-222222222222';
-const EVENT_A = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
-const EVENT_B = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb';
 
 const ctxFor = (role: Parameters<typeof createTenantContext>[0]['role']) =>
   createTenantContext({ organizationId: ORG, accountId: ACCOUNT, role });
@@ -36,81 +33,42 @@ describe('createTenantContext', () => {
   });
 });
 
-describe('event grants add, never remove (§6.3)', () => {
-  it('grants a permission on the named event only', () => {
-    const ctx = createTenantContext({
-      organizationId: ORG,
-      accountId: ACCOUNT,
-      role: 'viewer',
-      eventGrants: new Map([[EVENT_A, 'co_host']]),
-    });
+describe('the checkin role is the door (D24)', () => {
+  const door = ctxFor('checkin');
 
-    expect(canOnEvent(ctx, EVENT_A, 'event:update')).toBe(true);
-    expect(canOnEvent(ctx, EVENT_B, 'event:update')).toBe(false);
-    // And it does not leak into org-wide authority.
-    expect(can(ctx, 'event:update')).toBe(false);
+  it('can do everything the kiosk needs', () => {
+    expect(can(door, 'event:read')).toBe(true);
+    expect(can(door, 'attendance:read')).toBe(true);
+    expect(can(door, 'attendance:record')).toBe(true);
+    expect(can(door, 'person:read')).toBe(true);
   });
 
-  it('never removes an org-level permission', () => {
-    const ctx = createTenantContext({
-      organizationId: ORG,
-      accountId: ACCOUNT,
-      role: 'admin',
-      eventGrants: new Map([[EVENT_A, 'staff']]),
-    });
-    // `staff` is a narrow role, but the caller is an org admin: the grant must
-    // not downgrade them on that event.
-    expect(canOnEvent(ctx, EVENT_A, 'event:update')).toBe(true);
-  });
-});
-
-describe('device token scopes cap everything (D9, T13)', () => {
-  const scopes: Permission[] = ['attendance:record', 'event:read'];
-
-  it('intersects the role rather than granting the union', () => {
-    const ctx = createTenantContext({
-      organizationId: ORG,
-      accountId: null,
-      deviceId: 'device-1',
-      role: 'organizer',
-      deviceScopes: scopes,
-    });
-
-    expect(can(ctx, 'attendance:record')).toBe(true);
-    expect(can(ctx, 'event:read')).toBe(true);
-    // The organizer role has these; the token does not, so the token wins.
-    expect(can(ctx, 'event:update')).toBe(false);
-    expect(can(ctx, 'event:delete')).toBe(false);
-    expect(can(ctx, 'device:manage')).toBe(false);
+  it('cannot touch the event it is checking people into', () => {
+    // This is the claim that replaced device-token scope intersection. A door
+    // credential used to be capped by an issued scope list; now the cap is the
+    // role itself, which has to be at least as tight.
+    expect(can(door, 'event:update')).toBe(false);
+    expect(can(door, 'event:delete')).toBe(false);
+    expect(can(door, 'event:cancel')).toBe(false);
+    expect(can(door, 'event:create')).toBe(false);
   });
 
-  it('caps event-grant permissions too', () => {
-    // The hole worth naming: without this, a tablet paired to an event it also
-    // holds a grant on would escape its issued scopes.
-    const ctx = createTenantContext({
-      organizationId: ORG,
-      accountId: null,
-      deviceId: 'device-1',
-      role: 'organizer',
-      deviceScopes: scopes,
-      eventGrants: new Map([[EVENT_A, 'organizer']]),
-    });
-
-    expect(canOnEvent(ctx, EVENT_A, 'event:update')).toBe(false);
-    expect(canOnEvent(ctx, EVENT_A, 'device:manage')).toBe(false);
-    expect(canOnEvent(ctx, EVENT_A, 'attendance:record')).toBe(true);
+  it('cannot populate the org roll or read the member list', () => {
+    // §6.2 footnote 3: a walk-in creates a person inside AttendanceService, a
+    // different path from POST /people. And a door has no business enumerating
+    // staff — note `viewer` can, and `checkin` deliberately cannot.
+    expect(can(door, 'person:create')).toBe(false);
+    expect(can(door, 'person:delete')).toBe(false);
+    expect(can(door, 'member:read')).toBe(false);
+    expect(can(door, 'member:invite')).toBe(false);
   });
 
-  it('a scope list naming a permission the role lacks does not grant it', () => {
-    const ctx = createTenantContext({
-      organizationId: ORG,
-      accountId: null,
-      deviceId: 'device-1',
-      role: 'checkin',
-      deviceScopes: ['org:delete', 'attendance:record'],
-    });
-    expect(can(ctx, 'org:delete')).toBe(false);
-    expect(can(ctx, 'attendance:record')).toBe(true);
+  it('is strictly narrower than organizer', () => {
+    const organizer = ctxFor('organizer');
+    for (const permission of door.permissions) {
+      expect(organizer.permissions.has(permission)).toBe(true);
+    }
+    expect(organizer.permissions.size).toBeGreaterThan(door.permissions.size);
   });
 });
 
@@ -123,11 +81,8 @@ describe('the brand', () => {
     const forged: TenantContext = {
       organizationId: ORG,
       accountId: ACCOUNT,
-      deviceId: null,
       role: 'owner',
       permissions: new Set<Permission>(['org:delete']),
-      eventGrants: new Map(),
-      deviceScopes: null,
     };
     expect(forged.organizationId).toBe(ORG);
   });

@@ -14,8 +14,8 @@
  * ask, and nothing else.
  */
 
-import { useParams } from '@tanstack/react-router';
-import { CalendarCheck, CheckCircle2, Clock, MapPin, TicketX } from 'lucide-react';
+import { Link, useParams } from '@tanstack/react-router';
+import { ArrowRight, CalendarCheck, CheckCircle2, Clock, MapPin, TicketX } from 'lucide-react';
 import { format } from 'date-fns/format';
 import { usePass, usePassCheckIn } from '@credopass/api-client';
 import { Button } from '@credopass/ui/components/button';
@@ -130,8 +130,43 @@ export default function PassPage() {
         <p className="text-[11px] text-primary-foreground/45">
           Save this link. It is the only copy of your pass.
         </p>
+
+        <SignUpNudge />
       </div>
     </PassShell>
+  );
+}
+
+/**
+ * The sign-up nudge (D25).
+ *
+ * Copy and a link. No endpoint, no lookup, and deliberately no branch on
+ * whether this address already has an account — that would make the page an
+ * oracle for "does this person use CredoPass", and through the event link, for
+ * "is this person attending this event". The same reasoning makes
+ * `POST /public/events/{id}/resend-pass` answer an identical `202` either way.
+ *
+ * It sits below the pass rather than in the register dialog, where it would
+ * compete with the one action that matters. And it promises only what is built:
+ * an account is somewhere to keep passes, not an email that will arrive —
+ * there is no NotificationService, so no copy here may imply one.
+ */
+function SignUpNudge() {
+  return (
+    <div className="mt-2 w-full max-w-xs border-t border-primary-foreground/15 pt-4 text-center">
+      <p className="text-xs leading-relaxed text-primary-foreground/70">
+        Going to more of these? A free CredoPass account keeps every pass in one place, whoever is
+        running the event.
+      </p>
+      <Button
+        variant="ghost"
+        size="sm"
+        className="mt-2 rounded-full text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground"
+        render={(props) => <Link {...props} to="/login" search={{ view: 'social' }} />}
+      >
+        Create a free account <ArrowRight size={14} />
+      </Button>
+    </div>
   );
 }
 

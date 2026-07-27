@@ -32,7 +32,6 @@ export type PersonRef =
 
 export interface Actor {
   accountId?: string | null;
-  deviceId?: string | null;
 }
 
 export interface AttendanceResult {
@@ -347,7 +346,6 @@ export async function checkIn(
       checkInTime: now,
       checkInMethod: input.method,
       checkedInByAccountId: input.actor?.accountId ?? null,
-      checkedInByDeviceId: input.actor?.deviceId ?? null,
     })
     .onConflictDoUpdate({
       target: [attendance.eventId, attendance.personId],
@@ -356,7 +354,6 @@ export async function checkIn(
         checkInTime: now,
         checkInMethod: input.method,
         checkedInByAccountId: input.actor?.accountId ?? null,
-        checkedInByDeviceId: input.actor?.deviceId ?? null,
         updatedAt: now,
       },
       // The race: if a concurrent request already set `attended`, do not

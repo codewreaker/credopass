@@ -53,12 +53,14 @@ export type OrgSummary = components['schemas']['OrgSummary'];
  * matrix lives server-side in `services/core/src/authz/permissions.ts` and is
  * the only place it may live (§2.7 convention 1).
  *
- * The enum reaches the OpenAPI document through the device-pairing body, which
- * is the one place a permission is named in a request — so that is where the
- * literal union is read back from.
+ * Read off the response that actually carries them. It used to be read off the
+ * device-pairing REQUEST body — the one place a permission was ever named in a
+ * request — which meant deleting device tokens (D24) would have deleted this
+ * type. `/me/context` now declares the enum directly, which is both stabler and
+ * more honest: the field ships a closed set, so the contract says so.
  */
 export type Permission = NonNullable<
-  ApiBody<'/events/{id}/devices', 'post'>['scopes']
+  NonNullable<MeContext['membership']>['permissions']
 >[number];
 
 export type Role = components['schemas']['Member']['role'];
@@ -111,15 +113,6 @@ export type CheckInBody = ApiBody<'/events/{id}/check-in', 'post'>;
 export type CheckOutBody = ApiBody<'/events/{id}/check-out', 'post'>;
 export type CheckInState = ApiResponse<'/events/{id}/checkin-state', 'get'>;
 export type CloseResult = ApiResponse<'/events/{id}/close', 'post'>;
-
-// ============================================================================
-// Devices
-// ============================================================================
-
-export type Device = components['schemas']['Device'];
-export type DeviceStatus = Device['status'];
-export type DevicePairingCode = ApiResponse<'/events/{id}/devices', 'post'>;
-export type DevicePaired = ApiResponse<'/devices/pair', 'post'>;
 
 // ============================================================================
 // Public / pass

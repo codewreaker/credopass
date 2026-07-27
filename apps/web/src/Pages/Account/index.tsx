@@ -23,7 +23,6 @@ import {
   Plus,
   Settings,
   ShieldCheck,
-  Tablet,
   Trash2,
   UserRound,
   Users,
@@ -34,13 +33,12 @@ import {
   ProblemCode,
   setActiveOrganizationId,
   useDeleteOrganization,
-  useDevices,
   useInvitations,
   useMembers,
   useOrganizations,
   useCreateInvitation,
+  useCreateOrganization,
   useRemoveMember,
-  useRevokeDevice,
   useRevokeInvitation,
   useUpdateMemberRole,
   useUpdateOrganization,
@@ -50,6 +48,7 @@ import {
 import { Avatar, AvatarFallback } from '@credopass/ui/components/avatar';
 import { Button } from '@credopass/ui/components/button';
 import { Input } from '@credopass/ui/components/input';
+import { SheetDialog } from '@credopass/ui/components/sheet-dialog';
 import {
   Select,
   SelectContent,
@@ -67,7 +66,6 @@ export const ACCOUNT_TABS = [
   'profile',
   'organizations',
   'members',
-  'devices',
   'settings',
 ] as const;
 export type AccountTab = (typeof ACCOUNT_TABS)[number];
@@ -76,7 +74,6 @@ const TAB_LABELS: Record<AccountTab, { label: string; icon: typeof UserRound }> 
   profile: { label: 'Profile', icon: UserRound },
   organizations: { label: 'Organizations', icon: Building2 },
   members: { label: 'Members', icon: Users },
-  devices: { label: 'Devices', icon: Tablet },
   settings: { label: 'Settings', icon: Settings },
 };
 
@@ -128,7 +125,6 @@ export default function AccountPage() {
       {tab === 'profile' && <ProfileTab />}
       {tab === 'organizations' && <OrganizationsTab />}
       {tab === 'members' && <MembersTab />}
-      {tab === 'devices' && <DevicesTab />}
       {tab === 'settings' && <SettingsTab />}
     </div>
   );
@@ -223,23 +219,26 @@ function ProfileTab() {
 // ============================================================================
 
 function OrganizationsTab() {
-  const navigate = useNavigate();
   const { organizationId } = useSession();
   const { data: organizations = [], isLoading } = useOrganizations();
+  const [creating, setCreating] = useState(false);
 
   return (
     <Section
       title="Your organizations"
       description="Only the ones you belong to. Switching here re-scopes the whole console."
       action={
-        <Button
-          variant="outline"
-          size="sm"
-          className="shrink-0 gap-1.5 rounded-full"
-          onClick={() => navigate({ to: '/onboarding' })}
-        >
-          <Plus size={14} /> New
-        </Button>
+        <>
+          <Button
+            variant="outline"
+            size="sm"
+            className="shrink-0 gap-1.5 rounded-full"
+            onClick={() => setCreating(true)}
+          >
+            <Plus size={14} /> New
+          </Button>
+          <NewOrganizationDialog open={creating} onOpenChange={setCreating} />
+        </>
       }
     >
       {isLoading ? (
@@ -284,6 +283,72 @@ function OrganizationsTab() {
         </div>
       )}
     </Section>
+  );
+}
+
+/**
+ * Creating an organization is one field and one POST (D23).
+ *
+ * It used to be step 1 of a three-step wizard whose last step was "create your
+ * first event" — so the only route to a second organization ran through an
+ * event form, for no reason the API ever required. `POST /organizations` has
+ * always stood alone.
+ *
+ * The plan cap is not computed here. The server owns the number (it moves with
+ * pricing) and answers `402 plan_limit` with a sentence naming it, which is
+ * rendered verbatim.
+ */
+function NewOrganizationDialog({
+  open,
+  onOpenChange,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const [name, setName] = useState('');
+  const createOrganization = useCreateOrganization();
+  const canSubmit = name.trim().length > 1 && !createOrganization.isPending;
+
+  const submit = async () => {
+    if (!canSubmit) return;
+    try {
+      const organization = await createOrganization.mutateAsync({ name: name.trim() });
+      // Switch to it. Creating an organization you are then not looking at is a
+      // confusing outcome, and `POST /organizations` already made you its owner.
+      setActiveOrganizationId(organization.id);
+      toast.success(`${organization.name} created`);
+      setName('');
+      onOpenChange(false);
+    } catch (error) {
+      toast.error(errorMessage(error, 'Could not create that organization'));
+    }
+  };
+
+  return (
+    <SheetDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title="New organization"
+      footer={
+        <Button size="sm" className="rounded-full px-4" disabled={!canSubmit} onClick={submit}>
+          {createOrganization.isPending ? 'Creating…' : 'Create'}
+        </Button>
+      }
+      contentClassName="flex flex-col gap-3"
+    >
+      <Input
+        autoFocus
+        placeholder="Name"
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        onKeyDown={(e) => e.key === 'Enter' && submit()}
+        className="h-11 rounded-xl"
+      />
+      <p className="text-xs text-muted-foreground">
+        You will be its owner. Its web address is generated from the name and can be changed in
+        Settings.
+      </p>
+    </SheetDialog>
   );
 }
 
@@ -582,79 +647,6 @@ function CopyLinkButton({ url }: { url: string }) {
 }
 
 // ============================================================================
-// Devices
-// ============================================================================
-
-function DevicesTab() {
-  const { organizationId } = useSession();
-  const canManage = useCan('device:manage');
-  const { data: devices = [] } = useDevices(canManage ? (organizationId ?? undefined) : undefined);
-  const revokeDevice = useRevokeDevice(organizationId ?? undefined);
-
-  if (!canManage) {
-    return (
-      <Section title="Devices">
-        <p className="py-2 text-xs text-muted-foreground">
-          Your role does not let you manage paired devices.
-        </p>
-      </Section>
-    );
-  }
-
-  return (
-    <Section
-      title="Paired devices"
-      description="Tablets working your doors. Each is scoped to one event and cannot open the console."
-    >
-      {devices.length === 0 ? (
-        <p className="py-2 text-xs text-muted-foreground">
-          Nothing paired. Pair a tablet from an event's page.
-        </p>
-      ) : (
-        <div className="flex flex-col divide-y divide-border/60">
-          {devices.map((device) => (
-            <div key={device.id} className="flex items-center gap-3 py-2.5">
-              <Tablet size={15} className="shrink-0 text-muted-foreground" />
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium">{device.label}</p>
-                <p className="truncate text-xs text-muted-foreground">
-                  {device.status}
-                  {device.lastUsedAt
-                    ? ` · last seen ${new Date(device.lastUsedAt).toLocaleString(undefined, {
-                        day: 'numeric',
-                        month: 'short',
-                        hour: 'numeric',
-                        minute: '2-digit',
-                      })}`
-                    : ''}
-                </p>
-              </div>
-              {device.status !== 'revoked' && (
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  className="shrink-0 text-muted-foreground hover:text-destructive"
-                  onClick={async () => {
-                    try {
-                      await revokeDevice.mutateAsync(device.id);
-                      toast.success(`${device.label} revoked`);
-                    } catch (error) {
-                      toast.error(errorMessage(error, 'Could not revoke that device'));
-                    }
-                  }}
-                >
-                  <Trash2 size={14} />
-                </Button>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
-    </Section>
-  );
-}
-
-// ============================================================================
 // Organization settings
 // ============================================================================
 
@@ -705,7 +697,9 @@ function SettingsTab() {
       await deleteOrganization.mutateAsync(organization.id);
       clearActiveOrganization();
       toast.success(`${organization.name} deleted`);
-      navigate({ to: '/onboarding' });
+      // Stay put. The Organizations tab is where the remaining ones are, and
+      // where a new one is made — there is no onboarding screen to land on.
+      navigate({ to: '/account', search: { tab: 'organizations' } });
     } catch (error) {
       toast.error(
         hasProblemCode(error, ProblemCode.HAS_EVENTS)

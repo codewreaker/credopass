@@ -90,8 +90,22 @@ export function Home() {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  const navigateToApp = () => {
-    location.href = 'https://app.credopass.com';
+  /**
+   * The app root redirects a signed-out visitor to `/login`, which asks for a
+   * commitment before showing anything. Land them on the composer instead: it
+   * renders for a signed-out visitor with sign-in laid over it, so the first
+   * thing they see is the thing they came here to do (D21).
+   *
+   * `signIn` stays for returning users, who want the wall, not the composer.
+   */
+  const APP_ORIGIN = import.meta.env.VITE_APP_URL || 'https://app.credopass.com';
+
+  const startCreating = () => {
+    location.href = `${APP_ORIGIN}/events/new`;
+  }
+
+  const signIn = () => {
+    location.href = `${APP_ORIGIN}/login`;
   }
 
   return (
@@ -121,8 +135,8 @@ export function Home() {
               <button onClick={toggleTheme} className="p-2 hover:bg-accent rounded-lg transition-colors" aria-label="Toggle theme">
                 {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
               </button>
-              <Button variant="ghost" size="sm" className="text-sm">Sign In</Button>
-              <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90 text-sm rounded-lg shadow-[0_0_16px_rgba(212,255,0,0.2)]">
+              <Button variant="ghost" size="sm" className="text-sm" onClick={signIn}>Sign In</Button>
+              <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90 text-sm rounded-lg shadow-[0_0_16px_rgba(212,255,0,0.2)]" onClick={startCreating}>
                 Get Started <ArrowRight className="ml-1.5 w-3.5 h-3.5" />
               </Button>
             </div>
@@ -147,8 +161,8 @@ export function Home() {
               <a href="#pricing" className="py-2 text-sm text-muted-foreground hover:text-foreground">Pricing</a>
               <a href="#customers" className="py-2 text-sm text-muted-foreground hover:text-foreground">Customers</a>
               <div className="pt-4 flex flex-col gap-2">
-                <Button variant="outline" className="w-full" size="sm">Sign In</Button>
-                <Button className="w-full bg-primary text-primary-foreground" size="sm">
+                <Button variant="outline" className="w-full" size="sm" onClick={signIn}>Sign In</Button>
+                <Button className="w-full bg-primary text-primary-foreground" size="sm" onClick={startCreating}>
                   Get Started <ArrowRight className="ml-2 w-4 h-4" />
                 </Button>
               </div>
@@ -206,7 +220,7 @@ export function Home() {
             {/* CTA Buttons */}
             <Reveal delay={300}>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
-                <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 text-base px-8 h-12 shadow-[0_0_32px_rgba(212,255,0,0.25)] hover:shadow-[0_0_48px_rgba(212,255,0,0.4)] transition-all duration-300 hover:-translate-y-0.5" onClick={navigateToApp}>
+                <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 text-base px-8 h-12 shadow-[0_0_32px_rgba(212,255,0,0.25)] hover:shadow-[0_0_48px_rgba(212,255,0,0.4)] transition-all duration-300 hover:-translate-y-0.5" onClick={startCreating}>
                   Start For Free
                   <ArrowRight className="ml-2 w-5 h-5" />
                 </Button>
@@ -682,7 +696,7 @@ export function Home() {
                         </li>
                       ))}
                     </ul>
-                    <Button variant="outline" className="w-full" onClick={navigateToApp}>Get Started</Button>
+                    <Button variant="outline" className="w-full" onClick={startCreating}>Get Started</Button>
                   </div>
                 </Card>
               </Reveal>
@@ -766,7 +780,7 @@ export function Home() {
                 Join thousands of organizations using CredoPass to understand member engagement.
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
-                <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 text-base px-8 h-12 shadow-[0_0_32px_rgba(212,255,0,0.25)] hover:shadow-[0_0_48px_rgba(212,255,0,0.4)] transition-all duration-300 hover:-translate-y-0.5" onClick={navigateToApp}>
+                <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 text-base px-8 h-12 shadow-[0_0_32px_rgba(212,255,0,0.25)] hover:shadow-[0_0_48px_rgba(212,255,0,0.4)] transition-all duration-300 hover:-translate-y-0.5" onClick={startCreating}>
                   Start For Free
                   <ArrowRight className="ml-2 w-5 h-5" />
                 </Button>

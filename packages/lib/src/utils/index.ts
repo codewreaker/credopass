@@ -5,4 +5,3 @@
 
 export * from './events';
 export * from './date';
-export * from './formatting';

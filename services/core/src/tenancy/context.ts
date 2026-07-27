@@ -12,26 +12,17 @@
  * the payload. This is the mechanism.
  */
 
-import type { EventRole, OrgRole, Permission } from '../authz/permissions';
-import { EVENT_ROLE_PERMISSIONS, ROLE_PERMISSIONS } from '../authz/permissions';
+import type { OrgRole, Permission } from '../authz/permissions';
+import { ROLE_PERMISSIONS } from '../authz/permissions';
 
 declare const brand: unique symbol;
 
 export interface TenantContext {
   readonly [brand]: 'verified';
   readonly organizationId: string;
-  readonly accountId: string | null;
-  readonly deviceId: string | null;
+  readonly accountId: string;
   readonly role: OrgRole | null;
   readonly permissions: ReadonlySet<Permission>;
-  /** eventId → the caller's role on that specific event (§6.3). */
-  readonly eventGrants: ReadonlyMap<string, EventRole>;
-  /**
-   * A device token's explicit scope list, or null for account callers. Kept on
-   * the context so it can cap event-grant permissions too — without it, a grant
-   * would let a door tablet exceed the scopes it was issued.
-   */
-  readonly deviceScopes: ReadonlySet<Permission> | null;
 }
 
 /**
@@ -50,16 +41,8 @@ export interface AccountContext {
 
 export interface TenantContextInput {
   organizationId: string;
-  accountId: string | null;
-  deviceId?: string | null;
+  accountId: string;
   role: OrgRole | null;
-  /**
-   * Device tokens carry an explicit scope list. When present it is an
-   * INTERSECTION with the role's permissions, never additive beyond its own
-   * list (§6.3) — a stolen door tablet cannot exceed what it was issued.
-   */
-  deviceScopes?: readonly Permission[] | null;
-  eventGrants?: ReadonlyMap<string, EventRole>;
 }
 
 /**
@@ -70,29 +53,11 @@ export interface TenantContextInput {
  * `src/routes/**` may not import from `src/tenancy/context`.
  */
 export function createTenantContext(input: TenantContextInput): TenantContext {
-  const rolePermissions = input.role
-    ? ROLE_PERMISSIONS[input.role]
-    : new Set<Permission>();
-
-  const eventGrants = input.eventGrants ?? new Map<string, EventRole>();
-
-  // Event grants add permissions on their own event. They are stored per-event
-  // and consulted by `canOnEvent`; the flat `permissions` set stays org-level so
-  // a grant on one event can never be mistaken for org-wide authority.
-  const deviceScopes = input.deviceScopes ? new Set(input.deviceScopes) : null;
-
-  const effective: ReadonlySet<Permission> = deviceScopes
-    ? new Set([...rolePermissions].filter((p) => deviceScopes.has(p)))
-    : rolePermissions;
-
   return {
     organizationId: input.organizationId,
     accountId: input.accountId,
-    deviceId: input.deviceId ?? null,
     role: input.role,
-    permissions: effective,
-    eventGrants,
-    deviceScopes,
+    permissions: input.role ? ROLE_PERMISSIONS[input.role] : new Set<Permission>(),
   } as TenantContext;
 }
 
@@ -100,26 +65,14 @@ export function createAccountContext(accountId: string): AccountContext {
   return { accountId } as AccountContext;
 }
 
-/** Org-wide permission check. */
+/**
+ * Org-wide permission check, and the only one there is.
+ *
+ * There was a second — `canOnEvent`, backed by an `event_grants` table giving a
+ * caller extra permissions on one event. Nothing ever populated the map it read,
+ * so it returned false for every grant that was supposed to widen access. A
+ * permanently-empty authorization surface is worse than no surface, because it
+ * reads as working. Both are deleted (D24 / plan §4c).
+ */
 export const can = (ctx: TenantContext, permission: Permission): boolean =>
   ctx.permissions.has(permission);
-
-/**
- * Permission check for one event: org-level permissions ∪ the permissions this
- * caller's `event_grants` row adds for that event (§6.3).
- */
-export function canOnEvent(
-  ctx: TenantContext,
-  eventId: string,
-  permission: Permission
-): boolean {
-  if (ctx.permissions.has(permission)) return true;
-  const grant = ctx.eventGrants.get(eventId);
-  if (!grant) return false;
-  if (!EVENT_ROLE_PERMISSIONS[grant].has(permission)) return false;
-  // A device token's scope list caps everything, event grants included: a
-  // tablet issued {checkin:record} must not reach `event:update` by way of a
-  // grant on the event it is paired to.
-  if (ctx.deviceScopes && !ctx.deviceScopes.has(permission)) return false;
-  return true;
-}

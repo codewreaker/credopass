@@ -13,7 +13,6 @@ import { Route as UpgradeRouteImport } from './routes/upgrade'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as OrganizationsRouteImport } from './routes/organizations'
-import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as AccountRouteImport } from './routes/account'
@@ -25,7 +24,6 @@ import { Route as InvitationsTokenRouteImport } from './routes/invitations/$toke
 import { Route as EventsNewRouteImport } from './routes/events/new'
 import { Route as EventsEventIdRouteImport } from './routes/events/$eventId'
 import { Route as EEventIdRouteImport } from './routes/e/$eventId'
-import { Route as CheckinPairRouteImport } from './routes/checkin/pair'
 import { Route as CheckinEventIdRouteImport } from './routes/checkin/$eventId'
 import { Route as AttendeesNewRouteImport } from './routes/attendees/new'
 import { Route as EventsEventIdEditRouteImport } from './routes/events/$eventId_.edit'
@@ -49,11 +47,6 @@ const ProfileRoute = ProfileRouteImport.update({
 const OrganizationsRoute = OrganizationsRouteImport.update({
   id: '/organizations',
   path: '/organizations',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const OnboardingRoute = OnboardingRouteImport.update({
-  id: '/onboarding',
-  path: '/onboarding',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -111,11 +104,6 @@ const EEventIdRoute = EEventIdRouteImport.update({
   path: '/e/$eventId',
   getParentRoute: () => rootRouteImport,
 } as any)
-const CheckinPairRoute = CheckinPairRouteImport.update({
-  id: '/checkin/pair',
-  path: '/checkin/pair',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const CheckinEventIdRoute = CheckinEventIdRouteImport.update({
   id: '/checkin/$eventId',
   path: '/checkin/$eventId',
@@ -142,14 +130,12 @@ export interface FileRoutesByFullPath {
   '/account': typeof AccountRoute
   '/analytics': typeof AnalyticsRoute
   '/login': typeof LoginRoute
-  '/onboarding': typeof OnboardingRoute
   '/organizations': typeof OrganizationsRoute
   '/profile': typeof ProfileRoute
   '/reset-password': typeof ResetPasswordRoute
   '/upgrade': typeof UpgradeRoute
   '/attendees/new': typeof AttendeesNewRoute
   '/checkin/$eventId': typeof CheckinEventIdRoute
-  '/checkin/pair': typeof CheckinPairRoute
   '/e/$eventId': typeof EEventIdRoute
   '/events/$eventId': typeof EventsEventIdRoute
   '/events/new': typeof EventsNewRoute
@@ -165,14 +151,12 @@ export interface FileRoutesByTo {
   '/account': typeof AccountRoute
   '/analytics': typeof AnalyticsRoute
   '/login': typeof LoginRoute
-  '/onboarding': typeof OnboardingRoute
   '/organizations': typeof OrganizationsRoute
   '/profile': typeof ProfileRoute
   '/reset-password': typeof ResetPasswordRoute
   '/upgrade': typeof UpgradeRoute
   '/attendees/new': typeof AttendeesNewRoute
   '/checkin/$eventId': typeof CheckinEventIdRoute
-  '/checkin/pair': typeof CheckinPairRoute
   '/e/$eventId': typeof EEventIdRoute
   '/events/$eventId': typeof EventsEventIdRoute
   '/events/new': typeof EventsNewRoute
@@ -189,14 +173,12 @@ export interface FileRoutesById {
   '/account': typeof AccountRoute
   '/analytics': typeof AnalyticsRoute
   '/login': typeof LoginRoute
-  '/onboarding': typeof OnboardingRoute
   '/organizations': typeof OrganizationsRoute
   '/profile': typeof ProfileRoute
   '/reset-password': typeof ResetPasswordRoute
   '/upgrade': typeof UpgradeRoute
   '/attendees/new': typeof AttendeesNewRoute
   '/checkin/$eventId': typeof CheckinEventIdRoute
-  '/checkin/pair': typeof CheckinPairRoute
   '/e/$eventId': typeof EEventIdRoute
   '/events/$eventId': typeof EventsEventIdRoute
   '/events/new': typeof EventsNewRoute
@@ -214,14 +196,12 @@ export interface FileRouteTypes {
     | '/account'
     | '/analytics'
     | '/login'
-    | '/onboarding'
     | '/organizations'
     | '/profile'
     | '/reset-password'
     | '/upgrade'
     | '/attendees/new'
     | '/checkin/$eventId'
-    | '/checkin/pair'
     | '/e/$eventId'
     | '/events/$eventId'
     | '/events/new'
@@ -237,14 +217,12 @@ export interface FileRouteTypes {
     | '/account'
     | '/analytics'
     | '/login'
-    | '/onboarding'
     | '/organizations'
     | '/profile'
     | '/reset-password'
     | '/upgrade'
     | '/attendees/new'
     | '/checkin/$eventId'
-    | '/checkin/pair'
     | '/e/$eventId'
     | '/events/$eventId'
     | '/events/new'
@@ -260,14 +238,12 @@ export interface FileRouteTypes {
     | '/account'
     | '/analytics'
     | '/login'
-    | '/onboarding'
     | '/organizations'
     | '/profile'
     | '/reset-password'
     | '/upgrade'
     | '/attendees/new'
     | '/checkin/$eventId'
-    | '/checkin/pair'
     | '/e/$eventId'
     | '/events/$eventId'
     | '/events/new'
@@ -284,14 +260,12 @@ export interface RootRouteChildren {
   AccountRoute: typeof AccountRoute
   AnalyticsRoute: typeof AnalyticsRoute
   LoginRoute: typeof LoginRoute
-  OnboardingRoute: typeof OnboardingRoute
   OrganizationsRoute: typeof OrganizationsRoute
   ProfileRoute: typeof ProfileRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   UpgradeRoute: typeof UpgradeRoute
   AttendeesNewRoute: typeof AttendeesNewRoute
   CheckinEventIdRoute: typeof CheckinEventIdRoute
-  CheckinPairRoute: typeof CheckinPairRoute
   EEventIdRoute: typeof EEventIdRoute
   EventsEventIdRoute: typeof EventsEventIdRoute
   EventsNewRoute: typeof EventsNewRoute
@@ -331,13 +305,6 @@ declare module '@tanstack/react-router' {
       path: '/organizations'
       fullPath: '/organizations'
       preLoaderRoute: typeof OrganizationsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/onboarding': {
-      id: '/onboarding'
-      path: '/onboarding'
-      fullPath: '/onboarding'
-      preLoaderRoute: typeof OnboardingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -417,13 +384,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EEventIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/checkin/pair': {
-      id: '/checkin/pair'
-      path: '/checkin/pair'
-      fullPath: '/checkin/pair'
-      preLoaderRoute: typeof CheckinPairRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/checkin/$eventId': {
       id: '/checkin/$eventId'
       path: '/checkin/$eventId'
@@ -460,14 +420,12 @@ const rootRouteChildren: RootRouteChildren = {
   AccountRoute: AccountRoute,
   AnalyticsRoute: AnalyticsRoute,
   LoginRoute: LoginRoute,
-  OnboardingRoute: OnboardingRoute,
   OrganizationsRoute: OrganizationsRoute,
   ProfileRoute: ProfileRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   UpgradeRoute: UpgradeRoute,
   AttendeesNewRoute: AttendeesNewRoute,
   CheckinEventIdRoute: CheckinEventIdRoute,
-  CheckinPairRoute: CheckinPairRoute,
   EEventIdRoute: EEventIdRoute,
   EventsEventIdRoute: EventsEventIdRoute,
   EventsNewRoute: EventsNewRoute,

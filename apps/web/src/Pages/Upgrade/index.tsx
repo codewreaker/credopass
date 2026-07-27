@@ -1,151 +1,83 @@
-import { useState } from 'react'
-import { ArrowLeft, CheckCircle2, History, BarChart3, Users, Shield, Loader2, Sparkles } from 'lucide-react'
-import { Button } from '@credopass/ui/components/button'
-import { Input } from '@credopass/ui/components/input'
+/**
+ * `/upgrade` — what plan this organization is on.
+ *
+ * This page used to be a guest-conversion screen: *"You're in guest mode.
+ * Create a free account to save your check-ins"*, with a **"Continue as guest
+ * instead"** button and a sign-up form whose submit was a one-second
+ * `setTimeout` standing in for an API call that was never wired.
+ *
+ * Nothing ever linked to it that way. Its two callers — the org switcher and
+ * the spotlight on `/events` — both mean *upgrade your plan*, so every
+ * signed-in person who clicked Upgrade was told they were a guest and offered a
+ * mode that does not exist (D20).
+ *
+ * What it shows now is the truth and no more than the truth. Stripe is deferred
+ * (D15) and there is no billing endpoint, so there is no button here that
+ * pretends to charge anyone. The tier limits are deliberately not restated:
+ * `services/core/src/authz/permissions.ts` and `authz/plans.ts` own those
+ * numbers, they move with pricing, and a copy of them here would be wrong on
+ * the day pricing changes.
+ */
+
+import { ArrowLeft, Mail, Sparkles } from 'lucide-react'
 import { useNavigate } from '@tanstack/react-router'
-import { AuthScreen } from '../../containers/AuthScreen'
-
-const UPGRADE_BENEFITS = [
-  { icon: History,   text: 'Keep every check-in on your record' },
-  { icon: BarChart3, text: 'Full attendance history across all events' },
-  { icon: Users,     text: 'Member profile visible to organizers' },
-  { icon: Shield,    text: 'Secure account — your data, always' },
-] as const
-
-/** Live membership card — updates as the guest types their email. */
-const MembershipCardPreview = ({ email }: { email: string }) => (
-  <div className="rounded-2xl bg-primary-foreground text-primary p-4 max-w-[21rem] shadow-elevation-3">
-    <div className="flex items-center justify-between mb-5">
-      <span className="text-[10px] font-bold uppercase tracking-[0.16em] opacity-70">CredoPass member</span>
-      <Sparkles size={14} />
-    </div>
-    <p className="text-lg font-semibold tracking-tight truncate">{email || 'you@example.com'}</p>
-    <div className="flex items-center justify-between mt-4">
-      <div>
-        <p className="text-[9px] font-bold uppercase tracking-[0.14em] opacity-60">Events</p>
-        <p className="text-xl font-bold tabular-nums leading-tight">0</p>
-      </div>
-      <div className="text-right">
-        <p className="text-[9px] font-bold uppercase tracking-[0.14em] opacity-60">Since</p>
-        <p className="text-xl font-bold leading-tight">Today</p>
-      </div>
-    </div>
-  </div>
-)
+import { useOrganizations } from '@credopass/api-client'
+import { Button } from '@credopass/ui/components/button'
+import { useSession } from '../../contexts/session'
 
 export default function UpgradePage() {
   const navigate = useNavigate()
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
-  const [mode, setMode] = useState<'register' | 'success'>('register')
+  const { organizationId } = useSession()
+  const { data: organizations = [], isLoading } = useOrganizations()
 
-  const handleBack = () => navigate({ to: '/events' })
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!email || !password) return
-    setIsLoading(true)
-    try {
-      // TODO: wire to signUpWithEmail from Supabase auth client
-      await new Promise(r => setTimeout(r, 1000)) // placeholder
-      setMode('success')
-    } catch {
-      // handle error
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  if (mode === 'success') {
-    return (
-      <div className="flex min-h-svh items-center justify-center bg-background p-6">
-        <div className="w-full max-w-sm text-center">
-          <div className="mx-auto mb-6 flex size-14 items-center justify-center rounded-full bg-primary text-primary-foreground">
-            <CheckCircle2 size={24} />
-          </div>
-          <h2 className="text-2xl font-semibold tracking-tight mb-2">Account created</h2>
-          <p className="text-sm text-muted-foreground mb-8">
-            Check your inbox to confirm your email, then sign back in.
-          </p>
-          <Button className="w-full h-11 rounded-full font-semibold" onClick={() => navigate({ to: '/login', search: { view: 'email' } })}>
-            Sign in to your new account
-          </Button>
-        </div>
-      </div>
-    )
-  }
+  const organization = organizations.find((o) => o.id === organizationId) ?? organizations[0]
+  const goBack = () => navigate({ to: '/events' })
 
   return (
-    <AuthScreen
-      headline={<>Keep everything<br />you&rsquo;ve earned.</>}
-      subcopy="You’re in guest mode. Create a free account to save your check-ins and keep your attendance history."
-      features={UPGRADE_BENEFITS}
-      billboardCard={<MembershipCardPreview email={email} />}
-      billboardMaskSrc="/empty-state-two.svg"
-      mobileTagline="Keep everything you’ve earned — create a free account."
-      showClose
-      onClose={handleBack}
-      footerText={`© ${new Date().getFullYear()} CredoPass · Free forever for attendees`}
-    >
-      <button
-        onClick={handleBack}
-        className="mb-6 flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors duration-150 cursor-pointer"
-      >
-        <ArrowLeft size={14} />
-        Back to app
-      </button>
-
-      <div className="mb-8">
-        <h2 className="text-2xl font-semibold tracking-tight text-foreground">Create your account</h2>
-        <p className="mt-1.5 text-sm text-muted-foreground">Free forever. No credit card required.</p>
-      </div>
-
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-foreground" htmlFor="email">Email</label>
-          <Input
-            id="email"
-            type="email"
-            placeholder="you@example.com"
-            className="h-11 rounded-xl"
-            value={email}
-            onChange={e => setEmail(e.target.value)}
-            required
-            autoComplete="email"
-          />
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-foreground" htmlFor="password">Password</label>
-          <Input
-            id="password"
-            type="password"
-            placeholder="Min. 8 characters"
-            className="h-11 rounded-xl"
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            required
-            minLength={8}
-            autoComplete="new-password"
-          />
-        </div>
-
-        <Button type="submit" className="w-full h-11 rounded-full font-semibold mt-2" disabled={isLoading}>
-          {isLoading
-            ? <><Loader2 size={14} className="animate-spin" /> Creating account…</>
-            : 'Create free account'}
-        </Button>
-      </form>
-
-      <div className="mt-6 text-center">
+    <div className="flex min-h-svh items-start justify-center bg-background p-6 sm:items-center">
+      <div className="flex w-full max-w-md flex-col gap-6">
         <button
-          onClick={handleBack}
-          className="text-sm text-muted-foreground hover:text-foreground transition-colors duration-150 cursor-pointer"
+          onClick={goBack}
+          className="flex w-fit items-center gap-1.5 text-sm text-muted-foreground transition-colors duration-150 hover:text-foreground cursor-pointer"
         >
-          Continue as guest instead
+          <ArrowLeft size={14} />
+          Back to app
         </button>
+
+        <div className="rounded-2xl bg-primary p-5 text-primary-foreground">
+          <div className="mb-5 flex items-center justify-between">
+            <span className="text-[10px] font-bold uppercase tracking-[0.16em] opacity-70">
+              Current plan
+            </span>
+            <Sparkles size={14} />
+          </div>
+          <p className="truncate text-2xl font-semibold capitalize tracking-tight">
+            {isLoading ? '—' : (organization?.plan ?? 'free')}
+          </p>
+          <p className="mt-1 truncate text-[13px] font-medium opacity-70">
+            {organization?.name ?? 'No organization selected'}
+          </p>
+        </div>
+
+        <div className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-4">
+          <h2 className="text-sm font-semibold">Changing plans isn&rsquo;t self-service yet</h2>
+          <p className="text-[13px] leading-relaxed text-muted-foreground">
+            Billing isn&rsquo;t wired up, so there is nothing to click here that would move you to
+            another tier. Get in touch and we&rsquo;ll change it on our side.
+          </p>
+          <Button
+            variant="outline"
+            className="w-fit gap-2 rounded-full"
+            render={(props) => <a {...props} href="mailto:hello@credopass.com?subject=Plan%20change" />}
+          >
+            <Mail size={14} /> hello@credopass.com
+          </Button>
+        </div>
+
+        <p className="text-center text-xs text-muted-foreground">
+          © {new Date().getFullYear()} CredoPass
+        </p>
       </div>
-    </AuthScreen>
+    </div>
   )
 }

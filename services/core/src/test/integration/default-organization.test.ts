@@ -28,7 +28,7 @@ let db: any;
 const newAccount = async (displayName: string | null, email: string | null) => {
   const [row] = await db
     .insert(accounts)
-    .values({ displayName, email, isGuest: false, lastSeenAt: new Date() })
+    .values({ displayName, email, lastSeenAt: new Date() })
     .returning({ id: accounts.id });
   return { id: row.id, displayName, email };
 };

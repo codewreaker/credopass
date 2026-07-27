@@ -72,7 +72,7 @@ flowchart TD
     end
 
     subgraph Backend
-        Core["services/core<br/>Hono on Bun · /api/core"]
+        Core["services/core<br/>Hono on Bun · /api/v1/core"]
         DB[("PostgreSQL<br/>Drizzle ORM")]
     end
 
@@ -103,7 +103,7 @@ sequenceDiagram
     participant C as Component
     participant Col as TanStack DB collection
     participant Cl as api-client
-    participant API as Hono /api/core
+    participant API as Hono /api/v1/core
     participant DB as PostgreSQL
 
     C->>Col: insert() / update()
@@ -121,7 +121,7 @@ sequenceDiagram
 ## Auth & multi-tenancy
 
 - **Authentication** is **Supabase**. The client holds the session; every API request carries `Authorization: Bearer <jwt>`. The API verifies it against Supabase's JWKS endpoint — no shared secret (see [`services/core`](services/core/README.md)).
-- **The public event surface** (`/api/core/public/*`) is deliberately open — it's how a walk-in guest checks in with no account. It's mounted *before* the auth middleware and can only touch one event id.
+- **The public attendee surface** (`/api/v1/core/public/*` and `/p/{token}`) is deliberately open — it's how someone checks in with no account. Routes declare `scope: 'public'` or `scope: 'bearer'`, and can only touch one event or one pass.
 - **Multi-tenancy** (**designed, not yet enforced**): the `organizations` table is the intended tenant boundary. Users join orgs through `orgMemberships` with a role (`owner`/`admin`/`member`/`viewer`); events carry a team through `eventMembers` (`organizer`/`co-host`/`staff`/`volunteer`).
   > ⚠️ **Today the boundary is not enforced.** CRUD routes do not filter by the caller — `organizationId` is an optional client-supplied query filter — and RLS policies are dev-permissive. Every signed-in user sees every organisation's data. Read **[docs/MULTI-TENANCY.md](docs/MULTI-TENANCY.md)** before building anything that assumes isolation.
 
@@ -153,7 +153,7 @@ credopass/
 │   ├── mobile/      → Expo / React Native companion
 │   └── website/     → marketing site + /how-it-works                     (Vercel)
 ├── services/
-│   └── core/        → Hono API, /api/core                                (Cloud Run)
+│   └── core/        → Hono API, /api/v1/core                             (Cloud Run)
 ├── packages/
 │   ├── lib/         → schemas, types, enums, stores, theme, auth  ← the core
 │   ├── api-client/  → offline-first TanStack DB collections
@@ -214,10 +214,10 @@ bun start        # web + API together
 |---|---|
 | Web app | http://localhost:5000 (AirPlay often takes 5000 — check the terminal, it's usually 5001) |
 | API (new) | http://localhost:8080/api/v1/core |
-| API (old) | http://localhost:8080/api/core |
+| API | http://localhost:8080/api/v1/core |
 | **API docs + client** | **http://localhost:8080/api/v1/core/docs** |
 
-For the web app to reach a local API, set `VITE_API_URL=http://localhost:8080/api/core` in `apps/web/.env`.
+For the web app to reach a local API, set `VITE_API_URL=http://localhost:8080/api/v1/core` in `apps/web/.env`.
 
 ### Exploring the API
 
@@ -316,7 +316,7 @@ flowchart LR
     GH --> V["apps/web + website → Vercel"]
     GH --> CR["services/core → Cloud Run"]
     V --> App["app.credopass.com / credopass.com"]
-    CR --> Api["api.credopass.com/api/core"]
+    CR --> Api["api.credopass.com/api/v1/core"]
 ```
 
 - **Frontends → Vercel.** `apps/web/vercel.json` proxies `/api/*` to the API and adds security headers; `apps/website/vercel.json` does the SPA fallback + API proxy.

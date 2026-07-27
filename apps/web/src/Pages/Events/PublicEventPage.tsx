@@ -272,14 +272,14 @@ function RegisterDialog({
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
 
-  // Soft prefill: a signed-in, non-anonymous session already knows who this is,
-  // so a returning attendee barely types.
+  // Soft prefill: a signed-in session already knows who this is, so a returning
+  // attendee barely types.
   useEffect(() => {
     if (!open) return;
     let cancelled = false;
     supabase.auth.getUser().then(({ data }) => {
       const user = data.user;
-      if (cancelled || !user || user.is_anonymous) return;
+      if (cancelled || !user) return;
       const meta = (user.user_metadata ?? {}) as {
         full_name?: string; name?: string; first_name?: string; last_name?: string;
       };

@@ -35,12 +35,6 @@ export type OrgPlan = z.infer<typeof OrgPlanEnum>;
 export const OrgRoleEnum = z.enum(['owner', 'admin', 'organizer', 'checkin', 'viewer']);
 export type OrgRole = z.infer<typeof OrgRoleEnum>;
 
-/**
- * Event-scoped delegation. An `event_grants` row ADDS permissions on one event;
- * it is **not** how someone attends one. Attending is an `attendance` row.
- */
-export const EventRoleEnum = z.enum(['organizer', 'co_host', 'staff']);
-export type EventRole = z.infer<typeof EventRoleEnum>;
 
 /** How a check-in happened. */
 export const CheckInMethodEnum = z.enum(['qr', 'manual', 'self', 'pass']);

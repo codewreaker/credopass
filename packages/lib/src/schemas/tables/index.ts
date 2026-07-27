@@ -3,11 +3,14 @@
 // The schema. docs/API-FIRST-REBUILD.md §3
 // ============================================================================
 //
-// Ten tables, all snake_case, no legacy. Gone from the old shape:
+// Eleven tables, all snake_case, no legacy. Gone from the old shape:
 //
 //   users         → split into `accounts` (identity) + `people` (tenant-scoped)
-//   event_members → narrowed to `event_grants` (delegation only; sign-ups are
-//                   an `attendance` row with state = 'registered')
+//   event_members → deleted. It became `event_grants`, a per-event role map that
+//                   nothing ever populated, so every grant it was meant to widen
+//                   evaluated to false; that went too (D24). Signing up for an
+//                   event is an `attendance` row with state = 'registered'.
+//   device_tokens → deleted. A door is a person with the `checkin` role (D24).
 //   loyalty       → deleted outright (brief §4.1)
 //
 // ============================================================================
@@ -15,8 +18,6 @@
 import { relations } from 'drizzle-orm';
 import { accounts } from './accounts';
 import { attendance } from './attendance';
-import { deviceTokens } from './device-tokens';
-import { eventGrants } from './event-grants';
 import { events } from './events';
 import { identities } from './identities';
 import { invitations } from './invitations';
@@ -28,8 +29,6 @@ import { people } from './people';
 
 export { accounts } from './accounts';
 export { attendance } from './attendance';
-export { deviceTokens } from './device-tokens';
-export { eventGrants } from './event-grants';
 export { events } from './events';
 export { identities } from './identities';
 export { invitations } from './invitations';
@@ -41,7 +40,6 @@ export { people } from './people';
 export {
   attendanceState,
   checkInMethod,
-  eventRole,
   identityProviderKind,
   orgRole,
   provisionedBy,
@@ -61,7 +59,6 @@ export const accountsRelations = relations(accounts, ({ many }) => ({
   identities: many(identities),
   orgMemberships: many(orgMemberships),
   people: many(people),
-  eventGrants: many(eventGrants),
 }));
 
 export const identitiesRelations = relations(identities, ({ one }) => ({
@@ -107,7 +104,6 @@ export const eventsRelations = relations(events, ({ one, many }) => ({
     references: [organizations.id],
   }),
   attendance: many(attendance),
-  grants: many(eventGrants),
   passes: many(passes),
 }));
 
@@ -118,19 +114,6 @@ export const attendanceRelations = relations(attendance, ({ one }) => ({
   }),
   event: one(events, { fields: [attendance.eventId], references: [events.id] }),
   person: one(people, { fields: [attendance.personId], references: [people.id] }),
-}));
-
-export const eventGrantsRelations = relations(eventGrants, ({ one }) => ({
-  event: one(events, { fields: [eventGrants.eventId], references: [events.id] }),
-  account: one(accounts, { fields: [eventGrants.accountId], references: [accounts.id] }),
-}));
-
-export const deviceTokensRelations = relations(deviceTokens, ({ one }) => ({
-  organization: one(organizations, {
-    fields: [deviceTokens.organizationId],
-    references: [organizations.id],
-  }),
-  event: one(events, { fields: [deviceTokens.eventId], references: [events.id] }),
 }));
 
 export const passesRelations = relations(passes, ({ one }) => ({
@@ -174,10 +157,8 @@ export const schema = {
   invitations,
   people,
   events,
-  eventGrants,
   attendance,
   passes,
-  deviceTokens,
   accountsRelations,
   identitiesRelations,
   organizationsRelations,
@@ -185,9 +166,7 @@ export const schema = {
   peopleRelations,
   eventsRelations,
   attendanceRelations,
-  eventGrantsRelations,
   passesRelations,
-  deviceTokensRelations,
   invitationsRelations,
   orgIdentityProvidersRelations,
   orgDomainsRelations,

@@ -535,6 +535,108 @@ from using it, but the endpoint stays open until the project setting is turned o
 
 ---
 
+## The sign-up funnel; guests and device tokens deleted (2026-07-27)
+
+Plan: [`API-THIRD-REBUILD.md`](API-THIRD-REBUILD.md), decisions D20–D26. This is what happened.
+
+**26 files deleted, ~2,900 lines removed, 3 added.** Almost all of it was subtraction, because
+three systems had stopped meaning anything and were holding the funnel up.
+
+### Three things that could not be entered
+
+| Deleted | Why it was already dead |
+|---|---|
+| The guest tier | `accounts.is_guest` could only be set from an `is_anonymous` claim, and nothing had issued one since anonymous sign-in was removed. `Account.isGuest` was a contract field that was a compile-time constant `false`. |
+| The onboarding wizard (548 lines) | `ensureDefaultOrganization` made `needsOnboarding` permanently false, so `OnboardingGate` never blocked and the wizard was reachable only by typing the URL. Its third step was "create your first event" — the reason making an organisation required making an event. |
+| Device tokens (table, 4 endpoints, pairing screen, 32 tests, a 210-line explainer) | The `checkin` role already carried exactly the permissions a door needs, the device branch already borrowed it (`role: 'checkin'`), and the kiosk screen already worked for a signed-in user. |
+
+### The one change that had to go first
+
+`packages/api-client/types.ts` derived its `Permission` union from
+`ApiBody<'/events/{id}/devices','post'>['scopes']` — the device-pairing request body was the only
+place in the whole document where a permission was named in a *request*, so that is where the
+literal union was read back from. **Deleting the device routes would have deleted the type** and
+left `useCan` taking a bare `string`.
+
+`/me/context` now declares `z.enum(PERMISSIONS)` on the field that actually carries them, and the
+client anchors there. Stabler, and more honest — the field ships a closed set, so the contract
+says so.
+
+### `event_grants`: an authorization surface that silently did nothing
+
+Found in the sweep, not in the brief. It backed a per-event role system (`organizer` / `co_host`
+/ `staff`) consulted by `canOnEvent`, which read `ctx.eventGrants` — **a map `requireCaller`
+never populated.** Always empty, so every grant meant to widen access evaluated to `false`, and
+the only code exercising it was unit tests fabricating a context by hand.
+
+Deleted rather than wired up. A permanently-empty authorization surface is worse than none,
+because it reads as working: `permissions.ts` documented organizer's row-scoped rights as
+"enforced in EventService" against a table nothing ever wrote to.
+
+`org_identity_providers` and `org_domains` look equally unused and were **kept** — they are
+deliberate Phase 7 SSO scaffolding (D-M), and `identities.orgIdentityProviderId` references them.
+
+### Bugs found on the way
+
+- **`apps/web/.env.production` pointed at `/api/core`**, a base path the service 404s. Production
+  was aimed at a dead URL. `apps/mobile` had the same problem against `localhost:3000/api/core`.
+- **`/upgrade` told signed-in users they were guests.** Two live callers navigate to it and both
+  mean *upgrade your plan*; what rendered was "You're in guest mode… Continue as guest instead",
+  over a sign-up form whose submit was a one-second `setTimeout` standing in for an API call that
+  was never wired. Replaced with the plan screen, which says plainly that billing is not wired up
+  rather than offering a button that does nothing.
+- **T6 only passed against a pristine database.** The adversarial `beforeAll` never calls
+  `harness.reset()`, and T6 used a hardcoded `fresh@example.test`; a second run hit
+  `uq_accounts_email` and failed with a 500 from `GET /me` that had nothing to do with tenancy.
+  Uniquified. The suite is now idempotent — verified across three consecutive runs.
+- **`joinAs`'s `label` parameter inferred the role union** from `label = role`, so a test naming
+  an actor after what it proves failed to compile.
+
+### The tests that replaced the deleted ones
+
+Deleting 31 device tests without replacing their claims would be real lost coverage. Three took
+their place: a `checkin`-role block in `tenant-context.test.ts` asserting the door is **strictly
+narrower than organizer** (that is what replaced device-scope intersection — the cap is the role
+now, so it must be at least as tight); T13, that A's door staff cannot check anyone into B's
+event; and T14, that removing a door member ends their access on the next request.
+
+**T7 was rewritten and is no longer red.** It asserted §7.3's `200 []` against `requireTenant`'s
+`403 not_a_member` for "a guest with no active org" — a conflict now unreachable from both ends.
+T6 already covers what a fresh account sees, so T7 guards the *ambiguous* case instead: a caller
+in several organisations must name one. The dangerous failure there is silence — picking one on
+their behalf would put another tenant's rows on screen under a heading naming neither.
+
+### The funnel itself
+
+One route guard removed, one overlay, one dialog, one link.
+
+`/events/new` renders for a signed-out visitor with sign-in laid over it (glassmorphism, per the
+Luma reference). The fields are inert via `<fieldset disabled>`, so **there is no draft to
+save** — which is why this is simpler than the sessionStorage design first sketched. The overlay
+is presentation; `POST /events` is org-scoped and 401s, and that is the control.
+
+### Verification
+
+| Check | Result |
+|---|---|
+| `nx run coreservice:verify` | ✅ 68 unit/structural |
+| `nx run coreservice:test:integration` | ✅ 105 passing (was 136; 31 device tests deleted) |
+| `nx run coreservice:test:adversarial` | ✅ **39 pass / 12 todo / 0 fail** (was 38 / 12 / 1) |
+| `nx run web:build` · `web:lint` · `website:build` | ✅ |
+| API operations | 41 (was 45) · permissions 25 (was 26) · tables 11 (was 13) |
+
+Two pre-existing typecheck errors remain in `Pages/ResetPassword/index.tsx` and
+`packages/ui/src/components/login/email-password-form.tsx` (Zod/TanStack Form `StandardSchemaV1`
+mismatches) — confirmed identical on the untouched tree.
+
+**Migration `0003_drop_device_tokens_and_guest_tier.sql` is generated but NOT applied.**
+`nx run coreservice:migrate` writes to the remote Supabase instance; applying it is a deliberate
+act. The local test databases replay it from empty on every run, which is where the 105 + 39
+above come from.
+
+
+---
+
 ## Conventions worth knowing
 
 1. Every route is created with `defineRoute` and declares `scope` (+ `permission` if org-scoped).
@@ -543,7 +645,9 @@ from using it, but the endpoint stays open until the project setting is turned o
 4. Handlers never build a `TenantContext`. Only the tenant middleware does.
 5. `services/**` imports no framework.
 6. A resource in another tenant returns **404**, not 403.
-7. Tables are reached through `scoped(db, ctx)`.
+7. Every tenant-scoped query filters on `ctx.organizationId` explicitly. (There was a
+   `db/scoped.ts` meant to enforce this. Nothing imported it, so it was deleted rather than
+   left as a rule the code did not follow.)
 
 ---
 
@@ -556,6 +660,7 @@ from using it, but the endpoint stays open until the project setting is turned o
 | 1 · Identity + tenancy | 🟡 Endpoints done; RLS cutover, data migration, client rewiring open |
 | 2 · Events + people reads | ✅ Done (client rewiring deferred to Phase 3) |
 | 3 · Writes, passes, email, delete local-first | 🟡 Writes + passes done and wired into the web app; email (`NotificationService`) still open |
+| 3.5 · Sign-up funnel; guest + device tiers deleted | ✅ Done — see the 2026-07-27 entry above |
 | 4 · Domain events + live kiosk | ⬜ |
 | 5 · Recurrence | ⬜ |
 | 6 · Media, entitlements, real analytics | ⬜ |

@@ -58,7 +58,7 @@ export const useCommandPallete = () => {
                         break;
                     case 't':
                         e.preventDefault();
-                        navigate({ to: '/organizations' });
+                        navigate({ to: '/account', search: { tab: 'organizations' } });
                         break;
                     case 'p':
                         e.preventDefault();
@@ -77,12 +77,3 @@ export const useCommandPallete = () => {
     }
 }
 
-/**
- * `useGuestAutoLogin` was removed with anonymous sign-in.
- *
- * It signed every first-time visitor in anonymously before they had asked for
- * anything, which created an account row per browser profile, pushed them
- * straight into "create your organization", and left `/events` in the history
- * stack so Back bounced between the two forever. See `packages/lib/src/supabase
- * /auth.ts` for why anonymous sign-in itself is gone.
- */

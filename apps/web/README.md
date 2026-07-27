@@ -13,7 +13,7 @@
 flowchart LR
     R["Route<br/>(file-based)"] --> P["Page component"]
     P --> Col["getCollections()<br/>@credopass/api-client"]
-    Col --> API["/api/core (Hono)"]
+    Col --> API["/api/v1/core (Hono)"]
     P --> UI["@credopass/ui"]
     Store["Zustand<br/>@credopass/lib/stores"] --> P
     SB["Supabase session"] -->|access token| Col
@@ -51,7 +51,8 @@ flowchart LR
 ## Key flows to know
 
 - **Kiosk check-in** (`Pages/CheckIn/`) — `use-attendee-checkin.ts` finds-or-creates a user by email, then writes exactly one `attendance` row per (event, patron).
-- **Public event page** (`routes/e/$eventId.tsx` + `use-public-event.ts`) — reads from and posts to `/api/core/public/*`, so it works with no login.
+- **Public event page** (`routes/e/$eventId.tsx`) — reads from and posts to `/api/v1/core/public/*`, so it works with no login.
+- **Create event** (`routes/events/new.tsx`) — the one private-looking route with **no** auth guard. It renders the composer to a signed-out visitor with sign-in overlaid (D21); `POST /events` is org-scoped and 401s, which is the actual control.
 - **Event composer** (`Pages/Events/EventComposer/`) — the create/edit form, including the per-event `checkInMethods` toggle.
 
 ## Commands
@@ -66,4 +67,4 @@ nx run web:lint
 
 ## API wiring
 
-`main.tsx` calls `configureAPIClient({ baseURL: import.meta.env.VITE_API_URL ?? '/api/core', getAuthToken })`. In dev, point `VITE_API_URL` at the local core service (`http://localhost:8080/api/core`); in production Vercel rewrites `/api/*` to `https://api.credopass.com`.
+`main.tsx` calls `configureAPIClient({ baseURL: import.meta.env.VITE_API_URL ?? '/api/v1/core', getAuthToken })`. In dev, point `VITE_API_URL` at the local core service (`http://localhost:8080/api/v1/core`); in production Vercel rewrites `/api/*` to `https://api.credopass.com`.

@@ -44,7 +44,6 @@ import { GlowingQRCode } from '@credopass/ui/components/glowing-qr-code';
 import { toast } from '@credopass/ui/components/sonner';
 import { cn } from '@credopass/ui/lib/utils';
 import { EventQrPoster, EventQrPosterButton, useEventQrPoster } from './event-qr-poster';
-import { DevicesPanel } from './devices-panel';
 import { useCan } from '../../../contexts/session';
 import { errorMessage, isNotFound } from '../../../lib/errors';
 
@@ -110,7 +109,6 @@ function EventView({ event }: { event: Event }) {
   const canRecord = useCan('attendance:record');
   const canUpdate = useCan('event:update');
   const canCancel = useCan('event:cancel');
-  const canManageDevices = useCan('device:manage');
 
   const [addAttendeeOpen, setAddAttendeeOpen] = useState(false);
   const { open: posterOpen, setOpen: setPosterOpen, openPoster } = useEventQrPoster();
@@ -353,7 +351,6 @@ function EventView({ event }: { event: Event }) {
       )}
 
       {/* Devices at this event (§2.10) */}
-      {canManageDevices && <DevicesPanel eventId={event.id} />}
 
       {/* Ending the event, and cancelling it. Two different things. */}
       {!isEnded && (

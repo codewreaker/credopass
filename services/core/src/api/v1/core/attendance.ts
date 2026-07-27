@@ -156,7 +156,7 @@ attendanceRoutes.openapi(
       organizationId: tenant.organizationId,
       person: body,
       method: body.method ?? 'manual',
-      actor: { accountId: tenant.accountId, deviceId: tenant.deviceId },
+      actor: { accountId: tenant.accountId },
     });
     return c.json(result, 200);
   }

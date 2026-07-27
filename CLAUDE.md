@@ -20,20 +20,30 @@ Read both before changing the API, the schema, or anything tenancy-related.
 
 | Surface | Status | Use for |
 |---|---|---|
-| `/api/core/*` | The old one. Still serves the live web app. Untouched. | Nothing new. It gets deleted in Phase 3. |
-| `/api/v1/core/*` | The new one. | All new endpoints. |
+| `/api/core/*` | **Gone.** `src/routes/` and `crud-factory.ts` were deleted; the service 404s this path. | Nothing. If you see it in a config, that config is a bug. |
+| `/api/v1/core/*` | The only one. | Everything. |
 
 The `/core` suffix is there because more services will sit beside it later (`/api/v1/billing`, …). Code lives in `services/core/src/api/v1/core/`.
 
 Phase 0 is done. **Phase 1 is mostly done**: `accounts` / `identities` / `people` / `invitations` / SSO tables, RLS policies, issuer registry, auth + tenant middleware, `/me`, `/me/context`, organizations, members, invitations.
 
 **Still open in Phase 1:**
-- The API connects as `postgres`, which bypasses RLS — so the policies in `drizzle/0004_rls_tenancy.sql` are currently inert on the API path. Switching `DATABASE_URL` to `credopass_api` requires wiring `SET LOCAL app.account_id` per transaction first, or every query returns nothing.
+- The API connects as `postgres`, which bypasses RLS — so the policies in `services/core/drizzle/0001_rls.sql` are currently inert on the API path. Switching `DATABASE_URL` to `credopass_api` requires wiring `SET LOCAL app.account_id` per transaction first, or every query returns nothing.
 - No data migration from `users` → `accounts` + `people` yet.
 
 **The web app now talks to `/api/v1/core`.** Every screen reads the new API through
 `@credopass/api-client` hooks — see [`docs/API-SECOND-REBUILD.md`](docs/API-SECOND-REBUILD.md) for the
 plan and the "web app moved onto /api/v1/core" entry in the rebuild log for what was actually done.
+
+**The sign-up funnel landed** — [`docs/API-THIRD-REBUILD.md`](docs/API-THIRD-REBUILD.md), decisions
+D20–D26. Three things to internalise before touching auth, roles or onboarding:
+
+- **There is no guest tier and no onboarding screen.** Signing in commissions an organisation
+  (`ensureDefaultOrganization` in `requireCaller`). That *is* onboarding.
+- **There are no device tokens.** A door tablet is a person signed in with the `checkin` role.
+  Do not reintroduce a second authentication system for it.
+- **`/events/new` renders without a session**, with sign-in overlaid. That overlay is
+  presentation. `POST /events` is org-scoped and 401s — that is the control.
 
 ## What this is
 
@@ -69,30 +79,27 @@ These are enforced by code, not by convention. Breaking one fails the build, the
 4. **Handlers never build a `TenantContext`.** Only the tenant middleware does. The type is branded so you can't fake one, and lint blocks the import.
 5. **Domain services import no framework.** Nothing under `src/services/` may import `hono`. Lint blocks it.
 6. **A resource in another tenant returns 404, not 403.** 403 means "your tenant, wrong role". Never leak that a row exists.
-7. **Tables are reached through `scoped(db, ctx)`**, never imported directly in routes.
+7. **Every tenant-scoped query filters on `ctx.organizationId` explicitly. Routes never query; services do.** (There was a `db/scoped.ts` meant to enforce this. Nothing imported it — all ten services filtered by hand — so it was deleted rather than left as a rule the code did not follow.)
 
 ## Where things live
 
 | Need to touch… | Go to |
 |----------------|-------|
 | DB schema / model | `packages/lib/src/schemas/tables/` (+ relations in `tables/index.ts`) |
-| Validation / shared types | `packages/lib/src/schemas/*.schema.ts`, `enums.ts` |
+| Validation / shared types | `packages/lib/src/schemas/enums.ts`, `email.schemas.ts`. Request validation lives in the Zod schemas beside each route — there are no per-table `*.schema.ts` validators any more. |
 | Data fetching / mutations | `packages/api-client/src/hooks/` (TanStack Query, one file per endpoint group) |
 | Contract types for the client | `packages/api-client/src/types.ts` — **derived** from `generated/schema.d.ts`, never restated |
 | Active organization (client) | `packages/api-client/src/active-organization.ts` |
 | App bootstrap / permission gates | `apps/web/src/contexts/session.tsx` (`useSession`, `useCan`) |
-| API endpoints (old, `/api/core`) | `services/core/src/routes/` (+ mount in `src/index.ts`) |
-| Generic CRUD endpoint (old) | `services/core/src/util/crud-factory.ts` |
 | **API endpoints (new, `/api/v1`)** | `services/core/src/api/v1/` |
 | **Route + permission declaration** | `services/core/src/http/define-route.ts`, `http/route-registry.ts` |
 | **Error format** | `services/core/src/http/problem.ts` |
 | **Permissions & role matrix** | `services/core/src/authz/permissions.ts` |
 | **Tenant scoping types** | `services/core/src/tenancy/context.ts` |
-| **Tenant-scoped DB access** | `services/core/src/db/scoped.ts` |
 | **Domain services** (Phase 1+) | `services/core/src/services/` |
 | **Tests: unit / structural** | `services/core/src/test/*.test.ts` |
 | **Tests: adversarial tenancy** | `services/core/src/test/adversarial/` |
-| Auth (server) | `services/core/src/middleware/auth.ts` (Supabase JWT via JWKS) |
+| Auth (server) | `services/core/src/middleware/caller.ts` (`requireCaller` / `requireTenant`) + `identity/issuer-registry.ts` |
 | Auth (client) | `apps/web/src/supabase.ts`, `packages/lib/src/supabase/` |
 | Web routes | `apps/web/src/routes/` (file-based; `routeTree.gen.ts` is generated — don't edit) |
 | Web screens | `apps/web/src/Pages/` |
@@ -162,7 +169,7 @@ Verify a change compiles with `nx run <project>:typecheck` / `nx run <project>:b
 - **Ports:** web `5000` (AirPlay often holds it — it usually lands on `5001`), API `8080`, website `4200`, MinIO `9000` (console `9001`), test Postgres `55432`.
 - **Two base paths.** Old: `/api/core`. New: `/api/v1`. Web still reads `VITE_API_URL` (fallback `/api/core`).
 - **Docs:** Scalar at `http://localhost:8080/api/v1/docs`, raw spec at `/api/v1/openapi.json`.
-- **`AUTH_DISABLED=true`** bypasses JWT verification. It exists for `/api/core` only — **do not use it for `/api/v1`**. Run local Supabase instead so the auth path actually gets exercised.
+- **`AUTH_DISABLED=true`** bypassed JWT verification for `/api/core`, which no longer exists. **Do not use it.** Run local Supabase so the auth path actually gets exercised.
 - **`drizzle/` is now tracked in git.** Migrations are reviewed like any other code. Don't re-ignore it.
 - **Adding a column is not additive at runtime.** Drizzle builds an explicit column list from the schema, so a new column makes *every* query — including `/api/core`'s — ask for it. Every database the code runs against must be migrated before the code ships. The remote instance is currently un-migrated, so `/api/core` events queries 500 there.
 - **A `drizzle-kit push` database has tables but no migration journal**, so `migrate` fails on it. `nx run coreservice:db status` detects this; `db reset` fixes it.

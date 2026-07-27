@@ -11,7 +11,8 @@ import { pgEnum } from 'drizzle-orm/pg-core';
  * separate read-only branch.
  *
  * Renamed from the old text column's values: `member` becomes `organizer`, and
- * `checkin` is new — a door tablet's operator should not be able to edit events.
+ * `checkin` is new — it is the door role (D24), what someone working the
+ * entrance signs in as. They record arrivals; they cannot edit the event.
  * The permission matrix lives in services/core/src/authz/permissions.ts and is
  * the only place that decides what a role may do.
  */
@@ -22,12 +23,6 @@ export const orgRole = pgEnum('org_role', [
   'checkin',
   'viewer',
 ]);
-
-/**
- * Event-scoped delegation (§6.3). An `event_grants` row ADDS permissions on one
- * event; it never removes org-level ones.
- */
-export const eventRole = pgEnum('event_role', ['organizer', 'co_host', 'staff']);
 
 /**
  * How a membership came to exist. SCIM-ready from day one so adding it later is

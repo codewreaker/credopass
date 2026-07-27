@@ -12,6 +12,11 @@ import * as People from '../../services/people';
 import { createTenantContext, type TenantContext } from '../../tenancy/context';
 import { attendance, events, organizations, people } from '@credopass/lib/schemas/tables';
 
+// Any account works: these contexts are built by hand to exercise scoping,
+// not membership. `null` used to be legal here because a device caller had no
+// account; with device tokens gone every tenant context has one (D24).
+const ACTOR = '99999999-9999-9999-9999-999999999999';
+
 let harness: TestDatabase;
 let db: any;
 let ctxA: TenantContext;
@@ -65,7 +70,7 @@ beforeEach(async () => {
   await harness.reset();
   orgA = await makeOrg('Org A', `a-${crypto.randomUUID().slice(0, 8)}`);
   orgB = await makeOrg('Org B', `b-${crypto.randomUUID().slice(0, 8)}`);
-  ctxA = createTenantContext({ organizationId: orgA, accountId: null, role: 'owner' });
+  ctxA = createTenantContext({ organizationId: orgA, accountId: ACTOR, role: 'owner' });
 });
 
 afterAll(async () => {

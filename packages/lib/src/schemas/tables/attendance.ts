@@ -39,10 +39,11 @@ export const attendance = pgTable('attendance', {
   checkOutTime: timestamp('check_out_time', { mode: 'date', withTimezone: true }),
   checkInMethod: checkInMethod('check_in_method'),
 
-  // The audit trail the brief asks for: who checked this person in, when, from
-  // which device.
+  // The audit trail the brief asks for: who checked this person in, and when.
+  // There was a `checked_in_by_device_id` beside this, recording which paired
+  // tablet did it. Doors are staffed by people holding the `checkin` role now
+  // (D24), so the account id answers it on its own.
   checkedInByAccountId: uuid('checked_in_by_account_id').references(() => accounts.id, { onDelete: 'set null' }),
-  checkedInByDeviceId: uuid('checked_in_by_device_id'),
 
   notes: text('notes'),
 

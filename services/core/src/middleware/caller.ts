@@ -20,15 +20,11 @@ import { loadMemberships, resolveCaller, type Caller } from '../services/identit
 import { ensureDefaultOrganization } from '../services/membership';
 import { createTenantContext, type TenantContext } from '../tenancy/context';
 import { getDatabase } from '../db/client';
-import * as Device from '../services/device';
 import type { Permission } from '../authz/permissions';
 import { can } from '../tenancy/context';
 
 export interface CallerVars {
-  /** Present for a human caller. Absent for a device. */
   caller: Caller;
-  /** Present for a device caller. Absent for a human. */
-  device: Device.VerifiedDevice;
   tenant: TenantContext;
 }
 
@@ -60,17 +56,6 @@ export const requireCaller = createMiddleware<{ Variables: CallerVars }>(async (
 
   const db = await getDatabase();
 
-  // A device token is a different KIND of caller, not a weaker human one.
-  // Recognised by prefix so the two paths never overlap: a JWT can never be
-  // mistaken for a device credential, and a device token is never handed to
-  // the JWT verifier (whose failure mode is a flat 401 that would hide
-  // "revoked", which an operator needs to see).
-  if (token.startsWith(Device.DEVICE_TOKEN_PREFIX)) {
-    c.set('device', await Device.verifyToken(db, token));
-    await next();
-    return;
-  }
-
   const verified = await getRegistry().verify(token);
   if (!verified) throw problem.unauthenticated('The token could not be verified.');
   const caller = await resolveCaller(db, {
@@ -86,10 +71,10 @@ export const requireCaller = createMiddleware<{ Variables: CallerVars }>(async (
   // every request afterwards, so the transaction and its advisory lock are not
   // paid for by steady-state traffic.
   //
-  // Guests are excluded. Nothing issues anonymous tokens any more, but the API
-  // still accepts them, and provisioning an organisation for a caller who may
-  // never return is what D16 exists to forbid.
-  if (caller.memberships.length === 0 && !caller.isGuest) {
+  // This is all the onboarding there is (D22). Every token that verifies belongs
+  // to a real authenticated person — there is no guest tier to exclude, because
+  // there is no way to authenticate without being one.
+  if (caller.memberships.length === 0) {
     await ensureDefaultOrganization(db, {
       id: caller.accountId,
       displayName: caller.displayName,
@@ -142,32 +127,6 @@ export interface TenantOptions {
 
 export const requireTenant = (options: TenantOptions = {}) =>
   createMiddleware<{ Variables: CallerVars }>(async (c, next) => {
-  const device = c.get('device');
-
-  // A device's tenant comes from its own row, never from a header — it has no
-  // memberships to validate a header against, and letting it name an
-  // organisation would be exactly the escalation device tokens prevent.
-  if (device) {
-    const eventInPath = c.req.param('id') ?? c.req.param('eventId');
-    if (eventInPath) Device.assertEventInScope(device, eventInPath);
-
-    c.set(
-      'tenant',
-      createTenantContext({
-        organizationId: device.organizationId,
-        accountId: null,
-        deviceId: device.deviceId,
-        // A device acts with the `checkin` role, then INTERSECTED with its own
-        // scope list. Neither alone is enough: the role bounds what the product
-        // allows a door to do, the scopes bound what this token was issued for.
-        role: 'checkin',
-        deviceScopes: device.scopes,
-      })
-    );
-    await next();
-    return;
-  }
-
   const caller = c.get('caller');
   if (!caller) throw problem.unauthenticated();
 

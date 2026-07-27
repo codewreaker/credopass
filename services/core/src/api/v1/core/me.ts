@@ -11,7 +11,7 @@
 import { OpenAPIHono, z } from '@hono/zod-openapi';
 import { defineRoute, problemResponse } from '../../../http/define-route';
 import { requireCaller, type CallerVars } from '../../../middleware/caller';
-import { ROLE_PERMISSIONS } from '../../../authz/permissions';
+import { PERMISSIONS, ROLE_PERMISSIONS } from '../../../authz/permissions';
 
 export const me = new OpenAPIHono<{ Variables: CallerVars }>();
 
@@ -28,7 +28,6 @@ const AccountSchema = z
     id: z.string().uuid(),
     email: z.string().nullable(),
     displayName: z.string().nullable(),
-    isGuest: z.boolean(),
   })
   .openapi('Account');
 
@@ -45,9 +44,14 @@ const MeContextSchema = z
     organizations: z.array(OrgSummarySchema),
     activeOrganization: z.union([OrgSummarySchema, z.null()]),
     membership: z
-      .object({ role: z.string(), permissions: z.array(z.string()) })
+      // `z.enum(PERMISSIONS)`, not `z.string()`. This array is where the
+      // permission vocabulary reaches the OpenAPI document, and therefore the
+      // generated client's `Permission` union — the client used to read it off
+      // the device-pairing request body, which disappeared with device tokens.
+      // Naming the enum here is also simply more honest: the field ships a
+      // closed set, so the contract should say so.
+      .object({ role: z.string(), permissions: z.array(z.enum(PERMISSIONS)) })
       .nullable(),
-    needsOnboarding: z.boolean(),
   })
   .openapi('MeContext');
 
@@ -71,7 +75,6 @@ me.openapi(
         id: caller.accountId,
         email: caller.email,
         displayName: caller.displayName,
-        isGuest: caller.isGuest,
       },
       200
     );
@@ -85,10 +88,11 @@ me.openapi(
  * the fix for the leak where OrgSelector listed every organisation in the
  * database and auto-selected the first (T1, §10.7).
  *
- * `needsOnboarding` is true when the caller belongs to nothing. The web app
- * renders "Create your organisation" rather than someone else's data — without
- * it, enforcing tenancy would leave a new account staring at an empty console
- * with no way forward (D-A).
+ * There is no `needsOnboarding`. It used to say "this caller belongs to nothing,
+ * send them to the onboarding wizard", but `ensureDefaultOrganization` gives
+ * every account an organisation on its first authenticated request, so the field
+ * was permanently false and the wizard permanently unreachable. Onboarding is
+ * signing in (D22).
  */
 me.openapi(
   defineRoute({
@@ -131,12 +135,10 @@ me.openapi(
         id: caller.accountId,
         email: caller.email,
         displayName: caller.displayName,
-        isGuest: caller.isGuest,
       },
       organizations,
       activeOrganization: active,
       membership: active ? { role: active.role, permissions } : null,
-      needsOnboarding: organizations.length === 0,
     }, 200);
   }
 );

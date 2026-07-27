@@ -1,3 +1,18 @@
+> # ⚠️ HISTORICAL — superseded by [`API-THIRD-REBUILD.md`](API-THIRD-REBUILD.md)
+>
+> This document designed an anonymous-guest onboarding tier. **It was not built, and the guest
+> tier it assumed has since been deleted** (D20). Its own §10.1 asked the right question —
+> *"Is guest onboarding wanted at all, given D17 already exists?"*, recommending measurement
+> before building stages 3-5 — and the answer turned out to be no.
+>
+> What replaced it: signing in *is* onboarding, and `/events/new` renders to a signed-out
+> visitor with sign-in overlaid, so nobody needs an anonymous account to see the product.
+>
+> Kept for the reasoning in §2 (verified Supabase anonymous-sign-in behaviour) and §6 (lifecycle
+> and abuse controls), which would matter again if anonymous auth were ever revisited. **Do not
+> implement anything from §7 or §11** — those reference tables, middleware and flags that either
+> never existed or have been removed.
+
 # Guest / anonymous onboarding — design recommendation
 
 **Status:** research + recommendation. Nothing here is implemented.

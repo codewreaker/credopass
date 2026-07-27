@@ -9,8 +9,9 @@
  *
  *   A caller is identified by (issuer, subject). NEVER by email address.
  *
- * Email is user-editable at many providers, absent for anonymous sessions, and
- * is exactly the stopgap the old routes/org-memberships.ts:97 used. It appears
+ * Email is user-editable at many providers, absent from some federated
+ * assertions, and is exactly the stopgap the old
+ * routes/org-memberships.ts:97 used. It appears
  * below only as DATA to record, and once as a gate on claiming — never as the
  * key that answers "who is this?".
  *
@@ -31,7 +32,6 @@ export interface Caller {
   accountId: string;
   email: string | null;
   displayName: string | null;
-  isGuest: boolean;
   memberships: CallerMembership[];
 }
 
@@ -48,7 +48,6 @@ export interface ResolveInput {
     email?: unknown;
     email_verified?: unknown;
     name?: unknown;
-    is_anonymous?: unknown;
     [k: string]: unknown;
   };
   providerKind: 'supabase' | 'oidc' | 'saml';
@@ -71,38 +70,16 @@ class LostIdentityRace extends Error {
 }
 
 /**
- * A friendly label for an anonymous guest, e.g. `Guest 4821`.
- *
- * Anonymous sign-ins assert no `name` claim, so without this every guest shows
- * up as a raw UUID (or as nothing at all) everywhere a display name is rendered.
- *
- * Derived from the subject rather than randomised, so the same anonymous user
- * keeps the same label if the account is ever recreated, and so tests are
- * deterministic. Four digits is a label, not an identifier — collisions are
- * expected and harmless; `(issuer, subject)` remains the only thing that
- * identifies a caller.
- */
-export const guestDisplayName = (subject: string): string => {
-  let hash = 0;
-  for (let i = 0; i < subject.length; i++) {
-    hash = (hash * 31 + subject.charCodeAt(i)) % 10000;
-  }
-  return `Guest ${String(hash).padStart(4, '0')}`;
-};
-
-/**
  * Find the account behind `(issuer, subject)`, creating it on first sight.
  *
- * "Creating on first sight" is not the same as the lazy-guest rule in D16: a
- * token that verifies represents a real authenticated human, and they need an
- * account row to hang memberships on. What D16 forbids is creating an account
- * for someone who has merely *visited* — which never reaches this function,
- * because there is no token.
+ * A token that verifies represents a real authenticated human, and they need an
+ * account row to hang memberships on. There is no lazier tier below this one:
+ * anonymous sign-in is gone and nothing issues a token for someone who has
+ * merely visited, so every account this creates belongs to somebody real (D20).
  */
 export async function resolveCaller(db: Database, input: ResolveInput): Promise<Caller> {
   const email = asString(input.claims.email);
   const emailVerified = input.claims.email_verified === true;
-  const isGuest = input.claims.is_anonymous === true;
 
   const existing = await db
     .select({ id: identities.id, accountId: identities.accountId })
@@ -140,11 +117,7 @@ export async function resolveCaller(db: Database, input: ResolveInput): Promise<
           .insert(accounts)
           .values({
             email,
-            // A guest asserts no name; fall back to a readable label rather
-            // than leaving every guest nameless in the UI.
-            displayName:
-              asString(input.claims.name) ?? (isGuest ? guestDisplayName(input.subject) : null),
-            isGuest,
+            displayName: asString(input.claims.name),
             lastSeenAt: new Date(),
           })
           .returning({ id: accounts.id });
@@ -199,7 +172,6 @@ export async function resolveCaller(db: Database, input: ResolveInput): Promise<
       id: accounts.id,
       email: accounts.email,
       displayName: accounts.displayName,
-      isGuest: accounts.isGuest,
     })
     .from(accounts)
     .where(eq(accounts.id, accountId))
@@ -211,7 +183,6 @@ export async function resolveCaller(db: Database, input: ResolveInput): Promise<
     accountId,
     email: account?.email ?? null,
     displayName: account?.displayName ?? null,
-    isGuest: account?.isGuest ?? false,
     memberships,
   };
 }
@@ -233,9 +204,10 @@ export async function loadMemberships(
     .from(orgMemberships)
     .where(and(eq(orgMemberships.accountId, accountId), eq(orgMemberships.status, 'active')));
 
-  // The legacy `role` column is text with the OLD vocabulary. `member` maps to
-  // `organizer`; anything unrecognised falls back to the least privilege rather
-  // than crashing or, worse, defaulting to something permissive.
+  // `role` is a pg enum (`org_role`), so the database cannot hand back anything
+  // outside the vocabulary. This stays as a total function anyway: an unreadable
+  // role falls back to the LEAST privilege rather than crashing or, worse,
+  // defaulting to something permissive.
   return rows.map((r) => ({
     organizationId: r.organizationId,
     role: normaliseRole(r.role),
@@ -247,7 +219,6 @@ const ROLE_ALIASES: Record<string, OrgRole> = {
   owner: 'owner',
   admin: 'admin',
   organizer: 'organizer',
-  member: 'organizer',
   checkin: 'checkin',
   viewer: 'viewer',
 };
@@ -256,7 +227,11 @@ export const normaliseRole = (raw: string | null | undefined): OrgRole =>
   ROLE_ALIASES[String(raw ?? '').toLowerCase()] ?? 'viewer';
 
 /**
- * Link prior anonymous registrations to this account (D17, T33/T34).
+ * Link prior unclaimed registrations to this account (D17, T33/T34).
+ *
+ * Written, tested by nobody, and deliberately unrouted: `/me/claim` is deferred
+ * with the rest of the "My Tickets" surface (D26). Kept because the moment that
+ * screen lands, this is the query it needs.
  *
  * Matches ONLY on an address the provider asserts as verified. An unverified
  * address claims nothing — that would be account takeover by typo. Creates no

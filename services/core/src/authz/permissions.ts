@@ -14,16 +14,13 @@ export const PERMISSIONS = [
   'person:read', 'person:create', 'person:update', 'person:delete',
   'attendance:read', 'attendance:record', 'attendance:amend',
   'analytics:read', 'analytics:export',
-  'device:manage', 'media:upload', 'media:read',
+  'media:upload', 'media:read',
 ] as const;
 
 export type Permission = (typeof PERMISSIONS)[number];
 
 export const ORG_ROLES = ['owner', 'admin', 'organizer', 'checkin', 'viewer'] as const;
 export type OrgRole = (typeof ORG_ROLES)[number];
-
-export const EVENT_ROLES = ['organizer', 'co_host', 'staff'] as const;
-export type EventRole = (typeof EVENT_ROLES)[number];
 
 /**
  * Route scopes. A route declares exactly one; `organization` additionally
@@ -37,13 +34,11 @@ export type RouteScope = (typeof ROUTE_SCOPES)[number];
  * read-only branch, which is why this is written out rather than derived by
  * inheritance — viewer would inherit the wrong things.
  *
- * Two footnotes from the table are deliberately NOT encoded here because they
- * are row-dependent and cannot be decided from a role alone:
- *   ² organizer's event:update/delete/cancel/device:manage apply only to events
- *     they created or hold an `event_grants` row on — enforced in EventService.
- *   ¹ an admin may not change or remove an owner, and nobody may remove the
- *     last owner — enforced in MembershipService.
- * A permission check is necessary but not sufficient; the service still decides.
+ * One footnote from the table is deliberately NOT encoded here because it is
+ * row-dependent and cannot be decided from a role alone: an admin may not
+ * change or remove an owner, and nobody may remove the last owner — enforced in
+ * MembershipService. A permission check is necessary but not sufficient; the
+ * service still decides.
  */
 const VIEWER: Permission[] = [
   'org:read', 'member:read', 'event:read', 'person:read',
@@ -63,7 +58,7 @@ const ORGANIZER: Permission[] = [
   'person:create', 'person:update',
   'attendance:amend',
   'analytics:read', 'analytics:export',
-  'device:manage', 'media:upload',
+  'media:upload',
 ];
 
 const ADMIN: Permission[] = [
@@ -84,22 +79,15 @@ export const ROLE_PERMISSIONS: Record<OrgRole, ReadonlySet<Permission>> = {
 };
 
 /**
- * §6.3 — an event grant ADDS permissions on one event. It never removes
- * org-level ones, and it never applies to a different event.
- */
-export const EVENT_ROLE_PERMISSIONS: Record<EventRole, ReadonlySet<Permission>> = {
-  organizer: new Set<Permission>([
-    'event:update', 'event:delete', 'event:cancel', 'device:manage', 'attendance:amend',
-  ]),
-  co_host: new Set<Permission>(['event:update', 'attendance:amend']),
-  staff: new Set<Permission>(['attendance:record', 'attendance:read', 'person:create']),
-};
-
-/**
- * `checkin` role does NOT get `person:create` (§6.2 footnote 3). A walk-in
- * check-in creates a person through AttendanceService, which is a different
- * path from `POST /people`. Granting it here would let a door tablet's
- * credential populate the org roll directly.
+ * `checkin` is the door role (D24). It is what someone working the entrance
+ * signs in as: they can find people, record arrivals and departures, and read
+ * the event — and nothing else. It replaced paired device tokens, which were a
+ * second authentication system for the same job.
+ *
+ * It does NOT get `person:create` (§6.2 footnote 3). A walk-in check-in creates
+ * a person through AttendanceService, which is a different path from
+ * `POST /people`. Granting it here would let a door credential populate the org
+ * roll directly.
  */
 export const isPermission = (v: string): v is Permission =>
   (PERMISSIONS as readonly string[]).includes(v);

@@ -38,8 +38,7 @@ Add a column to a table once → the migration, the Zod validator, and the TS ty
 | `src/stores/` | Zustand stores (`appStore`, `toolbarStore`) shared by the web UI. |
 | `src/theme/` | `ThemeProvider` + `useTheme` (light/dark), used by web and website. |
 | `src/supabase/` | Shared Supabase client + auth helpers. |
-| `src/analytics/` | The analytics **response contract** (`AnalyticsResponse`, `AnalyticsRange`) — shared by the API generator and the client fetcher. |
-| `src/hooks/`, `src/utils/`, `src/layout/`, `src/constants/` | Cross-app hooks, date/formatting/event helpers, grid-layout wrapper, constants. |
+| `src/hooks/`, `src/utils/`, `src/constants/` | Cross-app hooks, date and event helpers, constants. |
 
 ## The data model (7 tables)
 
@@ -75,7 +74,7 @@ erDiagram
 
 ## Enums (`schemas/enums.ts`)
 
-`EventStatus` · `LoyaltyTier` · `OrgPlan` · `OrgRole` · `EventRole` · `CheckInMethod` · `LiveUpdateType`
+`EventStatus` · `OrgPlan` · `OrgRole` · `CheckInMethod` · `AttendanceState`
 
 ## Using it
 
@@ -83,8 +82,11 @@ erDiagram
 // Tables + relations (server / migrations)
 import { schema, events, attendance } from '@credopass/lib/schemas';
 
-// Zod validators + inferred types (anywhere)
-import { CreateEventSchema, type EventType } from '@credopass/lib/schemas';
+// Shared enums and the auth-form validators
+import { OrgRoleEnum, resetPasswordSchema } from '@credopass/lib/schemas';
+// NOTE: there are no per-table Zod validators here any more. Request validation
+// lives in the Zod schemas beside each route in services/core, which are also
+// what generate the OpenAPI document — one definition, not two.
 
 // Cross-app helpers
 import { useTheme } from '@credopass/lib/theme';

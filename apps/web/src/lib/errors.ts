@@ -32,7 +32,6 @@ const MESSAGES: Record<string, string> = {
   [ProblemCode.HAS_EVENTS]: 'This organization still has events. Delete or move them first.',
   [ProblemCode.EXPIRED]: 'This has expired.',
   [ProblemCode.REVOKED]: 'This has been revoked.',
-  [ProblemCode.TOKEN_REVOKED]: 'This device has been revoked — ask an admin to re-pair it.',
   [ProblemCode.INVALID_PASS]: 'That pass is not valid for this event.',
   [ProblemCode.PASS_EXPIRED]: 'That pass has expired.',
   [ProblemCode.NOT_FOUND]: 'Not found.',
@@ -63,12 +62,8 @@ export function isNotFound(error: unknown): boolean {
   return isApiError(error) && error.status === 404;
 }
 
-/** True when the failure means "your organization, wrong role". */
-export function isForbidden(error: unknown): boolean {
-  return isApiError(error) && error.status === 403;
-}
 
-/** True when the credential itself is finished — expired pass, revoked device. */
+/** True when the credential itself is finished — an expired pass. */
 export function isGone(error: unknown): boolean {
   return isApiError(error) && error.status === 410;
 }

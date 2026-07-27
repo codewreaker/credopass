@@ -37,11 +37,9 @@ export const ProblemCode = {
   PUBLIC_SUFFIX: 'public_suffix',
   // 401
   UNAUTHENTICATED: 'unauthenticated',
-  TOKEN_REVOKED: 'token_revoked',
   // 403
   INSUFFICIENT_PERMISSION: 'insufficient_permission',
   NOT_A_MEMBER: 'not_a_member',
-  OUT_OF_SCOPE: 'out_of_scope',
   SELF_CHECKIN_DISABLED: 'self_checkin_disabled',
   INVITATION_MISMATCH: 'invitation_mismatch',
   // 404

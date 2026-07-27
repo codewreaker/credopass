@@ -4,7 +4,7 @@
  *
  * The old form asked for a **role on the event** — organizer, co-host, staff,
  * volunteer — and wrote an `event_members` row. That table is gone. Its
- * replacement, `event_grants`, is only for delegating *management* of an event;
+ * replacement, `event_grants`, was only for delegating *management* of an event and has since been deleted;
  * it has nothing to do with attending one.
  *
  * So adding someone to an event is two things now, and the difference matters:

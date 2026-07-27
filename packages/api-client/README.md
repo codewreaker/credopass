@@ -16,7 +16,7 @@ flowchart TD
     App["Component<br/>(web / mobile)"] -->|read/insert/update/delete| Col["TanStack DB Collection"]
     Col -->|optimistic| App
     Col -->|queryFn / onInsert…| Client["client.ts<br/>authHeaders() + fetch"]
-    Client -->|Bearer JWT| API["Hono API /api/core"]
+    Client -->|Bearer JWT| API["Hono API /api/v1/core"]
     API -->|rows| Col
     Cfg["configureAPIClient()"] -.->|baseURL + getAuthToken| Client
 ```
@@ -32,7 +32,7 @@ flowchart TD
 // 1. Configure once (app entry point)
 import { configureAPIClient } from '@credopass/api-client';
 configureAPIClient({
-  baseURL: import.meta.env.VITE_API_URL ?? '/api/core',
+  baseURL: import.meta.env.VITE_API_URL ?? '/api/v1/core',
   getAuthToken: getAccessToken, // from @credopass/lib/supabase
 });
 
@@ -50,4 +50,4 @@ const going = attendance.toArray.filter((a) => a.eventId === id && a.attended);
 - **Reactive** — components re-render when the underlying data changes, across tabs/devices.
 - **One contract** — every collection validates against the same `@credopass/lib` Zod schema the server uses.
 
-> The **public event page** (walk-in check-in with no login) is the one exception — it hits the token-optional `/api/core/public/*` endpoints. See `services/core` and `apps/web`.
+> The **public event page** (walk-in check-in with no login) is the one exception — it hits the token-optional `/api/v1/core/public/*` endpoints. See `services/core` and `apps/web`.

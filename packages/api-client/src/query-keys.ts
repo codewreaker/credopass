@@ -25,8 +25,6 @@ export const queryKeys = {
   organization: (id: string) => ['organizations', id] as const,
   members: (id: string) => ['organizations', id, 'members'] as const,
   invitations: (id: string) => ['organizations', id, 'invitations'] as const,
-  organizationDevices: (id: string, eventId?: string) =>
-    ['organizations', id, 'devices', eventId ?? null] as const,
 
   events: (organizationId: OrgId, params?: QueryParams) =>
     ['org', organizationId ?? null, 'events', 'list', params ?? {}] as const,
@@ -50,9 +48,6 @@ export const queryKeys = {
   pass: (token: string) => ['pass', token] as const,
 } as const;
 
-/** Everything under the active organization — the blast radius of any org write. */
-export const organizationScope = (organizationId: OrgId) =>
-  ['org', organizationId ?? null] as const;
 
 /** Every event-derived cache entry: lists, summary, calendar, detail. */
 export const eventsScope = (organizationId: OrgId) =>

@@ -4,7 +4,7 @@
 // docs/API-FIRST-REBUILD.md §3.2, D1
 // ============================================================================
 
-import { pgTable, text, timestamp, index, uuid, boolean, uniqueIndex } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, index, uuid, uniqueIndex } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 
 /**
@@ -28,16 +28,12 @@ import { sql } from 'drizzle-orm';
 export const accounts = pgTable('accounts', {
   id: uuid('id').primaryKey().defaultRandom(),
 
-  // Nullable: an anonymous guest has no email until they upgrade (D16).
+  // Nullable: a federated identity (OIDC, SAML) need not assert an address, and
+  // an account is identified by (issuer, subject) rather than by email anyway.
   email: text('email'),
 
   displayName: text('display_name'),
   avatarAssetId: uuid('avatar_asset_id'),
-
-  // A guest account is created lazily, on first write — never on token
-  // verification alone (D16). `/upgrade` converts it by attaching a real
-  // identity.
-  isGuest: boolean('is_guest').notNull().default(false),
 
   locale: text('locale'),
   // IANA zone. Drives ICS output and how times are displayed to this human.
@@ -48,8 +44,8 @@ export const accounts = pgTable('accounts', {
   createdAt: timestamp('created_at', { mode: 'date', withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { mode: 'date', withTimezone: true }).notNull().defaultNow(),
 }, (table) => [
-  // Case-insensitive and partial: two accounts may both have NULL email
-  // (anonymous guests), but no two may share an address.
+  // Case-insensitive and partial: two accounts may both have NULL email, but no
+  // two may share an address.
   uniqueIndex('uq_accounts_email').on(sql`lower(${table.email})`).where(sql`${table.email} IS NOT NULL`),
   index('idx_accounts_last_seen_at').on(table.lastSeenAt),
 ]).enableRLS();

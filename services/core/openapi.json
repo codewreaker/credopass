@@ -16,7 +16,7 @@
         "type": "http",
         "scheme": "bearer",
         "bearerFormat": "JWT",
-        "description": "Supabase-issued JWT, or a kiosk device token. Get one with: nx run coreservice:token"
+        "description": "Supabase-issued JWT. Get one with: nx run coreservice:token"
       }
     },
     "schemas": {
@@ -133,16 +133,12 @@
               "string",
               "null"
             ]
-          },
-          "isGuest": {
-            "type": "boolean"
           }
         },
         "required": [
           "id",
           "email",
-          "displayName",
-          "isGuest"
+          "displayName"
         ]
       },
       "MeContext": {
@@ -179,7 +175,34 @@
               "permissions": {
                 "type": "array",
                 "items": {
-                  "type": "string"
+                  "type": "string",
+                  "enum": [
+                    "org:read",
+                    "org:update",
+                    "org:delete",
+                    "org:billing",
+                    "member:read",
+                    "member:invite",
+                    "member:update_role",
+                    "member:remove",
+                    "event:read",
+                    "event:create",
+                    "event:update",
+                    "event:delete",
+                    "event:cancel",
+                    "series:manage",
+                    "person:read",
+                    "person:create",
+                    "person:update",
+                    "person:delete",
+                    "attendance:read",
+                    "attendance:record",
+                    "attendance:amend",
+                    "analytics:read",
+                    "analytics:export",
+                    "media:upload",
+                    "media:read"
+                  ]
                 }
               }
             },
@@ -187,17 +210,13 @@
               "role",
               "permissions"
             ]
-          },
-          "needsOnboarding": {
-            "type": "boolean"
           }
         },
         "required": [
           "account",
           "organizations",
           "activeOrganization",
-          "membership",
-          "needsOnboarding"
+          "membership"
         ]
       },
       "OrgSummary": {
@@ -787,72 +806,6 @@
           "person",
           "attendance",
           "canSelfCheckIn"
-        ]
-      },
-      "Device": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "label": {
-            "type": "string"
-          },
-          "eventId": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "format": "uuid"
-          },
-          "scopes": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "pending",
-              "active",
-              "revoked",
-              "expired"
-            ]
-          },
-          "pairedAt": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "lastUsedAt": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "expiresAt": {
-            "type": "string"
-          },
-          "pairingCode": {
-            "type": [
-              "string",
-              "null"
-            ]
-          }
-        },
-        "required": [
-          "id",
-          "label",
-          "eventId",
-          "scopes",
-          "status",
-          "pairedAt",
-          "lastUsedAt",
-          "expiresAt",
-          "pairingCode"
         ]
       }
     },
@@ -4281,386 +4234,6 @@
           },
           "410": {
             "description": "Expired or revoked",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/events/{id}/devices": {
-      "post": {
-        "summary": "Pair a door tablet to this event. Returns a code, not a token.",
-        "tags": [
-          "Devices"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "required": true,
-            "name": "id",
-            "in": "path"
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "label": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 100
-                  },
-                  "scopes": {
-                    "type": "array",
-                    "items": {
-                      "type": "string",
-                      "enum": [
-                        "org:read",
-                        "org:update",
-                        "org:delete",
-                        "org:billing",
-                        "member:read",
-                        "member:invite",
-                        "member:update_role",
-                        "member:remove",
-                        "event:read",
-                        "event:create",
-                        "event:update",
-                        "event:delete",
-                        "event:cancel",
-                        "series:manage",
-                        "person:read",
-                        "person:create",
-                        "person:update",
-                        "person:delete",
-                        "attendance:read",
-                        "attendance:record",
-                        "attendance:amend",
-                        "analytics:read",
-                        "analytics:export",
-                        "device:manage",
-                        "media:upload",
-                        "media:read"
-                      ]
-                    }
-                  },
-                  "expiresAt": {
-                    "type": "string",
-                    "format": "date-time"
-                  }
-                },
-                "required": [
-                  "label"
-                ]
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Read `pairingCode` to whoever is setting up the tablet.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string",
-                      "format": "uuid"
-                    },
-                    "label": {
-                      "type": "string"
-                    },
-                    "eventId": {
-                      "type": [
-                        "string",
-                        "null"
-                      ],
-                      "format": "uuid"
-                    },
-                    "pairingCode": {
-                      "type": "string"
-                    },
-                    "pairingExpiresAt": {
-                      "type": "string"
-                    },
-                    "expiresAt": {
-                      "type": "string"
-                    },
-                    "scopes": {
-                      "type": "array",
-                      "items": {
-                        "type": "string"
-                      }
-                    }
-                  },
-                  "required": [
-                    "id",
-                    "label",
-                    "eventId",
-                    "pairingCode",
-                    "pairingExpiresAt",
-                    "expiresAt",
-                    "scopes"
-                  ]
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid body",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Insufficient role",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Event not found",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/organizations/{id}/devices": {
-      "get": {
-        "summary": "Every device for this organisation, and what each is doing",
-        "tags": [
-          "Devices"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "required": true,
-            "name": "id",
-            "in": "path"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "required": false,
-            "name": "eventId",
-            "in": "query"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Devices",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Device"
-                  }
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Insufficient role",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not found, or not yours",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/devices/{deviceId}": {
-      "delete": {
-        "summary": "Revoke a device. Takes effect on its next request.",
-        "tags": [
-          "Devices"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "required": true,
-            "name": "deviceId",
-            "in": "path"
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Revoked"
-          },
-          "403": {
-            "description": "Insufficient role",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "No such active device",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/devices/pair": {
-      "post": {
-        "summary": "Redeem a pairing code for a device token",
-        "tags": [
-          "Devices"
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "pairingCode": {
-                    "type": "string",
-                    "minLength": 4,
-                    "maxLength": 32
-                  }
-                },
-                "required": [
-                  "pairingCode"
-                ]
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Paired. `token` is shown ONCE and cannot be retrieved again.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "token": {
-                      "type": "string"
-                    },
-                    "deviceId": {
-                      "type": "string",
-                      "format": "uuid"
-                    },
-                    "label": {
-                      "type": "string"
-                    },
-                    "eventId": {
-                      "type": [
-                        "string",
-                        "null"
-                      ],
-                      "format": "uuid"
-                    },
-                    "organizationId": {
-                      "type": "string",
-                      "format": "uuid"
-                    },
-                    "scopes": {
-                      "type": "array",
-                      "items": {
-                        "type": "string"
-                      }
-                    },
-                    "expiresAt": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "token",
-                    "deviceId",
-                    "label",
-                    "eventId",
-                    "organizationId",
-                    "scopes",
-                    "expiresAt"
-                  ]
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid body",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Code unknown, already used, or expired",
             "content": {
               "application/problem+json": {
                 "schema": {

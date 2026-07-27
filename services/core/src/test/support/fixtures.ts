@@ -12,9 +12,6 @@
 
 import { request, type Actor } from './actors';
 import { installTestIssuers, mintToken, type MintOptions } from './issuer';
-import { getTestDatabase } from './database';
-import { deviceTokens } from '@credopass/lib/schemas/tables';
-import { eq } from 'drizzle-orm';
 
 /** Unique per call, so a reset between tests cannot collide with a stale row. */
 const unique = () => crypto.randomUUID().slice(0, 8);
@@ -47,10 +44,6 @@ export async function newAccount(opts: AccountOptions = {}): Promise<Actor> {
   actor.accountId = (await res.json()).id;
   return actor;
 }
-
-/** An anonymous caller — a real Supabase anonymous sign-in asserts no email. */
-export const newGuest = (label = 'guest'): Promise<Actor> =>
-  newAccount({ label, isAnonymous: true });
 
 /**
  * An account that owns a brand-new organisation.
@@ -88,7 +81,10 @@ export async function newTenant(label: string): Promise<Actor> {
 export async function joinAs(
   owner: Actor,
   role: 'admin' | 'organizer' | 'checkin' | 'viewer',
-  label = role
+  // Annotated, not inferred. `label = role` alone infers the ROLE union, so a
+  // test naming an actor after what it is proving ('ambiguous') fails to
+  // compile — a label is free text and always was.
+  label: string = role
 ): Promise<Actor> {
   const email = `${label}-${unique()}@example.test`;
 
@@ -205,73 +201,6 @@ export async function registerFor(
     passToken: body.pass.token,
     passUrl: body.pass.url,
   };
-}
-
-export interface Device {
-  deviceId: string;
-  /** The `cpd_`-prefixed bearer credential. */
-  token: string;
-  /** An Actor, so device tests read like every other test. */
-  actor: Actor;
-}
-
-/**
- * A paired door tablet, scoped to one event.
- *
- * Two calls because the product deliberately never returns a token from the
- * creating call — the operator reads a pairing code to the tablet, and the
- * tablet redeems it.
- */
-export async function newDevice(
-  owner: Actor,
-  eventId: string,
-  label = 'door'
-): Promise<Device> {
-  const created = await request(owner, 'POST', `/events/${eventId}/devices`, {
-    body: { label },
-  });
-  if (created.status !== 201) {
-    throw new Error(`fixture: creating a device answered ${created.status}`);
-  }
-  const { id: deviceId, pairingCode } = await created.json();
-
-  // Pairing is unauthenticated by design: the tablet has no credential yet.
-  const paired = await request(null, 'POST', '/devices/pair', {
-    organizationId: null,
-    body: { pairingCode },
-  });
-  if (paired.status !== 200 && paired.status !== 201) {
-    throw new Error(`fixture: pairing answered ${paired.status}`);
-  }
-  const { token } = await paired.json();
-
-  return {
-    deviceId,
-    token,
-    actor: {
-      label,
-      accountId: '',
-      // A device names no organisation — its tenant comes from its own row.
-      organizationId: '',
-      token,
-    },
-  };
-}
-
-/**
- * Revoke a device directly.
- *
- * `DELETE /devices/{deviceId}` exists, but T14 needs a token that is revoked
- * *and still syntactically valid*, which is a state the API deliberately makes
- * hard to reach. Written here rather than asserted through the endpoint so the
- * test is about `verifyToken`'s response, not about the revoke route.
- */
-export async function revokeDevice(deviceId: string): Promise<void> {
-  const { db } = await getTestDatabase();
-  await db
-    .update(deviceTokens)
-    .set({ revokedAt: new Date() })
-    .where(eq(deviceTokens.id, deviceId));
 }
 
 /** The pair of mutually-suspicious tenants nearly every test needs. */

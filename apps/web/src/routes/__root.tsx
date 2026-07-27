@@ -1,5 +1,5 @@
-import { Suspense, useEffect } from "react";
-import { createRootRoute, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
+import { Suspense } from "react";
+import { createRootRoute, Outlet, useRouterState } from "@tanstack/react-router";
 import { TopNavBar } from "../containers/TopNavBar/index";
 import LeftSidebar, { SidebarInset, SidebarTrigger, OrgSelector } from "../containers/LeftSidebar";
 import { RightSidebar } from "../containers/RightSidebar";
@@ -12,27 +12,28 @@ import { ModalPortal } from "@credopass/ui/components/launcher";
 import { NAV_ITEMS } from "@credopass/lib/constants";
 import { useTheme } from "@credopass/lib/theme";
 import { useCommandPallete } from "../hooks";
-import { SessionProvider, useSession } from "../contexts/session";
+import { SessionProvider } from "../contexts/session";
 import { ToolbarSlotProvider } from "../containers/TopNavBar/toolbar-slot";
 
 /**
  * Routes that render standalone — no sidebar, no top bar, no org switcher.
  *
- * Three different reasons land here. `/login` and `/onboarding` are pre-console:
- * there is no organization to frame them with yet. `/e/`, `/p/` and
- * `/checkin/pair` are attendee and device surfaces — someone opened a link from
- * a message, or a tablet is being set up. Neither has an account, and showing
- * them console chrome would imply they could use it.
+ * Two reasons land here. `/login` and `/reset-password` are pre-console: there
+ * is no organization to frame them with yet. `/e/`, `/p/` and `/invitations/`
+ * are attendee surfaces — someone opened a link from a message. They have no
+ * account, and console chrome would imply they could use one.
+ *
+ * `/events/new` is deliberately NOT here. It renders inside the console for a
+ * signed-in host, and standalone-with-an-overlay for a visitor who arrived from
+ * the marketing site; the page decides, not this list.
  */
 const STANDALONE_ROUTES = [
   '/login',
   '/reset-password',
   '/upgrade',
-  '/onboarding',
   '/invitations/',
   '/e/',
   '/p/',
-  '/checkin/pair',
 ];
 
 export const Route = createRootRoute({
@@ -89,9 +90,7 @@ export function RootLayout() {
                     <div className="w-5 h-5 border-2 border-border border-t-primary rounded-full animate-spin" />
                   </div>
                 }>
-                  <OnboardingGate>
-                    <Outlet />
-                  </OnboardingGate>
+                  <Outlet />
                 </Suspense>
               </div>
             </SidebarInset>
@@ -106,43 +105,3 @@ export function RootLayout() {
   );
 }
 
-/**
- * A brand-new account belongs to no organization, so every console query
- * correctly returns nothing. Without somewhere to land, enforcing tenancy would
- * break the product for every new user — so the console redirects rather than
- * rendering an empty shell (§2.2).
- *
- * It **wraps** the outlet rather than sitting beside it. Navigation happens in
- * an effect, which runs *after* children have mounted — so as a sibling this
- * let org-scoped screens mount, fire their queries and, worse, accept a submit
- * in the frame before the redirect landed. `POST /events` with no active
- * organization answers `403 not_a_member` ("This account belongs to no
- * organization yet"), which is both a dead end and the wrong thing to tell
- * someone who simply has not created an organization yet.
- *
- * Blocking here fixes it once for every org-scoped route, rather than needing a
- * `beforeLoad` guard on each one that would have to re-fetch `/me/context`
- * outside the api-client (golden rule 2).
- */
-function OnboardingGate({ children }: { children: React.ReactNode }) {
-  const { needsOnboarding, isContextLoading, isPairedDevice } = useSession();
-  const navigate = useNavigate();
-
-  // A paired device has no account and never onboards; it must not be bounced.
-  const blocked = !isContextLoading && !isPairedDevice && needsOnboarding;
-
-  useEffect(() => {
-    if (!blocked) return;
-    navigate({ to: '/onboarding', replace: true });
-  }, [blocked, navigate]);
-
-  if (blocked) {
-    return (
-      <div className="flex items-center justify-center h-full min-h-40">
-        <div className="w-5 h-5 border-2 border-border border-t-primary rounded-full animate-spin" />
-      </div>
-    );
-  }
-
-  return <>{children}</>;
-}

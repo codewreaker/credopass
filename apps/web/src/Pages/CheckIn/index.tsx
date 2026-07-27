@@ -21,7 +21,6 @@ import { useParams, useNavigate } from '@tanstack/react-router';
 import { useToolbarContext } from '@credopass/lib/hooks';
 import {
   hasProblemCode,
-  isApiError,
   ProblemCode,
   useCheckIn,
   useCheckInState,
@@ -30,7 +29,7 @@ import {
   type Event,
 } from '@credopass/api-client';
 import { useIsMobile } from '@credopass/ui/hooks/use-mobile';
-import { QrCodeIcon, ArrowLeft, ScanLine, UserRoundPlus, Bug, Trash2, CalendarCheck, Users, Maximize2, Minimize2, MapPin, ShieldOff, LogOut } from 'lucide-react';
+import { QrCodeIcon, ArrowLeft, ScanLine, UserRoundPlus, Bug, Trash2, CalendarCheck, Users, Maximize2, Minimize2, MapPin, LogOut } from 'lucide-react';
 import { Button } from '@credopass/ui/components/button';
 import { GlowingQRCode } from '@credopass/ui/components/glowing-qr-code';
 import { SheetDialog } from '@credopass/ui/components/sheet-dialog';
@@ -45,7 +44,6 @@ import { QRScanner } from './components/QRScanner';
 import ManualSignInForm, { type AttendeeDetails } from './ManualSignInForm';
 import SuccessCheckInScreen from './SuccessCheckInScreen';
 import CredoPassLogoIcon from '../../containers/LeftSidebar/brand-icon';
-import { clearDeviceCredential, readDeviceCredential } from '../../lib/device-token';
 import { errorMessage } from '../../lib/errors';
 
 type KioskMode = 'display' | 'scan';
@@ -69,7 +67,7 @@ const CheckInPage: React.FC = () => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
 
-  const { data: event, isLoading, error } = useEvent(eventId);
+  const { data: event, isLoading } = useEvent(eventId);
   const { data: state } = useCheckInState(eventId);
   const checkIn = useCheckIn(eventId);
   const checkOut = useCheckOut(eventId);
@@ -154,13 +152,6 @@ const CheckInPage: React.FC = () => {
         setTimeout(() => setSuccessPerson(null), 2600);
         return true;
       } catch (error) {
-        // The console revoked this device. That is not "please sign in" — it is
-        // "ask an admin to re-pair me" (§2.6).
-        if (hasProblemCode(error, ProblemCode.TOKEN_REVOKED)) {
-          clearDeviceCredential();
-          navigate({ to: '/checkin/pair', search: { revoked: true } });
-          return false;
-        }
         if (hasProblemCode(error, ProblemCode.CAPACITY_REACHED)) {
           toast.error('This event is full — nobody else can be checked in.');
           pushLog('error', `Capacity reached (${label})`);
@@ -172,7 +163,7 @@ const CheckInPage: React.FC = () => {
         return false;
       }
     },
-    [checkIn, navigate, pushLog]
+    [checkIn, pushLog]
   );
 
   const handleManual = useCallback(
@@ -234,10 +225,6 @@ const CheckInPage: React.FC = () => {
   if (isLoading) return <LoadingState />;
 
   if (!event) {
-    // A revoked device gets a 401 on the event read too. Same answer: re-pair.
-    if (isApiError(error) && error.code === ProblemCode.TOKEN_REVOKED) {
-      return <RevokedDevice onRepair={() => { clearDeviceCredential(); navigate({ to: '/checkin/pair', search: { revoked: true } }); }} />;
-    }
     return (
       <div className="checkin-page flex h-full flex-col items-center justify-center p-6">
         <EmptyState
@@ -397,8 +384,6 @@ const CheckInPage: React.FC = () => {
           <dd className="font-mono">{ev.shortCode}</dd>
           <dt className="text-muted-foreground">Mode</dt>
           <dd className="font-mono">{mode}</dd>
-          <dt className="text-muted-foreground">Credential</dt>
-          <dd className="font-mono">{readDeviceCredential() ? 'device token' : 'account'}</dd>
           <dt className="text-muted-foreground">Share URL</dt>
           <dd className="truncate font-mono">{shareUrl}</dd>
           <dt className="text-muted-foreground">Counter</dt>
@@ -535,19 +520,5 @@ const CheckInPage: React.FC = () => {
   );
 };
 
-/** `401 token_revoked` — a specific state with a specific fix. */
-function RevokedDevice({ onRepair }: { onRepair: () => void }) {
-  return (
-    <div className="checkin-page flex h-full flex-col items-center justify-center p-6">
-      <EmptyState
-        error
-        icon={<ShieldOff className="size-16 text-destructive" />}
-        title="This device has been revoked"
-        description="Someone turned this tablet off from the console. Ask an admin for a new pairing code to bring it back."
-        action={{ label: 'Pair again', onClick: onRepair }}
-      />
-    </div>
-  );
-}
 
 export default CheckInPage;

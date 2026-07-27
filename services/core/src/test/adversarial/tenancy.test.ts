@@ -19,10 +19,7 @@ import { request, problemCode, type Actor } from '../support/actors';
 import {
   joinAs,
   newAccount,
-  newDevice,
-  newGuest,
   newPerson,
-  revokeDevice,
   twoTenants,
 } from '../support/fixtures';
 
@@ -92,12 +89,19 @@ describe('T1-T10 — the baseline from MULTI-TENANCY.md §5', () => {
     // zero memberships, because signing in commissions an organisation for
     // them. What must still hold — and is the tenancy claim — is that the
     // organisation is theirs alone and neither A's nor B's is visible in it.
-    const fresh = await newAccount({ label: 'fresh', email: 'fresh@example.test' });
+    // Unique address, like every other fixture. A hardcoded one passed only
+    // against a pristine container: the adversarial `beforeAll` never calls
+    // `harness.reset()`, so a second run of the suite hit `uq_accounts_email`
+    // and this test failed with a 500 from `GET /me` that had nothing to do
+    // with tenancy.
+    const fresh = await newAccount({
+      label: 'fresh',
+      email: `fresh-${crypto.randomUUID().slice(0, 8)}@example.test`,
+    });
     const ctx = await request(fresh, 'GET', '/me/context', { organizationId: null });
     expect(ctx.status).toBe(200);
     const body = await ctx.json();
 
-    expect(body.needsOnboarding).toBe(false);
     expect(body.organizations).toHaveLength(1);
     expect(body.organizations[0].role).toBe('owner');
 
@@ -113,19 +117,29 @@ describe('T1-T10 — the baseline from MULTI-TENANCY.md §5', () => {
     expect((await events.json()).data).toEqual([]);
   });
 
-  it('T7 · an anonymous guest with no active org gets an empty page, never another org (D16)', async () => {
-    // KNOWN CONFLICT, left red on purpose.
+  it('T7 · a caller in several organisations must name one — no silent default', async () => {
+    // Was: "an anonymous guest with no active org gets an empty page (D16)" — a
+    // known red test asserting §7.3's `200 []` against `requireTenant`'s
+    // `403 not_a_member`. Both halves of that conflict are now unreachable:
+    // there is no guest tier (D20), and `ensureDefaultOrganization` means no
+    // authenticated caller is a member of nothing (D22). T6 already covers what
+    // a fresh account can see.
     //
-    // §7.3 specifies 200 + []. `requireTenant` answers 403 not_a_member with
-    // "This account belongs to no organization yet." Both satisfy the security
-    // half — a guest never sees another tenant's rows either way — so this is a
-    // product decision, not a leak: is "you have no organisation" an error, or
-    // an empty state? The suite asserts the spec until the spec changes; making
-    // it match the code would be exactly the softening §7.3 forbids.
-    const guest = await newGuest();
-    const res = await request(guest, 'GET', '/events', { organizationId: null });
-    expect(res.status).toBe(200);
-    expect((await res.json()).data).toEqual([]);
+    // The rule worth guarding in its place is the ambiguous case, because the
+    // dangerous failure is *silence*: picking one organisation on the caller's
+    // behalf would put another tenant's rows on screen under a heading naming
+    // neither, and nothing about the response would say so.
+    //
+    // A `joinAs` account belongs to two — the one commissioned on its first
+    // sign-in, and A's.
+    const staff = await joinAs(A, 'organizer', 'ambiguous');
+
+    const res = await request(staff, 'GET', '/events', {
+      organizationId: null,
+      skipContract: true,
+    });
+    expect(res.status).toBe(400);
+    expect(await problemCode(res)).toBe('organization_required');
   });
 
   it("T8 · an anonymous session reads /public/events/{B's id} — that id only", async () => {
@@ -189,24 +203,37 @@ describe('T11-T19 — cross-tenant object access', () => {
     if (res.status === 400) expect(await problemCode(res)).toBe('invalid_pass');
   });
 
-  it('T13 · a device token for event X used on event Y → 403 out_of_scope', async () => {
-    const door = await newDevice(A, aEventId, 'door-X');
-    const res = await request(door.actor, 'POST', `/events/${bEventId}/check-in`, {
+  // T13 and T14 used to pair a door tablet and assert its token was scoped to
+  // one event and died on revocation. Device tokens are gone (D24): a door is a
+  // person holding the `checkin` role. The claims below are what replaced them.
+
+  it("T13 · A's door staff cannot check anyone into B's event", async () => {
+    const door = await joinAs(A, 'checkin');
+
+    const res = await request(door, 'POST', `/events/${bEventId}/check-in`, {
       idempotencyKey: crypto.randomUUID(),
       body: { personId: bPersonId, method: 'qr' },
     });
+    // 404, not 403: confirming the event exists would leak that B owns it.
     expect([403, 404]).toContain(res.status);
   });
 
-  it('T14 · a revoked or expired device token → 401 token_revoked', async () => {
-    const door = await newDevice(A, aEventId, 'revoked');
-    await revokeDevice(door.deviceId);
+  it('T14 · removing a door member ends their access on the next request', async () => {
+    // The revocation story. A paired tablet was revoked by deleting its row;
+    // a person is revoked by removing their membership, and it must take effect
+    // immediately rather than at the end of some cached session.
+    const door = await joinAs(A, 'checkin');
 
-    const res = await request(door.actor, 'GET', `/events/${aEventId}/checkin-state`, {
+    const before = await request(door, 'GET', `/events/${aEventId}/checkin-state`);
+    expect(before.status).toBe(200);
+
+    const removed = await request(A, 'DELETE', `/organizations/${A.organizationId}/members/${door.accountId}`);
+    expect(removed.status).toBe(204);
+
+    const after = await request(door, 'GET', `/events/${aEventId}/checkin-state`, {
       skipContract: true,
     });
-    expect(res.status).toBe(401);
-    expect(await problemCode(res)).toBe('token_revoked');
+    expect([403, 404]).toContain(after.status);
   });
 
   // Needs GET /analytics/overview — not built (analytics are still fabricated).

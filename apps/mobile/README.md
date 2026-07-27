@@ -21,7 +21,7 @@ flowchart TD
     CheckIn --> Scan["QRScannerScreen<br/>(expo camera)"]
     CheckIn --> Manual["ManualSignInScreen"]
     Screens["All screens"] --> Col["@credopass/api-client<br/>collections"]
-    Col --> API["/api/core"]
+    Col --> API["/api/v1/core"]
 ```
 
 ## Structure
@@ -47,6 +47,6 @@ flowchart TD
 nx run mobile:start      # or: cd apps/mobile && bunx expo start
 ```
 
-Set the API URL in Expo config (`extra.apiUrl`); it defaults to `http://localhost:3000/api/core`.
+Set the API URL in Expo config (`extra.apiUrl`); it defaults to `http://localhost:8080/api/v1/core`.
 
 > Some navigation/provider wiring is still marked `TODO` in `src/app.tsx` — this app trails the web app in maturity.

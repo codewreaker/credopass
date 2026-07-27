@@ -119,12 +119,16 @@ describe('the live registry', () => {
 });
 
 describe('permission vocabulary (§6.1)', () => {
-  it('has exactly the 26 permissions the plan specifies', () => {
-    expect(PERMISSIONS).toHaveLength(26);
+  it('has exactly the 25 permissions the plan specifies', () => {
+    expect(PERMISSIONS).toHaveLength(25);
   });
 
   it('does not contain event:publish — dropping `draft` removed it (D2)', () => {
     expect(PERMISSIONS as readonly string[]).not.toContain('event:publish');
+  });
+
+  it('does not contain device:manage — a door is a role, not a paired tablet (D24)', () => {
+    expect(PERMISSIONS as readonly string[]).not.toContain('device:manage');
   });
 
   it('owner ⊃ admin ⊃ organizer ⊃ checkin', () => {

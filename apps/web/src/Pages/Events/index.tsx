@@ -39,15 +39,11 @@ const HeroSpotlight = ({
     stats,
     onCreateEvent,
     canCreate,
-    needsOnboarding,
-    onStartOnboarding,
 }: {
     nextEvent: Event | null;
     stats: { total: number; upcoming: number; ongoing: number };
     onCreateEvent: () => void;
     canCreate: boolean;
-    needsOnboarding: boolean;
-    onStartOnboarding: () => void;
 }) => {
     const navigate = useNavigate();
     const [collapsed, setCollapsed] = useState<boolean>(() => {
@@ -212,24 +208,23 @@ const HeroSpotlight = ({
                 <div className="relative z-10 flex flex-col md:flex-row md:items-center gap-4 md:gap-6">
                     <div className="min-w-0 flex-1">
                         <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-primary-foreground/60 mb-1.5">Get started</p>
-                        {/* An account with no organization has nothing to create an
-                            event *on*, so the first ask is the organization (§2.3). */}
+                        {/* This used to branch on `needsOnboarding` and ask for an
+                            organization first. Signing in commissions one (D22), so
+                            there is always something to create an event on. */}
                         <h2 className="text-xl lg:text-2xl font-semibold tracking-tight mb-1">
-                            {needsOnboarding ? 'Create your organization' : 'Plan your next event'}
+                            Plan your next event
                         </h2>
                         <p className="text-[13px] font-medium text-primary-foreground/70 mb-4">
-                            {needsOnboarding
-                                ? 'Events, attendees and your team all live inside an organization. It takes a minute.'
-                                : 'Create an event and start checking people in within minutes.'}
+                            Create an event and start checking people in within minutes.
                         </p>
-                        {(needsOnboarding || canCreate) && (
+                        {canCreate && (
                             <button
                                 type="button"
-                                onClick={needsOnboarding ? onStartOnboarding : onCreateEvent}
+                                onClick={onCreateEvent}
                                 className="inline-flex items-center gap-2 whitespace-nowrap rounded-full bg-primary-foreground text-primary px-4 h-9 text-[13px] font-semibold cursor-pointer transition-transform duration-150 hover:scale-[1.02] active:scale-[0.98]"
                             >
                                 <Plus size={14} />
-                                {needsOnboarding ? 'Create organization' : 'Create Event'}
+                                Create Event
                             </button>
                         )}
                     </div>
@@ -294,7 +289,7 @@ const EventsPage = () => {
     const [searchQuery, setSearchQuery] = useState<string>('');
     const [calendarMonth, setCalendarMonth] = useState<Date>(() => new Date());
 
-    const { needsOnboarding, organizationId } = useSession();
+    const { organizationId } = useSession();
     const canCreate = useCan('event:create');
     const canDelete = useCan('event:delete');
     const canCancel = useCan('event:cancel');
@@ -444,8 +439,6 @@ const EventsPage = () => {
                                 stats={heroStats}
                                 onCreateEvent={handleCreateEvent}
                                 canCreate={canCreate}
-                                needsOnboarding={needsOnboarding || !organizationId}
-                                onStartOnboarding={() => navigate({ to: '/onboarding' })}
                             />
                             <EventListView
                                 events={events}

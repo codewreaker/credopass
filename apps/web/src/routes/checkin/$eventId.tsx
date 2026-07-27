@@ -1,23 +1,20 @@
 import CheckInPage from "../../Pages/CheckIn";
-import { createFileRoute, redirect } from '@tanstack/react-router'
+import { createFileRoute } from '@tanstack/react-router'
 import { requireAuth } from "../../lib/auth-guard";
-import { readDeviceCredential } from "../../lib/device-token";
 
 /**
- * The door. Two credentials reach it: a signed-in account (staff kiosk) or a
- * paired device token (tablet). The guard accepts either — requiring a Supabase
- * session would lock every tablet out of the one screen it exists for.
+ * The door.
+ *
+ * One credential: a signed-in account. Whoever is working the entrance holds
+ * the `checkin` role, which can read the event and record arrivals and nothing
+ * else — see the role matrix in `services/core/src/authz/permissions.ts`.
+ *
+ * This used to accept a second credential, a `cpd_…` token belonging to a
+ * paired tablet, and redirect it home if it was pointed at the wrong event.
+ * Device tokens are gone (D24): the role does the same job without a second
+ * authentication system to keep correct.
  */
 export const Route = createFileRoute('/checkin/$eventId')({
-    beforeLoad: async (ctx) => {
-        const device = readDeviceCredential();
-        if (!device) return requireAuth(ctx);
-
-        // A device token is scoped to one event. Sending it anywhere else would
-        // only earn a 403, so send it home instead.
-        if (device.eventId && device.eventId !== ctx.params.eventId) {
-            throw redirect({ to: '/checkin/$eventId', params: { eventId: device.eventId } });
-        }
-    },
+    beforeLoad: requireAuth,
     component: CheckInPage
 })

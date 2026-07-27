@@ -7,7 +7,6 @@ import { Analytics } from '@vercel/analytics/react'
 import { SpeedInsights } from '@vercel/speed-insights/react'
 import { configureAPIClient } from '@credopass/api-client'
 import { getAccessToken } from './supabase'
-import { getDeviceToken } from './lib/device-token'
 import { queryClient } from './lib/query-client'
 import { routeTree } from './routeTree.gen'
 import './index.css'
@@ -25,10 +24,10 @@ declare module '@tanstack/react-router' {
 /**
  * Point the client at `/api/v1/core` and tell it how to authenticate.
  *
- * Two credentials reach the API the same way. A paired door tablet holds a
- * `cpd_…` device token and no account at all, and it takes precedence: a tablet
- * that has been paired is a tablet, and a leftover guest session on it must not
- * silently downgrade the door back into account mode.
+ * One credential, always: the Supabase session. A door tablet used to hold a
+ * `cpd_…` device token instead, which took precedence over any session on the
+ * same browser — whoever is working the entrance signs in as themselves with
+ * the `checkin` role now (D24).
  *
  * `X-Organization-Id` is not configured here — the client reads it from the
  * active-organization store, which the session bootstrap resolves from
@@ -36,7 +35,7 @@ declare module '@tanstack/react-router' {
  */
 configureAPIClient({
   baseURL: import.meta.env.VITE_API_URL || '/api/v1/core',
-  getAuthToken: async () => getDeviceToken() ?? (await getAccessToken()),
+  getAuthToken: getAccessToken,
 })
 
 createRoot(document.getElementById('root')!).render(

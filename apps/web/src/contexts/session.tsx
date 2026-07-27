@@ -3,10 +3,13 @@
  *
  * `GET /me/context` is the first call every screen makes (API-SECOND-REBUILD
  * §1.7). It returns the account, the caller's memberships, the active
- * organization, the effective `permissions[]` for that organization, and
- * `needsOnboarding`. Everything downstream — the org switcher, every permission
- * gate, the greeting, the onboarding redirect — reads from here rather than
- * asking again.
+ * organization and the effective `permissions[]` for that organization.
+ * Everything downstream — the org switcher, every permission gate, the greeting
+ * — reads from here rather than asking again.
+ *
+ * It used to carry `needsOnboarding` too, which gated a redirect to a wizard.
+ * Signing in commissions an organization, so the flag was permanently false and
+ * the wizard permanently unreachable; both are gone (D22).
  *
  * This replaces `contexts/premium.tsx`, which kept entitlements in
  * `localStorage`. Entitlements are the server's answer now.
@@ -29,22 +32,17 @@ import {
   type Permission,
 } from '@credopass/api-client';
 import { supabase } from '../supabase';
-import { readDeviceCredential } from '../lib/device-token';
 
 interface SessionContextValue {
-  /** The Supabase session, or null for a signed-out visitor / paired device. */
+  /** The Supabase session, or null for a signed-out visitor. */
   session: Session | null;
   /** True until Supabase has replayed the persisted session. */
   isAuthLoading: boolean;
   /** `/me/context`. Undefined until it resolves, or when signed out. */
   context: MeContext | undefined;
   isContextLoading: boolean;
-  /** The caller belongs to no organization — send them to `/onboarding`. */
-  needsOnboarding: boolean;
   /** The active organization id, or null when there is none yet. */
   organizationId: string | null;
-  /** True when this browser is a paired door tablet rather than a person. */
-  isPairedDevice: boolean;
 }
 
 const SessionContext = createContext<SessionContextValue | null>(null);
@@ -53,10 +51,6 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   const organizationId = useActiveOrganizationId();
-
-  // A paired tablet is decided once, at mount: pairing navigates afterwards, so
-  // there is no state in which this needs to change under a rendered tree.
-  const [isPairedDevice] = useState(() => readDeviceCredential() !== null);
 
   useEffect(() => {
     let cancelled = false;
@@ -78,10 +72,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  // A paired device has no account and must never be asked for one, so the
-  // account-scoped bootstrap simply does not run for it.
   const { data: context, isLoading: isContextLoading } = useMeContext({
-    enabled: !isAuthLoading && !!session && !isPairedDevice,
+    enabled: !isAuthLoading && !!session,
   });
 
   // Which organization the console opens on. Resolved from the caller's own
@@ -101,11 +93,9 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       isAuthLoading,
       context,
       isContextLoading,
-      needsOnboarding: context?.needsOnboarding ?? false,
       organizationId,
-      isPairedDevice,
     }),
-    [session, isAuthLoading, context, isContextLoading, organizationId, isPairedDevice]
+    [session, isAuthLoading, context, isContextLoading, organizationId]
   );
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;

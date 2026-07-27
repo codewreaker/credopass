@@ -29,6 +29,12 @@
       "options": {
         "command": "bun run scripts/db.ts",
         "cwd": "{projectRoot}"
+      },
+      "configurations": {
+        "status": { "command": "bun run scripts/db.ts status" },
+        "migrate": { "command": "bun run scripts/db.ts migrate" },
+        "reset": { "command": "bun run scripts/db.ts reset" },
+        "seed": { "command": "bun run scripts/db.ts seed" }
       }
     },
     "seed": {

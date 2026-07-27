@@ -9,7 +9,7 @@ import { configureAPIClient } from '@credopass/api-client';
 import RootNavigator from './navigation/RootNavigator';
 
 // Configure API client with environment-specific URL
-const API_BASE_URL = Constants.expoConfig?.extra?.apiUrl || 'http://localhost:3000/api/core';
+const API_BASE_URL = Constants.expoConfig?.extra?.apiUrl || 'http://localhost:8080/api/v1/core';
 
 export default function App() {
   useEffect(() => {

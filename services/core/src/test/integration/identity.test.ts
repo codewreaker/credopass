@@ -105,36 +105,3 @@ describe('resolveCaller — concurrency on first sight', () => {
     expect(new Set(callers.map((c) => c.accountId)).size).toBe(4);
   });
 });
-
-describe('resolveCaller — guest labelling', () => {
-  it('gives an anonymous caller a readable display name', async () => {
-    const caller = await resolveCaller(db, input(`sub-${crypto.randomUUID()}`, { is_anonymous: true }));
-
-    expect(caller.isGuest).toBe(true);
-    expect(caller.displayName).toMatch(/^Guest \d{4}$/);
-  });
-
-  it('prefers the name the provider asserts over the generated label', async () => {
-    const caller = await resolveCaller(
-      db,
-      input(`sub-${crypto.randomUUID()}`, { is_anonymous: true, name: 'Ada Lovelace' })
-    );
-
-    expect(caller.displayName).toBe('Ada Lovelace');
-  });
-
-  it('does not label a non-guest', async () => {
-    const caller = await resolveCaller(
-      db,
-      input(`sub-${crypto.randomUUID()}`, { email: 'someone@example.com' })
-    );
-
-    expect(caller.isGuest).toBe(false);
-    expect(caller.displayName).toBeNull();
-  });
-
-  it('creates no membership — a new account belongs to nothing (D16)', async () => {
-    const caller = await resolveCaller(db, input(`sub-${crypto.randomUUID()}`, { is_anonymous: true }));
-    expect(caller.memberships).toHaveLength(0);
-  });
-});

@@ -170,7 +170,7 @@ const OrgSelector: React.FC<{
                 ))}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
-                    onClick={() => navigate({ to: '/onboarding' })}
+                    onClick={() => navigate({ to: '/account', search: { tab: 'organizations' } })}
                     className="gap-2 p-2"
                 >
                     <div className="flex size-6 items-center justify-center rounded-sm border border-dashed">

@@ -139,7 +139,6 @@ export interface MintOptions {
   email?: string;
   emailVerified?: boolean;
   name?: string;
-  isAnonymous?: boolean;
   /** Seconds from now. Negative mints an already-expired token. */
   expiresIn?: number;
   extraClaims?: JWTPayload;
@@ -155,7 +154,6 @@ export async function mintToken(opts: MintOptions = {}): Promise<string> {
     ...(opts.email ? { email: opts.email } : {}),
     ...(opts.emailVerified !== undefined ? { email_verified: opts.emailVerified } : {}),
     ...(opts.name ? { name: opts.name } : {}),
-    ...(opts.isAnonymous ? { is_anonymous: true } : {}),
     ...opts.extraClaims,
   };
 
