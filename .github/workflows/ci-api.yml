@@ -15,7 +15,16 @@ on:
       - 'services/core/**'
       - 'packages/lib/**'
       - '.github/workflows/ci-api.yml'
-  
+
+  # Quality gates must run BEFORE a merge, not after. The adversarial tenancy
+  # suite blocks merge unconditionally (docs/API-FIRST-REBUILD.md §12.1), which
+  # it cannot do if it only runs on push to main.
+  pull_request:
+    paths:
+      - 'services/core/**'
+      - 'packages/lib/**'
+      - '.github/workflows/ci-api.yml'
+
   # Manual deployment trigger
   workflow_dispatch:
     inputs:
@@ -56,7 +65,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -70,7 +79,7 @@ jobs:
 
       - name: Derive SHAs for base and head
         if: github.event_name != 'workflow_dispatch'
-        uses: nrwl/nx-set-shas@v4
+        uses: nrwl/nx-set-shas@v5
 
       - name: Lint Core API service
         run: bun nx lint coreservice
@@ -78,23 +87,75 @@ jobs:
       - name: Type check Core API service
         run: bun nx typecheck coreservice
 
-      # DB/Supabase-backed integration tests self-skip without the secrets
-      # below; set them in repo CI secrets to run the full suite.
-      - name: Test Core API service
+      # Unit + structural suite: no database, so it runs everywhere and always
+      # means something. Deliberately NOT given the production DATABASE_URL —
+      # tests must never be able to reach the live instance.
+      - name: Test Core API service (unit + structural)
         run: bun nx test coreservice
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
 
   # ==========================================================================
-  # Job 2: Build application and Docker image, then deploy via Coolify
+  # Job 2: Adversarial tenancy suite — blocks merge unconditionally
+  # ==========================================================================
+  # docs/API-FIRST-REBUILD.md §12.1. This is a separate job from the unit tests
+  # on purpose: a tenancy failure is not "some tests are red", it is "the
+  # product leaks between customers", and it should be legible as such in the
+  # checks list.
+  #
+  # Runs against a real Postgres service container. §12.5: the suite fails
+  # rather than skipping when it cannot connect, so this job cannot go green by
+  # running nothing.
+  # ==========================================================================
+  adversarial-tenancy:
+    name: Adversarial Tenancy Suite
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: credopass_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 2s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      # Bypasses Testcontainers: the service container above is already a
+      # throwaway Postgres, and starting a second one inside CI is wasteful.
+      TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/credopass_test
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      # Applies every committed migration to an EMPTY database (§9.4), so a
+      # migration that only works incrementally against the maintainer's
+      # existing schema fails here rather than at deploy time.
+      - name: Adversarial suite (migrations from scratch + RLS + tenancy)
+        run: bun nx run coreservice:test:adversarial
+
+  # ==========================================================================
+  # Job 3: Build application and Docker image, then deploy via Coolify
   # ==========================================================================
   build-and-deploy:
     name: Build & Deploy to Hetzner via Coolify
     runs-on: ubuntu-latest
-    needs: [quality-checks]
-    if: ${{ !failure() && !cancelled() }}
+    needs: [quality-checks, adversarial-tenancy]
+    # Never deploy from a pull request, and never past a red tenancy suite.
+    if: ${{ github.event_name != 'pull_request' && !failure() && !cancelled() }}
     
     environment:
       name: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production') || github.ref == 'refs/heads/main' && 'production-api' || 'staging-api' }}
@@ -105,7 +166,7 @@ jobs:
       # Step 1: Checkout and setup
       # ----------------------------------------------------------------------
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -131,7 +192,7 @@ jobs:
           ls -la dist/services/core/ || echo "Build output directory not found"
 
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}

@@ -1,17 +1,14 @@
 import { Separator } from '../separator'
 import { GithubButton } from './github-button'
-import { GuestButton } from './guest-button'
 import { Button } from '../button'
 
 export function AuthPage({
   signInWithGithub,
-  signInAsGuest,
   signInAsEmail,
   title = 'Welcome back',
   subtitle = 'Sign in to your account to continue',
 }: {
   signInWithGithub: () => Promise<any>
-  signInAsGuest: () => Promise<any>
   signInAsEmail: () => void
   title?: string
   subtitle?: string
@@ -37,8 +34,6 @@ export function AuthPage({
         <Button variant="outline" type="button" className="w-full h-11 rounded-full" onClick={signInAsEmail}>
           Continue with email
         </Button>
-
-        <GuestButton signInAsGuest={signInAsGuest} />
       </div>
     </div>
   )

@@ -9,9 +9,32 @@ import { EventImage } from './fields/event-image';
 import { DateTimeField } from './fields/date-time-field';
 import { LocationField } from './fields/location-field';
 import { DescriptionField } from './fields/description-field';
-import { CapacityField, SelfCheckInField, StatusField } from './fields/option-fields';
-import { OrgField } from './org-field';
+import { CapacityField, SelfCheckInField } from './fields/option-fields';
 import { DEFAULT_DURATION_MS, useEventForm, type EventFormValues } from './use-event-form';
+import { useOrganizations } from '@credopass/api-client';
+import { Building2 } from 'lucide-react';
+import { useSession } from '../../../contexts/session';
+
+/**
+ * Which organization this event will belong to.
+ *
+ * Read-only, and that is the point: `POST /events` has no `organizationId`
+ * field — the tenant comes from `X-Organization-Id`. A picker here would let
+ * someone choose one thing and get another. To create an event elsewhere,
+ * switch organization in the sidebar.
+ */
+function OrganizationPill() {
+  const { organizationId } = useSession();
+  const { data: organizations = [] } = useOrganizations();
+  const active = organizations.find((org) => org.id === organizationId);
+
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-full bg-primary-foreground/10 px-3 py-1.5 text-xs font-semibold">
+      <Building2 size={13} />
+      <span className="max-w-40 truncate">{active?.name ?? 'No organization'}</span>
+    </span>
+  );
+}
 
 interface EventComposerProps {
   mode: 'create' | 'edit';
@@ -43,6 +66,17 @@ const timeZoneLabel = () => {
 export function EventComposer({ mode, eventId, initialValues }: EventComposerProps) {
   const navigate = useNavigate();
   const isEditing = mode === 'edit';
+
+  // An event belongs to an organization — the tenant comes from
+  // `X-Organization-Id`, so with no active organization there is nothing for the
+  // server to file it under. Creating one anyway used to "work": the request
+  // resolved the caller's sole membership, which could point at an organization
+  // they had deleted. The API refuses that now; this stops the round trip and
+  // says why. Signed-out visitors are excluded — they see the sign-in overlay,
+  // not a complaint about organizations.
+  const { session, context, isContextLoading, organizationId } = useSession();
+  const missingOrganization =
+    !isEditing && !!session && !isContextLoading && !!context && !organizationId;
 
   const { form, isMutating } = useEventForm({
     mode,
@@ -81,6 +115,7 @@ export function EventComposer({ mode, eventId, initialValues }: EventComposerPro
       <form
         onSubmit={(e) => {
           e.preventDefault();
+          if (missingOrganization) return;
           form.handleSubmit();
         }}
         className="flex flex-col gap-4"
@@ -109,9 +144,7 @@ export function EventComposer({ mode, eventId, initialValues }: EventComposerPro
               <ArrowLeft />
               <span className="sr-only">Back</span>
             </Button>
-            <form.Field name="organizationId">
-              {(field) => <OrgField value={field.state.value} onChange={field.handleChange} />}
-            </form.Field>
+            <OrganizationPill />
             <span className="ml-auto rounded-full bg-primary-foreground/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em]">
               {isEditing ? 'Editing' : 'New'}
             </span>
@@ -236,11 +269,6 @@ export function EventComposer({ mode, eventId, initialValues }: EventComposerPro
             <form.Field name="allowSelfCheckIn">
               {(field) => <SelfCheckInField value={field.state.value} onChange={field.handleChange} />}
             </form.Field>
-            {isEditing && (
-              <form.Field name="status">
-                {(field) => <StatusField value={field.state.value} onChange={field.handleChange} />}
-              </form.Field>
-            )}
           </div>
         </div>
 
@@ -251,11 +279,17 @@ export function EventComposer({ mode, eventId, initialValues }: EventComposerPro
             'bg-linear-to-t from-background via-background to-transparent'
           )}
         >
+          {missingOrganization && (
+            <p className="mb-2 rounded-2xl border border-border bg-card px-4 py-3 text-xs text-muted-foreground">
+              Pick an organization in the sidebar before creating an event — every event belongs to
+              one.
+            </p>
+          )}
           <form.Subscribe selector={(state) => state.isSubmitting}>
             {(isSubmitting) => (
               <Button
                 type="submit"
-                disabled={isMutating || isSubmitting}
+                disabled={isMutating || isSubmitting || missingOrganization}
                 className="h-12 w-full rounded-full text-sm font-semibold"
               >
                 {isMutating || isSubmitting ? (

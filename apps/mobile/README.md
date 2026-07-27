@@ -8,7 +8,7 @@
 
 ## Architecture
 
-Same data brain as the web app (`@credopass/api-client` collections, `@credopass/lib` schemas) with a native shell.
+Same data layer as the web app — `@credopass/api-client` hooks over the generated OpenAPI contract — with a native shell.
 
 ```mermaid
 flowchart TD
@@ -20,8 +20,8 @@ flowchart TD
     Tabs --> Analytics["Analytics"]
     CheckIn --> Scan["QRScannerScreen<br/>(expo camera)"]
     CheckIn --> Manual["ManualSignInScreen"]
-    Screens["All screens"] --> Col["@credopass/api-client<br/>collections"]
-    Col --> API["/api/core"]
+    Screens["All screens"] --> Col["@credopass/api-client<br/>TanStack Query hooks"]
+    Col --> API["/api/v1/core"]
 ```
 
 ## Structure
@@ -37,7 +37,8 @@ flowchart TD
 ## Building blocks
 
 - **UI** from `@credopass/ui-mobile` (native components + theme tokens).
-- **Data** from `@credopass/api-client` — the exact same offline-first collections the web app uses.
+- **Data** from `@credopass/api-client` — the exact same typed hooks the web app uses. There are no
+  offline-first collections any more; the server decides and the client renders.
 - **Camera / QR** via Expo + `use-camera`; biometric unlock via `use-biometrics`.
 
 ## Running
@@ -47,6 +48,6 @@ flowchart TD
 nx run mobile:start      # or: cd apps/mobile && bunx expo start
 ```
 
-Set the API URL in Expo config (`extra.apiUrl`); it defaults to `http://localhost:3000/api/core`.
+Set the API URL in Expo config (`extra.apiUrl`); it defaults to `http://localhost:8080/api/v1/core`.
 
 > Some navigation/provider wiring is still marked `TODO` in `src/app.tsx` — this app trails the web app in maturity.

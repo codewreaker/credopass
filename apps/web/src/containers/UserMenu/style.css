@@ -1,0 +1,33 @@
+/* ================================================================
+   USER MENU (top bar avatar)
+   ================================================================
+   Sized to match `.toolbar-secondary-btn` so the right-hand cluster
+   reads as one row of 2rem controls. */
+
+.usermenu-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border-radius: 9999px;
+  border: 1px solid var(--border);
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.usermenu-trigger:hover {
+  border-color: var(--primary);
+  box-shadow: 0 0 12px oklch(93.604% 0.22511 121.257 / 12%);
+}
+
+.usermenu-trigger:active {
+  transform: scale(0.92);
+}
+
+.usermenu-trigger[data-popup-open] {
+  border-color: var(--primary);
+}

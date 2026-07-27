@@ -12,22 +12,39 @@ import { ModalPortal } from "@credopass/ui/components/launcher";
 import { NAV_ITEMS } from "@credopass/lib/constants";
 import { useTheme } from "@credopass/lib/theme";
 import { useCommandPallete } from "../hooks";
-import { PremiumProvider } from "../contexts/premium";
+import { SessionProvider } from "../contexts/session";
 import { ToolbarSlotProvider } from "../containers/TopNavBar/toolbar-slot";
 
-// Routes that render standalone without the app shell
-const STANDALONE_ROUTES = ['/login', '/upgrade', '/e/'];
+/**
+ * Routes that render standalone — no sidebar, no top bar, no org switcher.
+ *
+ * Two reasons land here. `/login` and `/reset-password` are pre-console: there
+ * is no organization to frame them with yet. `/e/`, `/p/` and `/invitations/`
+ * are attendee surfaces — someone opened a link from a message. They have no
+ * account, and console chrome would imply they could use one.
+ *
+ * `/events/new` is deliberately NOT here. It renders inside the console for a
+ * signed-in host, and standalone-with-an-overlay for a visitor who arrived from
+ * the marketing site; the page decides, not this list.
+ */
+const STANDALONE_ROUTES = [
+  '/login',
+  '/reset-password',
+  '/upgrade',
+  '/invitations/',
+  '/e/',
+  '/p/',
+];
 
 export const Route = createRootRoute({
   component: RootRoute,
 })
 
-/** Entitlements wrap the whole tree, standalone pages included. */
 function RootRoute() {
   return (
-    <PremiumProvider>
+    <SessionProvider>
       <RootLayout />
-    </PremiumProvider>
+    </SessionProvider>
   );
 }
 
@@ -39,7 +56,7 @@ export function RootLayout() {
 
   const isStandalone = STANDALONE_ROUTES.some(r => pathname.startsWith(r));
 
-  // Auth / standalone pages — no sidebar, no topbar
+  // Auth / attendee / device pages — no sidebar, no topbar
   if (isStandalone) {
     return (
       <>
@@ -87,3 +104,4 @@ export function RootLayout() {
     </ToolbarSlotProvider>
   );
 }
+

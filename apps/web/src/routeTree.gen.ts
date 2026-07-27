@@ -9,14 +9,19 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as UpgradeRouteImport } from './routes/upgrade'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as OrganizationsRouteImport } from './routes/organizations'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
+import { Route as AccountRouteImport } from './routes/account'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as UpgradeIndexRouteImport } from './routes/upgrade/index'
 import { Route as EventsIndexRouteImport } from './routes/events/index'
 import { Route as AttendeesIndexRouteImport } from './routes/attendees/index'
+import { Route as UpgradeCheckoutRouteImport } from './routes/upgrade/checkout'
+import { Route as PTokenRouteImport } from './routes/p/$token'
+import { Route as InvitationsTokenRouteImport } from './routes/invitations/$token'
 import { Route as EventsNewRouteImport } from './routes/events/new'
 import { Route as EventsEventIdRouteImport } from './routes/events/$eventId'
 import { Route as EEventIdRouteImport } from './routes/e/$eventId'
@@ -25,9 +30,9 @@ import { Route as AttendeesNewRouteImport } from './routes/attendees/new'
 import { Route as EventsEventIdEditRouteImport } from './routes/events/$eventId_.edit'
 import { Route as AttendeesUserIdEditRouteImport } from './routes/attendees/$userId_.edit'
 
-const UpgradeRoute = UpgradeRouteImport.update({
-  id: '/upgrade',
-  path: '/upgrade',
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProfileRoute = ProfileRouteImport.update({
@@ -50,9 +55,19 @@ const AnalyticsRoute = AnalyticsRouteImport.update({
   path: '/analytics',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AccountRoute = AccountRouteImport.update({
+  id: '/account',
+  path: '/account',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UpgradeIndexRoute = UpgradeIndexRouteImport.update({
+  id: '/upgrade/',
+  path: '/upgrade/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const EventsIndexRoute = EventsIndexRouteImport.update({
@@ -63,6 +78,21 @@ const EventsIndexRoute = EventsIndexRouteImport.update({
 const AttendeesIndexRoute = AttendeesIndexRouteImport.update({
   id: '/attendees/',
   path: '/attendees/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UpgradeCheckoutRoute = UpgradeCheckoutRouteImport.update({
+  id: '/upgrade/checkout',
+  path: '/upgrade/checkout',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PTokenRoute = PTokenRouteImport.update({
+  id: '/p/$token',
+  path: '/p/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InvitationsTokenRoute = InvitationsTokenRouteImport.update({
+  id: '/invitations/$token',
+  path: '/invitations/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
 const EventsNewRoute = EventsNewRouteImport.update({
@@ -103,53 +133,68 @@ const AttendeesUserIdEditRoute = AttendeesUserIdEditRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/account': typeof AccountRoute
   '/analytics': typeof AnalyticsRoute
   '/login': typeof LoginRoute
   '/organizations': typeof OrganizationsRoute
   '/profile': typeof ProfileRoute
-  '/upgrade': typeof UpgradeRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/attendees/new': typeof AttendeesNewRoute
   '/checkin/$eventId': typeof CheckinEventIdRoute
   '/e/$eventId': typeof EEventIdRoute
   '/events/$eventId': typeof EventsEventIdRoute
   '/events/new': typeof EventsNewRoute
+  '/invitations/$token': typeof InvitationsTokenRoute
+  '/p/$token': typeof PTokenRoute
+  '/upgrade/checkout': typeof UpgradeCheckoutRoute
   '/attendees/': typeof AttendeesIndexRoute
   '/events/': typeof EventsIndexRoute
+  '/upgrade/': typeof UpgradeIndexRoute
   '/attendees/$userId/edit': typeof AttendeesUserIdEditRoute
   '/events/$eventId/edit': typeof EventsEventIdEditRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/account': typeof AccountRoute
   '/analytics': typeof AnalyticsRoute
   '/login': typeof LoginRoute
   '/organizations': typeof OrganizationsRoute
   '/profile': typeof ProfileRoute
-  '/upgrade': typeof UpgradeRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/attendees/new': typeof AttendeesNewRoute
   '/checkin/$eventId': typeof CheckinEventIdRoute
   '/e/$eventId': typeof EEventIdRoute
   '/events/$eventId': typeof EventsEventIdRoute
   '/events/new': typeof EventsNewRoute
+  '/invitations/$token': typeof InvitationsTokenRoute
+  '/p/$token': typeof PTokenRoute
+  '/upgrade/checkout': typeof UpgradeCheckoutRoute
   '/attendees': typeof AttendeesIndexRoute
   '/events': typeof EventsIndexRoute
+  '/upgrade': typeof UpgradeIndexRoute
   '/attendees/$userId/edit': typeof AttendeesUserIdEditRoute
   '/events/$eventId/edit': typeof EventsEventIdEditRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/account': typeof AccountRoute
   '/analytics': typeof AnalyticsRoute
   '/login': typeof LoginRoute
   '/organizations': typeof OrganizationsRoute
   '/profile': typeof ProfileRoute
-  '/upgrade': typeof UpgradeRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/attendees/new': typeof AttendeesNewRoute
   '/checkin/$eventId': typeof CheckinEventIdRoute
   '/e/$eventId': typeof EEventIdRoute
   '/events/$eventId': typeof EventsEventIdRoute
   '/events/new': typeof EventsNewRoute
+  '/invitations/$token': typeof InvitationsTokenRoute
+  '/p/$token': typeof PTokenRoute
+  '/upgrade/checkout': typeof UpgradeCheckoutRoute
   '/attendees/': typeof AttendeesIndexRoute
   '/events/': typeof EventsIndexRoute
+  '/upgrade/': typeof UpgradeIndexRoute
   '/attendees/$userId_/edit': typeof AttendeesUserIdEditRoute
   '/events/$eventId_/edit': typeof EventsEventIdEditRoute
 }
@@ -157,81 +202,101 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/account'
     | '/analytics'
     | '/login'
     | '/organizations'
     | '/profile'
-    | '/upgrade'
+    | '/reset-password'
     | '/attendees/new'
     | '/checkin/$eventId'
     | '/e/$eventId'
     | '/events/$eventId'
     | '/events/new'
+    | '/invitations/$token'
+    | '/p/$token'
+    | '/upgrade/checkout'
     | '/attendees/'
     | '/events/'
+    | '/upgrade/'
     | '/attendees/$userId/edit'
     | '/events/$eventId/edit'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/account'
     | '/analytics'
     | '/login'
     | '/organizations'
     | '/profile'
-    | '/upgrade'
+    | '/reset-password'
     | '/attendees/new'
     | '/checkin/$eventId'
     | '/e/$eventId'
     | '/events/$eventId'
     | '/events/new'
+    | '/invitations/$token'
+    | '/p/$token'
+    | '/upgrade/checkout'
     | '/attendees'
     | '/events'
+    | '/upgrade'
     | '/attendees/$userId/edit'
     | '/events/$eventId/edit'
   id:
     | '__root__'
     | '/'
+    | '/account'
     | '/analytics'
     | '/login'
     | '/organizations'
     | '/profile'
-    | '/upgrade'
+    | '/reset-password'
     | '/attendees/new'
     | '/checkin/$eventId'
     | '/e/$eventId'
     | '/events/$eventId'
     | '/events/new'
+    | '/invitations/$token'
+    | '/p/$token'
+    | '/upgrade/checkout'
     | '/attendees/'
     | '/events/'
+    | '/upgrade/'
     | '/attendees/$userId_/edit'
     | '/events/$eventId_/edit'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AccountRoute: typeof AccountRoute
   AnalyticsRoute: typeof AnalyticsRoute
   LoginRoute: typeof LoginRoute
   OrganizationsRoute: typeof OrganizationsRoute
   ProfileRoute: typeof ProfileRoute
-  UpgradeRoute: typeof UpgradeRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   AttendeesNewRoute: typeof AttendeesNewRoute
   CheckinEventIdRoute: typeof CheckinEventIdRoute
   EEventIdRoute: typeof EEventIdRoute
   EventsEventIdRoute: typeof EventsEventIdRoute
   EventsNewRoute: typeof EventsNewRoute
+  InvitationsTokenRoute: typeof InvitationsTokenRoute
+  PTokenRoute: typeof PTokenRoute
+  UpgradeCheckoutRoute: typeof UpgradeCheckoutRoute
   AttendeesIndexRoute: typeof AttendeesIndexRoute
   EventsIndexRoute: typeof EventsIndexRoute
+  UpgradeIndexRoute: typeof UpgradeIndexRoute
   AttendeesUserIdEditRoute: typeof AttendeesUserIdEditRoute
   EventsEventIdEditRoute: typeof EventsEventIdEditRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/upgrade': {
-      id: '/upgrade'
-      path: '/upgrade'
-      fullPath: '/upgrade'
-      preLoaderRoute: typeof UpgradeRouteImport
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/profile': {
@@ -262,11 +327,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AnalyticsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/account': {
+      id: '/account'
+      path: '/account'
+      fullPath: '/account'
+      preLoaderRoute: typeof AccountRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/upgrade/': {
+      id: '/upgrade/'
+      path: '/upgrade'
+      fullPath: '/upgrade/'
+      preLoaderRoute: typeof UpgradeIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/events/': {
@@ -281,6 +360,27 @@ declare module '@tanstack/react-router' {
       path: '/attendees'
       fullPath: '/attendees/'
       preLoaderRoute: typeof AttendeesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/upgrade/checkout': {
+      id: '/upgrade/checkout'
+      path: '/upgrade/checkout'
+      fullPath: '/upgrade/checkout'
+      preLoaderRoute: typeof UpgradeCheckoutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/p/$token': {
+      id: '/p/$token'
+      path: '/p/$token'
+      fullPath: '/p/$token'
+      preLoaderRoute: typeof PTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/invitations/$token': {
+      id: '/invitations/$token'
+      path: '/invitations/$token'
+      fullPath: '/invitations/$token'
+      preLoaderRoute: typeof InvitationsTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/events/new': {
@@ -337,18 +437,23 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AccountRoute: AccountRoute,
   AnalyticsRoute: AnalyticsRoute,
   LoginRoute: LoginRoute,
   OrganizationsRoute: OrganizationsRoute,
   ProfileRoute: ProfileRoute,
-  UpgradeRoute: UpgradeRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   AttendeesNewRoute: AttendeesNewRoute,
   CheckinEventIdRoute: CheckinEventIdRoute,
   EEventIdRoute: EEventIdRoute,
   EventsEventIdRoute: EventsEventIdRoute,
   EventsNewRoute: EventsNewRoute,
+  InvitationsTokenRoute: InvitationsTokenRoute,
+  PTokenRoute: PTokenRoute,
+  UpgradeCheckoutRoute: UpgradeCheckoutRoute,
   AttendeesIndexRoute: AttendeesIndexRoute,
   EventsIndexRoute: EventsIndexRoute,
+  UpgradeIndexRoute: UpgradeIndexRoute,
   AttendeesUserIdEditRoute: AttendeesUserIdEditRoute,
   EventsEventIdEditRoute: EventsEventIdEditRoute,
 }

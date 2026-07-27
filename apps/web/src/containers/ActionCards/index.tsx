@@ -44,7 +44,7 @@ export default function ActionCards() {
                     onToggleCollapse();
                     break
                 case 'manage-org':
-                    navigate({ to: '/profile' });
+                    navigate({ to: '/account', search: { tab: 'organizations' } });
                     break
             }
         },

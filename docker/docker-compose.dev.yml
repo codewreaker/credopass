@@ -63,6 +63,88 @@ services:
     profiles:
       - services
 
+  # ---------------------------------------------------------------------------
+  # MinIO — S3-compatible object storage (docs/API-FIRST-REBUILD.md §9.1, §9.3)
+  # ---------------------------------------------------------------------------
+  # Event covers and avatars. Bytes go client → storage directly via a presigned
+  # URL and never touch the API, so local dev needs a real S3 API rather than a
+  # stub — otherwise the upload path is the least exercised code in the product.
+  #
+  #   console: http://localhost:9001  (credopass / credopass)
+  #   api:     http://localhost:9000
+  # ---------------------------------------------------------------------------
+  credopass-minio:
+    image: minio/minio:latest
+    container_name: credopass-minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-credopass}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-credopass}
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - credopass-network
+
+  # Creates the media bucket on first start, then exits. Without this the first
+  # upload of a fresh checkout fails with NoSuchBucket.
+  credopass-minio-init:
+    image: minio/mc:latest
+    container_name: credopass-minio-init
+    depends_on:
+      credopass-minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set local http://credopass-minio:9000 ${MINIO_ROOT_USER:-credopass} ${MINIO_ROOT_PASSWORD:-credopass};
+      mc mb --ignore-existing local/credopass-media-local;
+      mc anonymous set download local/credopass-media-local;
+      echo 'bucket credopass-media-local ready';
+      "
+    networks:
+      - credopass-network
+
+  # ---------------------------------------------------------------------------
+  # Throwaway Postgres for the test suites
+  # ---------------------------------------------------------------------------
+  # Separate from the dev database on purpose: the adversarial suite TRUNCATEs
+  # every table between runs, and pointing it at a database anyone cares about
+  # is a footgun. Export TEST_DATABASE_URL to use it and skip Testcontainers:
+  #
+  #   TEST_DATABASE_URL=postgresql://postgres:postgres@localhost:55432/credopass_test
+  # ---------------------------------------------------------------------------
+  credopass-postgres-test:
+    image: postgres:16-alpine3.23
+    container_name: credopass-postgres-test
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: credopass_test
+    ports:
+      - "55432:5432"
+    # tmpfs: the whole point is that it is disposable, and it makes the suite
+    # measurably faster than a disk-backed volume.
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 2s
+      timeout: 5s
+      retries: 5
+    networks:
+      - credopass-network
+    profiles:
+      - test
+
 # =============================================================================
 # Volumes
 # =============================================================================
@@ -71,6 +153,8 @@ services:
 volumes:
   postgres_data:
     name: credopass_postgres_data
+  minio_data:
+    name: credopass_minio_data
 
 # =============================================================================
 # Networks

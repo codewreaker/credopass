@@ -7,7 +7,6 @@ import { Map, MapMarker, MarkerContent } from '@credopass/ui/components/map';
 import type { MapViewport } from '@credopass/ui/components/map';
 import { cn } from '@credopass/ui/lib/utils';
 import { MAPBOX_ACCESS_TOKEN } from '../../../../config';
-import { useGeocodedLocation } from '../../use-geocoded-location';
 
 interface LocationFieldProps {
   value: string;
@@ -70,18 +69,13 @@ export function LocationField({ value, onChange, invalid }: LocationFieldProps) 
     setOpen(true);
   };
 
-  // With the pin reset on open, an event that already has a location would show
-  // "pick an address" over an empty panel. Geocoding the saved value means the
-  // preview opens on the real place — and on the *current* event's place, which is
-  // the whole point of clearing the stale pin.
-  const savedGeocode = useGeocodedLocation(open && !coordinates ? value : null);
-  const savedPin: [number, number] | null =
-    savedGeocode.status === 'ready' ? [savedGeocode.place.lng, savedGeocode.place.lat] : null;
-
-  const pin = coordinates ?? savedPin;
-  // Let the user's own panning win once they've moved the map; otherwise follow
-  // whichever pin is current.
-  const pinViewport = coordinates ? viewport : savedPin ? { center: savedPin, zoom: 15 } : viewport;
+  // Only the address the user just picked has coordinates. Reverse-geocoding a
+  // *saved* location used to happen here, in the browser, with a Mapbox token
+  // shipped to the client — that moved server-side, onto the write path, and the
+  // coordinates it produces are not exposed on the API yet. So an existing
+  // location opens without a pin rather than with a guessed one (§2.12).
+  const pin = coordinates;
+  const pinViewport = viewport;
 
   const handleRetrieve = (response: any) => {
     setDraft(parseAddress(response));
@@ -151,9 +145,7 @@ export function LocationField({ value, onChange, invalid }: LocationFieldProps) 
           </div>
         ) : (
           <p className="rounded-xl border border-dashed border-border px-3 py-6 text-center text-xs text-muted-foreground">
-            {savedGeocode.status === 'loading'
-              ? 'Locating the current address…'
-              : 'Pick an address to preview it on the map.'}
+            Pick an address to preview it on the map.
           </p>
         )}
       </SheetDialog>

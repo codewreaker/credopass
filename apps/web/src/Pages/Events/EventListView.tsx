@@ -2,12 +2,11 @@ import React, { useCallback, useMemo } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { Badge } from '@credopass/ui/components/badge';
 
-
-import type { EventType } from '@credopass/lib/schemas';
+import type { Event } from '@credopass/api-client';
+import type { DerivedEventStatus } from '@credopass/lib/hooks';
 import { EmptyState } from '@credopass/ui/components/empty-state';
-import { getGroupedEventsData, groupEventsByStatus, sortEventsByClosestToToday } from '@credopass/lib/utils';
 import { useIsMobile } from '@credopass/ui/hooks/use-mobile';
-import { EventRow, STATUS_MAPPING, type EventWithOrg } from '@credopass/ui/components/event-row';
+import { EventRow, STATUS_MAPPING } from '@credopass/ui/components/event-row';
 import { TimelineRail } from '@credopass/ui/components/timeline';
 import EmptyStateOne from '/empty-state-one.svg'
 import EmptyStateTwo from '/empty-state-two.svg'
@@ -20,20 +19,35 @@ const randomizeImage = () => {
 }
 
 interface EventListViewProps {
-    events: EventType[];
-    selectedStatus: EventType['status'][];
+    events: Event[];
+    /** Which statuses this group renders, and in what order. */
+    selectedStatus: DerivedEventStatus[];
     onCreateEvent: () => void;
-    onEditEvent: (event: EventWithOrg) => void;
-    onDeleteEvent: (eventId: string) => void;
+    onEditEvent: (event: Event) => void;
+    onDeleteEvent: (event: Event) => void;
     onViewAttendees?: (eventId: string) => void;
     timezone?: boolean
     /** Which group the switch is on — lets the empty state nudge to the other one. */
     activeGroup?: 'upcoming' | 'past';
     /** Jump to the past-events group (B8: don't strand a user whose events are all past). */
     onShowPast?: () => void;
+    /** The caller may create events. Hides the CTA rather than rendering a 403. */
+    canCreate?: boolean;
+    /** True while the first page is in flight — suppresses the empty state. */
+    isLoading?: boolean;
 }
 
-
+/**
+ * The events list.
+ *
+ * Order and membership are the server's: `?group=upcoming|past` decides which
+ * events arrive and in what order. All that happens here is sectioning them by
+ * the status each row already carries — no re-sorting, no re-deriving.
+ *
+ * One consequence looks like a bug and is not: a **cancelled future event
+ * appears under Past**. It is not going to happen, so it belongs with what
+ * didn't (§2.3).
+ */
 const EventListView: React.FC<EventListViewProps> = ({
     events,
     onCreateEvent,
@@ -44,15 +58,19 @@ const EventListView: React.FC<EventListViewProps> = ({
     timezone = false,
     activeGroup,
     onShowPast,
+    canCreate = true,
+    isLoading = false,
 }) => {
     const navigate = useNavigate();
     const isMobile = useIsMobile();
 
-    // Sort upcoming/scheduled event closest to today's date instead of just desc
-    const grouped = useMemo(() => {
-        const groupedMap = groupEventsByStatus(events);
-        groupedMap.set('scheduled', sortEventsByClosestToToday(groupedMap.get('scheduled') || []));
-        return getGroupedEventsData<EventWithOrg>(groupedMap, selectedStatus);
+    const grouped = useMemo<Array<[DerivedEventStatus, Event[]]>>(() => {
+        const sections: Array<[DerivedEventStatus, Event[]]> = [];
+        for (const status of selectedStatus) {
+            const inSection = events.filter((event) => event.status === status);
+            if (inSection.length > 0) sections.push([status, inSection]);
+        }
+        return sections;
     }, [events, selectedStatus]);
 
     // Nothing in the *current* group. Two shapes: no events at all (create your
@@ -66,16 +84,16 @@ const EventListView: React.FC<EventListViewProps> = ({
         navigate({ to: '/events/$eventId', params: { eventId } });
     }, [navigate]);
 
-    // Show empty state ONLY if there are no ongoing or upcoming events
-    // (past/completed events don't count toward having "active" events)
+    const eventsById = useMemo(() => new Map(events.map((e) => [e.id, e])), [events]);
+
     return (
         <div className="event-list">
-            {nothingInGroup && !hasAnyEvents && (<div className="flex items-center justify-center py-0">
+            {!isLoading && nothingInGroup && !hasAnyEvents && (<div className="flex items-center justify-center py-0">
                 <EmptyState
                     iconUrl={randomizeImage()}
                     title="You have no events yet"
                     description="Create your first event and start checking people in within minutes."
-                    action={{ label: 'Create Event', onClick: onCreateEvent }}
+                    action={canCreate ? { label: 'Create Event', onClick: onCreateEvent } : undefined}
                 />
             </div>)}
             {canGuideToPast && (<div className="flex items-center justify-center py-0">
@@ -84,10 +102,10 @@ const EventListView: React.FC<EventListViewProps> = ({
                     title="Nothing coming up"
                     description="You don’t have any upcoming events — but your past events are all here. Review who showed up, or plan the next one."
                     action={{ label: 'View past events', onClick: onShowPast! }}
-                    secondaryAction={{ label: 'Create event', onClick: onCreateEvent }}
+                    secondaryAction={canCreate ? { label: 'Create event', onClick: onCreateEvent } : undefined}
                 />
             </div>)}
-            {grouped.map(([statusLabel, eventsData]: [EventType['status'], EventWithOrg[]]) => (
+            {grouped.map(([statusLabel, eventsData]) => (
                 <div key={statusLabel} className="event-list-group">
                     <div className="event-list-date-heading">
                         {STATUS_MAPPING[statusLabel].icon}
@@ -101,13 +119,19 @@ const EventListView: React.FC<EventListViewProps> = ({
                         {/* Aligned to the centre of the date icon: 0.75rem of row
                             padding + half of the 4rem icon. */}
                         {eventsData.length > 1 && <TimelineRail inset="2.75rem" insetY="2.75rem" />}
-                        {eventsData.map((event: EventWithOrg) => (
+                        {eventsData.map((event) => (
                             <EventRow
                                 key={event.id}
                                 event={event}
                                 onNavigate={handleNavigateToEvent}
-                                onEdit={onEditEvent}
-                                onDelete={onDeleteEvent}
+                                onEdit={(row) => {
+                                    const target = eventsById.get(row.id);
+                                    if (target) onEditEvent(target);
+                                }}
+                                onDelete={(id) => {
+                                    const target = eventsById.get(id);
+                                    if (target) onDeleteEvent(target);
+                                }}
                                 onViewAttendees={onViewAttendees}
                                 isMobile={isMobile}
                                 timezone={timezone}

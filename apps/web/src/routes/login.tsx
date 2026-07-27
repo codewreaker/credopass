@@ -5,10 +5,8 @@ import { createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute('/login')({
   validateSearch: z.object({
-    // manual - true prevents auto guest sign in and presents user with sign-in options.
-    // Defaults to false so first-time visitors get the silent guest sign-in;
-    // "Log in" links opt into the form with ?manual=true.
-    manual: z.boolean().optional().default(false),
+    // `manual` is gone with anonymous sign-in: there is no longer an automatic
+    // path to opt out of, so every visitor sees the sign-in options.
     /**
      * Determing which view to show (e.g. a "Log in" nav item). 
      * social - Present social links e.g github, gmail
@@ -19,7 +17,7 @@ export const Route = createFileRoute('/login')({
     // out - true when the user just signed out; shows the goodbye variant.
     out: z.boolean().optional().default(false),
     // redirect - where to return after auth, set by the private-route guard
-    // (requireAuth). Honoured by useGuestAutoLogin and the manual sign-in watcher.
+    // (requireAuth). Honoured by the sign-in watcher on the login page.
     redirect: z.string().optional(),
   }),
   component: LoginPage,

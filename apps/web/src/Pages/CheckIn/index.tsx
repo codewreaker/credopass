@@ -1,11 +1,35 @@
+/**
+ * `/checkin/$eventId` — the door.
+ *
+ * Two modes, and the difference is the credential, not the UI:
+ *
+ *   A  staff kiosk    a signed-in account, as before
+ *   B  paired device  a `cpd_…` device token and nothing else
+ *
+ * Both call exactly one endpoint to record an arrival, `POST /events/{id}/check-in`,
+ * and the server resolves who the pass belongs to. The browser no longer holds a
+ * table of people to match a scan against, which is what made the old
+ * `users.find()` path both slow and wrong across two doors.
+ *
+ * The counter is `GET /events/{id}/checkin-state`, polled every 5 seconds. It
+ * used to be `useState(0)` — per tab, reset on reload, and two doors always
+ * disagreed. SSE is Phase 4; polling is the honest interim (§2.6).
+ */
+
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { eq, useLiveQuery } from '@tanstack/react-db';
 import { useParams, useNavigate } from '@tanstack/react-router';
 import { useToolbarContext } from '@credopass/lib/hooks';
-import type { EventType, User, UserType } from '@credopass/lib/schemas';
-import { getCollections } from '@credopass/api-client/collections';
+import {
+  hasProblemCode,
+  ProblemCode,
+  useCheckIn,
+  useCheckInState,
+  useCheckOut,
+  useEvent,
+  type Event,
+} from '@credopass/api-client';
 import { useIsMobile } from '@credopass/ui/hooks/use-mobile';
-import { QrCodeIcon, ArrowLeft, ScanLine, UserRoundPlus, Bug, Trash2, CalendarCheck, Users, Maximize2, Minimize2, MapPin } from 'lucide-react';
+import { QrCodeIcon, ArrowLeft, ScanLine, UserRoundPlus, Bug, Trash2, CalendarCheck, Users, Maximize2, Minimize2, MapPin, LogOut } from 'lucide-react';
 import { Button } from '@credopass/ui/components/button';
 import { GlowingQRCode } from '@credopass/ui/components/glowing-qr-code';
 import { SheetDialog } from '@credopass/ui/components/sheet-dialog';
@@ -17,10 +41,10 @@ import { cn } from '@credopass/ui/lib/utils';
 import './style.css';
 import CheckInHeader from './components/CheckInHeader';
 import { QRScanner } from './components/QRScanner';
-import ManualSignInForm from './ManualSignInForm';
+import ManualSignInForm, { type AttendeeDetails } from './ManualSignInForm';
 import SuccessCheckInScreen from './SuccessCheckInScreen';
-import { useAttendeeCheckIn } from '../Events/use-attendee-checkin';
 import CredoPassLogoIcon from '../../containers/LeftSidebar/brand-icon';
+import { errorMessage } from '../../lib/errors';
 
 type KioskMode = 'display' | 'scan';
 
@@ -42,7 +66,11 @@ const CheckInPage: React.FC = () => {
   const { eventId } = useParams({ from: '/checkin/$eventId' });
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  const { events: eventCollection, users: userCollection } = getCollections();
+
+  const { data: event, isLoading } = useEvent(eventId);
+  const { data: state } = useCheckInState(eventId);
+  const checkIn = useCheckIn(eventId);
+  const checkOut = useCheckOut(eventId);
 
   // DEV drawer — a running log of scans, parse outcomes and errors so check-in
   // (especially the camera scanner on real devices) can be debugged in place.
@@ -61,19 +89,12 @@ const CheckInPage: React.FC = () => {
     search: { enabled: false, placeholder: '' },
   });
 
-  const { data: event, isLoading } = useLiveQuery((q) =>
-    q.from({ eventCollection }).where(({ eventCollection }) => eq(eventCollection.id, eventId)).findOne()
-  );
-  const { data: usersData } = useLiveQuery((q) => q.from({ userCollection }));
-  const users = useMemo<UserType[]>(() => (Array.isArray(usersData) ? usersData : []), [usersData]);
-
-  const { checkIn } = useAttendeeCheckIn();
-
   const [mode, setMode] = useState<KioskMode>('display');
   const [manualOpen, setManualOpen] = useState(false);
-  const [checkInCount, setCheckInCount] = useState(0);
-  const [successUser, setSuccessUser] = useState<Partial<User> | null>(null);
-
+  // Only mounted when the event requires it — a door that does not track exits
+  // should not offer a button that records one.
+  const [checkOutOpen, setCheckOutOpen] = useState(false);
+  const [successPerson, setSuccessPerson] = useState<{ firstName: string; lastName: string; email: string | null } | null>(null);
   const [maximised, setMaximised] = useState(false);
 
   const shareUrl = useMemo(
@@ -82,8 +103,7 @@ const CheckInPage: React.FC = () => {
   );
 
   // Maximise fills the *app window* only — deliberately no `requestFullscreen()`.
-  // Taking over the whole screen is the OS's business and the user's choice; they
-  // can hit F11 (or the browser's own control) on top of this if they want it.
+  // Taking over the whole screen is the OS's business and the user's choice.
   const enterMaximised = useCallback(() => setMaximised(true), []);
   const exitMaximised = useCallback(() => setMaximised(false), []);
 
@@ -97,9 +117,7 @@ const CheckInPage: React.FC = () => {
   }, [maximised, exitMaximised]);
 
   // Size the maximised QR off the shorter viewport edge so it stays square and
-  // fully visible — recomputed on resize, since a door tablet gets rotated. The
-  // wide breakpoint puts the details beside the code rather than under it, so it
-  // gets a smaller share; the cap stops it ballooning on a desktop monitor.
+  // fully visible — recomputed on resize, since a door tablet gets rotated.
   const [maxQrSize, setMaxQrSize] = useState(320);
   useEffect(() => {
     if (!maximised) return;
@@ -117,67 +135,91 @@ const CheckInPage: React.FC = () => {
     };
   }, [maximised]);
 
-  const celebrate = useCallback((user: Partial<User>) => {
-    setSuccessUser(user);
-    setCheckInCount((c) => c + 1);
-    setTimeout(() => setSuccessUser(null), 2600);
-  }, []);
-
-  // Manual check-in → attendance API.
-  const handleManual = useCallback(
-    async (details: Partial<User>) => {
-      const ev = event as EventType | undefined;
-      if (!ev) return;
-      const result = await checkIn(
-        ev,
-        { firstName: details.firstName ?? '', lastName: details.lastName ?? '', email: details.email ?? '' },
-        'manual'
-      );
-      if (!result) return;
-      setManualOpen(false);
-      if (result.alreadyCheckedIn) toast.info('Already checked in');
-      celebrate(details);
+  /**
+   * Record an arrival.
+   *
+   * Idempotent by contract: scanning the same pass twice comes back
+   * `alreadyRecorded` rather than failing, so a queue can move without the
+   * operator tracking who they already did.
+   */
+  const record = useCallback(
+    async (body: Parameters<typeof checkIn.mutateAsync>[0], label: string) => {
+      try {
+        const result = await checkIn.mutateAsync(body);
+        pushLog('ok', `${result.alreadyRecorded ? 'Already in' : 'Checked in'}: ${result.person.firstName} ${result.person.lastName}`);
+        if (result.alreadyRecorded) toast.info(`${result.person.firstName} was already checked in`);
+        setSuccessPerson(result.person);
+        setTimeout(() => setSuccessPerson(null), 2600);
+        return true;
+      } catch (error) {
+        if (hasProblemCode(error, ProblemCode.CAPACITY_REACHED)) {
+          toast.error('This event is full — nobody else can be checked in.');
+          pushLog('error', `Capacity reached (${label})`);
+          return false;
+        }
+        const message = errorMessage(error, 'Check-in failed');
+        pushLog('error', `${label}: ${message}`);
+        toast.error(message);
+        return false;
+      }
     },
-    [event, checkIn, celebrate]
+    [checkIn, pushLog]
   );
 
-  // Scanned an attendee ticket (`eventId:userId`) → attendance API.
+  const handleManual = useCallback(
+    async (details: AttendeeDetails) => {
+      const ok = await record(
+        { firstName: details.firstName, lastName: details.lastName, email: details.email, method: 'manual' },
+        'manual'
+      );
+      if (ok) setManualOpen(false);
+    },
+    [record]
+  );
+
+  /** Recording someone leaving. Same resolution rules, different endpoint. */
+  const handleCheckOut = useCallback(
+    async (details: AttendeeDetails) => {
+      try {
+        const result = await checkOut.mutateAsync({
+          firstName: details.firstName,
+          lastName: details.lastName,
+          email: details.email,
+        });
+        pushLog('ok', `Checked out: ${result.person.firstName} ${result.person.lastName}`);
+        toast.success(`${result.person.firstName} checked out`);
+        setCheckOutOpen(false);
+      } catch (error) {
+        const message = errorMessage(error, 'Check-out failed');
+        pushLog('error', `check-out: ${message}`);
+        toast.error(message);
+      }
+    },
+    [checkOut, pushLog]
+  );
+
+  /**
+   * A scanned pass.
+   *
+   * The pass is an opaque signed token, so nothing here parses it or checks
+   * which event it belongs to — the server does, and a pass for another event
+   * comes back `invalid_pass`. The one thing worth catching locally is someone
+   * scanning the *event's* share link instead of an attendee's pass, because
+   * that is a mistake with a specific fix.
+   */
   const handleScan = useCallback(
     async (value: string) => {
-      const ev = event as EventType | undefined;
-      if (!ev) return;
       pushLog('scan', value);
-      const [scannedEventId, userId] = value.split(':');
-      if (!userId || scannedEventId !== ev.id) {
-        pushLog(
-          'error',
-          value.includes('/e/')
-            ? "That's the event's shareable link, not an attendee ticket."
-            : `Not a valid ticket for this event (got eventId "${scannedEventId ?? ''}").`
-        );
-        toast.error('Not a valid ticket for this event');
+      if (value.includes('/e/')) {
+        pushLog('error', "That's the event's shareable link, not an attendee pass.");
+        toast.error("That's the event link, not an attendee pass");
         return;
       }
-      const user = users.find((u) => u.id === userId);
-      if (!user) {
-        pushLog('error', `No local user matches ticket userId "${userId}".`);
-        toast.error('Ticket not recognised');
-        return;
-      }
-      const result = await checkIn(
-        ev,
-        { firstName: user.firstName, lastName: user.lastName, email: user.email },
-        'qr'
-      );
-      if (!result) {
-        pushLog('error', `Check-in write failed for ${user.firstName} ${user.lastName}.`);
-        return;
-      }
-      pushLog('ok', `${result.alreadyCheckedIn ? 'Already in' : 'Checked in'}: ${user.firstName} ${user.lastName}`);
-      if (result.alreadyCheckedIn) toast.info(`${user.firstName} was already checked in`);
-      celebrate(user);
+      // A scanned pass URL carries the token in its last path segment.
+      const pass = value.includes('/p/') ? value.split('/p/').pop()!.split(/[?#]/)[0] : value;
+      await record({ pass, method: 'qr' }, 'scan');
     },
-    [event, users, checkIn, celebrate, pushLog]
+    [record, pushLog]
   );
 
   if (isLoading) return <LoadingState />;
@@ -196,15 +238,9 @@ const CheckInPage: React.FC = () => {
     );
   }
 
-  const ev = event as EventType;
-
-  // Collections synced from PostgREST can hand back timestamps as ISO strings on
-  // the first read, so coerce rather than trusting `instanceof Date`.
-  const startDate = ev.startTime ? new Date(ev.startTime) : null;
-
-  // Event cover photo. `events` has no image column yet, so this is always null
-  // today — the cast is the single seam the future field plugs into.
-  const coverUrl = (ev as EventType & { imageUrl?: string | null }).imageUrl ?? null;
+  const ev: Event = event;
+  const startDate = new Date(ev.startAt);
+  const checkedIn = state?.checkedIn ?? ev.counts.attended;
 
   // Once an event is over, the kiosk stops offering a live check-in and points
   // the organiser at the attendance summary instead (B4 / §3.5).
@@ -230,8 +266,8 @@ const CheckInPage: React.FC = () => {
     );
   }
 
-  if (successUser) {
-    return <SuccessCheckInScreen user={successUser} checkInCount={checkInCount} eventName={ev.name} />;
+  if (successPerson) {
+    return <SuccessCheckInScreen user={successPerson} checkInCount={checkedIn} eventName={ev.name} />;
   }
 
   return (
@@ -241,11 +277,21 @@ const CheckInPage: React.FC = () => {
         eventLocation={ev.location || null}
         eventStatus={ev.status}
         eventCapacity={ev.capacity}
-        checkInCount={checkInCount}
+        checkInCount={checkedIn}
         onBack={() => navigate({ to: '/events/$eventId', params: { eventId } })}
       />
 
-      {/* Mode slider: show the event QR (walk-ins scan) vs scan attendee tickets */}
+      {/* Remaining capacity, when there is a cap. The server's number — a
+          check-in past it comes back 409 capacity_reached. */}
+      {state?.remaining != null && (
+        <p className="mx-auto text-xs text-muted-foreground">
+          {state.remaining > 0
+            ? `${state.remaining} place${state.remaining === 1 ? '' : 's'} left · ${state.registered} registered`
+            : `Full · ${state.registered} registered`}
+        </p>
+      )}
+
+      {/* Mode slider: show the event QR (walk-ins scan) vs scan attendee passes */}
       <div className="mx-auto flex w-full max-w-md">
         <div className="relative grid w-full grid-cols-2 rounded-full border border-border bg-card p-1">
           <span
@@ -289,23 +335,35 @@ const CheckInPage: React.FC = () => {
             onResult={handleScan}
             onDecodeError={(m) => setLastDecodeError(m)}
             onUseManual={() => setManualOpen(true)}
-            paused={!!successUser}
+            paused={!!successPerson || checkIn.isPending}
             className="aspect-square w-full"
           />
         )}
       </div>
 
       {/* Manual check-in — always available as a third path */}
-      <div className="mx-auto w-full max-w-md">
-        <Button variant="outline" className="w-full gap-2 rounded-full" onClick={() => setManualOpen(true)}>
+      <div className="mx-auto flex w-full max-w-md gap-2">
+        <Button variant="outline" className="flex-1 gap-2 rounded-full" onClick={() => setManualOpen(true)}>
           <UserRoundPlus size={15} />
           Manual check-in
         </Button>
+        {ev.requireCheckOut && (
+          <Button variant="outline" className="flex-1 gap-2 rounded-full" onClick={() => setCheckOutOpen(true)}>
+            <LogOut size={15} />
+            Check out
+          </Button>
+        )}
       </div>
 
       <SheetDialog open={manualOpen} onOpenChange={setManualOpen} title="Manual check-in" contentClassName="flex flex-col gap-3">
         <ManualSignInForm onSubmit={handleManual} onBack={() => setManualOpen(false)} showBack={false} />
       </SheetDialog>
+
+      {ev.requireCheckOut && (
+        <SheetDialog open={checkOutOpen} onOpenChange={setCheckOutOpen} title="Check out" contentClassName="flex flex-col gap-3">
+          <ManualSignInForm onSubmit={handleCheckOut} onBack={() => setCheckOutOpen(false)} showBack={false} />
+        </SheetDialog>
+      )}
 
       {/* DEV drawer — scan/parse/error log for debugging check-in on device */}
       <SheetDialog
@@ -321,13 +379,15 @@ const CheckInPage: React.FC = () => {
       >
         <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 rounded-xl border border-border bg-muted/30 p-3 text-xs">
           <dt className="text-muted-foreground">Event id</dt>
-          <dd className="truncate font-mono">{event.id}</dd>
+          <dd className="truncate font-mono">{ev.id}</dd>
+          <dt className="text-muted-foreground">Short code</dt>
+          <dd className="font-mono">{ev.shortCode}</dd>
           <dt className="text-muted-foreground">Mode</dt>
           <dd className="font-mono">{mode}</dd>
           <dt className="text-muted-foreground">Share URL</dt>
           <dd className="truncate font-mono">{shareUrl}</dd>
-          <dt className="text-muted-foreground">Ticket format</dt>
-          <dd className="font-mono">{'{eventId}:{userId}'}</dd>
+          <dt className="text-muted-foreground">Counter</dt>
+          <dd className="font-mono">{checkedIn} in / {state?.registered ?? '—'} registered</dd>
           <dt className="text-muted-foreground">Last decode err</dt>
           <dd className="truncate font-mono text-muted-foreground">{lastDecodeError ?? '—'}</dd>
         </dl>
@@ -337,7 +397,7 @@ const CheckInPage: React.FC = () => {
         </p>
         {debugLog.length === 0 ? (
           <p className="rounded-xl border border-dashed border-border px-3 py-6 text-center text-xs text-muted-foreground">
-            No scans yet. Switch to Scan and point at a ticket QR — the raw contents show here.
+            No scans yet. Switch to Scan and point at a pass QR — the raw contents show here.
           </p>
         ) : (
           <div className="flex flex-col gap-1.5">
@@ -366,14 +426,13 @@ const CheckInPage: React.FC = () => {
 
       {/* Door-tablet mode — a CredoPass billboard, not a bare QR. Same lime panel,
           logo lockup and decorative rings as the auth screen, so anyone walking up
-          to the tablet can tell what they're scanning and who it belongs to.
-          Stacks on a phone / portrait; goes side-by-side once there's width. */}
+          to the tablet can tell what they're scanning and who it belongs to. */}
       {maximised && (
         <div
           className="fixed inset-0 z-50 flex flex-col bg-primary text-primary-foreground p-6 md:p-10"
           role="dialog"
           aria-modal="true"
-          aria-label={`${event.name} check-in QR`}
+          aria-label={`${ev.name} check-in QR`}
         >
           <div aria-hidden className="pointer-events-none absolute -right-24 -top-24 size-72 rounded-full border-28 border-primary-foreground/8" />
           <div aria-hidden className="pointer-events-none absolute -left-20 -bottom-16 size-64 rounded-full border-22 border-primary-foreground/6" />
@@ -399,9 +458,8 @@ const CheckInPage: React.FC = () => {
             {/* Glass panel, then the rotating lime ring, then the code. The glass
                 is what makes the glow legible: a lime ring straight onto the lime
                 billboard would be invisible, but against a dark translucent panel
-                it reads clearly, and the blur keeps the decorative rings showing
-                faintly through. The QR keeps its own white quiet zone so scanning
-                is unaffected by any of it. */}
+                it reads clearly. The QR keeps its own white quiet zone so
+                scanning is unaffected by any of it. */}
             <div className="relative shrink-0 rounded-[2rem] bg-primary-foreground/25 p-5 shadow-2xl ring-1 ring-primary-foreground/15 backdrop-blur-xl md:p-7">
               <div
                 aria-hidden
@@ -418,44 +476,32 @@ const CheckInPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Event details */}
+            {/* Event details. No cover photo: there are no media endpoints yet,
+                so there is nothing to render (§1.6). */}
             <div className="min-w-0 max-w-lg text-center lg:text-left">
-              {/* TODO(event-image): the cover slot. Renders nothing until events
-                  carry an `imageUrl` — see the TODO in EventComposer for the
-                  schema/storage/API work. The layout already reserves the room, so
-                  landing that column is a one-line change to `coverUrl` above. */}
-              {coverUrl && (
-                <img
-                  src={coverUrl}
-                  alt=""
-                  className="mb-5 h-40 w-full max-w-lg rounded-2xl object-cover ring-1 ring-primary-foreground/15 md:h-48"
-                />
-              )}
               <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-primary-foreground/60">
                 {ev.status === 'ongoing' ? 'Checking in now' : 'Check in here'}
               </p>
               <h2 className="mt-2 text-3xl font-semibold leading-[1.08] tracking-tight md:text-4xl lg:text-5xl">
-                {event.name}
+                {ev.name}
               </h2>
 
               <div className="mt-5 flex flex-wrap items-center justify-center gap-2 lg:justify-start">
-                {startDate && (
-                  <span className="inline-flex items-center gap-2 rounded-full bg-primary-foreground/10 px-3.5 py-1.5 text-[13px] font-medium">
-                    <CalendarCheck size={14} />
-                    {startDate.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' })}
-                    {' · '}
-                    {startDate.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}
-                  </span>
-                )}
-                {event.location && (
+                <span className="inline-flex items-center gap-2 rounded-full bg-primary-foreground/10 px-3.5 py-1.5 text-[13px] font-medium">
+                  <CalendarCheck size={14} />
+                  {startDate.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' })}
+                  {' · '}
+                  {startDate.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}
+                </span>
+                {ev.location && (
                   <span className="inline-flex min-w-0 items-center gap-2 rounded-full bg-primary-foreground/10 px-3.5 py-1.5 text-[13px] font-medium">
                     <MapPin size={14} className="shrink-0" />
-                    <span className="truncate">{event.location}</span>
+                    <span className="truncate">{ev.location}</span>
                   </span>
                 )}
                 <span className="inline-flex items-center gap-2 rounded-full bg-primary-foreground px-3.5 py-1.5 text-[13px] font-bold text-primary">
                   <Users size={14} />
-                  <span className="tabular-nums">{checkInCount}</span> checked in
+                  <span className="tabular-nums">{checkedIn}</span> checked in
                 </span>
               </div>
 
@@ -473,5 +519,6 @@ const CheckInPage: React.FC = () => {
     </div>
   );
 };
+
 
 export default CheckInPage;

@@ -100,7 +100,7 @@ const CommandPalette: React.FC<{
 
   useHotkey('Mod+T', (event) => {
     event.preventDefault();
-    handleNavigate('/profile');
+    handleNavigate('/account');
   });
 
   useHotkey('Mod+P', (event) => {
@@ -166,7 +166,7 @@ const CommandPalette: React.FC<{
             <span>Analytics</span>
             <CommandShortcut>{'⌘A'}</CommandShortcut>
           </CommandItem>
-          <CommandItem onSelect={() => handleNavigate('/profile')} className="command-palette-item">
+          <CommandItem onSelect={() => handleNavigate('/account')} className="command-palette-item">
             <UserRound className="command-palette-item-icon" />
             <span>Profile & Organizations</span>
             <CommandShortcut>{'⌘T'}</CommandShortcut>

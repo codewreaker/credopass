@@ -90,8 +90,22 @@ export function Home() {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  const navigateToApp = () => {
-    location.href = 'https://app.credopass.com';
+  /**
+   * The app root redirects a signed-out visitor to `/login`, which asks for a
+   * commitment before showing anything. Land them on the composer instead: it
+   * renders for a signed-out visitor with sign-in laid over it, so the first
+   * thing they see is the thing they came here to do (D21).
+   *
+   * `signIn` stays for returning users, who want the wall, not the composer.
+   */
+  const APP_ORIGIN = import.meta.env.VITE_APP_URL || 'https://app.credopass.com';
+
+  const startCreating = () => {
+    location.href = `${APP_ORIGIN}/events/new`;
+  }
+
+  const signIn = () => {
+    location.href = `${APP_ORIGIN}/login`;
   }
 
   return (
@@ -121,8 +135,8 @@ export function Home() {
               <button onClick={toggleTheme} className="p-2 hover:bg-accent rounded-lg transition-colors" aria-label="Toggle theme">
                 {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
               </button>
-              <Button variant="ghost" size="sm" className="text-sm">Sign In</Button>
-              <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90 text-sm rounded-lg shadow-[0_0_16px_rgba(212,255,0,0.2)]">
+              <Button variant="ghost" size="sm" className="text-sm" onClick={signIn}>Sign In</Button>
+              <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90 text-sm rounded-lg shadow-[0_0_16px_rgba(212,255,0,0.2)]" onClick={startCreating}>
                 Get Started <ArrowRight className="ml-1.5 w-3.5 h-3.5" />
               </Button>
             </div>
@@ -147,8 +161,8 @@ export function Home() {
               <a href="#pricing" className="py-2 text-sm text-muted-foreground hover:text-foreground">Pricing</a>
               <a href="#customers" className="py-2 text-sm text-muted-foreground hover:text-foreground">Customers</a>
               <div className="pt-4 flex flex-col gap-2">
-                <Button variant="outline" className="w-full" size="sm">Sign In</Button>
-                <Button className="w-full bg-primary text-primary-foreground" size="sm">
+                <Button variant="outline" className="w-full" size="sm" onClick={signIn}>Sign In</Button>
+                <Button className="w-full bg-primary text-primary-foreground" size="sm" onClick={startCreating}>
                   Get Started <ArrowRight className="ml-2 w-4 h-4" />
                 </Button>
               </div>
@@ -206,7 +220,7 @@ export function Home() {
             {/* CTA Buttons */}
             <Reveal delay={300}>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
-                <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 text-base px-8 h-12 shadow-[0_0_32px_rgba(212,255,0,0.25)] hover:shadow-[0_0_48px_rgba(212,255,0,0.4)] transition-all duration-300 hover:-translate-y-0.5" onClick={navigateToApp}>
+                <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 text-base px-8 h-12 shadow-[0_0_32px_rgba(212,255,0,0.25)] hover:shadow-[0_0_48px_rgba(212,255,0,0.4)] transition-all duration-300 hover:-translate-y-0.5" onClick={startCreating}>
                   Start For Free
                   <ArrowRight className="ml-2 w-5 h-5" />
                 </Button>
@@ -400,11 +414,11 @@ export function Home() {
               { icon: QrCode, title: 'QR Code Check-In', desc: 'Instant check-ins with QR codes. No app downloads required -- just scan and go.' },
               { icon: LineChart, title: 'Real-Time Analytics', desc: 'Live attendance dashboards with trends, patterns, and actionable insights.' },
               { icon: Clock, title: 'Time Tracking', desc: 'Precise check-in and check-out times. Know exactly when people arrive and leave.' },
-              { icon: UserCheck, title: 'Member Management', desc: 'Import your existing database. Custom fields and loyalty tiers included.' },
-              { icon: Smartphone, title: 'Offline-First', desc: 'Check-ins work without internet. Auto-sync when connection returns.' },
+              { icon: UserCheck, title: 'Member Management', desc: 'One record per person, with the events they signed up for and the ones they turned up to.' },
+              { icon: Smartphone, title: 'Any Door, Any Device', desc: 'A phone, a tablet on the door, or a link people open themselves. No app to install.' },
               { icon: Globe, title: 'Integrations', desc: 'Works alongside EventBrite, Meetup, and your existing event tools.' },
-              { icon: Award, title: 'Loyalty Program', desc: 'Reward frequent attendees with points, tiers, and recognition.' },
-              { icon: Shield, title: 'Enterprise Security', desc: 'SOC 2 compliant. Data encryption at rest and in transit.' },
+              { icon: Award, title: 'No-Show Tracking', desc: 'See who registered and never came — the number ticketing tools cannot give you.' },
+              { icon: Shield, title: 'Tenant Isolation', desc: 'Row-level security in the database, not just in the app. Data encrypted in transit and at rest.' },
               { icon: Database, title: 'Export & API', desc: 'Full API access. Export data for reports, grants, and presentations.' },
             ].map((f, i) => (
               <Reveal key={f.title} delay={i * 60}>
@@ -509,7 +523,7 @@ export function Home() {
                   Comprehensive analytics dashboard shows attendance trends, engagement patterns, and member insights -- all in real time.
                 </p>
                 <ul className="flex flex-col gap-3">
-                  {['Attendance rate trends over time', 'Member engagement and loyalty scores', 'Export reports for grants and board meetings'].map(t => (
+                  {['Attendance rate trends over time', 'Registered vs. actually turned up, per event', 'Export reports for grants and board meetings'].map(t => (
                     <li key={t} className="flex items-start gap-3">
                       <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 shrink-0" />
                       <span className="text-muted-foreground">{t}</span>
@@ -529,7 +543,7 @@ export function Home() {
                   <span className="text-primary">Manage members</span> effortlessly
                 </h2>
                 <p className="text-lg text-muted-foreground leading-relaxed">
-                  Import your existing member database via CSV. Add custom fields, track loyalty points, and view individual attendance history.
+                  Import your existing member database via CSV. Add custom fields, and view individual attendance history.
                 </p>
                 <ul className="flex flex-col gap-3">
                   {['One-click CSV import from any system', 'Custom fields for your organization', 'Full attendance history per member'].map(t => (
@@ -657,87 +671,139 @@ export function Home() {
               <div className="max-w-2xl mx-auto text-center mb-10 lg:mb-16 flex flex-col gap-4">
                 <Badge variant="outline" className="w-fit mx-auto">Pricing</Badge>
                 <h2 className="text-4xl sm:text-5xl font-bold tracking-tighter">Simple, transparent pricing</h2>
-                <p className="text-lg text-muted-foreground">Start with a 30-day free trial. No credit card required.</p>
+                <p className="text-lg text-muted-foreground">Start on Free — no card, no trial clock. Move up when you outgrow it.</p>
               </div>
             </Reveal>
 
-            <div className="grid md:grid-cols-3 gap-4 md:gap-6 max-w-6xl mx-auto">
-              {/* Free */}
-              <Reveal delay={0}>
-                <Card className="p-6 lg:p-8 bg-card border-border/50 h-full flex flex-col">
-                  <div className="flex flex-col gap-6 flex-1">
-                    <div>
-                      <h3 className="text-xl font-bold mb-1">Free</h3>
-                      <p className="text-sm text-muted-foreground">For small groups</p>
+            {/*
+              These four tiers, their prices and their bullets are the same ones
+              `services/core/src/authz/plans.ts` serves at `GET /plans` — the
+              console reads them from the API, this page cannot (it is static and
+              unauthenticated), so it restates them. **If you change pricing,
+              change it there first and mirror it here.** The previous version of
+              this block had three tiers, priced Starter at $5 against a real
+              £19, and sold "up to 100 members" limits that the plan model has
+              never had (the real limit is organisations owned).
+            */}
+            <div className="grid gap-4 md:grid-cols-2 md:gap-6 xl:grid-cols-4 max-w-6xl mx-auto">
+              {[
+                {
+                  name: 'Free',
+                  price: '£0',
+                  period: '/month',
+                  tagline: 'Run your first events and see who actually turns up.',
+                  features: [
+                    'Unlimited events',
+                    'QR, manual and walk-in check-in',
+                    'Attendance records that persist',
+                    'Public event pages',
+                  ],
+                  cta: 'Get Started',
+                  featured: false,
+                },
+                {
+                  name: 'Starter',
+                  price: '£19',
+                  period: '/month',
+                  tagline: 'For a growing programme with a team on the door.',
+                  features: [
+                    'Everything in Free',
+                    'Up to 5 organisations',
+                    'Invite staff with door-only access',
+                    'Attendance analytics',
+                  ],
+                  cta: 'Get Started',
+                  featured: true,
+                },
+                {
+                  name: 'Pro',
+                  price: '£49',
+                  period: '/month',
+                  tagline: 'Full analytics and exports across every event you run.',
+                  features: [
+                    'Everything in Starter',
+                    'Up to 25 organisations',
+                    'Full analytics dashboard',
+                    'CSV and PDF export',
+                    'Priority support',
+                  ],
+                  cta: 'Get Started',
+                  featured: false,
+                },
+                {
+                  name: 'Enterprise',
+                  price: 'Custom',
+                  period: '',
+                  tagline: 'For institutions running attendance at scale.',
+                  features: [
+                    'Everything in Pro',
+                    'Effectively unlimited organisations',
+                    'SSO via your own identity provider',
+                    'Custom retention and data residency',
+                  ],
+                  cta: 'Contact Sales',
+                  featured: false,
+                },
+              ].map((plan, i) => (
+                <Reveal key={plan.name} delay={i * 100}>
+                  <Card
+                    className={
+                      plan.featured
+                        ? 'p-6 lg:p-8 bg-card border-primary relative shadow-[0_16px_64px_-12px_rgba(212,255,0,0.15)] h-full flex flex-col'
+                        : 'p-6 lg:p-8 bg-card border-border/50 h-full flex flex-col'
+                    }
+                  >
+                    {plan.featured && (
+                      <div className="absolute -top-4 left-1/2 -translate-x-1/2">
+                        <Badge className="bg-primary text-primary-foreground border-0 shadow-[0_0_16px_rgba(212,255,0,0.3)]">
+                          Most Popular
+                        </Badge>
+                      </div>
+                    )}
+                    <div className="flex flex-col gap-6 flex-1">
+                      <div>
+                        <h3 className="text-xl font-bold mb-1">{plan.name}</h3>
+                        <p className="text-sm text-muted-foreground">{plan.tagline}</p>
+                      </div>
+                      <div>
+                        <span className="text-5xl font-extrabold tracking-tight">{plan.price}</span>
+                        {plan.period ? <span className="text-muted-foreground">{plan.period}</span> : null}
+                      </div>
+                      <ul className="flex flex-col gap-3 flex-1">
+                        {plan.features.map(f => (
+                          <li key={f} className="flex items-start gap-3">
+                            <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+                            <span className="text-sm">{f}</span>
+                          </li>
+                        ))}
+                      </ul>
+                      {plan.cta === 'Contact Sales' ? (
+                        <Button
+                          variant="outline"
+                          className="w-full"
+                          render={(props) => (
+                            <a {...props} href="mailto:hello@credopass.com?subject=Enterprise%20plan" />
+                          )}
+                        >
+                          Contact Sales
+                        </Button>
+                      ) : (
+                        <Button
+                          variant={plan.featured ? 'default' : 'outline'}
+                          className={
+                            plan.featured
+                              ? 'w-full bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_0_16px_rgba(212,255,0,0.2)]'
+                              : 'w-full'
+                          }
+                          onClick={startCreating}
+                        >
+                          {plan.cta}
+                        </Button>
+                      )}
                     </div>
-                    <div>
-                      <span className="text-5xl font-extrabold tracking-tight">$0</span>
-                      <span className="text-muted-foreground">/month</span>
-                    </div>
-                    <ul className="flex flex-col gap-3 flex-1">
-                      {['Up to 100 members', 'Unlimited events', 'QR code check-in', 'Basic analytics'].map(f => (
-                        <li key={f} className="flex items-start gap-3">
-                          <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 shrink-0" />
-                          <span className="text-sm">{f}</span>
-                        </li>
-                      ))}
-                    </ul>
-                    <Button variant="outline" className="w-full" onClick={navigateToApp}>Get Started</Button>
-                  </div>
-                </Card>
-              </Reveal>
-
-              {/* Starter - Featured */}
-              <Reveal delay={100}>
-                <Card className="p-6 lg:p-8 bg-card border-primary relative shadow-[0_16px_64px_-12px_rgba(212,255,0,0.15)] h-full flex flex-col">
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                    <Badge className="bg-primary text-primary-foreground border-0 shadow-[0_0_16px_rgba(212,255,0,0.3)]">Most Popular</Badge>
-                  </div>
-                  <div className="flex flex-col gap-6 flex-1">
-                    <div>
-                      <h3 className="text-xl font-bold mb-1">Starter</h3>
-                      <p className="text-sm text-muted-foreground">For growing teams</p>
-                    </div>
-                    <div>
-                      <span className="text-5xl font-extrabold tracking-tight">$5</span>
-                      <span className="text-muted-foreground">/month</span>
-                    </div>
-                    <ul className="flex flex-col gap-3 flex-1">
-                      {['Up to 500 members', 'Everything in Free', 'Advanced analytics', 'Loyalty program', 'Custom branding'].map(f => (
-                        <li key={f} className="flex items-start gap-3">
-                          <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 shrink-0" />
-                          <span className="text-sm">{f}</span>
-                        </li>
-                      ))}
-                    </ul>
-                    <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_0_16px_rgba(212,255,0,0.2)]">Get Started</Button>
-                  </div>
-                </Card>
-              </Reveal>
-
-              {/* Pro */}
-              <Reveal delay={200}>
-                <Card className="p-6 lg:p-8 bg-card border-border/50 h-full flex flex-col">
-                  <div className="flex flex-col gap-6 flex-1">
-                    <div>
-                      <h3 className="text-xl font-bold mb-1">Pro</h3>
-                      <p className="text-sm text-muted-foreground">For large organizations</p>
-                    </div>
-                    <div>
-                      <span className="text-5xl font-extrabold tracking-tight">Custom</span>
-                    </div>
-                    <ul className="flex flex-col gap-3 flex-1">
-                      {['Unlimited members', 'Everything in Starter', 'API access', 'Custom integrations', 'Dedicated support', 'SLA guarantee'].map(f => (
-                        <li key={f} className="flex items-start gap-3">
-                          <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 shrink-0" />
-                          <span className="text-sm">{f}</span>
-                        </li>
-                      ))}
-                    </ul>
-                    <Button variant="outline" className="w-full">Contact Sales</Button>
-                  </div>
-                </Card>
-              </Reveal>
+                  </Card>
+                </Reveal>
+              ))}
             </div>
           </div>
         </section>
@@ -766,7 +832,7 @@ export function Home() {
                 Join thousands of organizations using CredoPass to understand member engagement.
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
-                <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 text-base px-8 h-12 shadow-[0_0_32px_rgba(212,255,0,0.25)] hover:shadow-[0_0_48px_rgba(212,255,0,0.4)] transition-all duration-300 hover:-translate-y-0.5" onClick={navigateToApp}>
+                <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 text-base px-8 h-12 shadow-[0_0_32px_rgba(212,255,0,0.25)] hover:shadow-[0_0_48px_rgba(212,255,0,0.4)] transition-all duration-300 hover:-translate-y-0.5" onClick={startCreating}>
                   Start For Free
                   <ArrowRight className="ml-2 w-5 h-5" />
                 </Button>

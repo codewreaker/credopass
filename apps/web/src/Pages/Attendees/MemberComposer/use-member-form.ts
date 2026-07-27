@@ -1,26 +1,43 @@
 /* eslint-disable no-useless-escape */
+/**
+ * The attendee composer's form state.
+ *
+ * The old form asked for a **role on the event** — organizer, co-host, staff,
+ * volunteer — and wrote an `event_members` row. That table is gone. Its
+ * replacement, `event_grants`, was only for delegating *management* of an event and has since been deleted;
+ * it has nothing to do with attending one.
+ *
+ * So adding someone to an event is two things now, and the difference matters:
+ *
+ *   POST /people                puts them on the organization's roll
+ *   POST /events/{id}/register  signs them up for one event, returning a pass
+ *
+ * Registering does not check anyone in. An `attendance` row means they turned
+ * up, and it cannot be a side effect of filling in this form.
+ */
+
 import { useState } from 'react';
 import { useForm } from '@tanstack/react-form';
 import * as z from 'zod';
 import { toast } from '@credopass/ui/components/sonner';
-import { getCollections, resolvePersistedUserId } from '@credopass/api-client/collections';
-import type { EventRole, UserType } from '@credopass/lib/schemas';
+import {
+  hasProblemCode,
+  ProblemCode,
+  useCreatePerson,
+  useRegisterAttendee,
+  useUpdatePerson,
+  type Person,
+  type PersonRow,
+} from '@credopass/api-client';
+import { errorMessage } from '../../../lib/errors';
 
 export interface MemberFormValues {
   firstName: string;
   lastName: string;
   email: string;
   phone: string;
-  /** Role on the event this member is being added to. */
-  role: EventRole;
+  notes: string;
 }
-
-export const ROLE_OPTIONS: { value: EventRole; label: string; description: string }[] = [
-  { value: 'organizer', label: 'Organizer', description: 'Full control of the event' },
-  { value: 'co-host', label: 'Co-host', description: 'Edit details and check people in' },
-  { value: 'staff', label: 'Staff', description: 'Check attendees in' },
-  { value: 'volunteer', label: 'Volunteer', description: 'Limited check-in' },
-];
 
 export const memberFormSchema = z.object({
   firstName: z
@@ -36,37 +53,49 @@ export const memberFormSchema = z.object({
   email: z
     .string()
     .email('Please enter a valid email address.')
-    .max(100, 'Email must be at most 100 characters.'),
+    .max(100, 'Email must be at most 100 characters.')
+    .or(z.literal(''))
+    .default(''),
   phone: z
     .string()
     .regex(/^[\d\s\-\+\(\)]+$/, 'Phone number can only contain numbers, spaces, hyphens and parentheses.')
     .min(10, 'Phone number must be at least 10 characters.')
     .or(z.literal(''))
     .default(''),
-  role: z.enum(['organizer', 'co-host', 'staff', 'volunteer'] as const),
+  notes: z.string().max(500, 'Notes must be at most 500 characters.').or(z.literal('')).default(''),
 });
 
-/** Maps a persisted user onto form values. */
-export const userToFormValues = (user: UserType, role: EventRole = 'staff'): MemberFormValues => ({
-  firstName: user.firstName ?? '',
-  lastName: user.lastName ?? '',
-  email: user.email ?? '',
-  phone: user.phone ?? '',
-  role,
+/** Maps a person from the API onto form values. */
+export const personToFormValues = (person: Person | PersonRow): MemberFormValues => ({
+  firstName: person.firstName ?? '',
+  lastName: person.lastName ?? '',
+  email: person.email ?? '',
+  phone: person.phone ?? '',
+  notes: 'notes' in person ? (person.notes ?? '') : '',
 });
 
 interface UseMemberFormArgs {
   mode: 'create' | 'edit';
-  userId?: string;
-  /** The event this member is scoped to — members only exist on an event. */
+  personId?: string;
+  /** When set, the new person is also registered onto this event. */
   eventId?: string;
   initialValues?: Partial<MemberFormValues>;
-  onSaved?: (userId: string) => void;
+  onSaved?: (personId: string, passUrl: string | null) => void;
 }
 
-export function useMemberForm({ mode, userId, eventId, initialValues, onSaved }: UseMemberFormArgs) {
-  const [isMutating, setIsMutating] = useState(false);
+export function useMemberForm({
+  mode,
+  personId,
+  eventId,
+  initialValues,
+  onSaved,
+}: UseMemberFormArgs) {
   const isEditing = mode === 'edit';
+  const [isMutating, setIsMutating] = useState(false);
+
+  const createPerson = useCreatePerson();
+  const updatePerson = useUpdatePerson(personId ?? '');
+  const register = useRegisterAttendee(eventId ?? '');
 
   const form = useForm({
     defaultValues: {
@@ -74,67 +103,51 @@ export function useMemberForm({ mode, userId, eventId, initialValues, onSaved }:
       lastName: initialValues?.lastName ?? '',
       email: initialValues?.email ?? '',
       phone: initialValues?.phone ?? '',
-      // Most people added to an event are there to check others in.
-      role: (initialValues?.role ?? 'staff') as EventRole,
+      notes: initialValues?.notes ?? '',
     } as MemberFormValues,
     validators: {
       // @ts-expect-error — zod schema output is narrower than the form values type
       onChange: memberFormSchema,
     },
     onSubmit: async ({ value }) => {
-      const { users: userCollection, eventMembers: eventMemberCollection } = getCollections();
-      setIsMutating(true);
-      const now = new Date();
-      const userData = {
+      const body = {
         firstName: value.firstName,
         lastName: value.lastName,
-        email: value.email,
+        email: value.email || null,
         phone: value.phone || null,
+        notes: value.notes || null,
       };
 
+      setIsMutating(true);
       try {
-        if (isEditing && userId) {
-          const tx = userCollection.update(userId, (draft) => {
-            Object.assign(draft, userData, { updatedAt: now });
-          });
-          await tx.isPersisted.promise;
-
-          if (eventId) await syncEventRole(eventId, userId, value.role);
-
-          toast.success('Member updated!');
-          onSaved?.(userId);
+        if (isEditing && personId) {
+          await updatePerson.mutateAsync(body);
+          toast.success('Attendee updated');
+          onSaved?.(personId, null);
           return;
         }
 
-        const optimisticId = crypto.randomUUID();
-        const tx = userCollection.insert({
-          ...userData,
-          id: optimisticId,
-          createdAt: now,
-          updatedAt: now,
-        });
-        await tx.isPersisted.promise;
+        // Our id is honoured, so a retry updates the same person rather than
+        // creating a second one.
+        const person = await createPerson.mutateAsync({ id: crypto.randomUUID(), ...body });
 
-        // The server mints its own id, so the optimistic one is not a usable
-        // foreign key — resolve the persisted id before linking to the event.
-        const persistedId = resolvePersistedUserId(optimisticId);
-
-        if (eventId) {
-          const membership = eventMemberCollection.insert({
-            id: crypto.randomUUID(),
-            eventId,
-            userId: persistedId,
-            role: value.role,
-            createdAt: now,
-            updatedAt: now,
-          });
-          await membership.isPersisted.promise;
+        if (!eventId) {
+          toast.success('Attendee added');
+          onSaved?.(person.id, null);
+          return;
         }
 
-        toast.success(eventId ? 'Member added to the event!' : 'Member added!');
-        onSaved?.(persistedId);
+        // Two calls, deliberately: being on the roll and being signed up for one
+        // event are different facts.
+        const result = await register.mutateAsync({ personId: person.id });
+        toast.success('Added and registered for the event');
+        onSaved?.(person.id, result.pass.url);
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : 'An unexpected error occurred.');
+        toast.error(
+          hasProblemCode(error, ProblemCode.EMAIL_TAKEN)
+            ? 'Someone with that email is already on this organization.'
+            : errorMessage(error, `Could not ${isEditing ? 'update' : 'add'} that attendee`)
+        );
       } finally {
         setIsMutating(false);
       }
@@ -142,29 +155,4 @@ export function useMemberForm({ mode, userId, eventId, initialValues, onSaved }:
   });
 
   return { form, isMutating, isEditing };
-}
-
-/** Create or update this user's membership row for the event. */
-async function syncEventRole(eventId: string, userId: string, role: EventRole) {
-  const { eventMembers: eventMemberCollection } = getCollections();
-  const existing = eventMemberCollection.toArray.find(
-    (m) => m.eventId === eventId && m.userId === userId
-  );
-
-  const now = new Date();
-  const tx = existing
-    ? eventMemberCollection.update(existing.id, (draft) => {
-        draft.role = role;
-        draft.updatedAt = now;
-      })
-    : eventMemberCollection.insert({
-        id: crypto.randomUUID(),
-        eventId,
-        userId,
-        role,
-        createdAt: now,
-        updatedAt: now,
-      });
-
-  await tx.isPersisted.promise;
 }

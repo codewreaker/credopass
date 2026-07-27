@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState } from 'react';
-import { Html5Qrcode } from 'html5-qrcode';
+import { Html5Qrcode, Html5QrcodeScannerState } from 'html5-qrcode';
 import { CameraOff, ScanLine, UserRoundPlus } from 'lucide-react';
 
 interface QRScannerProps {
@@ -44,13 +44,17 @@ export function QRScanner({ onResult, paused = false, onDecodeError, onUseManual
     let lastValue = '';
     let lastAt = 0;
 
-    scanner
+    const started = scanner
       .start(
         { facingMode: 'environment' },
         {
           fps: 10,
           qrbox: (vw: number, vh: number) => {
-            const side = Math.floor(Math.min(vw, vh) * 0.7);
+            // html5-qrcode THROWS on a box under 50px, and it calls this with
+            // the video element's real dimensions — which are 0 for the frame
+            // or two before the stream attaches. Without the floor, mounting
+            // the scanner on a not-yet-laid-out container kills the render.
+            const side = Math.max(50, Math.floor(Math.min(vw, vh) * 0.7));
             return { width: side, height: side };
           },
         },
@@ -79,11 +83,32 @@ export function QRScanner({ onResult, paused = false, onDecodeError, onUseManual
 
     return () => {
       stopped = true;
-      // stop() rejects if it never fully started; swallow either way.
-      scanner
-        .stop()
-        .then(() => scanner.clear())
-        .catch(() => {});
+      // Two traps here, and the old one-liner fell into both.
+      //
+      // 1. `stop()` THROWS synchronously — it does not reject — when the
+      //    scanner isn't running ("Cannot stop, scanner is not running or
+      //    paused."). A trailing `.catch()` never sees that, so it escaped to
+      //    the error boundary and took the page down.
+      // 2. Cleanup routinely lands while `start()` is still in flight: React
+      //    runs effects twice in StrictMode, and switching to the scanner tab
+      //    mounts and unmounts faster than the camera comes up. So we wait for
+      //    start to settle before deciding whether there is anything to stop.
+      void started
+        .catch(() => {})
+        .then(() => {
+          try {
+            if (scanner.getState() === Html5QrcodeScannerState.NOT_STARTED) {
+              scanner.clear();
+              return;
+            }
+            return scanner
+              .stop()
+              .then(() => scanner.clear())
+              .catch(() => {});
+          } catch {
+            // Raced anyway — the camera is already down, nothing to release.
+          }
+        });
     };
   }, [containerId]);
 

@@ -1,10 +1,9 @@
 import React from 'react';
 import { CheckCircle2, Users } from 'lucide-react';
-import type { User } from '@credopass/lib/schemas';
 import './style.css';
 
 interface SuccessCheckInScreenProps {
-  user: Partial<User>;
+  user: { firstName?: string; lastName?: string; email?: string | null };
   checkInCount: number;
   eventName: string;
 }

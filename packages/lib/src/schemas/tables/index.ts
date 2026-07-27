@@ -1,135 +1,175 @@
 // ============================================================================
 // FILE: packages/lib/src/schemas/tables/index.ts
-// Barrel export for all table definitions with relations
+// The schema. docs/API-FIRST-REBUILD.md §3
+// ============================================================================
+//
+// Eleven tables, all snake_case, no legacy. Gone from the old shape:
+//
+//   users         → split into `accounts` (identity) + `people` (tenant-scoped)
+//   event_members → deleted. It became `event_grants`, a per-event role map that
+//                   nothing ever populated, so every grant it was meant to widen
+//                   evaluated to false; that went too (D24). Signing up for an
+//                   event is an `attendance` row with state = 'registered'.
+//   device_tokens → deleted. A door is a person with the `checkin` role (D24).
+//   loyalty       → deleted outright (brief §4.1)
+//
 // ============================================================================
 
 import { relations } from 'drizzle-orm';
-import { users } from './users';
-import { organizations } from './organizations';
-import { orgMemberships } from './org-memberships';
-import { events } from './events';
-import { eventMembers } from './event-members';
+import { accounts } from './accounts';
 import { attendance } from './attendance';
-import { loyalty } from './loyalty';
+import { events } from './events';
+import { identities } from './identities';
+import { invitations } from './invitations';
+import { orgDomains, orgIdentityProviders } from './org-identity-providers';
+import { orgMemberships } from './org-memberships';
+import { organizations } from './organizations';
+import { passes } from './passes';
+import { people } from './people';
 
-// Re-export all tables
-export { users } from './users';
-export { organizations } from './organizations';
-export { orgMemberships } from './org-memberships';
-export { events } from './events';
-export { eventMembers } from './event-members';
+export { accounts } from './accounts';
 export { attendance } from './attendance';
-export { loyalty } from './loyalty';
+export { events } from './events';
+export { identities } from './identities';
+export { invitations } from './invitations';
+export { orgDomains, orgIdentityProviders } from './org-identity-providers';
+export { orgMemberships } from './org-memberships';
+export { organizations } from './organizations';
+export { passes } from './passes';
+export { people } from './people';
+export {
+  attendanceState,
+  checkInMethod,
+  identityProviderKind,
+  orgRole,
+  provisionedBy,
+} from './enums';
 
 // ============================================================================
-// Drizzle Relations
+// Relations
 // ============================================================================
 
-// Users can belong to multiple organizations and manage multiple events
-export const usersRelations = relations(users, ({ many }) => ({
-  // Memberships where this user is the member (disambiguated with relationName)
-  orgMemberships: many(orgMemberships, { relationName: 'membershipUser' }),
-  // Memberships where this user invited someone (disambiguated with relationName)
-  invitedMemberships: many(orgMemberships, { relationName: 'membershipInviter' }),
-  eventMemberships: many(eventMembers),
-  attendances: many(attendance),
-  loyaltyRecords: many(loyalty),
+/**
+ * An account reaches organisations ONLY through memberships, and its own
+ * attendee records ONLY through `people`. Those two paths never meet — which is
+ * how "attending an event never grants access to the organisation running it"
+ * is structural rather than a rule someone has to remember (§1.1 rule 6).
+ */
+export const accountsRelations = relations(accounts, ({ many }) => ({
+  identities: many(identities),
+  orgMemberships: many(orgMemberships),
+  people: many(people),
 }));
 
-// Organizations are the tenant boundary
+export const identitiesRelations = relations(identities, ({ one }) => ({
+  account: one(accounts, { fields: [identities.accountId], references: [accounts.id] }),
+  identityProvider: one(orgIdentityProviders, {
+    fields: [identities.orgIdentityProviderId],
+    references: [orgIdentityProviders.id],
+  }),
+}));
+
 export const organizationsRelations = relations(organizations, ({ many }) => ({
   memberships: many(orgMemberships),
+  people: many(people),
   events: many(events),
-  attendances: many(attendance),
-  loyaltyRecords: many(loyalty),
+  invitations: many(invitations),
+  identityProviders: many(orgIdentityProviders),
+  domains: many(orgDomains),
 }));
 
-// Org memberships link users to organizations with roles
 export const orgMembershipsRelations = relations(orgMemberships, ({ one }) => ({
-  user: one(users, {
-    fields: [orgMemberships.userId],
-    references: [users.id],
-    relationName: 'membershipUser',
-  }),
   organization: one(organizations, {
     fields: [orgMemberships.organizationId],
     references: [organizations.id],
   }),
-  inviter: one(users, {
-    fields: [orgMemberships.invitedBy],
-    references: [users.id],
-    relationName: 'membershipInviter',
-  }),
+  account: one(accounts, { fields: [orgMemberships.accountId], references: [accounts.id] }),
 }));
 
-// Events belong to organizations and have multiple members
+export const peopleRelations = relations(people, ({ one, many }) => ({
+  organization: one(organizations, {
+    fields: [people.organizationId],
+    references: [organizations.id],
+  }),
+  // Optional, and set only by claiming a verified email (D17) — never by
+  // registering for an event.
+  account: one(accounts, { fields: [people.accountId], references: [accounts.id] }),
+  attendance: many(attendance),
+  passes: many(passes),
+}));
+
 export const eventsRelations = relations(events, ({ one, many }) => ({
   organization: one(organizations, {
     fields: [events.organizationId],
     references: [organizations.id],
   }),
-  members: many(eventMembers),
-  attendances: many(attendance),
+  attendance: many(attendance),
+  passes: many(passes),
 }));
 
-// Event members link users to events with roles (replaces hostId)
-export const eventMembersRelations = relations(eventMembers, ({ one }) => ({
-  event: one(events, {
-    fields: [eventMembers.eventId],
-    references: [events.id],
-  }),
-  user: one(users, {
-    fields: [eventMembers.userId],
-    references: [users.id],
-  }),
-}));
-
-// Attendance tracks check-ins for events
 export const attendanceRelations = relations(attendance, ({ one }) => ({
   organization: one(organizations, {
     fields: [attendance.organizationId],
     references: [organizations.id],
   }),
-  event: one(events, {
-    fields: [attendance.eventId],
-    references: [events.id],
-  }),
-  patron: one(users, {
-    fields: [attendance.patronId],
-    references: [users.id],
-  }),
+  event: one(events, { fields: [attendance.eventId], references: [events.id] }),
+  person: one(people, { fields: [attendance.personId], references: [people.id] }),
 }));
 
-// Loyalty records track points and rewards per organization
-export const loyaltyRelations = relations(loyalty, ({ one }) => ({
+export const passesRelations = relations(passes, ({ one }) => ({
+  event: one(events, { fields: [passes.eventId], references: [events.id] }),
+  person: one(people, { fields: [passes.personId], references: [people.id] }),
+}));
+
+export const invitationsRelations = relations(invitations, ({ one }) => ({
   organization: one(organizations, {
-    fields: [loyalty.organizationId],
+    fields: [invitations.organizationId],
     references: [organizations.id],
   }),
-  patron: one(users, {
-    fields: [loyalty.patronId],
-    references: [users.id],
+  invitedBy: one(accounts, {
+    fields: [invitations.invitedByAccountId],
+    references: [accounts.id],
   }),
 }));
 
-// Schema object for drizzle client
+export const orgIdentityProvidersRelations = relations(orgIdentityProviders, ({ one, many }) => ({
+  organization: one(organizations, {
+    fields: [orgIdentityProviders.organizationId],
+    references: [organizations.id],
+  }),
+  identities: many(identities),
+}));
+
+export const orgDomainsRelations = relations(orgDomains, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [orgDomains.organizationId],
+    references: [organizations.id],
+  }),
+}));
+
 export const schema = {
-  // Tables
-  users,
+  accounts,
+  identities,
   organizations,
   orgMemberships,
+  orgIdentityProviders,
+  orgDomains,
+  invitations,
+  people,
   events,
-  eventMembers,
   attendance,
-  loyalty,
-  // Relations
-  usersRelations,
+  passes,
+  accountsRelations,
+  identitiesRelations,
   organizationsRelations,
   orgMembershipsRelations,
+  peopleRelations,
   eventsRelations,
-  eventMembersRelations,
   attendanceRelations,
-  loyaltyRelations,
+  passesRelations,
+  invitationsRelations,
+  orgIdentityProvidersRelations,
+  orgDomainsRelations,
 };
 
 export type Schema = typeof schema;

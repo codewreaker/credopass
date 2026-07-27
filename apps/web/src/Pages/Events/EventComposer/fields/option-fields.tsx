@@ -1,12 +1,10 @@
 import { useState } from 'react';
 import type { LucideIcon } from 'lucide-react';
-import { CheckIcon, PencilIcon, UsersIcon, ActivityIcon, ScanLineIcon } from 'lucide-react';
+import { CheckIcon, PencilIcon, UsersIcon, ScanLineIcon } from 'lucide-react';
 import { Button } from '@credopass/ui/components/button';
 import { Input } from '@credopass/ui/components/input';
 import { SheetDialog } from '@credopass/ui/components/sheet-dialog';
 import { cn } from '@credopass/ui/lib/utils';
-import type { EventStatus } from '@credopass/lib/schemas';
-import { STATUS_OPTIONS } from '../use-event-form';
 
 /** One row of the "Event Options" list — icon, label, current value, edit affordance. */
 function OptionRow({
@@ -138,34 +136,5 @@ export function SelfCheckInField({ value, onChange }: { value: boolean; onChange
         />
       </span>
     </button>
-  );
-}
-
-export function StatusField({ value, onChange }: { value: EventStatus; onChange: (status: EventStatus) => void }) {
-  const [open, setOpen] = useState(false);
-  const current = STATUS_OPTIONS.find((option) => option.value === value);
-
-  return (
-    <>
-      <OptionRow icon={ActivityIcon} label="Status" value={current?.label ?? 'Scheduled'} onClick={() => setOpen(true)} />
-      <SheetDialog open={open} onOpenChange={setOpen} title="Event Status" contentClassName="px-2 pb-3">
-        <div className="flex flex-col">
-          {STATUS_OPTIONS.map((option) => (
-            <button
-              key={option.value}
-              type="button"
-              onClick={() => {
-                onChange(option.value);
-                setOpen(false);
-              }}
-              className="flex items-center justify-between gap-3 rounded-lg px-3 py-3 text-left text-sm transition-colors hover:bg-muted/50"
-            >
-              {option.label}
-              {option.value === value && <CheckIcon size={16} className="text-primary" />}
-            </button>
-          ))}
-        </div>
-      </SheetDialog>
-    </>
   );
 }

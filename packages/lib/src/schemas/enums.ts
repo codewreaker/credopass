@@ -1,40 +1,49 @@
 // ============================================================================
-// FILE: packages/validation/src/schemas/enums.ts
-// Shared enum definitions using Zod
+// FILE: packages/lib/src/schemas/enums.ts
+// Zod mirrors of the Postgres enums in ./tables/enums.ts
 // ============================================================================
 
 import { z } from 'zod';
 
-// Event status enum
-export const EventStatusEnum = z.enum(['draft', 'scheduled', 'ongoing', 'completed', 'cancelled']);
-export type EventStatus = z.infer<typeof EventStatusEnum>;
+/**
+ * These mirror `tables/enums.ts` one-for-one. When they drifted from it — and
+ * they had — the result was validators that accepted values the database would
+ * reject, which is worse than no validator at all.
+ *
+ * Changed by the rebuild:
+ *   · no `draft` event status, and no stored status at all (see below)
+ *   · `member` role became `organizer`, and `checkin` is new
+ *   · `external_auth` check-in is gone (D-I: rejected); `self` and `pass` are new
+ */
 
-// Loyalty tier enum
-export const LoyaltyTierEnum = z.enum(['bronze', 'silver', 'gold', 'platinum']);
-export type LoyaltyTier = z.infer<typeof LoyaltyTierEnum>;
+/**
+ * The four states an event can be in.
+ *
+ * **Not a column.** `events` has no `status`; the API derives this from
+ * `(cancelled_at, closed_at, start_at, end_at, now)` on every read. A status
+ * that cannot be stored cannot go stale — which is exactly what the old column
+ * did, reporting `scheduled` for events that had already finished.
+ */
+export const EventStatusEnum = z.enum(['scheduled', 'ongoing', 'completed', 'cancelled']);
+export type EventStatus = z.infer<typeof EventStatusEnum>;
 
 // Organization plan enum
 export const OrgPlanEnum = z.enum(['free', 'starter', 'pro', 'enterprise']);
 export type OrgPlan = z.infer<typeof OrgPlanEnum>;
 
-// Organization role enum
-export const OrgRoleEnum = z.enum(['owner', 'admin', 'member', 'viewer']);
+/** `owner ⊃ admin ⊃ organizer ⊃ checkin`; `viewer` is a separate read-only branch. */
+export const OrgRoleEnum = z.enum(['owner', 'admin', 'organizer', 'checkin', 'viewer']);
 export type OrgRole = z.infer<typeof OrgRoleEnum>;
 
-// Event member role enum
-export const EventRoleEnum = z.enum(['organizer', 'co-host', 'staff', 'volunteer']);
-export type EventRole = z.infer<typeof EventRoleEnum>;
 
-// Check-in method enum
-export const CheckInMethodEnum = z.enum(['qr', 'manual', 'external_auth']);
+/** How a check-in happened. */
+export const CheckInMethodEnum = z.enum(['qr', 'manual', 'self', 'pass']);
 export type CheckInMethod = z.infer<typeof CheckInMethodEnum>;
 
-// Live update type enum (for real-time updates)
-export const LiveUpdateTypeEnum = z.enum([
-  'attendance_update',
-  'event_status_change',
-  'announcement',
-  'milestone',
-  'reward_earned'
-]);
-export type LiveUpdateType = z.infer<typeof LiveUpdateTypeEnum>;
+/**
+ * What an attendance row records. Replaces the `attended` boolean and the
+ * render-time no-show inference — `no_show` is a written fact now, set once when
+ * an event closes, so it can be corrected and audited.
+ */
+export const AttendanceStateEnum = z.enum(['registered', 'attended', 'no_show', 'cancelled']);
+export type AttendanceState = z.infer<typeof AttendanceStateEnum>;

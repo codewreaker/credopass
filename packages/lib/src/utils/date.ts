@@ -15,23 +15,4 @@ export function getGreeting(): string {
   return GREETINGS.evening;
 }
 
-export function formatDate(date: Date, options?: Intl.DateTimeFormatOptions): string {
-  return new Intl.DateTimeFormat('en-US', options).format(date);
-}
 
-export function isToday(date: Date): boolean {
-  const today = new Date();
-  return (
-    date.getDate() === today.getDate() &&
-    date.getMonth() === today.getMonth() &&
-    date.getFullYear() === today.getFullYear()
-  );
-}
-
-export function isFuture(date: Date): boolean {
-  return date.getTime() > Date.now();
-}
-
-export function isPast(date: Date): boolean {
-  return date.getTime() < Date.now();
-}
