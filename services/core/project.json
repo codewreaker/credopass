@@ -164,7 +164,7 @@
     "build": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "bun build ./src/index.ts --outdir ../../dist/{projectRoot} --target bun",
+        "command": "bun build ./src/index.ts --outdir ../../dist/{projectRoot} --target bun --env disable",
         "cwd": "{projectRoot}"
       }
     },
