@@ -17,7 +17,7 @@ echo "Probing $VITE_SUPABASE_URL with the public anon key"
 printf '%-18s %-6s %s\n' TABLE HTTP ROWS
 
 exposed=0
-for t in organizations users events event_members org_memberships attendance loyalty; do
+for t in accounts identities people organizations org_memberships org_domains org_identity_providers events attendance passes invitations; do
   body=$(curl -s "$VITE_SUPABASE_URL/rest/v1/$t?select=*&limit=1" \
     -H "apikey: $VITE_SUPABASE_ANON_KEY" \
     -H "Authorization: Bearer $VITE_SUPABASE_ANON_KEY" \

@@ -21,7 +21,10 @@ let db: Database | null = null;
  * Create a database client for Postgres (hosted environments)
  */
 export function createPostgresClient(connectionString: string) {
-  return drizzlePostgres(connectionString, { schema, logger: true });
+  // Query logging is development-only: `logger: true` prints every statement
+  // *with its bound parameters*, which in production means emails, tokens and
+  // ids in the Cloud Run log stream.
+  return drizzlePostgres(connectionString, { schema, logger: isDevelopment });
 }
 
 /**

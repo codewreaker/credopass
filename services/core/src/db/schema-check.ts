@@ -97,7 +97,6 @@ export async function reportSchemaAtBoot(): Promise<void> {
     `\n⚠️  DATABASE SCHEMA IS OUT OF DATE — /api/v1/core WILL RETURN 500\n` +
       `\n   Missing tables: ${status.missing.join(', ')}` +
       `\n   Database:       ${target || '(DATABASE_URL not set)'}` +
-      `\n\n${advice}` +
-      `\n\n   /api/core (the old surface) is unaffected and keeps working.\n`
+      `\n\n${advice}\n`
   );
 }

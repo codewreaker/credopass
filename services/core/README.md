@@ -70,6 +70,7 @@ Enforced by code, not convention. Breaking one fails the build, the lint, or the
 | `src/tenancy/context.ts` | The branded `TenantContext` and `can()`. |
 | `src/services/` | Domain logic. No framework imports. |
 | `src/db/` | `client.ts` (pool + Drizzle), `schema-check.ts`, `seed.ts`. |
+| `sql/` | Out-of-band SQL: revoking public PostgREST access, and the probe that verifies it. |
 | `drizzle/` | Migrations, **tracked in git and reviewed like code.** |
 
 ## Auth model
@@ -117,7 +118,7 @@ nx run coreservice:test:integration   # services against real Postgres; starts i
 nx run coreservice:test:adversarial   # the tenancy suite
 nx run coreservice:db status          # does the DB match the code? START HERE when confused
 nx run coreservice:db reset           # drop + replay migrations (localhost only, by design)
-nx run coreservice:migrate            # drizzle-kit generate && migrate  ← WRITES TO REMOTE
+nx run coreservice:migrate            # apply pending migrations to whatever DATABASE_URL points at
 nx run coreservice:docs               # Scalar at /api/v1/core/docs
 nx run coreservice:token              # mint a JWT for the Scalar auth box
 nx run coreservice:openapi:export     # write openapi.json for desktop clients
@@ -130,6 +131,22 @@ To generate a migration **without applying it** (no database contact):
 ```bash
 cd services/core && bunx drizzle-kit generate --name=<what_it_does>
 ```
+
+**Read [`docs/DATABASE-MIGRATION.md`](../../docs/DATABASE-MIGRATION.md) before pointing
+`DATABASE_URL` at anything remote.** The remote Supabase instance still runs the pre-rewrite schema,
+and there is no automatic path from `users` to `accounts` + `identities` + `people`.
+
+### RLS is currently inert on the API path
+
+`drizzle/0001_rls.sql` creates the `credopass_api` role (`NOSUPERUSER NOBYPASSRLS`) and a
+membership-scoped policy on every tenant table. **The API does not use that role.** It connects as
+`postgres`, which is `BYPASSRLS`, so those policies are not evaluated — tenancy is enforced by
+exactly one layer today: the explicit `ctx.organizationId` predicate every service applies by hand,
+which is what the adversarial suite polices.
+
+Switching is not a one-line change: the policies read the caller from
+`current_setting('app.account_id')`, and nothing in `src/` sets it. Point the API at `credopass_api`
+today and every query returns zero rows. The ordered fix is in `docs/DATABASE-MIGRATION.md` §6.
 
 ## Environment
 

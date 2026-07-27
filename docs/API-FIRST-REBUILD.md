@@ -1,9 +1,27 @@
 # CredoPass: the API-first rebuild
 
+> ### ⚠️ Read this first — some links below are dead, on purpose
+>
+> This document is the **plan**, kept as the record of what was decided and why. It has not been
+> rewritten as the code moved; [`REBUILD-LOG.md`](REBUILD-LOG.md) is where the plan and reality are
+> reconciled, and it wins wherever the two disagree.
+>
+> Three things it links to no longer exist, because this document is what made them obsolete:
+>
+> | Link | What happened |
+> |---|---|
+> | `MULTI-TENANCY.md` | A patch plan for the pre-rewrite system. Every phase in it is done — identity, server-side scoping, RLS, invitations — and it described files (`crud-factory.ts`, `routes/events.ts`, the `users` table) that were deleted. **Removed.** |
+> | `MVP-READINESS.md` | Removed before this document was written. Its sole P0 was the tenancy work above. |
+> | `../audit/shots/` | Pre-rewrite screenshots. Untracked local files, never in git. The three that ship are cropped into `apps/web/public/showcase/`. |
+>
+> For the current state, start at [`README.md`](../README.md); for the database, at
+> [`DATABASE-MIGRATION.md`](DATABASE-MIGRATION.md); for what is left, at
+> [`NEXT-UI-LIST.md`](NEXT-UI-LIST.md).
+
 > **The plan to make the API the product.** Today CredoPass is a React app with a database attached.
 > After this work, every capability is reachable with `curl`, the UI is a rendering client, and the
-> OpenAPI document is the contract. This supersedes [MULTI-TENANCY.md](MULTI-TENANCY.md) (a patch plan
-> for a system we are now replacing) and closes out the P0 in [MVP-READINESS.md](MVP-READINESS.md).
+> OpenAPI document is the contract. This supersedes `MULTI-TENANCY.md` (a patch plan for a system we
+> are now replacing) and closes out the P0 in `MVP-READINESS.md`.
 
 **Status:** proposed · **Author:** rebuild planning pass · **Date:** 2026-07-26 (rev 2)
 **Verified against:** `epic/credopass-api-rewrite` @ `9eed1c6`, plus a live walk of the running stack

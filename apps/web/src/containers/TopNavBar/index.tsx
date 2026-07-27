@@ -4,6 +4,7 @@ import './style.css';
 import SecondaryActionButton from './SecondaryAction';
 import ContextualSearch from './ContextualSearch';
 import { useToolbarSlotRef } from './toolbar-slot';
+import UserMenu from '../UserMenu';
 import { cn } from '@credopass/ui/lib/utils';
 import { useIsMobile } from '@credopass/ui/hooks/use-mobile';
 
@@ -25,6 +26,10 @@ export const TopNavBar: React.FC = () => {
         {/* Contextual search + secondary action grouped */}
         <ContextualSearch />
         <SecondaryActionButton />
+        {/* The account avatar sits last, where it is expected. It is the only
+            route to the profile page from the chrome — the org switcher owns
+            organizations and nothing else. */}
+        <UserMenu />
       </div>
     </div>
   );

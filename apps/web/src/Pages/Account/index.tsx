@@ -23,6 +23,7 @@ import {
   Plus,
   Settings,
   ShieldCheck,
+  Sparkles,
   Trash2,
   UserRound,
   Users,
@@ -161,8 +162,12 @@ function Section({
 
 function ProfileTab() {
   const navigate = useNavigate();
-  const { context } = useSession();
+  const { context, organizationId } = useSession();
   const account = context?.account;
+  const canBill = useCan('org:billing');
+
+  const { data: organizations = [] } = useOrganizations();
+  const organization = organizations.find((o) => o.id === organizationId) ?? null;
 
   const initials = (account?.displayName || account?.email || 'CP')
     .split(/[\s._@-]+/)
@@ -195,6 +200,36 @@ function ProfileTab() {
           a real account to keep your organizations" — an action that was never
           built, so it promised a rescue that did not exist.
         */}
+      </Section>
+
+      {/*
+        Plan lives on this tab because it is what people come here looking for.
+        The tier is the *organization's*, read from `GET /organizations` — never
+        restated from a constant, since `authz/plans.ts` owns those numbers.
+        Only an owner holds `org:billing`, so a non-owner is told who can change
+        it rather than being handed a button that comes back 403.
+      */}
+      <Section
+        title="Plan"
+        description={
+          canBill
+            ? 'Compare tiers and switch — takes effect immediately.'
+            : 'Only an owner of this organization can change the plan.'
+        }
+        action={
+          <span className="shrink-0 rounded-full bg-primary/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-primary">
+            {organization?.plan ?? '—'}
+          </span>
+        }
+      >
+        <Button
+          variant="outline"
+          className="w-fit gap-2 rounded-full"
+          onClick={() => navigate({ to: '/upgrade' })}
+        >
+          <Sparkles size={15} />
+          {canBill ? 'View plans & upgrade' : 'View plans'}
+        </Button>
       </Section>
 
       <Section title="Session" description="Sign out of this browser.">
@@ -761,12 +796,13 @@ function SettingsTab() {
         </Section>
       )}
 
-      {/* SSO, verified domains and billing all have schema but no endpoints yet
-          (Phase 7). Naming them is more useful than an empty tab. */}
+      {/* Plan changes landed (`PUT /organizations/{id}/plan`) and live on the
+          Profile tab. SSO has schema but no endpoints yet — naming it is more
+          useful than an empty tab. */}
       <Section title="Coming later" description="Built in the schema, not yet reachable from here.">
         <ul className="flex flex-col gap-1 text-xs text-muted-foreground">
           <li>· Single sign-on providers and verified email domains</li>
-          <li>· Billing and plan changes — currently {organization.plan}</li>
+          <li>· Real payment capture — plan changes are recorded, no money moves yet</li>
         </ul>
       </Section>
     </div>

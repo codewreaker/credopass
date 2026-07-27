@@ -1,13 +1,12 @@
 /**
  * The `/api/v1` surface. docs/API-FIRST-REBUILD.md §5.
  *
- * Phase 0 mounts the skeleton only: ops endpoints, the generated OpenAPI
- * document and Scalar. Phases 1-6 add the real routes; every one of them goes
- * through `defineRoute`, so the document and the authorization registry stay in
- * step with the code by construction.
+ * **The only surface.** `/api/core/*` and its CRUD factory are deleted; the
+ * service 404s that path, and every client — web, mobile, Scalar — is on
+ * `/api/v1/core`. If you find `/api/core` in a config, that config is a bug.
  *
- * `/api/core/*` is untouched and keeps serving the current web app. It starts
- * answering 308 in Phase 3, once nothing calls it.
+ * Every route here goes through `defineRoute`, so the OpenAPI document and the
+ * authorization registry stay in step with the code by construction.
  */
 
 import { OpenAPIHono, z } from '@hono/zod-openapi';

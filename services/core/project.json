@@ -37,10 +37,24 @@
         "seed": { "command": "bun run scripts/db.ts seed" }
       }
     },
+    "migrate": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun run scripts/db.ts migrate",
+        "cwd": "{projectRoot}"
+      }
+    },
     "seed": {
       "executor": "nx:run-commands",
       "options": {
         "command": "bun run scripts/db.ts seed",
+        "cwd": "{projectRoot}"
+      }
+    },
+    "verify:public-access": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bash sql/verify-public-access.sh",
         "cwd": "{projectRoot}"
       }
     },

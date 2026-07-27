@@ -29,12 +29,8 @@ Errors = { error: "..." }                 Errors = RFC 9457 problem+json
 OpenAPI hand-written, always stale        OpenAPI generated from the Zod schemas
 ```
 
-**Two API surfaces run side by side, on purpose:**
-
-| Surface | State | For |
-|---|---|---|
-| `/api/core/*` | Untouched. Still serves the live web app. | Nothing new. Deleted in Phase 3. |
-| `/api/v1/core/*` | The rebuild. | All new work. |
+**One API surface.** This section used to describe two running side by side. `/api/core/*` and its
+CRUD factory are deleted; the service 404s that path and every client is on `/api/v1/core`.
 
 ---
 
@@ -629,10 +625,76 @@ Two pre-existing typecheck errors remain in `Pages/ResetPassword/index.tsx` and
 `packages/ui/src/components/login/email-password-form.tsx` (Zod/TanStack Form `StandardSchemaV1`
 mismatches) — confirmed identical on the untouched tree.
 
-**Migration `0003_drop_device_tokens_and_guest_tier.sql` is generated but NOT applied.**
-`nx run coreservice:migrate` writes to the remote Supabase instance; applying it is a deliberate
-act. The local test databases replay it from empty on every run, which is where the 105 + 39
+**Migration `0003_drop_device_tokens_and_guest_tier.sql` is applied locally, not remotely.**
+`nx run coreservice:migrate` writes to whatever `DATABASE_URL` points at — locally that is the
+Docker Postgres. The remote Supabase instance has never been migrated for the rewrite; see
+[`DATABASE-MIGRATION.md`](DATABASE-MIGRATION.md) §5. The local test databases replay it from empty on every run, which is where the 105 + 39
 above come from.
+
+
+---
+
+## Account shortcut, and the documentation/dead-code sweep (2026-07-27)
+
+Not a phase. A cleanup pass with one UI change in it.
+
+### The avatar menu — `apps/web/src/containers/UserMenu/`
+
+There was no route to your own profile from the chrome. Account, Billing and Sign out lived inside
+`OrgSelector` — the control in the sidebar header branded with the *organisation's* logo — so "where
+is my profile?" was answered by a menu about something else.
+
+Split by subject: `OrgSelector` is now organisations only; a new avatar in the top bar owns the
+account. It carries profile, plan (with the active org's tier as a badge, read from
+`GET /organizations`), members (gated on `member:read`), settings, a theme toggle, and sign out.
+
+The theme toggle is worth a note. `ThemeProvider` has always exposed `toggleTheme`, and nothing in
+the console called it — the app could read the theme but not set it. It is a
+`closeOnClick={false}` item, because a menu that closes when you change the theme makes comparing
+the two modes tedious.
+
+`/account?tab=profile` gained a **Plan** section: the current tier, and a link to `/upgrade`. Gated
+on `useCan('org:billing')` so a non-owner is told who can change it rather than handed a 403.
+
+### Deleted
+
+| What | Why |
+|---|---|
+| `packages/ui/src/components/user/` (376 lines) | A config-driven user menu with zero importers. Its one real idea — the theme switcher — moved into `UserMenu`. |
+| `@tanstack/react-db`, `query-db-collection`, `query-core`, `react-devtools`, `router-devtools`, `lodash`, `@types/lodash` | Declared, never imported. TanStack DB has been gone since the second rebuild. |
+| `audit/*.md`, `docs/MULTI-TENANCY.md`, `docs/GUEST-ONBOARDING.md` | Plans for a system that no longer exists. Every phase in `MULTI-TENANCY.md` is done; it described `crud-factory.ts`, `routes/events.ts` and the `users` table, all deleted. `GUEST-ONBOARDING.md` was self-marked historical. |
+| `AGENTS.md` (as a file) | Was a stale copy of `CLAUDE.md` still claiming `/api/core` "still serves the live web app". Now a symlink — one source of truth, not two that drift. |
+
+### Corrected claims
+
+The marketing site was selling three things that do not exist: a loyalty programme (deleted in the
+first rebuild), an offline-first kiosk (deleted with TanStack DB), and SOC 2 compliance (never
+true). Its pricing block had three tiers where `authz/plans.ts` has four, priced Starter at $5
+against a real £19, and sold "up to 100 members" limits the plan model has never had — the real
+limit is organisations owned. All now mirror the catalogue, with a comment saying to change pricing
+there first.
+
+`db/client.ts` passed `logger: true` to Drizzle unconditionally, which prints every statement *with
+its bound parameters*. In production that is emails and ids in the Cloud Run log stream. Now
+`logger: isDevelopment`.
+
+### Targets that were documented but did not exist
+
+`CLAUDE.md` listed `coreservice:migrate` and `coreservice:verify:public-access`. Neither was a
+target — `migrate` only existed as an nx *configuration* of `db`, and the public-access probe was a
+shell script nothing pointed at. Both are real targets now. The probe was also still testing
+`users`, `event_members` and `loyalty`; it tests the eleven tables that exist.
+
+### New: `docs/DATABASE-MIGRATION.md`
+
+The step-by-step for getting the schema onto a database — fresh local, the throwaway test one, and
+the remote Supabase cutover. §5 is the cutover, including the shape the `users` →
+`accounts` + `people` backfill has to have (still unwritten). §6 states plainly that **RLS is inert
+on the API path** and gives the ordered fix, because the policies exist and look like they are
+protecting you.
+
+`docs/API-FIRST-REBUILD.md` now carries a header saying which of its links are dead and why, rather
+than being rewritten — it is the record of what was decided, and reality lives here.
 
 
 ---

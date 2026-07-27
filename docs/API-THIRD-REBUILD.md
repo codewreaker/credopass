@@ -8,7 +8,7 @@
 |---|---|
 | [`API-FIRST-REBUILD.md`](API-FIRST-REBUILD.md) | Target architecture, D1–D19, schema, endpoint list. Still authoritative except where D20–D26 below supersede it. |
 | [`API-SECOND-REBUILD.md`](API-SECOND-REBUILD.md) | The UI rewiring onto `/api/v1/core`. Done. Its device sections (§1.5 Devices, §2.10) are obsolete. |
-| [`GUEST-ONBOARDING.md`](GUEST-ONBOARDING.md) | A design study for anonymous guest onboarding. **Historical — this document supersedes it.** Its conclusion (§10.1: measure before building) was right; the answer was "don't". |
+| ~~`GUEST-ONBOARDING.md`~~ | A design study for anonymous guest onboarding. **Deleted** — this document superseded it, and the guest tier it assumed no longer exists. Its conclusion (§10.1: measure before building) was right; the answer was "don't". Recoverable from git history if the reasoning is ever wanted again. |
 | [`REBUILD-LOG.md`](REBUILD-LOG.md) | What actually happened. |
 
 ---
@@ -63,7 +63,7 @@ round-trip — which is precisely why this is simpler than saving a draft would 
 `scope: 'organization'`, so `requireCaller` answers 401 before any handler runs. Deleting the
 overlay in devtools and re-enabling a field yields a form whose submit is refused.
 
-A server-side `drafts` table was considered and rejected ([`GUEST-ONBOARDING.md` §7.1](GUEST-ONBOARDING.md)):
+A server-side `drafts` table was considered and rejected (in the since-deleted `GUEST-ONBOARDING.md` §7.1):
 it needed an owner, and the only owner available for a visitor was an anonymous account.
 
 ### D22 — Onboarding is signing in

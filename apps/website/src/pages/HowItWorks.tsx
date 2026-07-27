@@ -185,13 +185,13 @@ export const PERSONAS: Persona[] = [
         detail: 'Same attendance record as everyone else.',
       },
       {
-        icon: Trophy, kicker: 'Step 04', title: 'Earn loyalty',
-        body: 'Showing up adds points and moves you up the tiers — Bronze to Platinum.',
-        detail: 'Rewards are scoped per organization.',
+        icon: Trophy, kicker: 'Step 04', title: 'Get the credit',
+        body: 'Turning up is recorded against you — not just the ticket you bought.',
+        detail: 'One attendance row per person, per event.',
       },
       {
         icon: BarChart3, kicker: 'Step 05', title: 'Build your history',
-        body: 'Every visit stacks into an attendance history the organizer can see and reward.',
+        body: 'Every visit stacks into an attendance history the organizer can see.',
         detail: 'Real engagement, not just a ticket sale.',
       },
     ],
