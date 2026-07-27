@@ -155,7 +155,7 @@ export default function ResetPasswordPage() {
                   value={field.state.value}
                   onBlur={field.handleBlur}
                   onChange={(e) => field.handleChange(e.target.value)}
-                  aria-invalid={field.state.meta.errors.length > 0}
+                  aria-invalid={field.state.meta.isTouched && field.state.meta.errors.length > 0}
                 />
                 <div className="flex gap-1 pt-1" aria-hidden>
                   {PASSWORD_RULES.map((rule, i) => (
@@ -169,7 +169,7 @@ export default function ResetPasswordPage() {
                     />
                   ))}
                 </div>
-                {(field.state.meta.errors[0] as { message?: string } | undefined)?.message && (
+                {field.state.meta.isTouched && (field.state.meta.errors[0] as { message?: string } | undefined)?.message && (
                   <p className="text-xs text-destructive">
                     {(field.state.meta.errors[0] as { message: string }).message}
                   </p>
@@ -190,9 +190,9 @@ export default function ResetPasswordPage() {
                   value={field.state.value}
                   onBlur={field.handleBlur}
                   onChange={(e) => field.handleChange(e.target.value)}
-                  aria-invalid={field.state.meta.errors.length > 0}
+                  aria-invalid={field.state.meta.isTouched && field.state.meta.errors.length > 0}
                 />
-                {(field.state.meta.errors[0] as { message?: string } | undefined)?.message && (
+                {field.state.meta.isTouched && (field.state.meta.errors[0] as { message?: string } | undefined)?.message && (
                   <p className="text-xs text-destructive">
                     {(field.state.meta.errors[0] as { message: string }).message}
                   </p>

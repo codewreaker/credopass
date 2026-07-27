@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { ArrowLeft, Zap, CheckCircle2, BarChart3, CalendarCheck } from 'lucide-react'
 import AuthPage from '@credopass/ui/components/login'
-import { EmailPasswordForm } from '@credopass/ui/components/login/email-password-form'
+import { EmailPasswordForm, type FormView } from '@credopass/ui/components/login/email-password-form'
 import { GlowingQRCode } from '@credopass/ui/components/glowing-qr-code'
 import {
   supabase as supabaseInstance,
@@ -25,6 +25,9 @@ export default function LoginPage() {
   const { view, out, redirect } = useSearch({ from: '/login' })
   const navigate = useNavigate({ from: '/login' })
   const [hasSession, setHasSession] = useState(false)
+  // Which view the email form is showing. The form draws its own "Back" in the
+  // forgot and notice views, so this page must not draw a second one.
+  const [formView, setFormView] = useState<FormView>('signIn')
 
   // Where to land after auth: the private route the guard sent us back from
   // (same-origin relative paths only), else the events home.
@@ -75,24 +78,27 @@ export default function LoginPage() {
           className="shrink-0 relative z-10"
         />
       }
-      mobileExtra={<AppShowcase className="mx-auto" />}
+      mobileExtra={<AppShowcase tone="onSurface" className="mx-auto" />}
       showClose={hasSession}
       onClose={() => (navigate as any)({ to: destination })}
       footerText={`© ${new Date().getFullYear()} CredoPass · Built for live events`}
     >
       {view === 'email' ? (
         <>
-          <button
-            onClick={showOptions}
-            className="mb-6 flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors duration-150 cursor-pointer"
-          >
-            <ArrowLeft size={14} />
-            Back
-          </button>
+          {formView !== 'forgot' && formView !== 'notice' && (
+            <button
+              onClick={showOptions}
+              className="mb-6 flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors duration-150 cursor-pointer"
+            >
+              <ArrowLeft size={14} />
+              Back
+            </button>
+          )}
           <EmailPasswordForm
             signInCallback={(values) => signInWithEmail(values.email, values.password)}
             signUpCallback={(values) => signUpWithEmail(values.email, values.password)}
             resetCallback={(email) => sendPasswordReset(email)}
+            onViewChange={setFormView}
           />
         </>
       ) : (

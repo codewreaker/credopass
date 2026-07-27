@@ -1,5 +1,5 @@
 //this hook is temporarily in the ui package, but it should be moved to lib once I figure out the best way to handle cross-package dependencies for hooks that are used in both packages (e.g. usePrevious)
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useCallback, useRef } from 'react';
 import CommandPalette from '../containers/Command/index';
 import { launchSignInForm } from '../containers/SignInModal/index';
 import { useNavigate } from '@tanstack/react-router';

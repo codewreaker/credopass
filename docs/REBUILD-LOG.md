@@ -449,6 +449,92 @@ someone shows the link on screen and says to send it. No copy anywhere claims an
 
 ---
 
+## Anonymous sign-in removed; the first organisation is now automatic (2026-07-27)
+
+### Why the guest flow went
+
+`/login` silently signed every first-time visitor in anonymously. Measured, not assumed:
+
+- Growth was **one account per browser profile**, not per visit — Supabase persists the session in
+  `localStorage`, so returning visitors reuse it. (4 loads across 2 profiles produced 2 accounts.)
+- It bought nothing. The visitor was signed in, then shown **"Create your organization"** — a bigger
+  commitment than the sign-in screen it replaced.
+- `/` → `/login` → `/events` → `/onboarding` was **three redirects**, and `/events` was a *push*, so
+  Back bounced between `/login` and `/onboarding` forever. Verified: three Back presses, no escape.
+- There was **no upgrade path** — no `linkIdentity`, no `updateUser`. The Account page offered
+  "create a real account to keep your organizations" for an action that did not exist. A guest who
+  built something and cleared storage lost it permanently, sole owner and all.
+
+`signInAnonymously` is gone from `createAuthClient`. Do not reintroduce it without account linking.
+
+### What replaced it
+
+| Was | Now |
+|---|---|
+| Silent guest sign-in, then an onboarding wall | Sign-in screen with a rotating showcase of real app screenshots |
+| 3 redirects from `/` | 1 — `/` reads the session in `beforeLoad` and picks `/events` or `/login` |
+| New account belongs to nothing | First sign-in auto-provisions **"<Name>'s organization"**, owner role |
+| — | Per-plan cap on organisations an account may **own** (`authz/plans.ts`; free = 2) |
+
+**This reverses the earlier "drop auto-org" decision, and D16 is why it is now safe.** D16 forbids
+provisioning for someone who merely *visited*. With anonymous sign-in gone, every account is a real
+authenticated person, so that objection no longer applies. Guests are still excluded from
+auto-provisioning — the API accepts anonymous tokens even though nothing issues them.
+
+Auto-provisioning runs in `requireCaller`, gated on `memberships.length === 0 && !isGuest`, so it is
+true once per account and free on every request after. It takes `pg_advisory_xact_lock(hashtext(id))`
+and re-checks inside the lock, because a first page load fires several requests at once and all of
+them see "no memberships". Slugs get a random suffix on collision — two people called Israel must not
+make the second one's sign-in fail on a globally-unique column.
+
+### Bugs found on the way
+
+- **Device pairing was impossible.** `use('/devices/:deviceId', requireCaller)` matches on path only,
+  so it also caught `POST /devices/pair` with `deviceId = "pair"`. The route declares
+  `scope: 'public'` — a tablet has no token yet — but the mount answered 401. Now bound to `DELETE`.
+- **`claimByVerifiedEmail` would 500 on every call.** `= ANY(${addresses})` bound a JS array as one
+  parameter, so Postgres raised `malformed array literal`. Now `inArray`. Latent only because
+  `/me/claim` is unbuilt.
+- **Sign-up gave no feedback.** With email confirmation on, Supabase returns a user and *no session*;
+  the form only checked `error`, so success re-rendered silently. Now shows "Confirm your email".
+
+### Adversarial suite: fixtures are real now
+
+Was **11 pass / 39 fail**. The failures were not schema drift — a wiped test container reproduced
+them exactly. They were placeholder `token: ''` actors, and most "endpoint not in openapi.json"
+errors were malformed URLs (`/events//check-in`) from empty ids, not missing routes.
+
+`test/support/issuer.ts` signs ES256 tokens in-process behind a real `IssuerRegistry` subclass, so
+signature and issuer checks still run. `test/support/fixtures.ts` builds two tenants **through the
+API**. Now **38 pass / 12 todo / 1 fail**.
+
+The 12 `todo` name the endpoint each needs (`/uploads`, `/me/tickets`, `/me/claim`, `/analytics`,
+`/attendance/{id}`, `/people/{id}/merge`, `/events/{id}/stream`, domains, `/auth/realm`) — so a red
+run means a regression, not a backlog item.
+
+**The 1 remaining failure is a decision, not a defect.** T7: §7.3 says an account with no
+organisation gets `200 []`; `requireTenant` answers `403 not_a_member`. Not a leak either way. Left
+red rather than softened.
+
+T6, T29b and T34 were rewritten: they asserted "zero organisations", which auto-provisioning makes
+false. They now assert the claim that actually matters — *none of B's* — which is stricter about the
+leak and no longer coupled to onboarding behaviour.
+
+### Verification
+
+| Check | Result |
+|---|---|
+| `nx run coreservice:verify` | ✅ 72 unit/structural passing |
+| `nx run coreservice:test:integration` | ✅ 136 passing |
+| `nx run coreservice:test:adversarial` | 38 pass / 12 todo / 1 known-decision fail |
+| `nx run web:build` · `web:lint` | ✅ |
+
+Still open: `packages/ui` / `packages/lib` lint failures listed above (pre-existing). Anonymous
+sign-in should also be disabled in the Supabase dashboard — removing the client call stops the app
+from using it, but the endpoint stays open until the project setting is turned off.
+
+---
+
 ## Conventions worth knowing
 
 1. Every route is created with `defineRoute` and declares `scope` (+ `permission` if org-scoped).

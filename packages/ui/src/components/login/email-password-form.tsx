@@ -18,8 +18,16 @@ import { cn } from '../../lib/utils'
 export type EmailPasswordValues = { email: string; password: string }
 export type AuthMode = 'signIn' | 'signUp' | 'forgot'
 
-/** Field error text, or nothing. TanStack surfaces Zod issues as `{ message }`. */
-const FieldError = ({ errors }: { errors: unknown[] }) => {
+/**
+ * Field error text, or nothing. TanStack surfaces Zod issues as `{ message }`.
+ *
+ * Gated on `touched` because validation runs against the WHOLE object on every
+ * keystroke — that is what makes the sign-up password/confirm match check
+ * possible. Without the gate, typing a password lights up "Email is required"
+ * on a field the person has not reached yet.
+ */
+const FieldError = ({ errors, touched }: { errors: unknown[]; touched: boolean }) => {
+  if (!touched) return null
   const first = errors[0] as { message?: string } | undefined
   if (!first?.message) return null
   return <p className="text-xs text-destructive">{first.message}</p>
@@ -74,19 +82,55 @@ function PasswordChecklist({ value }: { value: string }) {
 
 export interface EmailPasswordFormProps {
   signInCallback: (values: EmailPasswordValues) => Promise<any>
+  /**
+   * Must resolve the provider's FULL result, not just its error.
+   *
+   * Whether a session came back is the only way to tell "signed in" from
+   * "account created, now go and confirm your email" — swallowing `data` here
+   * leaves a successful sign-up with nothing to say.
+   */
   signUpCallback: (values: EmailPasswordValues) => Promise<any>
   /** Send a recovery link. Resolves the same way whether or not the address exists. */
   resetCallback: (email: string) => Promise<any>
+  /**
+   * Which view the form is showing.
+   *
+   * The host page draws its own "Back" to leave the email form entirely. In the
+   * forgot and notice views this component draws one too, and two stacked Backs
+   * pointing at different places is worse than either alone — so the page uses
+   * this to stand down while the form owns that affordance.
+   */
+  onViewChange?: (view: FormView) => void
 }
+
+export type FormView = AuthMode | 'notice'
+
+/**
+ * A terminal state: the form has done its job and is replaced by a message.
+ *
+ * Both outcomes end in "we sent you an email", but they are NOT the same thing
+ * — one confirms a new account, the other recovers an existing one — and the
+ * copy has to say which, or the person cannot tell whether their sign-up
+ * actually worked.
+ */
+type Notice =
+  | { kind: 'confirm'; email: string }
+  | { kind: 'reset'; email: string }
 
 export function EmailPasswordForm({
   signInCallback,
   signUpCallback,
   resetCallback,
+  onViewChange,
 }: EmailPasswordFormProps) {
   const [mode, setMode] = useState<AuthMode>('signIn')
   const [formError, setFormError] = useState<string | null>(null)
-  const [resetSentTo, setResetSentTo] = useState<string | null>(null)
+  const [notice, setNotice] = useState<Notice | null>(null)
+
+  // Reported from the handlers that cause it, never from an effect: a
+  // render-phase notification would be a setState cascade in the parent.
+  const announce = (next: Notice | null, nextMode: AuthMode) =>
+    onViewChange?.(next ? 'notice' : nextMode)
 
   const form = useForm({
     defaultValues: { email: '', password: '', confirmPassword: '' },
@@ -104,13 +148,40 @@ export function EmailPasswordForm({
         const { error } = await resetCallback(value.email)
         // Confirm identically whether or not the address is registered —
         // otherwise this endpoint enumerates who has an account.
-        if (error) setFormError(error.message)
-        else setResetSentTo(value.email)
+        if (error) {
+          setFormError(error.message)
+        } else {
+          setNotice({ kind: 'reset', email: value.email })
+          announce({ kind: 'reset', email: value.email }, mode)
+        }
         return
       }
 
-      const callback = mode === 'signIn' ? signInCallback : signUpCallback
-      const { error } = await callback({ email: value.email, password: value.password })
+      if (mode === 'signUp') {
+        const { data, error } = await signUpCallback({
+          email: value.email,
+          password: value.password,
+        })
+        if (error) {
+          setFormError(error.message)
+          return
+        }
+
+        // Sign-up has TWO successful shapes and they look nothing alike.
+        //
+        // With email confirmation on, Supabase returns a user and NO session:
+        // nothing is signed in, no auth event fires, and without this branch the
+        // form simply re-rendered — the "it just flashes" bug. With confirmation
+        // off, a session comes back and the page's auth listener navigates, so
+        // there is deliberately nothing to do here.
+        if (!data?.session) {
+          setNotice({ kind: 'confirm', email: value.email })
+          announce({ kind: 'confirm', email: value.email }, mode)
+        }
+        return
+      }
+
+      const { error } = await signInCallback({ email: value.email, password: value.password })
       if (error) setFormError(error.message)
     },
   })
@@ -118,23 +189,37 @@ export function EmailPasswordForm({
   const go = (next: AuthMode) => {
     setMode(next)
     setFormError(null)
-    setResetSentTo(null)
+    setNotice(null)
+    announce(null, next)
     form.reset()
   }
 
-  // Recovery link sent — a terminal state, so the form is replaced rather than
-  // left on screen inviting a second submit.
-  if (resetSentTo) {
+  // The form is replaced rather than left on screen inviting a second submit.
+  if (notice) {
+    const isConfirm = notice.kind === 'confirm'
     return (
       <div className="flex flex-col items-center gap-4 text-center">
         <div className="flex size-11 items-center justify-center rounded-full bg-primary/10 text-primary">
           <MailCheck size={20} />
         </div>
         <div>
-          <h3 className="text-base font-semibold text-foreground">Check your inbox</h3>
+          <h3 className="text-base font-semibold text-foreground">
+            {isConfirm ? 'Confirm your email' : 'Check your inbox'}
+          </h3>
           <p className="mt-1.5 text-sm text-muted-foreground">
-            If an account exists for <span className="text-foreground">{resetSentTo}</span>, a
-            password reset link is on its way. The link expires in an hour.
+            {isConfirm ? (
+              <>
+                Your account is created. We sent a confirmation link to{' '}
+                <span className="text-foreground">{notice.email}</span> — open it and you&rsquo;re
+                in.
+              </>
+            ) : (
+              <>
+                If an account exists for{' '}
+                <span className="text-foreground">{notice.email}</span>, a password reset link is
+                on its way. The link expires in an hour.
+              </>
+            )}
           </p>
         </div>
         <Button variant="outline" className="w-full rounded-full" onClick={() => go('signIn')}>
@@ -186,9 +271,9 @@ export function EmailPasswordForm({
               value={field.state.value}
               onBlur={field.handleBlur}
               onChange={(e) => field.handleChange(e.target.value)}
-              aria-invalid={field.state.meta.errors.length > 0}
+              aria-invalid={field.state.meta.isTouched && field.state.meta.errors.length > 0}
             />
-            <FieldError errors={field.state.meta.errors} />
+            <FieldError errors={field.state.meta.errors} touched={field.state.meta.isTouched} />
           </div>
         )}
       </form.Field>
@@ -217,12 +302,12 @@ export function EmailPasswordForm({
                 value={field.state.value}
                 onBlur={field.handleBlur}
                 onChange={(e) => field.handleChange(e.target.value)}
-                aria-invalid={field.state.meta.errors.length > 0}
+                aria-invalid={field.state.meta.isTouched && field.state.meta.errors.length > 0}
               />
               {isSignUp ? (
                 <PasswordChecklist value={field.state.value} />
               ) : (
-                <FieldError errors={field.state.meta.errors} />
+                <FieldError errors={field.state.meta.errors} touched={field.state.meta.isTouched} />
               )}
             </div>
           )}
@@ -242,9 +327,9 @@ export function EmailPasswordForm({
                 value={field.state.value}
                 onBlur={field.handleBlur}
                 onChange={(e) => field.handleChange(e.target.value)}
-                aria-invalid={field.state.meta.errors.length > 0}
+                aria-invalid={field.state.meta.isTouched && field.state.meta.errors.length > 0}
               />
-              <FieldError errors={field.state.meta.errors} />
+              <FieldError errors={field.state.meta.errors} touched={field.state.meta.isTouched} />
             </div>
           )}
         </form.Field>

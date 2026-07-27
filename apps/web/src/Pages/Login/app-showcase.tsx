@@ -39,9 +39,43 @@ const SHOTS: readonly Shot[] = [
 
 const INTERVAL_MS = 5000
 
-export function AppShowcase({ className = '' }: { className?: string }) {
+/**
+ * Which surface this sits on.
+ *
+ * The billboard is lime, so its chrome and caption use `primary-foreground`.
+ * The mobile placement sits on the dark form column, where those same tokens
+ * render dark-on-dark and the caption disappears. Two token sets rather than
+ * one, because the two backgrounds are genuinely opposite.
+ */
+type Tone = 'onPrimary' | 'onSurface'
+
+const TONES: Record<Tone, { frame: string; dot: string; caption: string; on: string; off: string }> = {
+  onPrimary: {
+    frame: 'border-primary-foreground/15 bg-primary-foreground/10',
+    dot: 'bg-primary-foreground/25',
+    caption: 'text-primary-foreground/85',
+    on: 'bg-primary-foreground/80',
+    off: 'bg-primary-foreground/30 hover:bg-primary-foreground/50',
+  },
+  onSurface: {
+    frame: 'border-border bg-card',
+    dot: 'bg-muted-foreground/30',
+    caption: 'text-muted-foreground',
+    on: 'bg-primary',
+    off: 'bg-border hover:bg-muted-foreground/40',
+  },
+}
+
+export function AppShowcase({
+  className = '',
+  tone = 'onPrimary',
+}: {
+  className?: string
+  tone?: Tone
+}) {
   const [index, setIndex] = useState(0)
   const [paused, setPaused] = useState(false)
+  const t = TONES[tone]
 
   useEffect(() => {
     // Someone who asked for less motion gets the first frame and no rotation.
@@ -63,11 +97,11 @@ export function AppShowcase({ className = '' }: { className?: string }) {
       onMouseLeave={() => setPaused(false)}
     >
       {/* Device frame */}
-      <div className="rounded-2xl border border-primary-foreground/15 bg-primary-foreground/10 p-1.5 backdrop-blur-sm shadow-lg">
+      <div className={`rounded-2xl border p-1.5 backdrop-blur-sm shadow-lg ${t.frame}`}>
         <div className="flex items-center gap-1.5 px-1.5 py-1">
-          <span className="size-1.5 rounded-full bg-primary-foreground/25" />
-          <span className="size-1.5 rounded-full bg-primary-foreground/25" />
-          <span className="size-1.5 rounded-full bg-primary-foreground/25" />
+          <span className={`size-1.5 rounded-full ${t.dot}`} />
+          <span className={`size-1.5 rounded-full ${t.dot}`} />
+          <span className={`size-1.5 rounded-full ${t.dot}`} />
         </div>
 
         <div className="relative aspect-video overflow-hidden rounded-xl bg-black">
@@ -94,7 +128,7 @@ export function AppShowcase({ className = '' }: { className?: string }) {
 
       {/* Caption + indicators */}
       <div className="mt-3 flex items-center justify-between gap-3">
-        <p className="text-[13px] font-medium leading-snug text-primary-foreground/85" aria-live="polite">
+        <p className={`text-[13px] font-medium leading-snug ${t.caption}`} aria-live="polite">
           {current.caption}
         </p>
         <div className="flex shrink-0 gap-1.5">
@@ -106,9 +140,7 @@ export function AppShowcase({ className = '' }: { className?: string }) {
               aria-label={`Show: ${shot.caption}`}
               aria-current={i === index}
               className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
-                i === index
-                  ? 'w-5 bg-primary-foreground/80'
-                  : 'w-1.5 bg-primary-foreground/30 hover:bg-primary-foreground/50'
+                i === index ? `w-5 ${t.on}` : `w-1.5 ${t.off}`
               }`}
             />
           ))}
