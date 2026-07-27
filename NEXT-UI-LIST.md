@@ -7,8 +7,12 @@
 > [`REBUILD-LOG.md`](REBUILD-LOG.md) (the running record) ·
 > [`API-FIRST-REBUILD.md`](API-FIRST-REBUILD.md) (the API's own plan)
 
-**Status:** `apps/web` compiles and reads `/api/v1/core`. **Not yet run against a live API** —
-build, typecheck and unit tests pass; nothing has been exercised in a browser.
+**Status:** `apps/web` compiles and reads `/api/v1/core`. Build, typecheck and unit tests pass.
+
+**Update 2026-07-27 (second session):** items **2.2** (declined, with a live-reproduced D16 violation
+recorded), **2.3** (fixed) and **2.6** (analysed, decision pending) are done — see each section. The
+API path has now been exercised against a live local stack via curl; **the browser pass in 2.8 is
+still not done.**
 
 ---
 
@@ -76,12 +80,12 @@ all loyalty copy on `/login` and `/upgrade` · loyalty helpers in `packages/lib`
 
 | | |
 |---|---|
-| `nx run coreservice:verify` | ✅ 61 tests |
+| `nx run coreservice:verify` | ✅ **65 tests** (61 + 4 for `guestDisplayName`) |
 | `nx run web:build` | ✅ |
 | `apps/web` typecheck | ✅ 0 errors (was 151) |
 | `nx run web:lint` | ✅ 2 warnings, both pre-existing |
 | `ui:lint`, `lib:lint` | ❌ **pre-existing**, confirmed against a stashed tree. `map.tsx`, `bottom-nav.tsx`, `date-time-range-picker.tsx`, `use-toolbar-context.ts` — none touched by this work |
-| Run against a live API | ⬜ **never done** |
+| Run against a live API | 🟡 **API path only.** Local stack (`dev:up` + `db reset` + `bun start`), verified by curl: guest display name, `needsOnboarding`, `403 not_a_member` with no org, create-org → create-event happy path. **No browser pass yet.** |
 
 ---
 
@@ -104,7 +108,46 @@ The forms work; they look like forms. Give the flow an experience.
 
 Files: `apps/web/src/Pages/Onboarding/index.tsx`, `apps/web/src/containers/AuthScreen/index.tsx`.
 
-## 2.2 ⬜ Auto-create a default organization for every new account — **analysis first, then decide** · M
+## 2.2 ✅ Auto-create a default organization — **analysed, declined** (2026-07-27)
+
+**Decision: no.** [D16](docs/API-FIRST-REBUILD.md#L486) had already settled it — a guest sign-in gets a
+lazy account with zero memberships and lands on onboarding; it does not get an organization. Auto-org
+contradicts that directly.
+
+**What the analysis turned up, which is the part that matters:** the code already violates D16.
+`resolveCaller` (`services/core/src/services/identity.ts`) inserts an `accounts` row on **first token
+verification**, not on first write — while §4.1's own invariant table reads *"A guest account is
+created lazily, never on token verification alone (D16)."*
+
+Reproduced against a live API: five read-only `GET /me` calls with fresh anonymous tokens took
+`accounts` from 1 → 5, all guests, all with zero memberships. Every visitor who lands on `/` gets a
+row, because `/` redirects to `/login` and `useGuestAutoLogin` signs them in with no interaction.
+D16's stated mitigation — a 30-day reaper — **does not exist**; there is no scheduler in the service.
+
+So auto-org would not have introduced unbounded growth, it would have multiplied growth that is
+already happening, adding an `organizations` row, an `org_memberships` row and a live RLS-policied
+tenant per bot visit.
+
+**What was built instead** (the middle path): onboarding step 1 prefills the organization name from
+the account's display name, so it is one Enter press. Guests are skipped — their display name is a
+generated label and would read as noise. Organization creation stays deliberate.
+
+**Still open, and worth doing on its own:** the D16 violation itself. Either make guest accounts lazy
+on first write (touches the auth path every request goes through) or add the reaper D16 promised
+(needs somewhere to run it). Neither was in scope here.
+
+### Guest display names — done
+
+Guests asserted no `name` claim, so `display_name` was `null` everywhere. `guestDisplayName(subject)`
+in `services/core/src/services/identity.ts` now derives a `Guest 4821` label — deterministic from the
+subject, so the same anonymous user reads the same way twice. Four unit tests in
+`src/test/guest-name.test.ts`. Verified live: a fresh anonymous token returns
+`"displayName":"Guest 9810"`.
+
+<details>
+<summary>Original brief (kept for context)</summary>
+
+### Auto-create a default organization for every new account — **analysis first, then decide** · M
 
 The maintainer wants this considered, *with* the security and architecture implications. Do the
 analysis before writing code; it is not obviously right.
@@ -135,12 +178,39 @@ Also mentioned: "same as a random user id for guest users". Clarify what is want
 get a Supabase anonymous user id. If the ask is a friendly display name (`Guest 4821`) rather than a
 raw UUID, that is a small change in `services/core/src/middleware/caller.ts` / the account row.
 
-## 2.3 ⬜ "Create event" with no organization fails silently · S — **do this first, it is a bug**
+</details>
 
-Reproduce: sign in as an account with no organization, click Create Event.
+## 2.3 ✅ "Create event" with no organization · S — **fixed 2026-07-27, but the brief was wrong**
 
-What happens: `useCreateEvent` fires without `X-Organization-Id`, the API answers
-`400 organization_required`, and nothing is shown.
+Two of the three claims in the original brief did not reproduce. Recording that, because the wrong
+diagnosis would have sent the next person to the wrong files.
+
+| Claim | Reality |
+|---|---|
+| "The API answers `400 organization_required`" | ❌ It answers **`403 not_a_member`**. `organization_required` fires only when a caller has **2+ organizations and sends no header** (`middleware/caller.ts`). Verified live. |
+| "The composer's submit path swallows the error" | ❌ It has a `try/catch` that toasts (`use-event-form.ts`). |
+| "Audit every `mutateAsync` call site for a `catch` that toasts" | ❌ Already done — **all 30 sites** across 13 files already handle errors. |
+| "`/events/new` has no org guard" | ✅ **True, and this was the actual bug.** |
+
+**The real cause.** `OnboardingGate` navigated from a `useEffect` while sitting *beside* the outlet.
+Effects run after children mount, so org-scoped screens mounted anyway, fired their queries, and could
+accept a submit in the frame before the redirect landed.
+
+**The fix.** `OnboardingGate` now **wraps** the outlet (`apps/web/src/routes/__root.tsx`) and renders a
+spinner instead of children while a redirect is pending. That closes it once for **every** org-scoped
+route rather than needing a `beforeLoad` guard per route — which would have had to re-fetch
+`/me/context` outside the api-client and break golden rule 2. It fails open (a failed `/me/context`
+renders normally), which is right: this is a UX redirect, not a security control. The server still
+enforces tenancy.
+
+**Left alone deliberately:** `not_a_member` copy reads "You are not a member of this organization.",
+which is misleading for someone who has no organization at all — the server uses one code for two
+situations, distinguished only by `detail`, and `lib/errors.ts` correctly refuses to branch on
+`detail`. With the gate in place the zero-org case no longer reaches a mutation from the UI. Fixing it
+properly means a new problem code on the API.
+
+<details>
+<summary>Original brief (kept for context)</summary>
 
 Two fixes, both wanted:
 
@@ -155,6 +225,8 @@ Two fixes, both wanted:
 
 Worth a broader sweep: **any org-scoped mutation reachable with no active organization** has the same
 hole (add attendee, pair device, invite member).
+
+</details>
 
 ## 2.4 ⬜ Restore `/analytics` with a "dummy data" banner · S
 
@@ -205,7 +277,36 @@ Not diagnosed; it was never run. Here is what is known, so the next agent does n
 5. **Old QR format.** Anything generated before the rebuild is `{eventId}:{userId}` and will never
    verify. Regenerate passes after `db reset`.
 
-## 2.6 ⬜ Rethink device tokens — do what Luma does · L
+## 2.6 🔍 Device tokens — **analysed 2026-07-27, decision still yours**
+
+Two corrections to the framing below before you decide.
+
+1. **Device tokens are not necessarily event-scoped.** `device_tokens.event_id` is **nullable**
+   (`packages/lib/src/schemas/tables/device-tokens.ts`). The "scoped to one event" half of the
+   trade-off is optional, not structural. What actually distinguishes a device token is `revoked_at` —
+   per-*tablet* revocation.
+2. **`event_grants` is plumbing with no producer.** The table exists, `tenancy/context.ts` reads it and
+   `db/scoped.ts` exposes it, but **nothing writes it** — no route, no service. It can only ever be
+   empty today, so adopting it as "the natural home for per-event scoping" is new work, not a
+   migration.
+
+**The argument for your instinct that the brief doesn't make:** a `cpd_` token lives in `localStorage`
+(`apps/web/src/lib/device-token.ts`) and **takes precedence over the Supabase session**. That is an
+unsupervised bearer credential at the door outranking real auth.
+
+**The argument against:** the device path is load-bearing in middleware, not a leaf. It is a whole
+caller *kind* — `middleware/caller.ts` has both a token branch and a tenant branch with role/scope
+intersection. Deleting it is a schema + API + UI change, not a UI cleanup.
+
+**The deciding question, which needs your answer:** are doors staffed by *volunteers you would add as
+members* (the Luma model works cleanly — the `checkin` role already exists in `authz/permissions.ts`
+and is already assignable from Account → Members), or by *unattended tablets* (no person to attach a
+role to, which is exactly what device tokens are for)?
+
+<details>
+<summary>Original brief (kept for context)</summary>
+
+### Rethink device tokens — do what Luma does · L
 
 The maintainer wants the whole `cpd_…` device-token approach reconsidered: **a limited role plus a
 shared QR, not a device credential.**
@@ -235,6 +336,8 @@ door holds anything that reaches the account.
   the natural home for per-event scoping if it is still wanted.
 
 This is a schema + API + UI change. Do the API side first, then delete the UI in one pass.
+
+</details>
 
 ## 2.7 ⬜ No way to toggle premium in the UI · S
 

@@ -59,6 +59,26 @@ const asString = (v: unknown): string | null =>
   typeof v === 'string' && v.length > 0 ? v : null;
 
 /**
+ * A friendly label for an anonymous guest, e.g. `Guest 4821`.
+ *
+ * Anonymous sign-ins assert no `name` claim, so without this every guest shows
+ * up as a raw UUID (or as nothing at all) everywhere a display name is rendered.
+ *
+ * Derived from the subject rather than randomised, so the same anonymous user
+ * keeps the same label if the account is ever recreated, and so tests are
+ * deterministic. Four digits is a label, not an identifier — collisions are
+ * expected and harmless; `(issuer, subject)` remains the only thing that
+ * identifies a caller.
+ */
+export const guestDisplayName = (subject: string): string => {
+  let hash = 0;
+  for (let i = 0; i < subject.length; i++) {
+    hash = (hash * 31 + subject.charCodeAt(i)) % 10000;
+  }
+  return `Guest ${String(hash).padStart(4, '0')}`;
+};
+
+/**
  * Find the account behind `(issuer, subject)`, creating it on first sight.
  *
  * "Creating on first sight" is not the same as the lazy-guest rule in D16: a
@@ -92,28 +112,74 @@ export async function resolveCaller(db: Database, input: ResolveInput): Promise<
     // A new (issuer, subject). Note we do NOT look for an existing account by
     // email and attach to it — that would let anyone who can get a token from
     // any registered issuer for an address take over that account.
-    const [account] = await db
-      .insert(accounts)
-      .values({
-        email,
-        displayName: asString(input.claims.name),
-        isGuest,
-        lastSeenAt: new Date(),
+    //
+    // Concurrency matters here, and used to be got wrong. A brand-new caller's
+    // first page load fires several requests at once; every one of them misses
+    // the SELECT above, and every one of them tried to insert. The unique index
+    // `uq_identities_issuer_subject` then rejected all but one, so a new user's
+    // very first requests answered 500 (reproduced: 3 of 4 concurrent).
+    //
+    // Two things fix it. The insert tolerates the conflict instead of raising,
+    // and the pair is one transaction — so a lost race rolls the account back
+    // rather than leaving an orphan with no identity pointing at it.
+    const created = await db
+      .transaction(async (tx) => {
+        const [account] = await tx
+          .insert(accounts)
+          .values({
+            email,
+            // A guest asserts no name; fall back to a readable label rather
+            // than leaving every guest nameless in the UI.
+            displayName:
+              asString(input.claims.name) ?? (isGuest ? guestDisplayName(input.subject) : null),
+            isGuest,
+            lastSeenAt: new Date(),
+          })
+          .returning({ id: accounts.id });
+
+        const inserted = await tx
+          .insert(identities)
+          .values({
+            accountId: account.id,
+            issuer: input.issuer,
+            subject: input.subject,
+            providerKind: input.providerKind,
+            orgIdentityProviderId: input.orgIdentityProviderId ?? null,
+            email,
+            emailVerified,
+            lastLoginAt: new Date(),
+          })
+          .onConflictDoNothing({ target: [identities.issuer, identities.subject] })
+          .returning({ id: identities.id });
+
+        // Lost the race: another request inserted this identity first. Abort so
+        // the account we just made is rolled back, then read theirs below.
+        if (inserted.length === 0) throw new LostIdentityRace();
+
+        return account.id;
       })
-      .returning({ id: accounts.id });
+      .catch((error: unknown) => {
+        if (error instanceof LostIdentityRace) return null;
+        throw error;
+      });
 
-    accountId = account.id;
+    if (created) {
+      accountId = created;
+    } else {
+      const [winner] = await db
+        .select({ accountId: identities.accountId })
+        .from(identities)
+        .where(and(eq(identities.issuer, input.issuer), eq(identities.subject, input.subject)))
+        .limit(1);
 
-    await db.insert(identities).values({
-      accountId,
-      issuer: input.issuer,
-      subject: input.subject,
-      providerKind: input.providerKind,
-      orgIdentityProviderId: input.orgIdentityProviderId ?? null,
-      email,
-      emailVerified,
-      lastLoginAt: new Date(),
-    });
+      // The row is guaranteed to exist: the conflict above proves it was
+      // committed. Treat its absence as a real fault rather than papering over
+      // it with a second account.
+      if (!winner) {
+        throw new Error('identity conflicted on insert but could not be read back');
+      }
+      accountId = winner.accountId;
+    }
   }
 
   const [account] = await db

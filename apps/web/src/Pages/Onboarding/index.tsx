@@ -45,6 +45,7 @@ import { toast } from '@credopass/ui/components/sonner';
 import { cn } from '@credopass/ui/lib/utils';
 import CredoPassLogoIcon from '../../containers/LeftSidebar/brand-icon';
 import { errorMessage } from '../../lib/errors';
+import { useSession } from '../../contexts/session';
 
 const STEPS = ['Organization', 'Team', 'First event'] as const;
 
@@ -56,6 +57,27 @@ const slugify = (name: string) =>
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
     .slice(0, 64);
+
+/**
+ * A first suggestion for the organization name, so step 1 is one Enter press.
+ *
+ * D16 keeps creating an organization deliberate — an account that belongs to
+ * nothing lands here rather than being handed a tenant it never asked for. This
+ * is the cheap half of that trade: it removes the typing without creating an
+ * organization (and an RLS-policied tenant) per anonymous visitor.
+ *
+ * Skipped for guests, whose display name is a generated `Guest 4821` label
+ * (`guestDisplayName` in services/core/src/services/identity.ts) and would read
+ * as noise rather than as a suggestion.
+ */
+const suggestedOrganizationName = (
+  displayName: string | null | undefined,
+  isGuest: boolean
+): string => {
+  if (isGuest) return '';
+  const first = displayName?.trim().split(/\s+/)[0];
+  return first ? `${first}'s organization` : '';
+};
 
 const browserTimezone = () => {
   try {
@@ -144,9 +166,19 @@ function CreateOrganizationStep({
 }: {
   onCreated: (id: string, name: string) => void;
 }) {
-  const [name, setName] = useState('');
+  const { context } = useSession();
+  // `null` means "untouched, show the suggestion". Derived rather than seeded
+  // into state by an effect: the account arrives with `/me/context`, which may
+  // still be in flight on first render, and writing state from an effect to
+  // catch that would cascade renders. Once the host types, their value wins —
+  // including an empty one.
+  const [typed, setTyped] = useState<string | null>(null);
   const [timezone, setTimezone] = useState(browserTimezone);
   const createOrganization = useCreateOrganization();
+
+  const name =
+    typed ??
+    suggestedOrganizationName(context?.account.displayName, context?.account.isGuest ?? false);
 
   const slug = useMemo(() => slugify(name), [name]);
   const canSubmit = name.trim().length > 1 && !createOrganization.isPending;
@@ -190,7 +222,10 @@ function CreateOrganizationStep({
           value={name}
           placeholder="Kharis Church"
           className="h-11 rounded-xl"
-          onChange={(e) => setName(e.target.value)}
+          // Select-all on focus so the suggestion is one keystroke to replace
+          // and one Enter to accept.
+          onFocus={(e) => e.target.select()}
+          onChange={(e) => setTyped(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === 'Enter') submit();
           }}

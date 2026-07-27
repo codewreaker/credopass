@@ -68,7 +68,6 @@ export function RootLayout() {
 
   return (
     <ToolbarSlotProvider>
-      <OnboardingGate />
       <div className="app-container">
         <div className="app-layout">
           <LeftSidebar
@@ -89,7 +88,9 @@ export function RootLayout() {
                     <div className="w-5 h-5 border-2 border-border border-t-primary rounded-full animate-spin" />
                   </div>
                 }>
-                  <Outlet />
+                  <OnboardingGate>
+                    <Outlet />
+                  </OnboardingGate>
                 </Suspense>
               </div>
             </SidebarInset>
@@ -109,15 +110,38 @@ export function RootLayout() {
  * correctly returns nothing. Without somewhere to land, enforcing tenancy would
  * break the product for every new user — so the console redirects rather than
  * rendering an empty shell (§2.2).
+ *
+ * It **wraps** the outlet rather than sitting beside it. Navigation happens in
+ * an effect, which runs *after* children have mounted — so as a sibling this
+ * let org-scoped screens mount, fire their queries and, worse, accept a submit
+ * in the frame before the redirect landed. `POST /events` with no active
+ * organization answers `403 not_a_member` ("This account belongs to no
+ * organization yet"), which is both a dead end and the wrong thing to tell
+ * someone who simply has not created an organization yet.
+ *
+ * Blocking here fixes it once for every org-scoped route, rather than needing a
+ * `beforeLoad` guard on each one that would have to re-fetch `/me/context`
+ * outside the api-client (golden rule 2).
  */
-function OnboardingGate() {
+function OnboardingGate({ children }: { children: React.ReactNode }) {
   const { needsOnboarding, isContextLoading, isPairedDevice } = useSession();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (isContextLoading || isPairedDevice || !needsOnboarding) return;
-    navigate({ to: '/onboarding', replace: true });
-  }, [needsOnboarding, isContextLoading, isPairedDevice, navigate]);
+  // A paired device has no account and never onboards; it must not be bounced.
+  const blocked = !isContextLoading && !isPairedDevice && needsOnboarding;
 
-  return null;
+  useEffect(() => {
+    if (!blocked) return;
+    navigate({ to: '/onboarding', replace: true });
+  }, [blocked, navigate]);
+
+  if (blocked) {
+    return (
+      <div className="flex items-center justify-center h-full min-h-40">
+        <div className="w-5 h-5 border-2 border-border border-t-primary rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  return <>{children}</>;
 }
