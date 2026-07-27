@@ -12,7 +12,27 @@
  *      CI uses when it has a service container).
  *   2. Testcontainers — starts postgres:16 on demand. Needs a Docker daemon.
  * Never the developer's real DATABASE_URL: these tests truncate tables.
+ *
+ * It also sets `PASS_SIGNING_KEY` below. Not this module's subject, but this is
+ * the one thing every DB-backed suite calls, so it is the only place the default
+ * cannot be forgotten — which it was, in the adversarial suite, until CI went red
+ * on a 500 from `POST /public/events/{id}/register`.
  */
+
+/**
+ * `PassService.keyFor` throws when this is unset — correctly, because a default
+ * signing key is the same as no signature. Bun auto-loads `services/core/.env`,
+ * so a maintainer's machine has a key and a fresh clone or a CI runner does not;
+ * the suite was green locally and red in CI for exactly that reason.
+ *
+ * The value protects nothing: it signs tokens minted and verified inside this
+ * process, against a database that is truncated between suites. Same category as
+ * the `postgres:postgres` test credentials in `.env.example`.
+ *
+ * `??=`, never `=`: a runner with a real key, or a test exercising the
+ * key-absent branch, still wins.
+ */
+process.env.PASS_SIGNING_KEY ??= 'test-signing-key-not-for-production';
 
 import { PostgreSqlContainer, type StartedPostgreSqlContainer } from '@testcontainers/postgresql';
 import { drizzle } from 'drizzle-orm/node-postgres';
