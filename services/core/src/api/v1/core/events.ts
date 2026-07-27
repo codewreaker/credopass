@@ -129,7 +129,7 @@ eventRoutes.openapi(
               total: z.number().int(),
               upcoming: z.number().int(),
               ongoing: z.number().int(),
-              next: EventSummarySchema.nullable(),
+              next: z.union([EventSummarySchema, z.null()]),
             }),
           },
         },

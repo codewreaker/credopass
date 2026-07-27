@@ -1,5 +1,19 @@
-import { useEffect, useMemo } from "react";
-import { Organization } from "@credopass/lib/schemas";
+import {
+    ChevronsUpDownIcon,
+    CreditCard,
+    HelpCircle,
+    LogOut,
+    Plus,
+    Settings,
+    User,
+} from "lucide-react";
+import { useNavigate } from "@tanstack/react-router";
+import {
+    clearActiveOrganization,
+    setActiveOrganizationId,
+    useOrganizations,
+    type Organization,
+} from "@credopass/api-client";
 import { SidebarMenuButton } from "@credopass/ui/components/sidebar";
 import {
     DropdownMenu,
@@ -10,198 +24,186 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@credopass/ui/components/dropdown-menu"
-
+import { Avatar, AvatarFallback } from "@credopass/ui/components/avatar";
 import { cn } from "@credopass/ui/lib/utils";
-import {
-    ChevronsUpDownIcon,
-    Plus,
-    Settings,
-    User,
-    CreditCard,
-    LogOut,
-    HelpCircle,
-} from "lucide-react";
-import { useLauncher, useOrganizationStore } from '@credopass/lib/stores';
-import { launchOrganizationForm } from "../OrganizationForm";
-import { launchSignInForm } from "../SignInModal/index";
 import CredoPassLogoIcon from "../LeftSidebar/brand-icon";
-import { useLiveQuery } from '@tanstack/react-db';
-import { getCollections } from '@credopass/api-client/collections';
-import { useNavigate } from "@tanstack/react-router";
 import { supabase } from "../../supabase";
-import { Avatar, AvatarFallback, AvatarImage } from "@credopass/ui/components/avatar";
+import { useSession } from "../../contexts/session";
 
+/** "Israel Agyeman-Prempeh" → "IA". */
+const initialsOf = (name: string | null | undefined, email: string | null | undefined) => {
+    const source = name?.trim() || email?.split('@')[0] || '';
+    const parts = source.split(/[\s._-]+/).filter(Boolean);
+    if (parts.length === 0) return 'CP';
+    return (parts[0][0] + (parts[1]?.[0] ?? '')).toUpperCase();
+};
 
+/**
+ * The organization switcher.
+ *
+ * `GET /organizations` returns the caller's own organizations and nothing else —
+ * it is not a directory. That is the fix for the leak where this component
+ * listed every organization in the database and auto-selected the first, which
+ * is how one account ended up looking at another tenant's events (§2.2, §2.12).
+ *
+ * The active choice is decided at bootstrap from `/me/context` and remembered
+ * per account; switching here only re-points the store. Because the active id is
+ * part of every org-scoped query key, that re-keys the cache — no page reload,
+ * and no possibility of the previous organization's rows surviving the switch.
+ */
 const OrgSelector: React.FC<{
     onClick?: (org: Organization) => void
     compact?: boolean
-}> = ({
-    onClick,
-    compact = false
-}) => {
+}> = ({ onClick, compact = false }) => {
+    const navigate = useNavigate();
+    const { context, organizationId } = useSession();
+    const { data: organizations = [] } = useOrganizations({ enabled: !!context });
 
+    const account = context?.account;
+    const activeOrganization = organizations.find((o) => o.id === organizationId) ?? null;
 
-        // Get collections inside component
-        const { organizations: organizationCollection } = getCollections();
+    const handleSelectOrganization = (org: Organization) => {
+        setActiveOrganizationId(org.id);
+        onClick?.(org);
+    };
 
-        // Fetch organizations from API
-        const orgsQuery = useLiveQuery((query) =>
-            query
-                .from({ organizationCollection })
-        );
-        const organizations = useMemo(() =>
-            (orgsQuery.data ?? []) as Organization[]
-            , [orgsQuery.data]);
+    const signOut = async () => {
+        await supabase.auth.signOut();
+        clearActiveOrganization();
+        navigate({ to: '/login', search: { manual: true, view: 'social', out: true } });
+    };
 
-        const { activeOrganizationId, activeOrganization, setActiveOrganization, switchOrganization } = useOrganizationStore();
-        const navigate = useNavigate();
-        const { openLauncher } = useLauncher();
-
-
-
-        // Auto-select first organization if none selected (without reload)
-        useEffect(() => {
-            if (!activeOrganizationId && organizations.length > 0) {
-                setActiveOrganization(organizations[0].id, organizations[0]);
-            }
-        }, [activeOrganizationId, organizations, setActiveOrganization]);
-
-        const handleSelectOrganization = (org: Organization) => {
-            // If switching to a different org, use switchOrganization which reloads the app
-            if (activeOrganizationId && activeOrganizationId !== org.id) {
-                switchOrganization(org.id, org);
-            } else {
-                setActiveOrganization(org.id, org);
-            }
-            onClick?.(org);
-        };
-
-        return (
-            <DropdownMenu>
-                <DropdownMenuTrigger render={() => (
-                    <SidebarMenuButton
-                        size={compact ? "default" : "lg"}
-                        className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
-                    >
-                        <CredoPassLogoIcon size={16} />
-                        {!compact && (
-                            <>
-                                <div className="grid flex-1 text-left text-sm leading-tight">
-                                    <span className="truncate font-semibold">
-                                        {activeOrganization?.name || 'Select Organization'}
-                                    </span>
-                                    <span className="truncate text-xs">
-                                        {activeOrganization?.plan || 'No org selected'}
-                                    </span>
-                                </div>
-                                <ChevronsUpDownIcon className="ml-auto" />
-                            </>
-                        )}
-                    </SidebarMenuButton>
-                )} />
-                <DropdownMenuContent
-                    className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
-                    align="start"
-                    side="bottom"
-                    sideOffset={4}
+    return (
+        <DropdownMenu>
+            <DropdownMenuTrigger render={() => (
+                <SidebarMenuButton
+                    size={compact ? "default" : "lg"}
+                    className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                 >
-                    {/* ── User Profile Section ── */}
-                    <DropdownMenuGroup>
-                        <DropdownMenuLabel className="p-0">
-                            <div className="flex items-center gap-2 px-2 py-2">
-                                <Avatar className="h-8 w-8 border border-border">
-                                    <AvatarImage src="/avatars/shadcn.jpg" alt="Israel" />
-                                    <AvatarFallback className="text-[0.625rem] font-semibold bg-muted text-muted-foreground">IA</AvatarFallback>
-                                </Avatar>
-                                <div className="flex flex-col gap-0.5">
-                                    <span className="text-sm font-medium leading-none">Israel</span>
-                                    <span className="text-xs text-muted-foreground leading-none">iz@credopass.com</span>
-                                </div>
+                    <CredoPassLogoIcon size={16} />
+                    {!compact && (
+                        <>
+                            <div className="grid flex-1 text-left text-sm leading-tight">
+                                <span className="truncate font-semibold">
+                                    {activeOrganization?.name || 'Select Organization'}
+                                </span>
+                                <span className="truncate text-xs">
+                                    {activeOrganization?.plan || 'No org selected'}
+                                </span>
                             </div>
-                        </DropdownMenuLabel>
-                    </DropdownMenuGroup>
-                    <DropdownMenuSeparator />
+                            <ChevronsUpDownIcon className="ml-auto" />
+                        </>
+                    )}
+                </SidebarMenuButton>
+            )} />
+            <DropdownMenuContent
+                className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
+                align="start"
+                side="bottom"
+                sideOffset={4}
+            >
+                {/* ── Account ── from GET /me/context, never hardcoded ── */}
+                <DropdownMenuGroup>
+                    <DropdownMenuLabel className="p-0">
+                        <div className="flex items-center gap-2 px-2 py-2">
+                            <Avatar className="h-8 w-8 border border-border">
+                                <AvatarFallback className="text-[0.625rem] font-semibold bg-muted text-muted-foreground">
+                                    {initialsOf(account?.displayName, account?.email)}
+                                </AvatarFallback>
+                            </Avatar>
+                            <div className="flex min-w-0 flex-col gap-0.5">
+                                <span className="truncate text-sm font-medium leading-none">
+                                    {account?.displayName || account?.email?.split('@')[0] || 'Your account'}
+                                </span>
+                                <span className="truncate text-xs text-muted-foreground leading-none">
+                                    {account?.email ?? 'Signed in'}
+                                </span>
+                            </div>
+                        </div>
+                    </DropdownMenuLabel>
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator />
 
-                    <DropdownMenuGroup>
-                        <DropdownMenuItem
-                            onClick={() => launchSignInForm({}, openLauncher)}
-                            className="gap-2 p-2"
-                        >
-                            <User className="h-4 w-4" />
-                            <span>Profile</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="gap-2 p-2">
-                            <CreditCard className="h-4 w-4" />
-                            <span>Billing</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="gap-2 p-2">
-                            <Settings className="h-4 w-4" />
-                            <span>Settings</span>
-                        </DropdownMenuItem>
-                    </DropdownMenuGroup>
-                    <DropdownMenuSeparator />
-
-                    {/* ── Organizations Section ── */}
-                    <DropdownMenuGroup>
-                        <DropdownMenuLabel className="text-xs text-muted-foreground">Organizations</DropdownMenuLabel>
-                    </DropdownMenuGroup>
-                    {organizations.map((org) => (
-                        <DropdownMenuItem
-                            key={org.id}
-                            onClick={() => handleSelectOrganization(org)}
-                            className={cn(
-                                "gap-2 p-2",
-                                activeOrganizationId === org.id && "bg-accent"
-                            )}
-                        >
-                            <div className="flex size-6 items-center justify-center rounded-sm border">
-                                {org.name?.charAt(0) || 'O'}
-                            </div>
-                            <div className="flex flex-col">
-                                <span>{org.name}</span>
-                                <span className="text-xs text-muted-foreground">{org.plan}</span>
-                            </div>
-                        </DropdownMenuItem>
-                    ))}
-                    <DropdownMenuSeparator />
+                <DropdownMenuGroup>
                     <DropdownMenuItem
-                        onClick={() => launchOrganizationForm({}, openLauncher)}
+                        onClick={() => navigate({ to: '/account' })}
                         className="gap-2 p-2"
                     >
-                        <div className="flex size-6 items-center justify-center rounded-sm border border-dashed">
-                            <Plus className="h-4 w-4" />
-                        </div>
-                        <span>New Organization</span>
+                        <User className="h-4 w-4" />
+                        <span>Account</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate({ to: '/upgrade' })} className="gap-2 p-2">
+                        <CreditCard className="h-4 w-4" />
+                        <span>Billing</span>
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                        onClick={() => navigate({ to: '/organizations' })}
+                        onClick={() => navigate({ to: '/account', search: { tab: 'settings' } })}
                         className="gap-2 p-2"
+                    >
+                        <Settings className="h-4 w-4" />
+                        <span>Settings</span>
+                    </DropdownMenuItem>
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator />
+
+                {/* ── Organizations — yours only ── */}
+                <DropdownMenuGroup>
+                    <DropdownMenuLabel className="text-xs text-muted-foreground">Organizations</DropdownMenuLabel>
+                </DropdownMenuGroup>
+                {organizations.map((org) => (
+                    <DropdownMenuItem
+                        key={org.id}
+                        onClick={() => handleSelectOrganization(org)}
+                        className={cn(
+                            "gap-2 p-2",
+                            organizationId === org.id && "bg-accent"
+                        )}
                     >
                         <div className="flex size-6 items-center justify-center rounded-sm border">
-                            <Settings className="h-4 w-4" />
+                            {org.name?.charAt(0) || 'O'}
                         </div>
-                        <span>Manage Organizations</span>
+                        <div className="flex min-w-0 flex-col">
+                            <span className="truncate">{org.name}</span>
+                            <span className="text-xs text-muted-foreground">{org.role ?? org.plan}</span>
+                        </div>
                     </DropdownMenuItem>
+                ))}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                    onClick={() => navigate({ to: '/onboarding' })}
+                    className="gap-2 p-2"
+                >
+                    <div className="flex size-6 items-center justify-center rounded-sm border border-dashed">
+                        <Plus className="h-4 w-4" />
+                    </div>
+                    <span>New Organization</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                    onClick={() => navigate({ to: '/account', search: { tab: 'organizations' } })}
+                    className="gap-2 p-2"
+                >
+                    <div className="flex size-6 items-center justify-center rounded-sm border">
+                        <Settings className="h-4 w-4" />
+                    </div>
+                    <span>Manage Organizations</span>
+                </DropdownMenuItem>
 
-                    {/* ── Support & Sign Out ── */}
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem className="gap-2 p-2">
-                        <HelpCircle className="h-4 w-4" />
-                        <span>Help & Support</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                        className="gap-2 p-2 text-destructive focus:text-destructive"
-                        onClick={async () => {
-                            await supabase.auth.signOut();
-                            navigate({ to: '/login', search: { manual: true, view: 'social', out: true } });
-                        }}
-                    >
-                        <LogOut className="h-4 w-4" />
-                        <span>Sign Out</span>
-                    </DropdownMenuItem>
-                </DropdownMenuContent>
-            </DropdownMenu>
-        )
-    }
+                {/* ── Support & Sign Out ── */}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="gap-2 p-2">
+                    <HelpCircle className="h-4 w-4" />
+                    <span>Help & Support</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                    className="gap-2 p-2 text-destructive focus:text-destructive"
+                    onClick={signOut}
+                >
+                    <LogOut className="h-4 w-4" />
+                    <span>Sign Out</span>
+                </DropdownMenuItem>
+            </DropdownMenuContent>
+        </DropdownMenu>
+    )
+}
 export default OrgSelector;

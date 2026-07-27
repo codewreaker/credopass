@@ -13,6 +13,7 @@
  */
 
 import createClient, { type Middleware } from 'openapi-fetch';
+import { getActiveOrganizationId } from './active-organization';
 import type { components, paths } from './generated/schema';
 
 /** Matches the `servers` entry in the generated OpenAPI document. */
@@ -155,6 +156,9 @@ export interface ApiClientConfig {
    * routes and pass routes ignore it, and routes addressed as
    * `/organizations/{id}/…` take the id from the path instead — so sending it
    * everywhere is safe.
+   *
+   * Defaults to the active-organization store, which is what `useActiveOrganizationId`
+   * and the org switcher read. Override only to point the client at something else.
    */
   getOrganizationId?: () => string | null | undefined;
 }
@@ -183,7 +187,7 @@ const authMiddleware: Middleware = {
     const token = await config.getAuthToken?.();
     if (token) request.headers.set('Authorization', `Bearer ${token}`);
 
-    const organizationId = config.getOrganizationId?.();
+    const organizationId = config.getOrganizationId?.() ?? getActiveOrganizationId();
     if (organizationId) request.headers.set('X-Organization-Id', organizationId);
 
     return request;

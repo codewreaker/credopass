@@ -43,7 +43,7 @@ const MeContextSchema = z
   .object({
     account: AccountSchema,
     organizations: z.array(OrgSummarySchema),
-    activeOrganization: OrgSummarySchema.nullable(),
+    activeOrganization: z.union([OrgSummarySchema, z.null()]),
     membership: z
       .object({ role: z.string(), permissions: z.array(z.string()) })
       .nullable(),

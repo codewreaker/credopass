@@ -1,18 +1,24 @@
 import { useCallback, useMemo, useState, type KeyboardEvent } from 'react';
-import { eq, useLiveQuery } from '@tanstack/react-db';
-import { getCollections } from '@credopass/api-client/collections';
-import type { EventType, Organization } from '@credopass/lib/schemas';
-import { useEventSessionStore } from '@credopass/lib/stores';
+import { useNavigate } from '@tanstack/react-router';
+import {
+    hasProblemCode,
+    ProblemCode,
+    useCancelEvent,
+    useDeleteEvent,
+    useEvents,
+    useEventsCalendar,
+    useEventsSummary,
+    useOrganizations,
+    type Event,
+} from '@credopass/api-client';
 import EventListView from './EventListView';
 import EventCalendar from '@credopass/ui/components/event-calendar';
 import { CalendarPlus, CalendarsIcon, FastForward, MapPin, Users, Clock, ScanLine, ArrowUpRight, Plus, ChevronUp, ChevronDown, Sparkles } from 'lucide-react';
-import { useNavigate } from '@tanstack/react-router';
 import { useStatusFilter, useToolbarContext } from '@credopass/lib/hooks';
 export { EVENTS_FILTER_GROUP_COOKIE_NAME, EVENTS_FILTER_ENABLED_COOKIE_NAME } from '@credopass/lib/hooks';
 import { ButtonGroup } from '@credopass/ui/components/button-group';
 import { getGreeting } from '@credopass/lib/utils';
-import { handleCollectionDeleteById } from '@credopass/api-client/collections';
-
+import { toast } from '@credopass/ui/components/sonner';
 
 import './events.css';
 import { RightSidebarTrigger } from '../../containers/RightSidebar';
@@ -22,10 +28,8 @@ import { StatusFilterSwitch } from './StatusFilterSwitch';
 import { Separator } from '@credopass/ui/components/separator';
 import { useIsMobile } from '@credopass/ui/hooks/use-mobile';
 import { Button } from '@credopass/ui/components/button';
-import { usePremium } from '../../contexts/premium';
-
-
-const handleDeleteEvent = (eventId: string) => handleCollectionDeleteById('events', eventId);
+import { useCan, useDisplayName, useSession } from '../../contexts/session';
+import { errorMessage } from '../../lib/errors';
 
 /** Lime spotlight hero — surfaces the next ongoing/scheduled event with quick actions. */
 const HERO_COLLAPSED_KEY = 'credopass:events-hero-collapsed';
@@ -34,10 +38,16 @@ const HeroSpotlight = ({
     nextEvent,
     stats,
     onCreateEvent,
+    canCreate,
+    needsOnboarding,
+    onStartOnboarding,
 }: {
-    nextEvent: EventType | null;
+    nextEvent: Event | null;
     stats: { total: number; upcoming: number; ongoing: number };
     onCreateEvent: () => void;
+    canCreate: boolean;
+    needsOnboarding: boolean;
+    onStartOnboarding: () => void;
 }) => {
     const navigate = useNavigate();
     const [collapsed, setCollapsed] = useState<boolean>(() => {
@@ -49,7 +59,8 @@ const HeroSpotlight = ({
             return !prev;
         });
     };
-    const startDate = nextEvent?.startTime ? new Date(nextEvent.startTime) : null;
+    const startDate = nextEvent?.startAt ? new Date(nextEvent.startAt) : null;
+    // Derived server-side. Never recompute it from the timestamps here.
     const isLive = nextEvent?.status === 'ongoing';
 
     // Minimized: a compact strip that reads like the other rows
@@ -113,7 +124,7 @@ const HeroSpotlight = ({
                 }
                 : {})}
         >
-            <div className="pointer-events-none absolute -right-14 -top-14 size-44 rounded-full border-[18px] border-primary-foreground/6" />
+            <div className="pointer-events-none absolute -right-14 -top-14 size-44 rounded-full border-18 border-primary-foreground/6" />
             {nextEvent && (
                 <button
                     type="button"
@@ -162,12 +173,10 @@ const HeroSpotlight = ({
                                     <span className="truncate">{nextEvent.location}</span>
                                 </span>
                             )}
-                            {nextEvent.capacity != null && (
-                                <span className="inline-flex items-center gap-1.5">
-                                    <Users size={13} />
-                                    {nextEvent.capacity}
-                                </span>
-                            )}
+                            <span className="inline-flex items-center gap-1.5">
+                                <Users size={13} />
+                                {nextEvent.counts.registered} registered
+                            </span>
                         </div>
 
                         {/* CTAs */}
@@ -203,16 +212,26 @@ const HeroSpotlight = ({
                 <div className="relative z-10 flex flex-col md:flex-row md:items-center gap-4 md:gap-6">
                     <div className="min-w-0 flex-1">
                         <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-primary-foreground/60 mb-1.5">Get started</p>
-                        <h2 className="text-xl lg:text-2xl font-semibold tracking-tight mb-1">Plan your next event</h2>
-                        <p className="text-[13px] font-medium text-primary-foreground/70 mb-4">Create an event and start checking people in within minutes.</p>
-                        <button
-                            type="button"
-                            onClick={onCreateEvent}
-                            className="inline-flex items-center gap-2 whitespace-nowrap rounded-full bg-primary-foreground text-primary px-4 h-9 text-[13px] font-semibold cursor-pointer transition-transform duration-150 hover:scale-[1.02] active:scale-[0.98]"
-                        >
-                            <Plus size={14} />
-                            Create Event
-                        </button>
+                        {/* An account with no organization has nothing to create an
+                            event *on*, so the first ask is the organization (§2.3). */}
+                        <h2 className="text-xl lg:text-2xl font-semibold tracking-tight mb-1">
+                            {needsOnboarding ? 'Create your organization' : 'Plan your next event'}
+                        </h2>
+                        <p className="text-[13px] font-medium text-primary-foreground/70 mb-4">
+                            {needsOnboarding
+                                ? 'Events, attendees and your team all live inside an organization. It takes a minute.'
+                                : 'Create an event and start checking people in within minutes.'}
+                        </p>
+                        {(needsOnboarding || canCreate) && (
+                            <button
+                                type="button"
+                                onClick={needsOnboarding ? onStartOnboarding : onCreateEvent}
+                                className="inline-flex items-center gap-2 whitespace-nowrap rounded-full bg-primary-foreground text-primary px-4 h-9 text-[13px] font-semibold cursor-pointer transition-transform duration-150 hover:scale-[1.02] active:scale-[0.98]"
+                            >
+                                <Plus size={14} />
+                                {needsOnboarding ? 'Create organization' : 'Create Event'}
+                            </button>
+                        )}
                     </div>
                     {statBlocks}
                 </div>
@@ -255,17 +274,30 @@ const UpgradeSpotlight = ({ onUpgrade }: { onUpgrade: () => void }) => (
     </div>
 );
 
+/** `2026-07` — the month key `GET /events/calendar` expects. */
+const monthKey = (date: Date) =>
+    `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+
 /**
- * EventCalendar is a full blown calendar that can be accessed in the sidebar
- * should we want to make it available in the event view just import it here
- * import { EventCalendar } from '../../components/event-calendar';
+ * The console's home.
+ *
+ * Every number on this page comes off the wire. The counts are
+ * `GET /events/summary`, the spotlight is `summary.next`, the list is
+ * `GET /events?group=…&q=…`, and the calendar rail is
+ * `GET /events/calendar?month=`. What used to be four `useMemo`s over a
+ * full-table cache is now four requests that the server already knows the
+ * answers to (§2.3).
  */
 const EventsPage = () => {
     const navigate = useNavigate();
-    const { events: eventCollection, organizations: orgCollection } = getCollections();
     const isMobile = useIsMobile();
     const [searchQuery, setSearchQuery] = useState<string>('');
+    const [calendarMonth, setCalendarMonth] = useState<Date>(() => new Date());
 
+    const { needsOnboarding, organizationId } = useSession();
+    const canCreate = useCan('event:create');
+    const canDelete = useCan('event:delete');
+    const canCancel = useCan('event:cancel');
 
     const {
         activeGroup, setActiveGroup,
@@ -273,34 +305,41 @@ const EventsPage = () => {
         actionsEnabled, toggleActions,
     } = useStatusFilter();
 
-    const { isPremium } = usePremium();
-    const userName = useEventSessionStore((s) => s.session.currentUserName);
-    const firstName = useMemo(() => userName?.split(' ')[0] || 'there', [userName]);
+    const firstName = useDisplayName().split(' ')[0];
     const greeting = useMemo(() => getGreeting(), []);
 
-    const { data: eventsData } = useLiveQuery((q) => q
-        .from({ eventCollection })
-        .join(
-            { orgCollection },
-            ({ eventCollection, orgCollection }) => eq(eventCollection.organizationId, orgCollection.id)
-        )
-        .orderBy(({ eventCollection }) => eventCollection.startTime, 'desc')
-        .select(({ eventCollection, orgCollection }) => ({
-            ...eventCollection,
-            orgCollection,
-        }))
-    );
-    const events = useMemo<EventType[]>(
-        () => (Array.isArray(eventsData) ? eventsData : []),
-        [eventsData],
+    const { data: summary } = useEventsSummary();
+    const { data: page, isLoading } = useEvents({
+        group: activeGroup,
+        q: searchQuery.trim() || undefined,
+    });
+    const { data: calendar } = useEventsCalendar(monthKey(calendarMonth));
+    const { data: organizations = [] } = useOrganizations();
+    const activeOrganization = organizations.find((o) => o.id === organizationId);
+
+    const events = page?.data ?? [];
+
+    // The calendar rail shows the whole month, independent of the Upcoming/Past
+    // switch — a month is a month.
+    const calendarEvents = useMemo<Event[]>(
+        () => (calendar?.days ?? []).flatMap((day) => day.events),
+        [calendar]
     );
 
+    const heroStats = {
+        total: summary?.total ?? 0,
+        upcoming: summary?.upcoming ?? 0,
+        ongoing: summary?.ongoing ?? 0,
+    };
+
+    const cancelEvent = useCancelEvent();
+    const deleteEvent = useDeleteEvent();
 
     const handleCreateEvent = useCallback(() => {
         navigate({ to: '/events/new' });
     }, [navigate]);
 
-    const handleEditEvent = useCallback((event: EventType & { orgCollection?: Organization }) => {
+    const handleEditEvent = useCallback((event: Event) => {
         navigate({ to: '/events/$eventId/edit', params: { eventId: event.id } });
     }, [navigate]);
 
@@ -309,55 +348,62 @@ const EventsPage = () => {
         navigate({ to: '/attendees', search: { eventId } });
     }, [navigate]);
 
+    /**
+     * Delete, falling back to cancel.
+     *
+     * `DELETE /events/{id}` refuses with 409 once anyone has registered, and it
+     * is right to: those people hold pass URLs. Cancelling keeps the rows, the
+     * URL and the history, and is what the organiser actually wants.
+     */
+    const handleDeleteEvent = useCallback(async (event: Event) => {
+        if (!canDelete) return;
+        try {
+            await deleteEvent.mutateAsync(event.id);
+            toast.success(`${event.name} deleted`);
+        } catch (error) {
+            if (hasProblemCode(error, ProblemCode.CONFLICT, ProblemCode.HAS_EVENTS) || (error as { status?: number })?.status === 409) {
+                if (!canCancel) {
+                    toast.error('People have already registered — an admin needs to cancel this event.');
+                    return;
+                }
+                toast.error('People have already registered', {
+                    description: 'Cancel it instead — everyone keeps their pass and the link still works.',
+                    action: {
+                        label: 'Cancel event',
+                        onClick: async () => {
+                            try {
+                                await cancelEvent.mutateAsync({ id: event.id });
+                                toast.success(`${event.name} cancelled`);
+                            } catch (cancelError) {
+                                toast.error(errorMessage(cancelError, 'Could not cancel the event'));
+                            }
+                        },
+                    },
+                });
+                return;
+            }
+            toast.error(errorMessage(error, 'Could not delete the event'));
+        }
+    }, [canDelete, canCancel, deleteEvent, cancelEvent]);
+
     // Register toolbar context: secondary "Create Event" button + search
     useToolbarContext({
-        action: { icon: CalendarPlus, label: 'Create Event', onClick: handleCreateEvent },
+        action: canCreate
+            ? { icon: CalendarPlus, label: 'Create Event', onClick: handleCreateEvent }
+            : null,
         search: { enabled: true, placeholder: 'Search events…', onSearch: setSearchQuery },
     });
-
-    // Read the clock once on mount rather than during render, which isn't pure.
-    const [now] = useState(() => Date.now());
-
-    // Next ongoing event, else soonest upcoming scheduled event — feeds the hero spotlight
-    const nextEvent = useMemo<EventType | null>(() => {
-        const ongoing = events.find((e) => e.status === 'ongoing');
-        if (ongoing) return ongoing;
-        const upcoming = events
-            .filter((e) => e.status === 'scheduled' && e.startTime && new Date(e.startTime).getTime() >= now)
-            .sort((a, b) => new Date(a.startTime!).getTime() - new Date(b.startTime!).getTime());
-        return upcoming[0] ?? events.find((e) => e.status === 'scheduled') ?? null;
-    }, [events, now]);
-
-    const heroStats = useMemo(() => ({
-        total: events.length,
-        upcoming: events.filter((e) => e.status === 'scheduled').length,
-        ongoing: events.filter((e) => e.status === 'ongoing').length,
-    }), [events]);
-
-    // Filter events by search query (name, location, description)
-    const filteredEvents = useMemo<EventType[]>(() => {
-        if (!searchQuery.trim()) return events;
-        const q = searchQuery.toLowerCase();
-        return events.filter(
-            (e) =>
-                e.name?.toLowerCase().includes(q) ||
-                e.location?.toLowerCase().includes(q) ||
-                e.description?.toLowerCase().includes(q),
-        );
-    }, [events, searchQuery]);
-
-
 
     return (
         <div className="events-page">
             <div className="events-header">
-                {/* Greeting */}
+                {/* Greeting — the name is the account's, from GET /me/context */}
                 <div className="events-header-left">
                     <h1 className="events-header-title">
                         {greeting}, {firstName}
                     </h1>
                     <p className="events-header-subtitle">
-                        {`${heroStats.total} event${heroStats.total === 1 ? '' : 's'} \u00b7 ${heroStats.upcoming} upcoming \u00b7 ${heroStats.ongoing} live now`}
+                        {`${heroStats.total} event${heroStats.total === 1 ? '' : 's'} · ${heroStats.upcoming} upcoming · ${heroStats.ongoing} live now`}
                     </p>
                 </div>
 
@@ -394,12 +440,15 @@ const EventsPage = () => {
                     <div className='w-full md:w-2/3 md:border-r md:pr-4 min-h-0'>
                         <div className='h-full overflow-auto flex flex-col gap-4'>
                             <HeroSpotlight
-                                nextEvent={nextEvent}
+                                nextEvent={summary?.next ?? null}
                                 stats={heroStats}
                                 onCreateEvent={handleCreateEvent}
+                                canCreate={canCreate}
+                                needsOnboarding={needsOnboarding || !organizationId}
+                                onStartOnboarding={() => navigate({ to: '/onboarding' })}
                             />
                             <EventListView
-                                events={filteredEvents}
+                                events={events}
                                 onCreateEvent={handleCreateEvent}
                                 onEditEvent={handleEditEvent}
                                 onDeleteEvent={handleDeleteEvent}
@@ -408,15 +457,28 @@ const EventsPage = () => {
                                 timezone={enableTimezone}
                                 activeGroup={activeGroup}
                                 onShowPast={() => setActiveGroup('past')}
+                                canCreate={canCreate}
+                                isLoading={isLoading}
                             />
-                            {!isPremium && (
+                            {page?.page.hasMore && (
+                                <p className="shrink-0 pb-2 text-center text-xs text-muted-foreground">
+                                    Showing the first {events.length}. Narrow the search to find more.
+                                </p>
+                            )}
+                            {/* Entitlement is the organization's plan, from the API —
+                                not a localStorage flag (§2.12). */}
+                            {activeOrganization?.plan === 'free' && (
                                 <UpgradeSpotlight onUpgrade={() => navigate({ to: '/upgrade' })} />
                             )}
                         </div>
                     </div>
                     {!isMobile && (
                         <div className='w-1/3'>
-                            <EventCalendar events={filteredEvents} />
+                            <EventCalendar
+                                events={calendarEvents}
+                                month={calendarMonth}
+                                onMonthChange={setCalendarMonth}
+                            />
                         </div>
                     )}
                 </div>

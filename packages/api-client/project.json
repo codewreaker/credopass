@@ -4,5 +4,23 @@
   "sourceRoot": "packages/api-client/src",
   "projectType": "library",
   "tags": ["type:package", "scope:shared"],
-  "targets": {}
+  "targets": {
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tsc -p tsconfig.json --noEmit",
+        "cwd": "{projectRoot}"
+      }
+    },
+    "generate": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "nx run coreservice:openapi:export",
+          "openapi-typescript services/core/openapi.json -o packages/api-client/src/generated/schema.d.ts"
+        ],
+        "parallel": false
+      }
+    }
+  }
 }

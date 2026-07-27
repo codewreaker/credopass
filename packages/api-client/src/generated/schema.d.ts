@@ -1000,7 +1000,7 @@ export interface paths {
                             total: number;
                             upcoming: number;
                             ongoing: number;
-                            next: components["schemas"]["EventSummary"] & (Record<string, never> | null);
+                            next: components["schemas"]["EventSummary"] | null;
                         };
                     };
                 };
@@ -2796,7 +2796,7 @@ export interface components {
         MeContext: {
             account: components["schemas"]["Account"];
             organizations: components["schemas"]["OrgSummary"][];
-            activeOrganization: components["schemas"]["OrgSummary"] & (Record<string, never> | null);
+            activeOrganization: components["schemas"]["OrgSummary"] | null;
             membership: {
                 role: string;
                 permissions: string[];

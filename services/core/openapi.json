@@ -158,15 +158,12 @@
             }
           },
           "activeOrganization": {
-            "allOf": [
+            "anyOf": [
               {
                 "$ref": "#/components/schemas/OrgSummary"
               },
               {
-                "type": [
-                  "object",
-                  "null"
-                ]
+                "type": "null"
               }
             ]
           },
@@ -2124,15 +2121,12 @@
                       "type": "integer"
                     },
                     "next": {
-                      "allOf": [
+                      "anyOf": [
                         {
                           "$ref": "#/components/schemas/EventSummary"
                         },
                         {
-                          "type": [
-                            "object",
-                            "null"
-                          ]
+                          "type": "null"
                         }
                       ]
                     }

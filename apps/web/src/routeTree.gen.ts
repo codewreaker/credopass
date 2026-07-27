@@ -12,14 +12,18 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as UpgradeRouteImport } from './routes/upgrade'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as OrganizationsRouteImport } from './routes/organizations'
+import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as EventsIndexRouteImport } from './routes/events/index'
 import { Route as AttendeesIndexRouteImport } from './routes/attendees/index'
+import { Route as PTokenRouteImport } from './routes/p/$token'
+import { Route as InvitationsTokenRouteImport } from './routes/invitations/$token'
 import { Route as EventsNewRouteImport } from './routes/events/new'
 import { Route as EventsEventIdRouteImport } from './routes/events/$eventId'
 import { Route as EEventIdRouteImport } from './routes/e/$eventId'
+import { Route as CheckinPairRouteImport } from './routes/checkin/pair'
 import { Route as CheckinEventIdRouteImport } from './routes/checkin/$eventId'
 import { Route as AttendeesNewRouteImport } from './routes/attendees/new'
 import { Route as EventsEventIdEditRouteImport } from './routes/events/$eventId_.edit'
@@ -38,6 +42,11 @@ const ProfileRoute = ProfileRouteImport.update({
 const OrganizationsRoute = OrganizationsRouteImport.update({
   id: '/organizations',
   path: '/organizations',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OnboardingRoute = OnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -65,6 +74,16 @@ const AttendeesIndexRoute = AttendeesIndexRouteImport.update({
   path: '/attendees/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PTokenRoute = PTokenRouteImport.update({
+  id: '/p/$token',
+  path: '/p/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InvitationsTokenRoute = InvitationsTokenRouteImport.update({
+  id: '/invitations/$token',
+  path: '/invitations/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const EventsNewRoute = EventsNewRouteImport.update({
   id: '/events/new',
   path: '/events/new',
@@ -78,6 +97,11 @@ const EventsEventIdRoute = EventsEventIdRouteImport.update({
 const EEventIdRoute = EEventIdRouteImport.update({
   id: '/e/$eventId',
   path: '/e/$eventId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CheckinPairRoute = CheckinPairRouteImport.update({
+  id: '/checkin/pair',
+  path: '/checkin/pair',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CheckinEventIdRoute = CheckinEventIdRouteImport.update({
@@ -105,14 +129,18 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/analytics': typeof AnalyticsRoute
   '/login': typeof LoginRoute
+  '/onboarding': typeof OnboardingRoute
   '/organizations': typeof OrganizationsRoute
   '/profile': typeof ProfileRoute
   '/upgrade': typeof UpgradeRoute
   '/attendees/new': typeof AttendeesNewRoute
   '/checkin/$eventId': typeof CheckinEventIdRoute
+  '/checkin/pair': typeof CheckinPairRoute
   '/e/$eventId': typeof EEventIdRoute
   '/events/$eventId': typeof EventsEventIdRoute
   '/events/new': typeof EventsNewRoute
+  '/invitations/$token': typeof InvitationsTokenRoute
+  '/p/$token': typeof PTokenRoute
   '/attendees/': typeof AttendeesIndexRoute
   '/events/': typeof EventsIndexRoute
   '/attendees/$userId/edit': typeof AttendeesUserIdEditRoute
@@ -122,14 +150,18 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/analytics': typeof AnalyticsRoute
   '/login': typeof LoginRoute
+  '/onboarding': typeof OnboardingRoute
   '/organizations': typeof OrganizationsRoute
   '/profile': typeof ProfileRoute
   '/upgrade': typeof UpgradeRoute
   '/attendees/new': typeof AttendeesNewRoute
   '/checkin/$eventId': typeof CheckinEventIdRoute
+  '/checkin/pair': typeof CheckinPairRoute
   '/e/$eventId': typeof EEventIdRoute
   '/events/$eventId': typeof EventsEventIdRoute
   '/events/new': typeof EventsNewRoute
+  '/invitations/$token': typeof InvitationsTokenRoute
+  '/p/$token': typeof PTokenRoute
   '/attendees': typeof AttendeesIndexRoute
   '/events': typeof EventsIndexRoute
   '/attendees/$userId/edit': typeof AttendeesUserIdEditRoute
@@ -140,14 +172,18 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/analytics': typeof AnalyticsRoute
   '/login': typeof LoginRoute
+  '/onboarding': typeof OnboardingRoute
   '/organizations': typeof OrganizationsRoute
   '/profile': typeof ProfileRoute
   '/upgrade': typeof UpgradeRoute
   '/attendees/new': typeof AttendeesNewRoute
   '/checkin/$eventId': typeof CheckinEventIdRoute
+  '/checkin/pair': typeof CheckinPairRoute
   '/e/$eventId': typeof EEventIdRoute
   '/events/$eventId': typeof EventsEventIdRoute
   '/events/new': typeof EventsNewRoute
+  '/invitations/$token': typeof InvitationsTokenRoute
+  '/p/$token': typeof PTokenRoute
   '/attendees/': typeof AttendeesIndexRoute
   '/events/': typeof EventsIndexRoute
   '/attendees/$userId_/edit': typeof AttendeesUserIdEditRoute
@@ -159,14 +195,18 @@ export interface FileRouteTypes {
     | '/'
     | '/analytics'
     | '/login'
+    | '/onboarding'
     | '/organizations'
     | '/profile'
     | '/upgrade'
     | '/attendees/new'
     | '/checkin/$eventId'
+    | '/checkin/pair'
     | '/e/$eventId'
     | '/events/$eventId'
     | '/events/new'
+    | '/invitations/$token'
+    | '/p/$token'
     | '/attendees/'
     | '/events/'
     | '/attendees/$userId/edit'
@@ -176,14 +216,18 @@ export interface FileRouteTypes {
     | '/'
     | '/analytics'
     | '/login'
+    | '/onboarding'
     | '/organizations'
     | '/profile'
     | '/upgrade'
     | '/attendees/new'
     | '/checkin/$eventId'
+    | '/checkin/pair'
     | '/e/$eventId'
     | '/events/$eventId'
     | '/events/new'
+    | '/invitations/$token'
+    | '/p/$token'
     | '/attendees'
     | '/events'
     | '/attendees/$userId/edit'
@@ -193,14 +237,18 @@ export interface FileRouteTypes {
     | '/'
     | '/analytics'
     | '/login'
+    | '/onboarding'
     | '/organizations'
     | '/profile'
     | '/upgrade'
     | '/attendees/new'
     | '/checkin/$eventId'
+    | '/checkin/pair'
     | '/e/$eventId'
     | '/events/$eventId'
     | '/events/new'
+    | '/invitations/$token'
+    | '/p/$token'
     | '/attendees/'
     | '/events/'
     | '/attendees/$userId_/edit'
@@ -211,14 +259,18 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AnalyticsRoute: typeof AnalyticsRoute
   LoginRoute: typeof LoginRoute
+  OnboardingRoute: typeof OnboardingRoute
   OrganizationsRoute: typeof OrganizationsRoute
   ProfileRoute: typeof ProfileRoute
   UpgradeRoute: typeof UpgradeRoute
   AttendeesNewRoute: typeof AttendeesNewRoute
   CheckinEventIdRoute: typeof CheckinEventIdRoute
+  CheckinPairRoute: typeof CheckinPairRoute
   EEventIdRoute: typeof EEventIdRoute
   EventsEventIdRoute: typeof EventsEventIdRoute
   EventsNewRoute: typeof EventsNewRoute
+  InvitationsTokenRoute: typeof InvitationsTokenRoute
+  PTokenRoute: typeof PTokenRoute
   AttendeesIndexRoute: typeof AttendeesIndexRoute
   EventsIndexRoute: typeof EventsIndexRoute
   AttendeesUserIdEditRoute: typeof AttendeesUserIdEditRoute
@@ -246,6 +298,13 @@ declare module '@tanstack/react-router' {
       path: '/organizations'
       fullPath: '/organizations'
       preLoaderRoute: typeof OrganizationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/onboarding': {
+      id: '/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof OnboardingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -283,6 +342,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AttendeesIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/p/$token': {
+      id: '/p/$token'
+      path: '/p/$token'
+      fullPath: '/p/$token'
+      preLoaderRoute: typeof PTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/invitations/$token': {
+      id: '/invitations/$token'
+      path: '/invitations/$token'
+      fullPath: '/invitations/$token'
+      preLoaderRoute: typeof InvitationsTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/events/new': {
       id: '/events/new'
       path: '/events/new'
@@ -302,6 +375,13 @@ declare module '@tanstack/react-router' {
       path: '/e/$eventId'
       fullPath: '/e/$eventId'
       preLoaderRoute: typeof EEventIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/checkin/pair': {
+      id: '/checkin/pair'
+      path: '/checkin/pair'
+      fullPath: '/checkin/pair'
+      preLoaderRoute: typeof CheckinPairRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/checkin/$eventId': {
@@ -339,14 +419,18 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AnalyticsRoute: AnalyticsRoute,
   LoginRoute: LoginRoute,
+  OnboardingRoute: OnboardingRoute,
   OrganizationsRoute: OrganizationsRoute,
   ProfileRoute: ProfileRoute,
   UpgradeRoute: UpgradeRoute,
   AttendeesNewRoute: AttendeesNewRoute,
   CheckinEventIdRoute: CheckinEventIdRoute,
+  CheckinPairRoute: CheckinPairRoute,
   EEventIdRoute: EEventIdRoute,
   EventsEventIdRoute: EventsEventIdRoute,
   EventsNewRoute: EventsNewRoute,
+  InvitationsTokenRoute: InvitationsTokenRoute,
+  PTokenRoute: PTokenRoute,
   AttendeesIndexRoute: AttendeesIndexRoute,
   EventsIndexRoute: EventsIndexRoute,
   AttendeesUserIdEditRoute: AttendeesUserIdEditRoute,

@@ -4,10 +4,16 @@ import { Button } from '@credopass/ui/components/button';
 import { Input } from '@credopass/ui/components/input';
 import { Field, FieldError, FieldLabel } from '@credopass/ui/components/field';
 import { UserPlus, Mail, User as UserIcon } from 'lucide-react';
-import type { User } from '@credopass/lib/schemas';
+
+/** What a door needs to identify someone who has no pass on them. */
+export interface AttendeeDetails {
+  firstName: string;
+  lastName: string;
+  email: string;
+}
 
 interface ManualSignInFormProps {
-  onSubmit: (userData: Partial<User>) => void;
+  onSubmit: (userData: AttendeeDetails) => void;
   onBack: () => void;
   /** Show the back-to-QR button (mobile single-panel flow only) */
   showBack?: boolean;

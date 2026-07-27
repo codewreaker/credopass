@@ -1,15 +1,13 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { Calendar, CalendarDayButton } from '@credopass/ui/components/calendar';
-import type { EventType } from '@credopass/lib/schemas';
 import { cn } from '@credopass/ui/lib/utils';
-import { EventRow } from '../event-row';
-import { getMonthEvents, toDateKey } from '@credopass/lib/utils';
+import { EventRow, type EventRowModel } from '../event-row';
 
 import './event-calendar.css';
+
 // ---- Status colour mapping (dot indicator) ----
-const STATUS_DOT_COLORS: Record<EventType['status'], string> = {
-  draft: 'bg-muted-foreground',
+const STATUS_DOT_COLORS: Record<EventRowModel['status'], string> = {
   scheduled: 'bg-primary',
   ongoing: 'bg-success',
   completed: 'bg-muted-foreground/60',
@@ -18,13 +16,17 @@ const STATUS_DOT_COLORS: Record<EventType['status'], string> = {
 
 // ---- Helpers ----
 
+/** `2026-08-03` — the key a day cell looks itself up by. */
+function toDateKey(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
 
-/** Build a map of ISO-date-string → EventType[] for quick day lookups */
-function buildEventMap(events: EventType[]): Map<string, EventType[]> {
-  const map = new Map<string, EventType[]>();
+/** Build a map of ISO-date-string → events for quick day lookups */
+function buildEventMap(events: EventRowModel[]): Map<string, EventRowModel[]> {
+  const map = new Map<string, EventRowModel[]>();
   for (const ev of events) {
-    const start = new Date(ev.startTime);
-    const end = new Date(ev.endTime);
+    const start = new Date(ev.startAt);
+    const end = new Date(ev.endAt || ev.startAt);
 
     const cursor = new Date(start.getFullYear(), start.getMonth(), start.getDate());
     const endDay = new Date(end.getFullYear(), end.getMonth(), end.getDate());
@@ -40,18 +42,35 @@ function buildEventMap(events: EventType[]): Map<string, EventType[]> {
   return map;
 }
 
+function eventsInMonth(month: Date, events: EventRowModel[]): EventRowModel[] {
+  const year = month.getFullYear();
+  const monthIndex = month.getMonth();
+  return events
+    .filter((ev) => {
+      const start = new Date(ev.startAt);
+      return start.getFullYear() === year && start.getMonth() === monthIndex;
+    })
+    .sort((a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime());
+}
+
 // ---- Component Props ----
 export interface EventCalendarProps {
-  events: EventType[];
+  events: EventRowModel[];
   /** "compact" for the sidebar widget, "full" for the events page */
   variant?: 'compact' | 'full';
   className?: string;
+  /**
+   * The month on show. Lifted so the page can fetch `GET /events/calendar?month=`
+   * for it — the calendar no longer filters a full-table cache in the browser.
+   */
+  month?: Date;
+  onMonthChange?: (month: Date) => void;
 }
 
 interface MonthEventsProps {
-  event: EventType;
-  isEventActive: (ev: EventType) => boolean;
-  handleEventRowClick: (ev: EventType) => void;
+  event: EventRowModel;
+  isEventActive: (ev: EventRowModel) => boolean;
+  handleEventRowClick: (ev: EventRowModel) => void;
   handleEventNavigate: (eventId: string) => void;
 }
 
@@ -71,17 +90,32 @@ export default function EventCalendar({
   events,
   variant = 'full',
   className,
+  month: controlledMonth,
+  onMonthChange,
 }: EventCalendarProps) {
   const navigate = useNavigate();
-  const [month, setMonth] = useState<Date>(new Date());
+  const [uncontrolledMonth, setUncontrolledMonth] = useState<Date>(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+
+  const month = controlledMonth ?? uncontrolledMonth;
+  const setMonth = useCallback(
+    (next: Date) => {
+      setUncontrolledMonth(next);
+      onMonthChange?.(next);
+    },
+    [onMonthChange],
+  );
 
   const eventMap = useMemo(() => buildEventMap(events), [events]);
 
   /** Events whose start falls in the currently viewed month */
-  const monthEvents = useMemo<EventType[]>(() => {
-    if (selectedDate) return events.filter(({ startTime }) => (toDateKey(startTime) === toDateKey(selectedDate))) || getMonthEvents(month, events);
-    return getMonthEvents(month, events)
+  const monthEvents = useMemo<EventRowModel[]>(() => {
+    if (selectedDate) {
+      const key = toDateKey(selectedDate);
+      const onDay = events.filter((ev) => toDateKey(new Date(ev.startAt)) === key);
+      if (onDay.length > 0) return onDay;
+    }
+    return eventsInMonth(month, events);
   }, [events, month, selectedDate]);
 
   /** All dates that have at least one event → used for modifiers */
@@ -99,15 +133,15 @@ export default function EventCalendar({
 
   /** Click an event row → select its start date on the calendar */
   const handleEventRowClick = useCallback(
-    (ev: EventType) => {
-      const start = new Date(ev.startTime);
+    (ev: EventRowModel) => {
+      const start = new Date(ev.startAt);
       setSelectedDate(start);
       // If the event is in a different month, navigate the calendar there
       if (start.getFullYear() !== month.getFullYear() || start.getMonth() !== month.getMonth()) {
         setMonth(start);
       }
     },
-    [month],
+    [month, setMonth],
   );
 
   const handleEventNavigate = useCallback(
@@ -119,7 +153,7 @@ export default function EventCalendar({
 
   /** Is a given event "active" (its start date matches the selected date)? */
   const isEventActive = useCallback(
-    (ev: EventType) => {
+    (ev: EventRowModel) => {
       if (!selectedDate) return false;
       const key = toDateKey(selectedDate);
       const evDays = eventMap.get(key);

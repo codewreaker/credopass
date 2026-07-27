@@ -1,5 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import type { EventType } from '../schemas';
+
+/**
+ * The four states an event can be in.
+ *
+ * Not read off the `events` table: there is no `status` column any more. The API
+ * derives it from `cancelled_at`, `closed_at`, `start_at` and `end_at` and ships
+ * it on every event it returns.
+ */
+export type DerivedEventStatus = 'scheduled' | 'ongoing' | 'completed' | 'cancelled';
 
 export const EVENTS_FILTER_GROUP_COOKIE_NAME = 'events_filter_group';
 export const EVENTS_FILTER_ENABLED_COOKIE_NAME = 'events_filter_enabled';
@@ -14,9 +22,9 @@ export const EVENTS_TIMEZONE_ENABLED_COOKIE_NAME = 'events_timezone_enabled';
 export type EventStatusGroup = 'upcoming' | 'past';
 
 /** Order within a group is also the order the list renders its sections in. */
-export const STATUS_GROUPS: Record<EventStatusGroup, EventType['status'][]> = {
+export const STATUS_GROUPS: Record<EventStatusGroup, DerivedEventStatus[]> = {
     upcoming: ['ongoing', 'scheduled'],
-    past: ['completed', 'cancelled', 'draft'],
+    past: ['completed', 'cancelled'],
 };
 
 export const STATUS_GROUP_KEYS = Object.keys(STATUS_GROUPS) as EventStatusGroup[];
@@ -168,7 +176,7 @@ export function useStatusFilter() {
     const toggleTimezone = useCallback(() => setEnableTimezone((prev) => !prev), [setEnableTimezone]);
 
     /** The raw statuses the list should render, expanded from the active group. */
-    const selectedStatuses = useMemo<EventType['status'][]>(
+    const selectedStatuses = useMemo<DerivedEventStatus[]>(
         () => STATUS_GROUPS[activeGroup],
         [activeGroup]
     );

@@ -1,6 +1,6 @@
 import {
     MapPin, Users, MoreVertical, Clock, Pencil, Trash2,
-    ClockCheck, FileClock, CalendarClock, ClockAlert
+    ClockCheck, CalendarClock, ClockAlert
 } from 'lucide-react';
 
 import {
@@ -11,23 +11,37 @@ import {
 } from "@credopass/ui/components/avatar"
 import { Badge } from '@credopass/ui/components/badge';
 
-import type { EventType, Organization } from '@credopass/lib/schemas';
+/**
+ * What a row needs to render.
+ *
+ * Structurally the API's `EventSummary`, restated here so the design system does
+ * not import the database schema — `startAt` is an ISO string off the wire, not
+ * a `Date`, and `status` is **derived server-side** from the timestamps. There
+ * is no `draft`: an event either has a start time or it does not exist yet.
+ */
+export interface EventRowModel {
+    id: string;
+    name: string;
+    status: 'scheduled' | 'ongoing' | 'completed' | 'cancelled';
+    startAt: string;
+    endAt: string;
+    location: string;
+    capacity: number | null;
+    organizationName?: string;
+    counts?: { registered: number; attended: number };
+}
 
-export type EventWithOrg = EventType & { orgCollection?: Organization };
+/** @deprecated Kept as an alias while call sites migrate. Use `EventRowModel`. */
+export type EventWithOrg = EventRowModel;
 
 import { useSwipeToReveal } from '../../../../../packages/ui/src/hooks/use-swipe-to-reveal';
 import './index.css'
-import { getTimeZone } from '@credopass/lib/utils';
-export const STATUS_MAPPING: Record<EventType['status'], {
+
+export const STATUS_MAPPING: Record<EventRowModel['status'], {
     icon?: React.JSX.Element;
     label: string;
     style: string;
 }> = {
-    draft: {
-        icon: <FileClock size={14} className='text-yellow-500' />,
-        label: 'Draft',
-        style: 'bg-yellow-500/10 text-yellow-500 border-yellow-500/30'
-    },
     scheduled: {
         icon: <CalendarClock size={14} className='text-primary/80' />,
         label: 'Scheduled',
@@ -51,6 +65,13 @@ export const STATUS_MAPPING: Record<EventType['status'], {
 }
 
 const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+/** GMT offset for the viewer's zone, e.g. `GMT+1`. */
+const timeZoneLabel = (at: Date) =>
+    new Intl.DateTimeFormat('en-US', { timeZone: userTimeZone, timeZoneName: 'shortOffset' })
+        .formatToParts(at)
+        .find((part) => part.type === 'timeZoneName')?.value ?? '';
+
 /** Luma-style date icon: month abbreviation on top, day number below */
 const DateIcon: React.FC<Partial<{ date: Date, url: string, hour12: boolean, compact: boolean }>> = ({ date, url, hour12 = true, compact = false }) => {
     if (url || !date) {
@@ -71,9 +92,9 @@ const DateIcon: React.FC<Partial<{ date: Date, url: string, hour12: boolean, com
 
 /** Single event row -- inspired by Luma desktop event management */
 export const EventRow: React.FC<{
-    event: EventWithOrg;
+    event: EventRowModel;
     onNavigate?: (eventId: string) => void;
-    onEdit?: (event: EventWithOrg) => void;
+    onEdit?: (event: EventRowModel) => void;
     onDelete?: (eventId: string) => void;
     /** Opens the attendee list scoped to this event. Omit to hide the action. */
     onViewAttendees?: (eventId: string) => void;
@@ -81,7 +102,7 @@ export const EventRow: React.FC<{
     compact?: boolean;
     timezone?: boolean;
 }> = ({ event, onNavigate, onEdit, onDelete, onViewAttendees, timezone, isMobile = false, compact = false }) => {
-    const startDate = event.startTime ? new Date(event.startTime) : null;
+    const startDate = event.startAt ? new Date(event.startAt) : null;
     const {
         offsetX, isSwiped, actionWidth, reset, toggle, onTouchStart, onTouchMove, onTouchEnd
     } = useSwipeToReveal(onViewAttendees ? 3 : 2);
@@ -111,14 +132,17 @@ export const EventRow: React.FC<{
         onViewAttendees?.(event.id);
     };
 
-    const orgData = event?.orgCollection;
-    
     const timeString = startDate
         ? startDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
         : '';
 
-    const timeZoneString = getTimeZone(userTimeZone);
-
+    // Registered/attended come off the row already counted — the list never
+    // scans attendance to work them out.
+    const headCount = event.counts
+        ? `${event.counts.attended || event.counts.registered}`
+        : event.capacity
+            ? `${event.capacity}`
+            : 'Unlimited';
 
     const rowContent = (
         <>
@@ -126,17 +150,14 @@ export const EventRow: React.FC<{
 
             <div className="event-row-details group-data-compact:gap-0.2">
                 {<div className='event-row-top group-data-compact:absolute group-data-compact:right-5'>
-                    {!compact && <div className='flex items-center gap-1'>
+                    {!compact && event.organizationName && <div className='flex items-center gap-1'>
                         <AvatarGroup>
                             <Avatar size='xs'>
                                 <AvatarImage src="/icons/zap.png" className={"bg-primary"} />
-                                <AvatarFallback>{orgData?.name?.slice(0, 2)}</AvatarFallback>
-                            </Avatar>
-                            <Avatar size='xs'>
-                                <AvatarFallback>{orgData?.plan}</AvatarFallback>
+                                <AvatarFallback>{event.organizationName.slice(0, 2)}</AvatarFallback>
                             </Avatar>
                         </AvatarGroup>
-                        <p className='text-muted-foreground text-xs'>{orgData?.name}</p>
+                        <p className='text-muted-foreground text-xs'>{event.organizationName}</p>
                     </div>}
                     <Badge
                         variant="outline"
@@ -154,7 +175,7 @@ export const EventRow: React.FC<{
                         <span className="event-row-meta-item group-data-compact:text-[0.6875rem]">
                             <Clock size={12} />
                             {timeString}
-                            {timezone && <span className="text-lime-400 text-xs">{timeZoneString}</span>}
+                            {timezone && startDate && <span className="text-lime-400 text-xs">{timeZoneLabel(startDate)}</span>}
                         </span>
                     )}
                     {event.location && (
@@ -166,7 +187,7 @@ export const EventRow: React.FC<{
                     {!compact && (
                         <span className="event-row-meta-item">
                             <Users size={12} />
-                            {event.capacity ? `${event.capacity}` : 'Unlimited'}
+                            {headCount}
                         </span>
                     )}
                 </div>

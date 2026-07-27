@@ -1,5 +1,5 @@
-import { Suspense } from "react";
-import { createRootRoute, Outlet, useRouterState } from "@tanstack/react-router";
+import { Suspense, useEffect } from "react";
+import { createRootRoute, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { TopNavBar } from "../containers/TopNavBar/index";
 import LeftSidebar, { SidebarInset, SidebarTrigger, OrgSelector } from "../containers/LeftSidebar";
 import { RightSidebar } from "../containers/RightSidebar";
@@ -12,22 +12,37 @@ import { ModalPortal } from "@credopass/ui/components/launcher";
 import { NAV_ITEMS } from "@credopass/lib/constants";
 import { useTheme } from "@credopass/lib/theme";
 import { useCommandPallete } from "../hooks";
-import { PremiumProvider } from "../contexts/premium";
+import { SessionProvider, useSession } from "../contexts/session";
 import { ToolbarSlotProvider } from "../containers/TopNavBar/toolbar-slot";
 
-// Routes that render standalone without the app shell
-const STANDALONE_ROUTES = ['/login', '/upgrade', '/e/'];
+/**
+ * Routes that render standalone — no sidebar, no top bar, no org switcher.
+ *
+ * Three different reasons land here. `/login` and `/onboarding` are pre-console:
+ * there is no organization to frame them with yet. `/e/`, `/p/` and
+ * `/checkin/pair` are attendee and device surfaces — someone opened a link from
+ * a message, or a tablet is being set up. Neither has an account, and showing
+ * them console chrome would imply they could use it.
+ */
+const STANDALONE_ROUTES = [
+  '/login',
+  '/upgrade',
+  '/onboarding',
+  '/invitations/',
+  '/e/',
+  '/p/',
+  '/checkin/pair',
+];
 
 export const Route = createRootRoute({
   component: RootRoute,
 })
 
-/** Entitlements wrap the whole tree, standalone pages included. */
 function RootRoute() {
   return (
-    <PremiumProvider>
+    <SessionProvider>
       <RootLayout />
-    </PremiumProvider>
+    </SessionProvider>
   );
 }
 
@@ -39,7 +54,7 @@ export function RootLayout() {
 
   const isStandalone = STANDALONE_ROUTES.some(r => pathname.startsWith(r));
 
-  // Auth / standalone pages — no sidebar, no topbar
+  // Auth / attendee / device pages — no sidebar, no topbar
   if (isStandalone) {
     return (
       <>
@@ -53,6 +68,7 @@ export function RootLayout() {
 
   return (
     <ToolbarSlotProvider>
+      <OnboardingGate />
       <div className="app-container">
         <div className="app-layout">
           <LeftSidebar
@@ -86,4 +102,22 @@ export function RootLayout() {
       <Toaster position="top-center" richColors theme={theme} />
     </ToolbarSlotProvider>
   );
+}
+
+/**
+ * A brand-new account belongs to no organization, so every console query
+ * correctly returns nothing. Without somewhere to land, enforcing tenancy would
+ * break the product for every new user — so the console redirects rather than
+ * rendering an empty shell (§2.2).
+ */
+function OnboardingGate() {
+  const { needsOnboarding, isContextLoading, isPairedDevice } = useSession();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (isContextLoading || isPairedDevice || !needsOnboarding) return;
+    navigate({ to: '/onboarding', replace: true });
+  }, [needsOnboarding, isContextLoading, isPairedDevice, navigate]);
+
+  return null;
 }
