@@ -9,9 +9,6 @@ export * from './tables';
 // Enums
 export * from './enums';
 
-// User schemas
-export * from './user.schema';
-
 // Organization schemas (multi-tenancy)
 export * from './organization.schema';
 
@@ -21,14 +18,8 @@ export * from './org-membership.schema';
 // Event schemas
 export * from './event.schema';
 
-// Event member schemas (replaces hostId)
-export * from './event-member.schema';
-
 // Attendance schemas
 export * from './attendance.schema';
-
-// Loyalty schemas
-export * from './loyalty.schema';
 
 // email from schemas
 export * from './email.schemas'

@@ -9,10 +9,6 @@ import { z } from 'zod';
 export const EventStatusEnum = z.enum(['draft', 'scheduled', 'ongoing', 'completed', 'cancelled']);
 export type EventStatus = z.infer<typeof EventStatusEnum>;
 
-// Loyalty tier enum
-export const LoyaltyTierEnum = z.enum(['bronze', 'silver', 'gold', 'platinum']);
-export type LoyaltyTier = z.infer<typeof LoyaltyTierEnum>;
-
 // Organization plan enum
 export const OrgPlanEnum = z.enum(['free', 'starter', 'pro', 'enterprise']);
 export type OrgPlan = z.infer<typeof OrgPlanEnum>;
