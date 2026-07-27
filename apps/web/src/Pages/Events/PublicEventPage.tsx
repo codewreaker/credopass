@@ -22,10 +22,14 @@ import {
   MapPin,
   RotateCw,
   Share2,
+  UserCheck,
   Users,
 } from 'lucide-react';
 import { format } from 'date-fns/format';
 import {
+  hasProblemCode,
+  ProblemCode,
+  usePublicCheckIn,
   usePublicEvent,
   usePublicRegister,
   useResendPass,
@@ -84,6 +88,7 @@ export default function PublicEventPage() {
 
 function PublicEventView({ event }: { event: PublicEvent }) {
   const [registerOpen, setRegisterOpen] = useState(false);
+  const [walkUpOpen, setWalkUpOpen] = useState(false);
   const [resendOpen, setResendOpen] = useState(false);
 
   const shareUrl =
@@ -192,16 +197,32 @@ function PublicEventView({ event }: { event: PublicEvent }) {
         </div>
       )}
 
-      {/* Already registered but lost the link. Always answers the same way,
-          registered or not — a different answer would leak the guest list. */}
+      {/* Two things someone who is already here might need. Both only exist
+          while the event is live enough to act on. */}
       {!isEnded && (
-        <button
-          type="button"
-          onClick={() => setResendOpen(true)}
-          className="inline-flex items-center justify-center gap-1.5 text-xs text-muted-foreground underline-offset-4 hover:underline"
-        >
-          <MailQuestion size={13} /> Already registered but lost your pass?
-        </button>
+        <div className="flex flex-col items-center gap-2">
+          {/* Walk-up: at the door, no pass in hand. Only offered when the
+              organiser turned self check-in on — otherwise it is a promise the
+              API will refuse with 403 self_checkin_disabled. */}
+          {event.allowSelfCheckIn && (
+            <button
+              type="button"
+              onClick={() => setWalkUpOpen(true)}
+              className="inline-flex items-center justify-center gap-1.5 text-xs font-semibold text-primary underline-offset-4 hover:underline"
+            >
+              <UserCheck size={13} /> Here now? Check yourself in
+            </button>
+          )}
+          {/* Always answers the same way, registered or not — a different answer
+              would leak the guest list. */}
+          <button
+            type="button"
+            onClick={() => setResendOpen(true)}
+            className="inline-flex items-center justify-center gap-1.5 text-xs text-muted-foreground underline-offset-4 hover:underline"
+          >
+            <MailQuestion size={13} /> Already registered but lost your pass?
+          </button>
+        </div>
       )}
 
       {/* Sticky CTA. "Add to calendar" is absent, not broken: there is no ICS
@@ -223,6 +244,7 @@ function PublicEventView({ event }: { event: PublicEvent }) {
       </div>
 
       <RegisterDialog open={registerOpen} onOpenChange={setRegisterOpen} event={event} />
+      <WalkUpCheckInDialog open={walkUpOpen} onOpenChange={setWalkUpOpen} event={event} />
       <ResendPassDialog open={resendOpen} onOpenChange={setResendOpen} event={event} />
     </div>
   );
@@ -317,6 +339,96 @@ function RegisterDialog({
       <p className="px-1 text-xs text-muted-foreground">
         {`Let the host know you’re coming to “${event.name}”. We'll show your pass on the next screen — save the link, it's the only copy.`}
       </p>
+    </SheetDialog>
+  );
+}
+
+/**
+ * The walk-up: someone standing at the door who never registered, or did and
+ * cannot find the link.
+ *
+ * `POST /public/events/{id}/check-in` resolves them by name and email and
+ * records the arrival in one call — it does not need a prior registration. It is
+ * idempotent, so someone who taps twice is told they are already in rather than
+ * counted twice.
+ */
+function WalkUpCheckInDialog({
+  open,
+  onOpenChange,
+  event,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  event: PublicEvent;
+}) {
+  const checkIn = usePublicCheckIn(event.id);
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [email, setEmail] = useState('');
+  const [done, setDone] = useState(false);
+
+  const canSubmit =
+    firstName.trim().length > 1 &&
+    lastName.trim().length > 1 &&
+    /.+@.+\..+/.test(email) &&
+    !checkIn.isPending;
+
+  const submit = async () => {
+    if (!canSubmit) return;
+    try {
+      const result = await checkIn.mutateAsync({
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        email: email.trim(),
+      });
+      setDone(true);
+      toast.success(result.alreadyRecorded ? 'You were already checked in' : "You're checked in");
+    } catch (error) {
+      toast.error(
+        hasProblemCode(error, ProblemCode.SELF_CHECKIN_DISABLED)
+          ? 'The organiser has turned off self check-in — ask a host to scan you in.'
+          : errorMessage(error, 'Could not check you in')
+      );
+    }
+  };
+
+  return (
+    <SheetDialog
+      open={open}
+      onOpenChange={(next) => {
+        onOpenChange(next);
+        if (!next) setDone(false);
+      }}
+      title={done ? "You're in" : 'Check yourself in'}
+      footer={
+        done ? (
+          <Button size="sm" className="rounded-full px-4" onClick={() => onOpenChange(false)}>
+            Done
+          </Button>
+        ) : (
+          <Button size="sm" className="rounded-full px-4" disabled={!canSubmit} onClick={submit}>
+            <UserCheck /> {checkIn.isPending ? 'Checking in…' : 'Check in'}
+          </Button>
+        )
+      }
+      contentClassName="flex flex-col gap-3"
+    >
+      {done ? (
+        <p className="py-2 text-sm text-muted-foreground">
+          Recorded. Enjoy {event.name}.
+        </p>
+      ) : (
+        <>
+          <div className="flex gap-2">
+            <Input autoFocus placeholder="First name" value={firstName} onChange={(e) => setFirstName(e.target.value)} className="h-11 rounded-xl" />
+            <Input placeholder="Last name" value={lastName} onChange={(e) => setLastName(e.target.value)} className="h-11 rounded-xl" />
+          </div>
+          <Input type="email" inputMode="email" placeholder="you@email.com" value={email} onChange={(e) => setEmail(e.target.value)} className="h-11 rounded-xl" />
+          <p className="px-1 text-xs text-muted-foreground">
+            Use this if you are at the event now. If you registered earlier, this finds you.
+          </p>
+        </>
+      )}
     </SheetDialog>
   );
 }

@@ -8,7 +8,7 @@ channel = "stable-25_05"
 [userenv]
 
 [userenv.shared]
-VITE_API_URL = "https://api.credopass.com/api/core"
+VITE_API_URL = "https://api.credopass.com/api/v1/core"
 VITE_SUPABASE_ANON_KEY = "sb_publishable_gc1o2zuvyrPHx26r7sPaEg_RgZWuMR1"
 VITE_SUPABASE_URL = "https://zzymqzurubgparvpgfvy.supabase.co"
 

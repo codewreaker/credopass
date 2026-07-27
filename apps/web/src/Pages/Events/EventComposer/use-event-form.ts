@@ -70,13 +70,7 @@ const browserTimezone = () => {
   }
 };
 
-/**
- * Maps an event from the API onto form values.
- *
- * `allowSelfCheckIn` is not on `EventSummary` — the list shape does not carry
- * door configuration. It seeds true here, and `PATCH` only sends what the form
- * actually touched, so editing an event never silently flips it.
- */
+/** Maps an event from the API onto form values. */
 export const eventToFormValues = (event: Event): EventFormValues => ({
   name: event.name ?? '',
   description: event.description ?? '',
@@ -84,7 +78,7 @@ export const eventToFormValues = (event: Event): EventFormValues => ({
   end: event.endAt ? new Date(event.endAt) : undefined,
   location: event.location ?? '',
   capacity: event.capacity != null ? String(event.capacity) : '',
-  allowSelfCheckIn: true,
+  allowSelfCheckIn: event.allowSelfCheckIn,
 });
 
 interface UseEventFormArgs {

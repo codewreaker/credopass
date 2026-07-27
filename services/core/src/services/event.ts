@@ -35,6 +35,13 @@ export interface EventSummary {
   shortCode: string;
   counts: { registered: number; attended: number };
   cancellationReason?: string | null;
+  /**
+   * Door configuration. On the summary because the two screens that need it —
+   * the kiosk deciding whether to offer check-out, and the composer round-tripping
+   * the toggle — have only ever held a summary, and were otherwise forced to guess.
+   */
+  allowSelfCheckIn: boolean;
+  requireCheckOut: boolean;
 }
 
 export interface ListEventsInput {
@@ -122,6 +129,8 @@ const toSummary = (
     shortCode: e.shortCode,
     counts: counts.get(e.id) ?? { registered: 0, attended: 0 },
     cancellationReason: e.cancellationReason,
+    allowSelfCheckIn: e.allowSelfCheckIn,
+    requireCheckOut: e.requireCheckOut,
   };
 };
 

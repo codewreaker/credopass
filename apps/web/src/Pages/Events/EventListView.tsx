@@ -124,7 +124,10 @@ const EventListView: React.FC<EventListViewProps> = ({
                                 key={event.id}
                                 event={event}
                                 onNavigate={handleNavigateToEvent}
-                                onEdit={onEditEvent}
+                                onEdit={(row) => {
+                                    const target = eventsById.get(row.id);
+                                    if (target) onEditEvent(target);
+                                }}
                                 onDelete={(id) => {
                                     const target = eventsById.get(id);
                                     if (target) onDeleteEvent(target);

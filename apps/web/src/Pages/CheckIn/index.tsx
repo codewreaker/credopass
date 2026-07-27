@@ -25,11 +25,12 @@ import {
   ProblemCode,
   useCheckIn,
   useCheckInState,
+  useCheckOut,
   useEvent,
   type Event,
 } from '@credopass/api-client';
 import { useIsMobile } from '@credopass/ui/hooks/use-mobile';
-import { QrCodeIcon, ArrowLeft, ScanLine, UserRoundPlus, Bug, Trash2, CalendarCheck, Users, Maximize2, Minimize2, MapPin, ShieldOff } from 'lucide-react';
+import { QrCodeIcon, ArrowLeft, ScanLine, UserRoundPlus, Bug, Trash2, CalendarCheck, Users, Maximize2, Minimize2, MapPin, ShieldOff, LogOut } from 'lucide-react';
 import { Button } from '@credopass/ui/components/button';
 import { GlowingQRCode } from '@credopass/ui/components/glowing-qr-code';
 import { SheetDialog } from '@credopass/ui/components/sheet-dialog';
@@ -71,6 +72,7 @@ const CheckInPage: React.FC = () => {
   const { data: event, isLoading, error } = useEvent(eventId);
   const { data: state } = useCheckInState(eventId);
   const checkIn = useCheckIn(eventId);
+  const checkOut = useCheckOut(eventId);
 
   // DEV drawer — a running log of scans, parse outcomes and errors so check-in
   // (especially the camera scanner on real devices) can be debugged in place.
@@ -91,6 +93,9 @@ const CheckInPage: React.FC = () => {
 
   const [mode, setMode] = useState<KioskMode>('display');
   const [manualOpen, setManualOpen] = useState(false);
+  // Only mounted when the event requires it — a door that does not track exits
+  // should not offer a button that records one.
+  const [checkOutOpen, setCheckOutOpen] = useState(false);
   const [successPerson, setSuccessPerson] = useState<{ firstName: string; lastName: string; email: string | null } | null>(null);
   const [maximised, setMaximised] = useState(false);
 
@@ -179,6 +184,27 @@ const CheckInPage: React.FC = () => {
       if (ok) setManualOpen(false);
     },
     [record]
+  );
+
+  /** Recording someone leaving. Same resolution rules, different endpoint. */
+  const handleCheckOut = useCallback(
+    async (details: AttendeeDetails) => {
+      try {
+        const result = await checkOut.mutateAsync({
+          firstName: details.firstName,
+          lastName: details.lastName,
+          email: details.email,
+        });
+        pushLog('ok', `Checked out: ${result.person.firstName} ${result.person.lastName}`);
+        toast.success(`${result.person.firstName} checked out`);
+        setCheckOutOpen(false);
+      } catch (error) {
+        const message = errorMessage(error, 'Check-out failed');
+        pushLog('error', `check-out: ${message}`);
+        toast.error(message);
+      }
+    },
+    [checkOut, pushLog]
   );
 
   /**
@@ -329,16 +355,28 @@ const CheckInPage: React.FC = () => {
       </div>
 
       {/* Manual check-in — always available as a third path */}
-      <div className="mx-auto w-full max-w-md">
-        <Button variant="outline" className="w-full gap-2 rounded-full" onClick={() => setManualOpen(true)}>
+      <div className="mx-auto flex w-full max-w-md gap-2">
+        <Button variant="outline" className="flex-1 gap-2 rounded-full" onClick={() => setManualOpen(true)}>
           <UserRoundPlus size={15} />
           Manual check-in
         </Button>
+        {ev.requireCheckOut && (
+          <Button variant="outline" className="flex-1 gap-2 rounded-full" onClick={() => setCheckOutOpen(true)}>
+            <LogOut size={15} />
+            Check out
+          </Button>
+        )}
       </div>
 
       <SheetDialog open={manualOpen} onOpenChange={setManualOpen} title="Manual check-in" contentClassName="flex flex-col gap-3">
         <ManualSignInForm onSubmit={handleManual} onBack={() => setManualOpen(false)} showBack={false} />
       </SheetDialog>
+
+      {ev.requireCheckOut && (
+        <SheetDialog open={checkOutOpen} onOpenChange={setCheckOutOpen} title="Check out" contentClassName="flex flex-col gap-3">
+          <ManualSignInForm onSubmit={handleCheckOut} onBack={() => setCheckOutOpen(false)} showBack={false} />
+        </SheetDialog>
+      )}
 
       {/* DEV drawer — scan/parse/error log for debugging check-in on device */}
       <SheetDialog

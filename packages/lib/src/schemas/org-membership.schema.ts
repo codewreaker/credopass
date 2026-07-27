@@ -17,10 +17,11 @@ export const OrgMembershipSchema = createSelectSchema(orgMemberships, {
 export const CreateOrgMembershipSchema = createInsertSchema(orgMemberships, {
   role: OrgRoleEnum,
 }).omit({
+  // `acceptedAt` is gone: an invitation to someone who has no account yet cannot
+  // be a membership row, so invitations live in their own table now.
   id: true,
   createdAt: true,
   updatedAt: true,
-  acceptedAt: true,
 });
 
 // Schema for updating a membership (change role)
@@ -28,9 +29,10 @@ export const UpdateOrgMembershipSchema = z.object({
   role: OrgRoleEnum.optional(),
 });
 
-// Schema for accepting an invitation
+// Schema for accepting an invitation. The token is the credential — there is no
+// membership row to point at until it has been accepted.
 export const AcceptInvitationSchema = z.object({
-  membershipId: z.string().uuid(),
+  token: z.string().min(16),
 });
 
 // Schema for inserting membership (with optional id for upserts)

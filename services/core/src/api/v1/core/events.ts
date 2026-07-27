@@ -41,6 +41,9 @@ const EventSummarySchema = z
     shortCode: z.string(),
     counts: z.object({ registered: z.number().int(), attended: z.number().int() }),
     cancellationReason: z.string().nullish(),
+    /** Door configuration the kiosk and the composer both need. */
+    allowSelfCheckIn: z.boolean(),
+    requireCheckOut: z.boolean(),
   })
   .openapi('EventSummary');
 

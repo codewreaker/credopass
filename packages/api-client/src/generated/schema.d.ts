@@ -2854,6 +2854,8 @@ export interface components {
                 attended: number;
             };
             cancellationReason?: string | null;
+            allowSelfCheckIn: boolean;
+            requireCheckOut: boolean;
         };
         PersonRow: {
             /** Format: uuid */

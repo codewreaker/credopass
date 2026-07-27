@@ -6,18 +6,24 @@
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 import { events } from './tables/events';
 import { z } from 'zod';
-import { EventStatusEnum, CheckInMethodEnum } from './enums';
+import { CheckInMethodEnum } from './enums';
+
+/**
+ * There is no `status` refinement here because there is no `status` column.
+ * Status is derived by the API from the timestamps; a validator for it would be
+ * validating a field that never arrives.
+ *
+ * The location field is `locationText` — free text now, with `locationLat` /
+ * `locationLng` filled in server-side on write.
+ */
 
 // Base event schema (SELECT from database)
-export const EventSchema = createSelectSchema(events, {
-  status: EventStatusEnum,
-});
+export const EventSchema = createSelectSchema(events);
 
 // Schema for creating a new event (INSERT without auto-generated fields)
 export const CreateEventSchema = createInsertSchema(events, {
   name: z.string().min(1),
-  location: z.string().min(1),
-  status: EventStatusEnum,
+  locationText: z.string().min(1),
   // `.nullish()`, not `.nullable()` — capacity is a nullable column, so omitting
   // it entirely has to be legal. `.nullable()` alone still demands the key.
   capacity: z.number().int().positive().nullish(),
@@ -36,10 +42,7 @@ export const UpdateEventSchema = CreateEventSchema.partial();
 // Schema for inserting an event (with optional id/timestamps for upserts)
 export const InsertEventSchema = createInsertSchema(events, {
   name: z.string().min(1),
-  location: z.string().min(1),
-  status: EventStatusEnum,
-  // `.nullish()`, not `.nullable()` — capacity is a nullable column, so omitting
-  // it entirely has to be legal. `.nullable()` alone still demands the key.
+  locationText: z.string().min(1),
   capacity: z.number().int().positive().nullish(),
   checkInMethods: z.array(CheckInMethodEnum).min(1),
   allowSelfCheckIn: z.boolean().default(true),
@@ -60,4 +63,3 @@ export type EventInsert = InsertEvent;
 // Select schema (for query results)
 export const SelectEventSchema = EventSchema;
 export type SelectEvent = Event;
-

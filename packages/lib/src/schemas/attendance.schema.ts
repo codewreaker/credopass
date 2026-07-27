@@ -6,10 +6,11 @@
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 import { attendance } from './tables/attendance';
 import { z } from 'zod';
-import { CheckInMethodEnum } from './enums';
+import { AttendanceStateEnum, CheckInMethodEnum } from './enums';
 
 // Base attendance schema (SELECT from database)
 export const AttendanceSchema = createSelectSchema(attendance, {
+  state: AttendanceStateEnum,
   checkInMethod: CheckInMethodEnum.nullable(),
 });
 
@@ -23,10 +24,11 @@ export const CreateAttendanceSchema = createInsertSchema(attendance, {
 // Schema for updating an attendance record
 export const UpdateAttendanceSchema = CreateAttendanceSchema.partial();
 
-// Schema for check-in operation
+// Schema for check-in operation. `patronId` became `personId`: a person belongs
+// to one organization, and is not the same thing as an account that signs in.
 export const CheckInSchema = z.object({
   eventId: z.string().uuid(),
-  patronId: z.string().uuid(),
+  personId: z.string().uuid(),
   organizationId: z.string().uuid(),
   checkInMethod: CheckInMethodEnum.optional(),
   notes: z.string().optional(),
@@ -35,7 +37,7 @@ export const CheckInSchema = z.object({
 // Schema for check-out operation
 export const CheckOutSchema = z.object({
   eventId: z.string().uuid(),
-  patronId: z.string().uuid(),
+  personId: z.string().uuid(),
   notes: z.string().optional(),
 });
 

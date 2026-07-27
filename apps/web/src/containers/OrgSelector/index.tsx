@@ -126,7 +126,7 @@ const OrgSelector: React.FC<{
 
                 <DropdownMenuGroup>
                     <DropdownMenuItem
-                        onClick={() => navigate({ to: '/account' })}
+                        onClick={() => navigate({ to: '/account', search: { tab: 'profile' } })}
                         className="gap-2 p-2"
                     >
                         <User className="h-4 w-4" />

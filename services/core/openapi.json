@@ -392,6 +392,12 @@
               "string",
               "null"
             ]
+          },
+          "allowSelfCheckIn": {
+            "type": "boolean"
+          },
+          "requireCheckOut": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -406,7 +412,9 @@
           "organizationId",
           "organizationName",
           "shortCode",
-          "counts"
+          "counts",
+          "allowSelfCheckIn",
+          "requireCheckOut"
         ]
       },
       "PersonRow": {
