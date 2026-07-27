@@ -136,9 +136,6 @@ export function Home() {
                 {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
               </button>
               <Button variant="ghost" size="sm" className="text-sm" onClick={signIn}>Sign In</Button>
-              <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90 text-sm rounded-lg shadow-[0_0_16px_rgba(212,255,0,0.2)]" onClick={startCreating}>
-                Get Started <ArrowRight className="ml-1.5 w-3.5 h-3.5" />
-              </Button>
             </div>
 
             <div className="flex lg:hidden items-center gap-2">
@@ -199,21 +196,21 @@ export function Home() {
             {/* Headline */}
             <Reveal delay={100}>
               <h1 className="text-5xl sm:text-6xl lg:text-7xl font-extrabold tracking-tighter leading-[1.02] text-balance">
-                Track who{' '}
+                Events made Simple for everyone, {'  '}
                 <span className="relative inline-block">
-                  <span className="text-primary">actually shows up</span>
+                  <span className="text-primary">just host it</span>
                   <svg className="absolute -bottom-2 left-0 w-full" viewBox="0 0 300 12" fill="none" aria-hidden="true">
                     <path d="M2 8.5C50 2.5 100 2 150 5.5C200 9 250 4.5 298 7" stroke="currentColor" strokeWidth="3" strokeLinecap="round" className="text-primary/40" />
                   </svg>
                 </span>
-                , not just who signed up
               </h1>
             </Reveal>
 
             {/* Subheadline */}
             <Reveal delay={200}>
               <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl leading-relaxed">
-                The modern attendance management system for organizations that need real engagement data. Works alongside your existing tools.
+                For the book club, the 5-a-side, the Bible study and the sip-and-paint. Make a page, share the link
+                With real engagement data.
               </p>
             </Reveal>
 
@@ -221,11 +218,8 @@ export function Home() {
             <Reveal delay={300}>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
                 <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 text-base px-8 h-12 shadow-[0_0_32px_rgba(212,255,0,0.25)] hover:shadow-[0_0_48px_rgba(212,255,0,0.4)] transition-all duration-300 hover:-translate-y-0.5" onClick={startCreating}>
-                  Start For Free
+                  Create Event
                   <ArrowRight className="ml-2 w-5 h-5" />
-                </Button>
-                <Button size="lg" variant="outline" className="text-base px-8 h-12 border-border/60 hover:border-primary/40 transition-all duration-300">
-                  View Demo
                 </Button>
               </div>
             </Reveal>
@@ -309,79 +303,27 @@ export function Home() {
       />
 
       {/* ============================================================
-          PROBLEM STATEMENT
-          ============================================================ */}
-      <Reveal>
-        <section className="py-12 sm:py-16 lg:py-32">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="max-w-3xl mx-auto text-center flex flex-col gap-6">
-              <Badge variant="outline" className="border-destructive/50 text-destructive w-fit mx-auto">The Problem</Badge>
-              <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tighter leading-tight text-balance">
-                Ticketing doesn't tell you who
-                <span className='relative inline-block ml-2'>
-                  <span className="text-primary">actually attended</span>
-                  <svg className="absolute -bottom-2 left-0 w-full" viewBox="0 0 300 12" fill="none" aria-hidden="true">
-                    <path d="M2 8.5C50 2.5 100 2 150 5.5C200 9 250 4.5 298 7" stroke="currentColor" strokeWidth="3" strokeLinecap="round" className="text-primary/40" />
-                  </svg>
-                </span>
-              </h2>
-              <p className="text-lg text-muted-foreground leading-relaxed">
-                EventBrite and similar platforms manage payments beautifully. But they don't capture the data you actually need: real attendance, engagement patterns, and member behavior.
-              </p>
-            </div>
-          </div>
-        </section>
-      </Reveal>
-
-      {/* ============================================================
           HOW IT WORKS — featured persona journeys (links to /how-it-works)
           ============================================================ */}
-      <section className="py-12 sm:py-16 lg:py-28 border-y border-border/40 bg-muted/30 relative overflow-hidden">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-200 h-96 bg-primary/5 rounded-full blur-[128px] pointer-events-none" />
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative">
-          <Reveal>
-            <div className="max-w-2xl mx-auto text-center mb-10 lg:mb-16 flex flex-col gap-4">
-              <Badge variant="outline" className="w-fit mx-auto">How it works</Badge>
-              <h2 className="text-4xl sm:text-5xl font-bold tracking-tighter text-balance">Built for everyone at your event</h2>
-              <p className="text-lg text-muted-foreground">
-                Organizer, steward, walk-in guest or regular — every role follows one clean path to a recorded check-in.
-                Pick a role to walk its journey.
-              </p>
-            </div>
-          </Reveal>
-
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5 max-w-6xl mx-auto">
-            {PERSONAS.map((p, i) => {
-              const Icon = p.icon;
-              return (
-                <Reveal key={p.id} delay={i * 80}>
-                  <button
-                    onClick={() => navigate('/how-it-works', p.id)}
-                    className={`group text-left w-full h-full rounded-2xl border p-6 flex flex-col gap-4 transition-all duration-300 hover:-translate-y-1 ${
-                      p.accent
-                        ? 'border-primary/40 bg-primary/5 hover:shadow-[0_16px_48px_-16px_rgba(212,255,0,0.3)]'
-                        : 'border-border/50 bg-card hover:border-primary/30'
-                    }`}
-                  >
-                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${p.accent ? 'bg-primary text-primary-foreground' : 'bg-primary/10 text-primary'}`}>
-                      <Icon className="w-6 h-6" />
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <h3 className="text-lg font-bold tracking-tight">{p.name}</h3>
-                      <p className="text-xs font-medium uppercase tracking-wider text-primary">{p.tag}</p>
-                    </div>
-                    <p className="text-sm text-muted-foreground leading-relaxed flex-1">{p.blurb}</p>
-                    <span className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground/80 group-hover:text-primary transition-colors">
-                      Walk the journey
-                      <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-                    </span>
-                  </button>
-                </Reveal>
-              );
-            })}
-          </div>
-
-          <Reveal delay={160}>
+      <Reveal>
+        <section className="py-6 sm:py-8 lg:py-16">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="max-w-3xl mx-auto text-center flex flex-col gap-6">
+              <div className="max-w-2xl mx-auto text-center mb-10 lg:mb-16 flex flex-col gap-4">
+                <Badge variant="outline" className="w-fit mx-auto">How it works</Badge>
+                <h2 className="text-5xl sm:text-6xl lg:text-7xl font-extrabold tracking-tighter leading-[1.02] text-balance">
+                  Multiple{'  '}
+                  <span className="relative inline-block">
+                    <span className="text-primary">hosts</span>
+                    <svg className="absolute -bottom-2 left-0 w-full" viewBox="0 0 300 12" fill="none" aria-hidden="true">
+                      <path d="M2 8.5C50 2.5 100 2 150 5.5C200 9 250 4.5 298 7" stroke="currentColor" strokeWidth="3" strokeLinecap="round" className="text-primary/40" />
+                    </svg>
+                  </span>
+                  no problem</h2>
+                <p className="text-lg text-muted-foreground">
+                  Organizer, steward, walk-in guest or regular — every role follows one clean path to a recorded check-in.
+                </p>
+                          <Reveal delay={160}>
             <div className="mt-10 flex justify-center">
               <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 text-base h-12 px-8 shadow-[0_0_24px_rgba(212,255,0,0.2)]" onClick={() => navigate('/how-it-works')}>
                 See how CredoPass works
@@ -389,13 +331,17 @@ export function Home() {
               </Button>
             </div>
           </Reveal>
-        </div>
-      </section>
+              </div>
+            </div>
+          </div>
+        </section>
+      </Reveal>
+
 
       {/* ============================================================
           FEATURES GRID
           ============================================================ */}
-      <section id="features" className="py-12 sm:py-16 lg:py-32">
+      <section id="features" className="py-12 sm:py-16 lg:py-32 bg-muted/30">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <Reveal>
             <div className="max-w-2xl mb-10 lg:mb-16">
@@ -437,36 +383,7 @@ export function Home() {
         </div>
       </section>
 
-      {/* ============================================================
-          HOW IT WORKS — persona journeys
-          ============================================================ */}
-      <section id="journey" className="py-12 sm:py-16 lg:py-32 bg-muted/30">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <Reveal>
-            <div className="max-w-2xl mb-10 lg:mb-16">
-              <Badge variant="outline" className="mb-4">How it works</Badge>
-              <h2 className="text-4xl sm:text-5xl font-bold tracking-tighter mb-4">
-                One flow, every attendee
-              </h2>
-              <p className="text-lg text-muted-foreground">
-                Whether you host, walk in off the street, or already use the app — every path leads
-                to a recorded check-in and live analytics.
-              </p>
-            </div>
-          </Reveal>
-          <Reveal delay={80}>
-            <JourneyFlow />
-          </Reveal>
-          <Reveal delay={160}>
-            <div className="mt-10 flex justify-center">
-              <Button variant="outline" size="lg" className="text-base h-12 px-8 border-border/60 hover:border-primary/40" onClick={() => navigate('/how-it-works')}>
-                Walk every journey in detail
-                <ArrowRight className="ml-2 w-5 h-5" />
-              </Button>
-            </div>
-          </Reveal>
-        </div>
-      </section>
+
 
       {/* ============================================================
           PRODUCT SECTIONS
@@ -833,11 +750,8 @@ export function Home() {
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
                 <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 text-base px-8 h-12 shadow-[0_0_32px_rgba(212,255,0,0.25)] hover:shadow-[0_0_48px_rgba(212,255,0,0.4)] transition-all duration-300 hover:-translate-y-0.5" onClick={startCreating}>
-                  Start For Free
+                  Create Event
                   <ArrowRight className="ml-2 w-5 h-5" />
-                </Button>
-                <Button size="lg" variant="outline" className="text-base px-8 h-12 border-border/60 hover:border-primary/40 transition-all duration-300">
-                  Schedule Demo
                 </Button>
               </div>
             </div>

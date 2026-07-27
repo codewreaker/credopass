@@ -512,7 +512,7 @@ function FooterCta() {
           </p>
           <div className="flex flex-col sm:flex-row items-center gap-4">
             <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 text-base px-8 h-12 shadow-[0_0_32px_rgba(212,255,0,0.25)]" onClick={() => (location.href = 'https://app.credopass.com')}>
-              Start for free <ArrowRight className="ml-2 w-5 h-5" />
+              Create Event <ArrowRight className="ml-2 w-5 h-5" />
             </Button>
             <Button size="lg" variant="outline" className="text-base px-8 h-12" onClick={() => navigate('/')}>
               <ArrowLeft className="mr-2 w-4 h-4" /> Back to home
