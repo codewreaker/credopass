@@ -59,6 +59,18 @@ const asString = (v: unknown): string | null =>
   typeof v === 'string' && v.length > 0 ? v : null;
 
 /**
+ * Thrown inside the account-creation transaction when another request inserted
+ * the same `(issuer, subject)` first. Rolls the transaction back; never escapes
+ * `resolveCaller`.
+ */
+class LostIdentityRace extends Error {
+  constructor() {
+    super('identity already created by a concurrent request');
+    this.name = 'LostIdentityRace';
+  }
+}
+
+/**
  * A friendly label for an anonymous guest, e.g. `Guest 4821`.
  *
  * Anonymous sign-ins assert no `name` claim, so without this every guest shows

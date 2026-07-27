@@ -81,11 +81,17 @@ all loyalty copy on `/login` and `/upgrade` · loyalty helpers in `packages/lib`
 | | |
 |---|---|
 | `nx run coreservice:verify` | ✅ **65 tests** (61 + 4 for `guestDisplayName`) |
+| `nx run coreservice:test:integration` | ✅ **127 tests** (119 + 8 for the `resolveCaller` race) |
 | `nx run web:build` | ✅ |
 | `apps/web` typecheck | ✅ 0 errors (was 151) |
 | `nx run web:lint` | ✅ 2 warnings, both pre-existing |
 | `ui:lint`, `lib:lint` | ❌ **pre-existing**, confirmed against a stashed tree. `map.tsx`, `bottom-nav.tsx`, `date-time-range-picker.tsx`, `use-toolbar-context.ts` — none touched by this work |
-| Run against a live API | 🟡 **API path only.** Local stack (`dev:up` + `db reset` + `bun start`), verified by curl: guest display name, `needsOnboarding`, `403 not_a_member` with no org, create-org → create-event happy path. **No browser pass yet.** |
+| Run against a live API | ✅ Local stack (`dev:up` + `db reset` + `bun start`), verified by curl and by a real browser |
+| Browser pass (Playwright) | ✅ **4/4** on the onboarding + `/events/new` path — 0 console errors, 0 failed requests. **The other 17 routes in 2.8 are still unchecked.** |
+
+> **Playwright is available** — `@playwright/test` 1.61.1 is already a dependency and Chromium is
+> installed. There is no `playwright.config.*` and no `e2e` target yet, so scripts are run directly
+> (`node script.mjs` with `node_modules` resolvable). Worth formalising for the 2.8 route audit.
 
 ---
 
@@ -131,6 +137,28 @@ tenant per bot visit.
 **What was built instead** (the middle path): onboarding step 1 prefills the organization name from
 the account's display name, so it is one Enter press. Guests are skipped — their display name is a
 generated label and would read as noise. Organization creation stays deliberate.
+
+### ✅ Bonus find — `resolveCaller` raced on a new account's first request (fixed)
+
+Found by the browser pass, not by reading. A new visitor's first page load showed a **500 on
+`GET /me/context`** in the console.
+
+`resolveCaller` did SELECT-then-INSERT with no conflict handling. A brand-new caller's first load
+fires several requests at once; every one missed the SELECT and every one tried to insert, so
+`uq_identities_issuer_subject` rejected all but one. Reproduced by hand: **3 of 4 concurrent first
+requests returned 500.** Because the `accounts` insert came *before* the `identities` insert, each
+loser also left an **orphan account** behind — 7 accumulated on the local DB before the fix.
+
+Fixed in `services/core/src/services/identity.ts`: the identity insert now tolerates the conflict
+(`onConflictDoNothing` on `(issuer, subject)`) and re-reads the winner, and the account+identity pair
+is wrapped in one transaction so a lost race rolls the account back instead of orphaning it. Both
+halves earn their place — the transaction stops orphans, the conflict handling stops the 500.
+
+Covered by `src/test/integration/identity.test.ts` (8 tests). Confirmed the tests catch the
+regression: with the conflict handling removed they fail with `code: 23505` on
+`uq_identities_issuer_subject`, the exact production error. After the fix, 30 concurrent first
+requests across 5 new tokens returned **200 every time**, created exactly 5 accounts, and added zero
+orphans.
 
 **Still open, and worth doing on its own:** the D16 violation itself. Either make guest accounts lazy
 on first write (touches the auth path every request goes through) or add the reaper D16 promised
