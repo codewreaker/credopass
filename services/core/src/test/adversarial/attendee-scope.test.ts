@@ -9,55 +9,80 @@
  * membership row exists, AND the org-scoped endpoints stay empty — because a
  * leak could be introduced at either layer.
  *
- * RED until Phase 3 (§12.2).
+ * Tests whose endpoint does not exist yet are `it.todo` and name the missing
+ * route, so a red run means a regression rather than a backlog item (§12.2).
  */
 
 import { beforeAll, describe, expect, it } from 'bun:test';
 import { getTestDatabase } from '../support/database';
 import { request, problemCode, type Actor } from '../support/actors';
+import { newAccount, newEvent, newTenant, registerFor } from '../support/fixtures';
 
 let B: Actor;          // the organiser whose event is being attended
 let attendee: Actor;   // a human with an account but no membership anywhere
 let bEventId: string;
 let passToken: string;
-let attendanceId: string;
+/** The address the attendee registered under AND holds verified — the T34 link. */
+let attendeeEmail: string;
 
 beforeAll(async () => {
   await getTestDatabase();
-  B = { label: 'B', accountId: '', organizationId: '', token: '' };
-  attendee = { label: 'attendee', accountId: '', organizationId: '', token: '' };
-  bEventId = '';
-  passToken = '';
-  attendanceId = '';
+
+  B = await newTenant('B');
+  // Self check-in off, so T38 tests the flag rather than the default.
+  bEventId = await newEvent(B, { name: "B's public event", allowSelfCheckIn: false });
+
+  attendeeEmail = `attendee-${crypto.randomUUID().slice(0, 8)}@example.test`;
+
+  // Registers anonymously FIRST, then signs in with the same verified address.
+  // That order is the real one — someone books, then makes an account — and it
+  // is what gives /me/claim something to link.
+  const registration = await registerFor(bEventId, {
+    firstName: 'Ada',
+    lastName: 'Attendee',
+    email: attendeeEmail,
+  });
+  // `registration.attendanceId` is what T32 needs; it stays unread until
+  // PATCH /attendance/{id} exists.
+  passToken = registration.passToken;
+
+  attendee = await newAccount({
+    label: 'attendee',
+    email: attendeeEmail,
+    emailVerified: true,
+  });
 });
 
 describe('T29-T30 — attending is not belonging', () => {
   it('T29 · registering for B\'s event creates NO org_memberships row', async () => {
-    const res = await request(null, 'POST', `/public/events/${bEventId}/register`, {
-      idempotencyKey: crypto.randomUUID(),
-      body: { firstName: 'Walk', lastName: 'In', email: `walkin+${crypto.randomUUID().slice(0, 8)}@x.com` },
-    });
-    expect(res.status).toBe(201);
-    const { person } = await res.json();
+    const { personId } = await registerFor(bEventId);
 
     const db = await getTestDatabase();
     const { rows } = await db.pool.query(
       `SELECT count(*)::int AS n FROM org_memberships m
          JOIN people p ON p.account_id = m.account_id
         WHERE p.id = $1`,
-      [person.id]
+      [personId]
     );
     expect(rows[0].n).toBe(0);
   });
 
-  it('T29b · and from the other side: the attendee sees zero organisations', async () => {
+  it("T29b · and from the other side: the attendee is in none of B's organisations", async () => {
+    // Auto-provisioning means the attendee HAS an organisation — their own,
+    // created when they signed in. The claim under test was never "zero
+    // organisations" though; it is that attending B's event grants nothing in
+    // B. Asserting emptiness would now pass or fail for reasons unrelated to
+    // the leak it exists to catch.
     const ctx = await request(attendee, 'GET', '/me/context', { organizationId: null });
     expect(ctx.status).toBe(200);
     const body = await ctx.json();
-    expect(body.organizations).toEqual([]);
-    expect(body.needsOnboarding).toBe(true);
 
-    const events = await request(attendee, 'GET', '/events', { organizationId: null });
+    expect(body.organizations.map((o: any) => o.id)).not.toContain(B.organizationId);
+
+    // Their own console shows their own organisation's events — none of B's.
+    const events = await request(attendee, 'GET', '/events', {
+      organizationId: body.organizations[0].id,
+    });
     expect(events.status).toBe(200);
     expect((await events.json()).data).toEqual([]);
   });
@@ -71,51 +96,35 @@ describe('T29-T30 — attending is not belonging', () => {
 });
 
 describe('T31-T34 — the personal scope', () => {
-  it('T31 · /me/tickets returns only mine, but across ALL organisations', async () => {
-    const res = await request(attendee, 'GET', '/me/tickets', { organizationId: null });
-    expect(res.status).toBe(200);
-    const { data } = await res.json();
+  // Needs GET /me/tickets — the personal ticket list is not built.
+  it.todo('T31 · /me/tickets returns only mine, but across ALL organisations', () => {});
 
-    // A ticket in an org the attendee does not administer must still appear —
-    // that is the entire point of the account scope.
-    expect(data.length).toBeGreaterThan(0);
-    expect(data.some((t: any) => t.organizationId === B.organizationId)).toBe(true);
-    for (const t of data) expect(t.accountId ?? attendee.accountId).toBe(attendee.accountId);
-  });
+  // Needs PATCH /attendance/{id} — the attendance write route is not built.
+  it.todo('T32 · the self branch is READ-ONLY — PATCHing my own attendance row → 403', () => {});
 
-  it('T32 · the self branch is READ-ONLY — PATCHing my own attendance row → 403', async () => {
-    // WITH CHECK omits the self predicate (§7.2), so an attendee may read the
-    // organiser's record of them but can never edit it.
-    const res = await request(attendee, 'PATCH', `/attendance/${attendanceId}`, {
-      organizationId: null,
-      body: { state: 'attended' },
-    });
-    expect(res.status).toBe(403);
-  });
+  // Needs POST /me/claim. `claimByVerifiedEmail` EXISTS in services/identity.ts
+  // and is tested at the service level; what is missing is only the route that
+  // exposes it. T33/T34 stay todo because the endpoint is the thing under test.
+  it.todo('T33 · /me/claim with an UNVERIFIED email links nothing', () => {});
+  it.todo(
+    'T34 · /me/claim with a verified email links matching rows, case-insensitively, and grants no membership'
+  , () => {});
 
-  it('T33 · /me/claim with an UNVERIFIED email links nothing', async () => {
-    const unverified: Actor = { label: 'unverified', accountId: '', organizationId: '', token: '' };
-    const res = await request(unverified, 'POST', '/me/claim', {
-      organizationId: null,
-      idempotencyKey: crypto.randomUUID(),
-    });
-    expect(res.status).toBe(200);
-    // Claiming on an unverified address is account takeover by typo.
-    expect((await res.json()).claimed).toBe(0);
-  });
-
-  it('T34 · /me/claim with a verified email links matching rows, case-insensitively, and grants no membership', async () => {
-    const res = await request(attendee, 'POST', '/me/claim', {
-      organizationId: null,
-      idempotencyKey: crypto.randomUUID(),
-    });
-    expect(res.status).toBe(200);
-    expect((await res.json()).claimed).toBeGreaterThan(0);
-
+  it('T34-service · claiming by verified email links rows and grants no membership', async () => {
+    // The invariant T34 guards, asserted against the service while the route is
+    // unbuilt — so the RULE is covered even though the endpoint is not.
+    const { claimByVerifiedEmail } = await import('../../services/identity');
     const db = await getTestDatabase();
+
+    const result = await claimByVerifiedEmail(db.db as never, attendee.accountId);
+    expect(result.claimed).toBeGreaterThan(0);
+
+    // Claiming a ticket must grant nothing in the organisation that issued it.
+    // Scoped to B rather than counting all memberships, because the attendee
+    // legitimately owns their own auto-provisioned organisation.
     const { rows } = await db.pool.query(
-      'SELECT count(*)::int AS n FROM org_memberships WHERE account_id = $1',
-      [attendee.accountId]
+      'SELECT count(*)::int AS n FROM org_memberships WHERE account_id = $1 AND organization_id = $2',
+      [attendee.accountId, B.organizationId]
     );
     expect(rows[0].n).toBe(0);
   });

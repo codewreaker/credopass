@@ -16,7 +16,8 @@ import { createMiddleware } from 'hono/factory';
 import type { Context } from 'hono';
 import { problem, ProblemCode } from '../http/problem';
 import { createIssuerRegistry, type IssuerRegistry } from '../identity/issuer-registry';
-import { resolveCaller, type Caller } from '../services/identity';
+import { loadMemberships, resolveCaller, type Caller } from '../services/identity';
+import { ensureDefaultOrganization } from '../services/membership';
 import { createTenantContext, type TenantContext } from '../tenancy/context';
 import { getDatabase } from '../db/client';
 import * as Device from '../services/device';
@@ -78,6 +79,31 @@ export const requireCaller = createMiddleware<{ Variables: CallerVars }>(async (
     claims: verified.claims,
     providerKind: verified.trusted.providerKind,
   });
+
+  // Give a brand-new account its own organisation, so nobody lands in a console
+  // where every query is correctly empty. The zero-membership test is what keeps
+  // this off the hot path: it is true exactly once per account, and false on
+  // every request afterwards, so the transaction and its advisory lock are not
+  // paid for by steady-state traffic.
+  //
+  // Guests are excluded. Nothing issues anonymous tokens any more, but the API
+  // still accepts them, and provisioning an organisation for a caller who may
+  // never return is what D16 exists to forbid.
+  if (caller.memberships.length === 0 && !caller.isGuest) {
+    await ensureDefaultOrganization(db, {
+      id: caller.accountId,
+      displayName: caller.displayName,
+      email: caller.email,
+    });
+
+    // Re-read unconditionally. The membership list above was read BEFORE the
+    // lock, so it is stale either way: this request may have created the
+    // organisation, or it may have lost the race to a sibling that did. The
+    // losing case is the one that matters — it returns null, and without a
+    // re-read this request would carry on with no memberships and 403 on every
+    // org-scoped route it touches.
+    caller.memberships = await loadMemberships(db, caller.accountId);
+  }
 
   c.set('caller', caller);
   await next();

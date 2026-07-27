@@ -25,6 +25,7 @@ import {
 import type { Database } from '../db/client';
 import { ProblemCode, problem } from '../http/problem';
 import type { OrgRole } from '../authz/permissions';
+import { DEFAULT_PLAN, orgLimitFor } from '../authz/plans';
 import { normaliseRole } from './identity';
 
 /**
@@ -67,6 +68,8 @@ export async function createOrganization(
   accountId: string,
   input: { id?: string; name: string; slug?: string; timezone?: string }
 ): Promise<OrganizationSummary> {
+  await assertCanOwnAnother(db, accountId);
+
   const slug = slugify(input.slug ?? input.name);
 
   const clash = await db
@@ -79,21 +82,156 @@ export async function createOrganization(
     throw problem.conflict(ProblemCode.SLUG_TAKEN, `The slug "${slug}" is already in use.`);
   }
 
+  return insertOrganization(db, accountId, { ...input, slug });
+}
+
+/**
+ * The org + owner-membership pair, written together.
+ *
+ * Split out because auto-provisioning needs exactly this and must NOT re-run
+ * the quota check — the first organisation is granted, not purchased.
+ */
+async function insertOrganization(
+  db: Database,
+  accountId: string,
+  input: { id?: string; name: string; slug: string }
+): Promise<OrganizationSummary> {
   return db.transaction(async (tx) => {
     const [org] = await tx
       .insert(organizations)
       .values({
         ...(input.id ? { id: input.id } : {}),
         name: input.name,
-        slug,
+        slug: input.slug,
         // `plan` is server-forced. A client that sends "enterprise" gets free.
-        plan: 'free',
+        plan: DEFAULT_PLAN,
       })
       .returning();
 
     await tx.insert(orgMemberships).values({
       organizationId: org.id,
       accountId,
+      role: 'owner',
+      status: 'active',
+      provisionedBy: 'manual',
+    });
+
+    return { id: org.id, name: org.name, slug: org.slug, plan: org.plan, role: 'owner' as const };
+  });
+}
+
+/** Organisations this account owns, with their plans. */
+async function ownedOrganizations(db: Database, accountId: string) {
+  return db
+    .select({ id: organizations.id, plan: organizations.plan })
+    .from(orgMemberships)
+    .innerJoin(organizations, eq(organizations.id, orgMemberships.organizationId))
+    .where(
+      and(
+        eq(orgMemberships.accountId, accountId),
+        eq(orgMemberships.role, 'owner'),
+        eq(orgMemberships.status, 'active'),
+        isNull(organizations.deletedAt)
+      )
+    );
+}
+
+/**
+ * Enforce the per-plan cap on organisations an account may own.
+ *
+ * 402, not 403: the caller is not forbidden, they have run out of allowance —
+ * and 402 is what the upgrade screen keys off. The detail names both numbers so
+ * the UI never has to guess what the limit was.
+ */
+async function assertCanOwnAnother(db: Database, accountId: string): Promise<void> {
+  const owned = await ownedOrganizations(db, accountId);
+  const limit = orgLimitFor(owned.map((o) => o.plan ?? DEFAULT_PLAN));
+
+  if (owned.length >= limit) {
+    throw problem.paymentRequired(
+      ProblemCode.PLAN_LIMIT,
+      `Your plan includes ${limit} organization${limit === 1 ? '' : 's'} and you already own ${owned.length}. Upgrade to create more.`
+    );
+  }
+}
+
+/** `Israel's organization`, from whatever the identity provider told us. */
+export function defaultOrganizationName(
+  displayName: string | null,
+  email: string | null
+): string {
+  const fromName = displayName?.trim().split(/\s+/)[0];
+  // Local-part fallback: `ada.lovelace@x.com` reads better as "Ada" than as the
+  // whole address, and an account with neither name nor email is possible.
+  const fromEmail = email?.split('@')[0]?.split(/[._-]/)[0];
+  const raw = fromName || fromEmail;
+  if (!raw) return 'My organization';
+
+  const who = raw.charAt(0).toUpperCase() + raw.slice(1);
+  return `${who}'s organization`;
+}
+
+/**
+ * Give a brand-new account its own organisation.
+ *
+ * Runs on first sign-in and never again — the membership it creates is what
+ * makes the check below false forever after. This is what replaced the
+ * onboarding wall: with anonymous sign-in gone, every account belongs to a real
+ * authenticated person, so there is no drive-by visitor to provision for.
+ *
+ * Two hazards, both handled:
+ *
+ *   · CONCURRENCY. A first page load fires several requests at once and every
+ *     one of them would see "no memberships" and create an organisation. The
+ *     advisory lock serialises them per account, and the re-check inside the
+ *     lock means the losers do nothing. The lock is transaction-scoped, so it
+ *     is released even if this throws.
+ *   · SLUG COLLISION. Two people called Israel produce the same slug, and the
+ *     column is globally unique. A suffix is appended until one is free rather
+ *     than failing a sign-in over a name nobody chose.
+ *
+ * Returns the organisation it created, or null when the account already had one.
+ */
+export async function ensureDefaultOrganization(
+  db: Database,
+  account: { id: string; displayName: string | null; email: string | null }
+): Promise<OrganizationSummary | null> {
+  return db.transaction(async (tx) => {
+    // Serialise concurrent first requests for THIS account only. hashtext gives
+    // a stable bigint from the uuid; collisions across accounts are harmless
+    // here because the worst case is one extra request waiting briefly.
+    await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${account.id}))`);
+
+    const existing = await tx
+      .select({ id: orgMemberships.id })
+      .from(orgMemberships)
+      .where(and(eq(orgMemberships.accountId, account.id), eq(orgMemberships.status, 'active')))
+      .limit(1);
+
+    if (existing.length > 0) return null;
+
+    const name = defaultOrganizationName(account.displayName, account.email);
+    const base = slugify(name);
+
+    let slug = base;
+    for (let attempt = 0; attempt < 25; attempt++) {
+      const taken = await tx
+        .select({ id: organizations.id })
+        .from(organizations)
+        .where(eq(organizations.slug, slug))
+        .limit(1);
+      if (taken.length === 0) break;
+      slug = `${base}-${randomBytes(3).toString('hex')}`;
+    }
+
+    const [org] = await tx
+      .insert(organizations)
+      .values({ name, slug, plan: DEFAULT_PLAN })
+      .returning();
+
+    await tx.insert(orgMemberships).values({
+      organizationId: org.id,
+      accountId: account.id,
       role: 'owner',
       status: 'active',
       provisionedBy: 'manual',

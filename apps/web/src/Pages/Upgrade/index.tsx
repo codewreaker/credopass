@@ -68,7 +68,7 @@ export default function UpgradePage() {
           <p className="text-sm text-muted-foreground mb-8">
             Check your inbox to confirm your email, then sign back in.
           </p>
-          <Button className="w-full h-11 rounded-full font-semibold" onClick={() => navigate({ to: '/login', search: { view: 'email', manual: true } })}>
+          <Button className="w-full h-11 rounded-full font-semibold" onClick={() => navigate({ to: '/login', search: { view: 'email' } })}>
             Sign in to your new account
           </Button>
         </div>

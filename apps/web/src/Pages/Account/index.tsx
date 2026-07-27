@@ -194,11 +194,11 @@ function ProfileTab() {
             <p className="truncate text-xs text-muted-foreground">{account?.email ?? '—'}</p>
           </div>
         </div>
-        {account?.isGuest && (
-          <p className="rounded-xl border border-primary/25 bg-primary/5 px-3 py-2 text-xs text-muted-foreground">
-            You are signed in as a guest. Create a real account to keep your organizations.
-          </p>
-        )}
+        {/*
+          The guest banner is gone with anonymous sign-in. It offered to "create
+          a real account to keep your organizations" — an action that was never
+          built, so it promised a rescue that did not exist.
+        */}
       </Section>
 
       <Section title="Session" description="Sign out of this browser.">
@@ -208,7 +208,7 @@ function ProfileTab() {
           onClick={async () => {
             await supabase.auth.signOut();
             clearActiveOrganization();
-            navigate({ to: '/login', search: { manual: true, view: 'social', out: true } });
+            navigate({ to: '/login', search: { view: 'social', out: true } });
           }}
         >
           <LogOut size={15} /> Sign out

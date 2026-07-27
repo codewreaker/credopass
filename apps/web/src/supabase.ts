@@ -8,10 +8,11 @@ import { SUPASE_CRED } from './config'
 export const supabase = createClient(SUPASE_CRED.URL, SUPASE_CRED.ANON_KEY)
 
 export const {
-  signInAsGuest,
   signInWithEmail,
   signInWithGithub,
   signUpWithEmail,
+  sendPasswordReset,
+  updatePassword,
 } = createAuthClient(supabase)
 
 /** Current session access token, for authenticated API requests. */

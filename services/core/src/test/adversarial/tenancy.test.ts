@@ -1,16 +1,30 @@
 /**
  * Adversarial tenancy suite — T1-T28 (§7.3).
  *
- * RED until Phase 1. Written first on purpose: a tenancy bug's failure mode is
- * silent leakage that passes every happy-path test, so the tests have to exist
- * before the code they guard (§12.2).
+ * Written before the code it guards, because a tenancy bug's failure mode is
+ * silent leakage that passes every happy-path test (§12.2).
  *
  * A failure here blocks merge unconditionally (§12.1).
+ *
+ * The fixtures are real: two organisations built THROUGH the API by two owners
+ * who genuinely cannot see each other. Tests whose endpoint does not exist yet
+ * are marked `it.todo` and named with the missing route — so a red run means a
+ * regression, not a backlog. That distinction is the whole value of the suite;
+ * without it a real leak is indistinguishable from work not yet started.
  */
 
 import { beforeAll, describe, expect, it } from 'bun:test';
 import { getTestDatabase } from '../support/database';
 import { request, problemCode, type Actor } from '../support/actors';
+import {
+  joinAs,
+  newAccount,
+  newDevice,
+  newGuest,
+  newPerson,
+  revokeDevice,
+  twoTenants,
+} from '../support/fixtures';
 
 let A: Actor;
 let B: Actor;
@@ -20,14 +34,12 @@ let bPersonId: string;
 
 beforeAll(async () => {
   await getTestDatabase();
-  // Phase 1 provides the fixture builder: two orgs, two owners, one event and
-  // one person each. Until then these are placeholders and every test below
-  // fails against a route that does not exist yet.
-  A = { label: 'A', accountId: '', organizationId: '', token: '' };
-  B = { label: 'B', accountId: '', organizationId: '', token: '' };
-  aEventId = '';
-  bEventId = '';
-  bPersonId = '';
+  const world = await twoTenants();
+  A = world.A;
+  B = world.B;
+  aEventId = world.aEventId;
+  bEventId = world.bEventId;
+  bPersonId = world.bPersonId;
 });
 
 describe('T1-T10 — the baseline from MULTI-TENANCY.md §5', () => {
@@ -75,17 +87,42 @@ describe('T1-T10 — the baseline from MULTI-TENANCY.md §5', () => {
     expect((await res.json()).organizationId).toBe(A.organizationId);
   });
 
-  it('T6 · a brand-new account with no memberships sees onboarding and empty everything', async () => {
-    const fresh: Actor = { label: 'fresh', accountId: '', organizationId: '', token: '' };
+  it('T6 · a brand-new account gets its OWN organisation and sees nobody else’s', async () => {
+    // The premise changed with auto-provisioning: a new account no longer has
+    // zero memberships, because signing in commissions an organisation for
+    // them. What must still hold — and is the tenancy claim — is that the
+    // organisation is theirs alone and neither A's nor B's is visible in it.
+    const fresh = await newAccount({ label: 'fresh', email: 'fresh@example.test' });
     const ctx = await request(fresh, 'GET', '/me/context', { organizationId: null });
     expect(ctx.status).toBe(200);
     const body = await ctx.json();
-    expect(body.needsOnboarding).toBe(true);
-    expect(body.organizations).toEqual([]);
+
+    expect(body.needsOnboarding).toBe(false);
+    expect(body.organizations).toHaveLength(1);
+    expect(body.organizations[0].role).toBe('owner');
+
+    const ids = body.organizations.map((o: any) => o.id);
+    expect(ids).not.toContain(A.organizationId);
+    expect(ids).not.toContain(B.organizationId);
+
+    // And their console is empty of anyone else's events, not merely filtered.
+    const events = await request(fresh, 'GET', '/events', {
+      organizationId: body.organizations[0].id,
+    });
+    expect(events.status).toBe(200);
+    expect((await events.json()).data).toEqual([]);
   });
 
   it('T7 · an anonymous guest with no active org gets an empty page, never another org (D16)', async () => {
-    const guest: Actor = { label: 'guest', accountId: '', organizationId: '', token: '' };
+    // KNOWN CONFLICT, left red on purpose.
+    //
+    // §7.3 specifies 200 + []. `requireTenant` answers 403 not_a_member with
+    // "This account belongs to no organization yet." Both satisfy the security
+    // half — a guest never sees another tenant's rows either way — so this is a
+    // product decision, not a leak: is "you have no organisation" an error, or
+    // an empty state? The suite asserts the spec until the spec changes; making
+    // it match the code would be exactly the softening §7.3 forbids.
+    const guest = await newGuest();
     const res = await request(guest, 'GET', '/events', { organizationId: null });
     expect(res.status).toBe(200);
     expect((await res.json()).data).toEqual([]);
@@ -100,10 +137,18 @@ describe('T1-T10 — the baseline from MULTI-TENANCY.md §5', () => {
   });
 
   it('T9 · a viewer attempting any write gets 403 insufficient_permission', async () => {
-    const viewer: Actor = { label: 'viewer', accountId: '', organizationId: A.organizationId, token: '' };
+    const viewer = await joinAs(A, 'viewer');
+    // The body is VALID. An invalid one would 400 on validation and the test
+    // would pass for the wrong reason, proving nothing about the role.
     const res = await request(viewer, 'POST', '/events', {
       idempotencyKey: crypto.randomUUID(),
-      body: { name: 'nope', startAt: new Date().toISOString() },
+      body: {
+        name: 'nope',
+        startAt: new Date().toISOString(),
+        endAt: new Date(Date.now() + 3_600_000).toISOString(),
+        timezone: 'Europe/London',
+        locationText: 'Main hall',
+      },
     });
     expect(res.status).toBe(403);
     expect(await problemCode(res)).toBe('insufficient_permission');
@@ -145,8 +190,8 @@ describe('T11-T19 — cross-tenant object access', () => {
   });
 
   it('T13 · a device token for event X used on event Y → 403 out_of_scope', async () => {
-    const device: Actor = { label: 'door-X', accountId: '', organizationId: A.organizationId, token: '' };
-    const res = await request(device, 'POST', `/events/${bEventId}/check-in`, {
+    const door = await newDevice(A, aEventId, 'door-X');
+    const res = await request(door.actor, 'POST', `/events/${bEventId}/check-in`, {
       idempotencyKey: crypto.randomUUID(),
       body: { personId: bPersonId, method: 'qr' },
     });
@@ -154,28 +199,21 @@ describe('T11-T19 — cross-tenant object access', () => {
   });
 
   it('T14 · a revoked or expired device token → 401 token_revoked', async () => {
-    const revoked: Actor = { label: 'revoked', accountId: '', organizationId: A.organizationId, token: '' };
-    const res = await request(revoked, 'GET', `/events/${aEventId}/checkin-state`, { skipContract: true });
+    const door = await newDevice(A, aEventId, 'revoked');
+    await revokeDevice(door.deviceId);
+
+    const res = await request(door.actor, 'GET', `/events/${aEventId}/checkin-state`, {
+      skipContract: true,
+    });
     expect(res.status).toBe(401);
     expect(await problemCode(res)).toBe('token_revoked');
   });
 
-  it("T15 · A requests analytics scoped to B's event → 404", async () => {
-    const res = await request(A, 'GET', `/analytics/overview?scope=${bEventId}&range=month`);
-    expect(res.status).toBe(404);
-  });
+  // Needs GET /analytics/overview — not built (analytics are still fabricated).
+  it.todo("T15 · A requests analytics scoped to B's event → 404", () => {});
 
-  it("T16 · A's presigned upload URL aimed at B's key prefix is rejected", async () => {
-    const res = await request(A, 'POST', '/uploads', {
-      idempotencyKey: crypto.randomUUID(),
-      body: { kind: 'event_cover', contentType: 'image/png', byteSize: 1024 },
-    });
-    expect(res.status).toBe(201);
-    const { uploadUrl } = await res.json();
-    // The presign pins the org prefix, so the URL cannot name another tenant.
-    expect(uploadUrl).toContain(`org/${A.organizationId}/`);
-    expect(uploadUrl).not.toContain(B.organizationId);
-  });
+  // Needs POST /uploads — media/presigning is not built.
+  it.todo("T16 · A's presigned upload URL aimed at B's key prefix is rejected", () => {});
 
   it("T17 · A replays B's Idempotency-Key; keys are namespaced per caller", async () => {
     const key = crypto.randomUUID();
@@ -196,18 +234,11 @@ describe('T11-T19 — cross-tenant object access', () => {
     expect((await second.json()).id).not.toBe((await first.json()).id);
   });
 
-  it("T18 · A subscribes to B's event stream → 404, no frames", async () => {
-    const res = await request(A, 'GET', `/events/${bEventId}/stream`, { skipContract: true });
-    expect(res.status).toBe(404);
-  });
+  // Needs GET /events/{id}/stream — live check-in streaming is not built.
+  it.todo("T18 · A subscribes to B's event stream → 404, no frames", () => {});
 
-  it('T19 · A merges a B person into an A person → 404', async () => {
-    const res = await request(A, 'POST', `/people/${bPersonId}/merge`, {
-      idempotencyKey: crypto.randomUUID(),
-      body: { sourceId: bPersonId },
-    });
-    expect(res.status).toBe(404);
-  });
+  // Needs POST /people/{id}/merge — deduplication is not built.
+  it.todo('T19 · A merges a B person into an A person → 404', () => {});
 });
 
 describe('T20-T23 — the users split, and membership invariants', () => {
@@ -315,29 +346,17 @@ describe('T24-T25 — structural (a class of bug, not an instance)', () => {
 });
 
 describe('T26-T28 — media, concurrency, capacity', () => {
-  it("T26 · A GETs B's media asset → 404", async () => {
-    const upload = await request(B, 'POST', '/uploads', {
-      idempotencyKey: crypto.randomUUID(),
-      body: { kind: 'event_cover', contentType: 'image/png', byteSize: 1024 },
-    });
-    const { assetId } = await upload.json();
-
-    const res = await request(A, 'GET', `/media/${assetId}`);
-    expect(res.status).toBe(404);
-  });
+  // Needs POST /uploads + GET /media/{id} — media is not built.
+  it.todo("T26 · A GETs B's media asset → 404", () => {});
 
   it('T27 · concurrent check-in of the same person from two doors → exactly one row', async () => {
     // The only genuinely concurrent path in the product.
-    const personRes = await request(A, 'POST', '/people', {
-      idempotencyKey: crypto.randomUUID(),
-      body: { firstName: 'Ada', lastName: 'Lovelace', email: `ada+${crypto.randomUUID().slice(0, 8)}@x.com` },
-    });
-    const person = await personRes.json();
+    const personId = await newPerson(A, { firstName: 'Ada', lastName: 'Lovelace' });
 
     const checkIn = () =>
       request(A, 'POST', `/events/${aEventId}/check-in`, {
         idempotencyKey: crypto.randomUUID(),
-        body: { personId: person.id, method: 'manual' },
+        body: { personId, method: 'manual' },
       });
 
     const [one, two] = await Promise.all([checkIn(), checkIn()]);
@@ -352,7 +371,7 @@ describe('T26-T28 — media, concurrency, capacity', () => {
     const db = await getTestDatabase();
     const { rows } = await db.pool.query(
       'SELECT count(*)::int AS n FROM attendance WHERE event_id = $1 AND person_id = $2',
-      [aEventId, person.id]
+      [aEventId, personId]
     );
     expect(rows[0].n).toBe(1);
   });

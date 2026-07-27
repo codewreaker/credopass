@@ -26,6 +26,7 @@ import { ToolbarSlotProvider } from "../containers/TopNavBar/toolbar-slot";
  */
 const STANDALONE_ROUTES = [
   '/login',
+  '/reset-password',
   '/upgrade',
   '/onboarding',
   '/invitations/',

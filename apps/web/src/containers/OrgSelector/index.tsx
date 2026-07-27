@@ -70,7 +70,7 @@ const OrgSelector: React.FC<{
     const signOut = async () => {
         await supabase.auth.signOut();
         clearActiveOrganization();
-        navigate({ to: '/login', search: { manual: true, view: 'social', out: true } });
+        navigate({ to: '/login', search: { view: 'social', out: true } });
     };
 
     return (

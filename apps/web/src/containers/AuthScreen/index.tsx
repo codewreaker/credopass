@@ -25,6 +25,14 @@ export interface AuthScreenProps {
   mobileTagline: string
   /** Optional element rendered on the right of the mobile banner (e.g. a QR). */
   mobileBannerAside?: React.ReactNode
+  /**
+   * Rendered under the form on small screens only.
+   *
+   * The billboard — where the product actually gets sold — is hidden below
+   * `md`, so without this a phone visitor sees a bare form and no reason to
+   * fill it in.
+   */
+  mobileExtra?: React.ReactNode
   /** Show the round close button (returns to the app). */
   showClose?: boolean
   onClose?: () => void
@@ -52,6 +60,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
   showClose = false,
   onClose,
   footerText,
+  mobileExtra,
   children,
 }) => {
   return (
@@ -134,6 +143,9 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
           <div className="w-full max-w-[340px]">
             {children}
           </div>
+          {mobileExtra && (
+            <div className="md:hidden w-full max-w-85 mt-8">{mobileExtra}</div>
+          )}
         </div>
 
         {footerText && (

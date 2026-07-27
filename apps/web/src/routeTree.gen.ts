@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as UpgradeRouteImport } from './routes/upgrade'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as OrganizationsRouteImport } from './routes/organizations'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
@@ -33,6 +34,11 @@ import { Route as AttendeesUserIdEditRouteImport } from './routes/attendees/$use
 const UpgradeRoute = UpgradeRouteImport.update({
   id: '/upgrade',
   path: '/upgrade',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProfileRoute = ProfileRouteImport.update({
@@ -139,6 +145,7 @@ export interface FileRoutesByFullPath {
   '/onboarding': typeof OnboardingRoute
   '/organizations': typeof OrganizationsRoute
   '/profile': typeof ProfileRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/upgrade': typeof UpgradeRoute
   '/attendees/new': typeof AttendeesNewRoute
   '/checkin/$eventId': typeof CheckinEventIdRoute
@@ -161,6 +168,7 @@ export interface FileRoutesByTo {
   '/onboarding': typeof OnboardingRoute
   '/organizations': typeof OrganizationsRoute
   '/profile': typeof ProfileRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/upgrade': typeof UpgradeRoute
   '/attendees/new': typeof AttendeesNewRoute
   '/checkin/$eventId': typeof CheckinEventIdRoute
@@ -184,6 +192,7 @@ export interface FileRoutesById {
   '/onboarding': typeof OnboardingRoute
   '/organizations': typeof OrganizationsRoute
   '/profile': typeof ProfileRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/upgrade': typeof UpgradeRoute
   '/attendees/new': typeof AttendeesNewRoute
   '/checkin/$eventId': typeof CheckinEventIdRoute
@@ -208,6 +217,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/organizations'
     | '/profile'
+    | '/reset-password'
     | '/upgrade'
     | '/attendees/new'
     | '/checkin/$eventId'
@@ -230,6 +240,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/organizations'
     | '/profile'
+    | '/reset-password'
     | '/upgrade'
     | '/attendees/new'
     | '/checkin/$eventId'
@@ -252,6 +263,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/organizations'
     | '/profile'
+    | '/reset-password'
     | '/upgrade'
     | '/attendees/new'
     | '/checkin/$eventId'
@@ -275,6 +287,7 @@ export interface RootRouteChildren {
   OnboardingRoute: typeof OnboardingRoute
   OrganizationsRoute: typeof OrganizationsRoute
   ProfileRoute: typeof ProfileRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   UpgradeRoute: typeof UpgradeRoute
   AttendeesNewRoute: typeof AttendeesNewRoute
   CheckinEventIdRoute: typeof CheckinEventIdRoute
@@ -297,6 +310,13 @@ declare module '@tanstack/react-router' {
       path: '/upgrade'
       fullPath: '/upgrade'
       preLoaderRoute: typeof UpgradeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/profile': {
@@ -443,6 +463,7 @@ const rootRouteChildren: RootRouteChildren = {
   OnboardingRoute: OnboardingRoute,
   OrganizationsRoute: OrganizationsRoute,
   ProfileRoute: ProfileRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   UpgradeRoute: UpgradeRoute,
   AttendeesNewRoute: AttendeesNewRoute,
   CheckinEventIdRoute: CheckinEventIdRoute,

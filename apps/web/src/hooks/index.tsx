@@ -78,55 +78,11 @@ export const useCommandPallete = () => {
 }
 
 /**
- * Guest login is the default experience: a visitor who lands on `/login`
- * without explicitly asking to sign in (no `?manual=true`) is signed in
- * anonymously right away and never sees the form.
+ * `useGuestAutoLogin` was removed with anonymous sign-in.
  *
- * Anyone who navigates here on purpose — e.g. a "Log in" link that sets
- * `?manual=true` — skips the auto sign-in and sees the full page, which
- * still exposes "Continue as guest" as an explicit button.
+ * It signed every first-time visitor in anonymously before they had asked for
+ * anything, which created an account row per browser profile, pushed them
+ * straight into "create your organization", and left `/events` in the history
+ * stack so Back bounced between the two forever. See `packages/lib/src/supabase
+ * /auth.ts` for why anonymous sign-in itself is gone.
  */
-export function useGuestAutoLogin(manual: boolean, supabase:any, signInAsGuest:any, redirectTo?: string) {
-  const [isAutoSigningIn, setIsAutoSigningIn] = useState(!manual)
-  const navigate = useNavigate()
-  const hasRun = useRef(false)
-
-  // Return the private route the guard sent us back from, else the events home.
-  // Guarded to same-origin relative paths so `redirect` can't bounce elsewhere.
-  const destination = (): string => {
-    if (redirectTo && redirectTo.startsWith('/') && !redirectTo.startsWith('//')) return redirectTo
-    return '/events'
-  }
-
-  useEffect(() => {
-    if (manual || hasRun.current) return
-    hasRun.current = true
-
-    // No `cancelled` cleanup flag here on purpose: `hasRun` already
-    // guarantees a single execution, and under React StrictMode the
-    // dev-only unmount/remount cycle would flip a cleanup flag and
-    // permanently suppress the post-await navigation.
-    async function run() {
-      const { data } = await supabase.auth.getSession()
-      if (data.session) {
-        (navigate as any)({ to: destination() })
-        return
-      }
-
-      const { error } = await signInAsGuest()
-
-      if (error) {
-        // Fall back to showing the real page so the person isn't stuck
-        // on a spinner if anonymous sign-in is disabled or fails.
-        setIsAutoSigningIn(false)
-        return
-      }
-
-      navigate({ to: destination() })
-    }
-
-    run()
-  }, [manual, navigate])
-
-  return isAutoSigningIn
-}

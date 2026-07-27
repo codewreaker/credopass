@@ -27,10 +27,18 @@ import * as Device from '../../../services/device';
 
 export const deviceRoutes = new OpenAPIHono<{ Variables: CallerVars }>();
 
-// `/devices/pair` is deliberately NOT here — a tablet has no credential yet.
 deviceRoutes.use('/events/:id/devices', requireCaller, requireTenant());
 deviceRoutes.use('/organizations/:id/devices', requireCaller, requireTenant({ fromPathParam: 'id' }));
-deviceRoutes.use('/devices/:deviceId', requireCaller, requireTenant());
+
+// Bound to DELETE, not mounted with `use`.
+//
+// `use('/devices/:deviceId', …)` matches on PATH ONLY, so it also caught
+// `POST /devices/pair` with `deviceId = "pair"` — and pairing is the one device
+// route that CANNOT require a token, because the tablet has no credential until
+// it succeeds. The declaration said `scope: 'public'` while the mount answered
+// 401, so no tablet could ever be paired. Method-bound is the fix: it cannot
+// silently widen again when another verb is added to this path.
+deviceRoutes.on('DELETE', '/devices/:deviceId', requireCaller, requireTenant());
 
 const DeviceSchema = z
   .object({

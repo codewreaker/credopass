@@ -17,7 +17,7 @@
  * No framework imports (rule 3, enforced by eslint).
  */
 
-import { and, eq, isNull, sql } from 'drizzle-orm';
+import { and, eq, inArray, isNull, sql } from 'drizzle-orm';
 import {
   accounts,
   identities,
@@ -284,7 +284,11 @@ export async function claimByVerifiedEmail(
       and(
         isNull(people.accountId),
         isNull(people.deletedAt),
-        sql`lower(${people.email}) = ANY(${addresses})`
+        // `inArray`, not `= ANY(${addresses})`. The raw form bound the JS array
+        // as a single parameter, so Postgres read the address as an array
+        // literal and raised `malformed array literal` — a guaranteed 500 on
+        // every claim. `inArray` expands to a proper parameter list.
+        inArray(sql`lower(${people.email})`, addresses)
       )
     )
     .returning({ organizationId: people.organizationId });
