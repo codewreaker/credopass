@@ -390,7 +390,7 @@ export interface paths {
         };
         put?: never;
         post?: never;
-        /** Soft-delete an organization (refused while events exist) */
+        /** Soft-delete an organization (refused while events exist, or if it is your last one) */
         delete: {
             parameters: {
                 query?: never;
@@ -427,7 +427,7 @@ export interface paths {
                         "application/problem+json": components["schemas"]["Problem"];
                     };
                 };
-                /** @description Still has events */
+                /** @description Still has events (`has_events`), or your only organization (`last_organization`) */
                 409: {
                     headers: {
                         [name: string]: unknown;

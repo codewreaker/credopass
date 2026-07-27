@@ -202,10 +202,21 @@ export async function ensureDefaultOrganization(
     // here because the worst case is one extra request waiting briefly.
     await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${account.id}))`);
 
+    // Same join as `loadMemberships`, for the same reason: a membership pointing
+    // at a soft-deleted organisation is not an organisation. Without it, an
+    // account whose only org was deleted would be told it already has one and
+    // then 403 on every org-scoped route — stuck, with no way back.
     const existing = await tx
       .select({ id: orgMemberships.id })
       .from(orgMemberships)
-      .where(and(eq(orgMemberships.accountId, account.id), eq(orgMemberships.status, 'active')))
+      .innerJoin(organizations, eq(organizations.id, orgMemberships.organizationId))
+      .where(
+        and(
+          eq(orgMemberships.accountId, account.id),
+          eq(orgMemberships.status, 'active'),
+          isNull(organizations.deletedAt)
+        )
+      )
       .limit(1);
 
     if (existing.length > 0) return null;
@@ -308,10 +319,24 @@ export async function updateOrganization(
 }
 
 /**
- * Soft delete. Refuses while events exist — deleting an organisation with
- * attendance history attached destroys the record the product exists to keep.
+ * Soft delete. Two refusals:
+ *
+ *   · while events exist — deleting an organisation with attendance history
+ *     attached destroys the record the product exists to keep;
+ *   · while it is the caller's ONLY organisation.
+ *
+ * The second is the counterpart of `ensureDefaultOrganization`. Signing in
+ * commissions an organisation and that is the whole of onboarding (D22), so
+ * there is no orgless state for the console to render and no screen that offers
+ * a way out of one. Deleting your last organisation therefore either strands
+ * you or silently hands you a fresh auto-provisioned one on the next request —
+ * both worse than saying no. Rename it, or create the replacement first.
  */
-export async function deleteOrganization(db: Database, organizationId: string): Promise<void> {
+export async function deleteOrganization(
+  db: Database,
+  organizationId: string,
+  accountId: string
+): Promise<void> {
   await getOrganization(db, organizationId);
 
   const [{ count }] = await db
@@ -323,6 +348,29 @@ export async function deleteOrganization(db: Database, organizationId: string): 
     throw problem.conflict(
       ProblemCode.HAS_EVENTS,
       `This organization still has ${count} event(s). Delete them first.`
+    );
+  }
+
+  // Checked second, and deliberately: "delete the events first" is the more
+  // specific instruction, and an org with events is the commoner case.
+  const others = await db
+    .select({ id: orgMemberships.id })
+    .from(orgMemberships)
+    .innerJoin(organizations, eq(organizations.id, orgMemberships.organizationId))
+    .where(
+      and(
+        eq(orgMemberships.accountId, accountId),
+        eq(orgMemberships.status, 'active'),
+        isNull(organizations.deletedAt),
+        sql`${organizations.id} <> ${organizationId}`
+      )
+    )
+    .limit(1);
+
+  if (others.length === 0) {
+    throw problem.conflict(
+      ProblemCode.LAST_ORGANIZATION,
+      'This is your only organization. Create another one first, or rename this one.'
     );
   }
 

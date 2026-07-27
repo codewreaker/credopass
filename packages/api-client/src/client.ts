@@ -52,6 +52,7 @@ export const ProblemCode = {
   EMAIL_TAKEN: 'email_taken',
   ALREADY_MEMBER: 'already_member',
   LAST_OWNER: 'last_owner',
+  LAST_ORGANIZATION: 'last_organization',
   CAPACITY_REACHED: 'capacity_reached',
   EVENT_CLOSED: 'event_closed',
   HAS_EVENTS: 'has_events',

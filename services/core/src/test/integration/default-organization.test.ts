@@ -115,6 +115,25 @@ describe('ensureDefaultOrganization', () => {
     expect(members).toHaveLength(1);
   });
 
+  it('re-provisions when every organisation the account had was soft-deleted', async () => {
+    // Recovery path for accounts stranded by the old delete behaviour. The
+    // membership row survives a soft delete, so the "already has one" check has
+    // to look through it at `organizations.deleted_at` — otherwise this account
+    // is told it has an organisation while every org-scoped route 403s.
+    const account = await newAccount('Israel', 'israel@example.test');
+    const first = await ensureDefaultOrganization(db, account);
+
+    await db
+      .update(organizations)
+      .set({ deletedAt: new Date() })
+      .where(eq(organizations.id, first!.id));
+
+    const replacement = await ensureDefaultOrganization(db, account);
+    expect(replacement).not.toBeNull();
+    expect(replacement!.id).not.toBe(first!.id);
+    expect(replacement!.role).toBe('owner');
+  });
+
   it('gives two people with the same name distinct slugs', async () => {
     // `organizations.slug` is globally unique, so a common first name must not
     // make the second person's sign-in fail.

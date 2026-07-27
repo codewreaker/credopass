@@ -67,6 +67,17 @@ export function EventComposer({ mode, eventId, initialValues }: EventComposerPro
   const navigate = useNavigate();
   const isEditing = mode === 'edit';
 
+  // An event belongs to an organization — the tenant comes from
+  // `X-Organization-Id`, so with no active organization there is nothing for the
+  // server to file it under. Creating one anyway used to "work": the request
+  // resolved the caller's sole membership, which could point at an organization
+  // they had deleted. The API refuses that now; this stops the round trip and
+  // says why. Signed-out visitors are excluded — they see the sign-in overlay,
+  // not a complaint about organizations.
+  const { session, context, isContextLoading, organizationId } = useSession();
+  const missingOrganization =
+    !isEditing && !!session && !isContextLoading && !!context && !organizationId;
+
   const { form, isMutating } = useEventForm({
     mode,
     eventId,
@@ -104,6 +115,7 @@ export function EventComposer({ mode, eventId, initialValues }: EventComposerPro
       <form
         onSubmit={(e) => {
           e.preventDefault();
+          if (missingOrganization) return;
           form.handleSubmit();
         }}
         className="flex flex-col gap-4"
@@ -267,11 +279,17 @@ export function EventComposer({ mode, eventId, initialValues }: EventComposerPro
             'bg-linear-to-t from-background via-background to-transparent'
           )}
         >
+          {missingOrganization && (
+            <p className="mb-2 rounded-2xl border border-border bg-card px-4 py-3 text-xs text-muted-foreground">
+              Pick an organization in the sidebar before creating an event — every event belongs to
+              one.
+            </p>
+          )}
           <form.Subscribe selector={(state) => state.isSubmitting}>
             {(isSubmitting) => (
               <Button
                 type="submit"
-                disabled={isMutating || isSubmitting}
+                disabled={isMutating || isSubmitting || missingOrganization}
                 className="h-12 w-full rounded-full text-sm font-semibold"
               >
                 {isMutating || isSubmitting ? (

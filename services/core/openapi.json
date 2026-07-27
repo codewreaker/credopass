@@ -1708,7 +1708,7 @@
         }
       },
       "delete": {
-        "summary": "Soft-delete an organization (refused while events exist)",
+        "summary": "Soft-delete an organization (refused while events exist, or if it is your last one)",
         "tags": [
           "Organizations"
         ],
@@ -1753,7 +1753,7 @@
             }
           },
           "409": {
-            "description": "Still has events",
+            "description": "Still has events (`has_events`), or your only organization (`last_organization`)",
             "content": {
               "application/problem+json": {
                 "schema": {

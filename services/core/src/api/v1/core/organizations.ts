@@ -253,7 +253,7 @@ organizations.openapi(
     path: '/organizations/{id}',
     scope: 'organization',
     permission: 'org:delete',
-    summary: 'Soft-delete an organization (refused while events exist)',
+    summary: 'Soft-delete an organization (refused while events exist, or if it is your last one)',
     tags: ['Organizations'],
     security: [{ bearerAuth: [] }],
     middleware: [requirePermission('org:delete')] as const,
@@ -262,12 +262,13 @@ organizations.openapi(
       204: { description: 'Deleted' },
       403: problemResponse('Insufficient role'),
       404: problemResponse('Not found, or not yours'),
-      409: problemResponse('Still has events'),
+      409: problemResponse('Still has events (`has_events`), or your only organization (`last_organization`)'),
     },
   }),
   async (c) => {
     const db = await getDatabase();
-    await Membership.deleteOrganization(db, c.get('tenant').organizationId);
+    const tenant = c.get('tenant');
+    await Membership.deleteOrganization(db, tenant.organizationId, tenant.accountId!);
     return c.body(null, 204);
   }
 );

@@ -699,6 +699,69 @@ than being rewritten — it is the record of what was decided, and reality lives
 
 ---
 
+## A soft-deleted organisation was still a tenant (2026-07-27)
+
+Three findings from a QA pass. Two were the same bug wearing different clothes; the third is a
+missing feature, now planned.
+
+### The bug: `loadMemberships` did not look at `organizations.deleted_at`
+
+Deleting an organisation is a **soft** delete — `organizations.deleted_at` is set and the
+`org_memberships` rows survive it, deliberately, so the delete is reversible. But
+[`loadMemberships`](../services/core/src/services/identity.ts) selected memberships without joining
+`organizations`, so a deleted organisation stayed a perfectly valid tenant on the API path:
+
+- `requireTenant` still resolved it. With the deleted org as the caller's *sole* membership, no
+  `X-Organization-Id` header was even needed — the "exactly one membership" branch picked it.
+- `POST /events` therefore wrote events into an organisation the owner had deleted and could no
+  longer see, because `GET /organizations` and `/me/context` *do* filter `deleted_at`.
+
+That is QA finding 2 — *"I created an event without an organisation and it worked"* — and it was
+caused by QA finding 1. The join is now on `loadMemberships`, so a soft-deleted organisation stops
+being a tenant everywhere at once: tenant resolution, `/me/context`, permissions, every org-scoped
+route.
+
+`ensureDefaultOrganization` needed the same join for the opposite reason. Its "does this account
+already have an organisation?" check counted the surviving membership row, so an account whose only
+organisation had been deleted was told it had one and then 403'd on every org-scoped route — stuck,
+with no screen offering a way out. It now looks through the membership at `deleted_at` and
+re-provisions, which is also the recovery path for anyone already stranded by the old behaviour.
+
+### The rule: you cannot delete your last organisation
+
+`deleteOrganization` takes the caller's account id and refuses with 409 `last_organization` when the
+target is the only organisation they still belong to. This is the counterpart of
+`ensureDefaultOrganization`: onboarding is signing in (D22), so there is no orgless console to land
+in and no screen that offers a way out of one — deleting your last organisation either strands you or
+silently hands you a fresh auto-provisioned one on the next request. Both are worse than saying no.
+
+Order of the two refusals is deliberate: `has_events` is checked first, because "delete the events
+first" is the more specific instruction.
+
+**Web:** the Account → Settings delete button is disabled with an explanatory description when it is
+the caller's only organisation, and the `last_organization` code has its own toast. The event
+composer disables submit and says why when a signed-in caller has no active organisation — it used
+to post regardless, which is how a deleted org absorbed an event.
+
+**Tests:** four new integration tests (last-org refusal, delete-once-a-second-exists, a soft-deleted
+org disappearing from `loadMemberships`, re-provisioning after every org was deleted). Full suite:
+68 unit + 109 integration + 39 adversarial, all green.
+
+### New: `docs/LIVE-UPDATES.md`
+
+QA finding 3 — *"I checked in from a separate window and the number didn't move"* — is a real gap,
+and only partly the missing SSE work. The kiosk counter **is** shared and correct (it polls
+`/events/{id}/checkin-state` every 5 s); every *other* surface has no freshness policy at all,
+because `apps/web/src/lib/query-client.ts` sets `refetchOnWindowFocus: false` and nothing polls.
+
+The document diagnoses each surface, sets a latency budget per surface, and splits the work: a
+half-day polling fix that closes the report everywhere except the sub-second door case, then D4/D5's
+SSE design rewritten for the system as it exists — no device tokens (so `EventSource` can't carry
+the bearer token and the client reads the stream with `fetch`), `/api/v1/core` paths, a dedicated
+`LISTEN` connection outside the pool, and `bigserial` gaps in replay. Decisions D27–D30.
+
+---
+
 ## Conventions worth knowing
 
 1. Every route is created with `defineRoute` and declares `scope` (+ `permission` if org-scoped).

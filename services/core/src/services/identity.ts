@@ -23,6 +23,7 @@ import {
   accounts,
   identities,
   orgMemberships,
+  organizations,
   people,
 } from '@credopass/lib/schemas/tables';
 import type { Database } from '../db/client';
@@ -190,6 +191,14 @@ export async function resolveCaller(db: Database, input: ResolveInput): Promise<
 /**
  * A caller's active memberships. Read on every authenticated request, which is
  * why `org_memberships(account_id)` is indexed.
+ *
+ * The join onto `organizations` is not decoration. Deleting an organisation is a
+ * SOFT delete, and the membership rows survive it — so without the
+ * `deleted_at IS NULL` filter a deleted organisation stayed a perfectly valid
+ * tenant: `requireTenant` still resolved it (sole membership ⇒ no header
+ * needed), and `POST /events` happily wrote events into an organisation the
+ * owner had deleted and could no longer see, because `/organizations` and
+ * `/me/context` both filter it out. That was one bug reported as two.
  */
 export async function loadMemberships(
   db: Database,
@@ -202,7 +211,14 @@ export async function loadMemberships(
       status: orgMemberships.status,
     })
     .from(orgMemberships)
-    .where(and(eq(orgMemberships.accountId, accountId), eq(orgMemberships.status, 'active')));
+    .innerJoin(organizations, eq(organizations.id, orgMemberships.organizationId))
+    .where(
+      and(
+        eq(orgMemberships.accountId, accountId),
+        eq(orgMemberships.status, 'active'),
+        isNull(organizations.deletedAt)
+      )
+    );
 
   // `role` is a pg enum (`org_role`), so the database cannot hand back anything
   // outside the vocabulary. This stays as a total function anyway: an unreadable

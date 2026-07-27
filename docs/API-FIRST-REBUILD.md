@@ -306,6 +306,10 @@ into every other subsystem.
 
 ### D4 — Domain events: Postgres table only. No Redis.
 
+> **Updated.** [`LIVE-UPDATES.md`](LIVE-UPDATES.md) carries the current analysis and plan for D4/D5 —
+> what changed (device tokens are gone, so the stream cannot use `EventSource`), what the freshness
+> problem actually is on non-kiosk screens, and what to build first. Decisions D27–D30 there.
+
 **Choice.** One append-only `domain_events` table. Written in the *same transaction* as the state
 change it describes. Fan-out via Postgres `LISTEN/NOTIFY` into an in-process SSE hub.
 
@@ -321,6 +325,9 @@ correct; it must be built, not assumed.
 ---
 
 ### D5 — Live kiosk updates: SSE
+
+> **Updated by [`LIVE-UPDATES.md`](LIVE-UPDATES.md)** — the path, the auth and the client transport
+> all changed. Read that before implementing this.
 
 **Choice.** `GET /api/v1/events/{id}/stream` (`text/event-stream`), with `Last-Event-ID` replay.
 Check-ins still go out as ordinary `POST`s.

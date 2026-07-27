@@ -205,6 +205,7 @@ Each package README goes further: [lib](packages/lib/README.md) · [api-client](
 | [`docs/API-FIRST-REBUILD.md`](docs/API-FIRST-REBUILD.md) | The plan — decisions, target schema, full endpoint list, phases. Historical; some links in it are dead and the header says which. |
 | [`docs/REBUILD-LOG.md`](docs/REBUILD-LOG.md) | What actually happened. **Wins wherever it disagrees with the plan.** |
 | [`docs/DATABASE-MIGRATION.md`](docs/DATABASE-MIGRATION.md) | Getting the schema onto a database — local, test, and the remote Supabase cutover. |
+| [`docs/LIVE-UPDATES.md`](docs/LIVE-UPDATES.md) | Why a check-in doesn't reach other screens, and the plan for it — polling first, then SSE (supersedes D4/D5 in the details). |
 | [`docs/NEXT-UI-LIST.md`](docs/NEXT-UI-LIST.md) | The open UI backlog. |
 
 `AGENTS.md` is a symlink to this file — one source of truth, not two that drift.

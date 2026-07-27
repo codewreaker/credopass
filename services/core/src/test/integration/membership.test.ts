@@ -9,6 +9,7 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'bun:test';
 import { getTestDatabase, type TestDatabase } from '../support/database';
 import * as Membership from '../../services/membership';
+import { loadMemberships } from '../../services/identity';
 import { accounts, identities, orgMemberships } from '@credopass/lib/schemas/tables';
 import { eq } from 'drizzle-orm';
 
@@ -271,6 +272,45 @@ describe('deleteOrganization', () => {
       shortCode: crypto.randomUUID().slice(0, 12),
     });
 
-    await expect(Membership.deleteOrganization(db, org.id)).rejects.toThrow(/still has 1 event/);
+    await expect(Membership.deleteOrganization(db, org.id, owner)).rejects.toThrow(
+      /still has 1 event/
+    );
+  });
+
+  it('refuses to delete the last organization the caller belongs to', async () => {
+    const owner = await newAccount('owner12@example.com');
+    const org = await Membership.createOrganization(db, owner, { name: 'Only One' });
+
+    await expect(Membership.deleteOrganization(db, org.id, owner)).rejects.toThrow(
+      /only organization/
+    );
+
+    // Still there, and still the caller's.
+    expect(await Membership.listMyOrganizations(db, owner)).toHaveLength(1);
+  });
+
+  it('deletes once a second organization exists, and drops it from the caller', async () => {
+    const owner = await newAccount('owner13@example.com');
+    const first = await Membership.createOrganization(db, owner, { name: 'First Org' });
+    await Membership.createOrganization(db, owner, { name: 'Second Org' });
+
+    await Membership.deleteOrganization(db, first.id, owner);
+
+    const remaining = await Membership.listMyOrganizations(db, owner);
+    expect(remaining.map((o) => o.name)).toEqual(['Second Org']);
+  });
+
+  it('a soft-deleted organization is no longer a tenant the caller can act in', async () => {
+    // The bug behind "I created an event without an organisation": the
+    // membership row outlives the soft delete, so `loadMemberships` used to hand
+    // `requireTenant` an organisation the owner could no longer see.
+    const owner = await newAccount('owner14@example.com');
+    const keep = await Membership.createOrganization(db, owner, { name: 'Keep This' });
+    const gone = await Membership.createOrganization(db, owner, { name: 'Delete This' });
+
+    await Membership.deleteOrganization(db, gone.id, owner);
+
+    const memberships = await loadMemberships(db, owner);
+    expect(memberships.map((m) => m.organizationId)).toEqual([keep.id]);
   });
 });

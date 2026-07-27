@@ -712,6 +712,12 @@ function SettingsTab() {
   const currentSlug = slug ?? organization.slug;
   const dirty = currentName !== organization.name || currentSlug !== organization.slug;
 
+  // Deleting your only organization is refused by the API (`last_organization`).
+  // Say so here rather than offering a button whose whole job is to fail: there
+  // is no orgless console to land in, because signing in commissions an
+  // organization and that is the entirety of onboarding (D22).
+  const isOnlyOrganization = organizations.length <= 1;
+
   const save = async () => {
     try {
       await updateOrganization.mutateAsync({ name: currentName, slug: currentSlug });
@@ -739,7 +745,9 @@ function SettingsTab() {
       toast.error(
         hasProblemCode(error, ProblemCode.HAS_EVENTS)
           ? 'This organization still has events. Delete or cancel them first.'
-          : errorMessage(error, 'Could not delete this organization')
+          : hasProblemCode(error, ProblemCode.LAST_ORGANIZATION)
+            ? 'This is your only organization. Create another one first, or rename this one.'
+            : errorMessage(error, 'Could not delete this organization')
       );
     }
   };
@@ -783,12 +791,16 @@ function SettingsTab() {
       {canDelete && (
         <Section
           title="Delete this organization"
-          description="Only possible while it has no events — otherwise its attendance history would go with it."
+          description={
+            isOnlyOrganization
+              ? 'You always belong to at least one organization, so your only one cannot be deleted. Create another first, or rename this one above.'
+              : 'Only possible while it has no events — otherwise its attendance history would go with it.'
+          }
         >
           <Button
             variant="outline"
             className="w-fit gap-2 rounded-full text-destructive hover:text-destructive"
-            disabled={deleteOrganization.isPending}
+            disabled={deleteOrganization.isPending || isOnlyOrganization}
             onClick={remove}
           >
             <Trash2 size={15} /> Delete {organization.name}
