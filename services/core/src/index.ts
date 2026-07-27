@@ -31,7 +31,11 @@ if (isDevelopment) {
     cors({
       // `app.credopass.com` is the product. `credopass.com` is the marketing
       // site and does not call the API.
-      origin: ['https://app.credopass.com'],
+      origin: [
+        'https://app.credopass.com',
+        'credopass-3g7cit9m2-codewreakers-projects.vercel.app',
+        'dwellpass.vercel.app'
+      ],
       credentials: true,
     })
   );
