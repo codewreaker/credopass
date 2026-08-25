@@ -67,3 +67,7 @@ npm-debug.*
 web-build/
 cache/
 audit/*
+# Python (services/core-v2). .venv/, .pytest_cache/ and .ruff_cache/ write their
+# own self-ignoring .gitignore; bytecode does not, so it goes here.
+__pycache__/
+*.py[cod]
