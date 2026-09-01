@@ -85,8 +85,7 @@ have them open when something in the generated `pyproject.toml` doesn't make sen
   nullability), 4/4 migrations in the journal on both, and `bun run scripts/db.ts status` reports
   "✅ Schema matches the committed migrations" against `credopass_v2_dev` — the repo's own tooling
   agreeing, not just a hand-rolled query.*
-- [ ] You can explain, without looking at the plan, why this is a second service reading the same
-  schema rather than a fork or replacement of `services/core`. **← the only thing left in week 0.**
+- [x] This is a second service because its written in another language and not meant to replace the existnig hono service. This is to help me implement and sharpen my python
 
 ## Reality check — where the plan met the machine
 
@@ -138,6 +137,11 @@ known, plus one naming decision:
 
 ## Retro (fill in at the end)
 
-- What was harder than expected:
-- Fundamentals gap surfaced, if any:
-- Carry into week 1:
+- What was harder than expected: So much more python tools, especially rustified tools
+have been added that I had no idea about. Its almost as if pip has been completely replaced.
+Even though it was hard remembering everything and learning new things, because of my experience in 
+typescript and js ecosystem which seems to be driving innovations in other languages like types in python,
+pydantic resembling zod etc, it was easy to pickup. Even uv is like bun/node
+
+- Fundamentals gap surfaced, if any: been a while since I used the python syntax, so forgot about the `for in` and even some simple class decorators
+- Carry into week 1: my python understanding and mode to help implement the rest

@@ -60,8 +60,13 @@ query, so you don't need it.
 a `GET /add/{a}/{b}` route showing a path param, a query param, and a Pydantic response model, so
 you see the shape once, in isolation, before touching the real thing.
 
+> **Deviation, 2026-09-01 (your call):** the `/api/v2/core` prefix is deferred until the API is
+> near release, so this week's routes are plain `/health` and `/health/ready`. The prefixed
+> `FastAPI()` constructor is kept commented out in `src/app/main.py` as the reminder. Adding the
+> prefix later is one `APIRouter(prefix=...)` + `include_router` — no handler changes.
+
 **Mode B — you write, tests provided:**
-1. I write `httpx`-based tests for `GET /api/v2/core/health` and `GET /api/v2/core/health/ready` —
+1. I write `httpx`-based tests for `GET /health` and `GET /health/ready` —
    the readiness test asserts a real DB check: 200 when `credopass_v2_dev` is reachable, a
    meaningfully non-200 status when it isn't (mirroring v1's `health/ready`, which does a live
    connectivity + migration-applied check, not just a liveness ping).
