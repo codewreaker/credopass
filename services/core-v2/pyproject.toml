@@ -13,7 +13,9 @@ requires-python = ">=3.13"
 #   week 5  uv add "pydantic-ai[ag-ui]"
 # Adding them here by hand instead would skip the one bit of packaging practice
 # week 0 is meant to leave behind.
-dependencies = []
+dependencies = [
+    "fastapi[standard]>=0.141.1",
+]
 
 [dependency-groups]
 dev = [
