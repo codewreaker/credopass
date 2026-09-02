@@ -1,41 +1,42 @@
+"""CredoPass core-v2 — the Copilot rail's backend.
+
+This service has exactly one job: serve the Organizer Copilot agent over the
+AG-UI protocol. See `docs/AI-SIDEBAR-PLAN.md`.
+
+It is deliberately *not* a REST API and never becomes one. It holds no database
+connection: every tool the agent exposes calls the existing v1 TypeScript API
+over HTTP, forwarding the caller's own bearer token, so the agent inherits the
+caller's permissions and gains no new ones.
+
+Routes:
+    GET  /health                            liveness
+    POST /api/v2/agent/organizer-copilot    the agent (day 5)
+"""
+
+from datetime import UTC, datetime
 from typing import Literal
 
 from fastapi import FastAPI
 from pydantic import BaseModel
-from os import getenv
-from datetime import datetime, UTC
+
+from app.settings import get_settings
 
 VERSION = "0.1.0"
 
-"""
-# uncomment this code when ready to use the actual path of this service
 app = FastAPI(
     title="CredoPass core-v2",
     version=VERSION,
-    description="Python/FastAPI port of services/core. See docs/PYTHON-LEARNING-PLAN.md.",
-    docs_url="/api/v2/core/docs",
-    openapi_url="/api/v2/core/openapi.json",
+    description="The Organizer Copilot, over AG-UI. See docs/AI-SIDEBAR-PLAN.md.",
 )
-"""
 
-
-app = FastAPI(
-    title="CredoPass core-v2",
-    version=VERSION,
-    description="Python/FastAPI port of services/core. See docs/PYTHON-LEARNING-PLAN.md."
-)
 
 class Health(BaseModel):
     status: Literal["ok"] = "ok"
     version: str = VERSION
-    commit: str = getenv("GIT_COMMIT", "unknown")
+    commit: str
     timestamp: datetime
 
 
-@app.get("/")
-async def root():
-    return {"message": "Hello World"}
-
 @app.get("/health")
 async def health() -> Health:
-    return Health(timestamp=datetime.now(UTC))
+    return Health(commit=get_settings().git_commit, timestamp=datetime.now(UTC))

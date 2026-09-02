@@ -3,13 +3,16 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "services/core-v2/src",
   "projectType": "application",
-  "tags": ["type:service", "scope:api"],
+  "tags": [
+    "type:service",
+    "scope:api"
+  ],
   "targets": {
     "start": {
       "continuous": true,
       "executor": "nx:run-commands",
       "options": {
-        "command": "uv run fastapi dev src/app/main.py --port 8090",
+        "command": "GIT_COMMIT=$(git rev-parse --short HEAD) uv run fastapi dev src/app/main.py --port 8090",
         "cwd": "{projectRoot}"
       }
     },

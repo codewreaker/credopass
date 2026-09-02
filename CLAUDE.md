@@ -207,5 +207,6 @@ Each package README goes further: [lib](packages/lib/README.md) · [api-client](
 | [`docs/DATABASE-MIGRATION.md`](docs/DATABASE-MIGRATION.md) | Getting the schema onto a database — local, test, and the remote Supabase cutover. |
 | [`docs/LIVE-UPDATES.md`](docs/LIVE-UPDATES.md) | Why a check-in doesn't reach other screens, and the plan for it — polling first, then SSE (supersedes D4/D5 in the details). |
 | [`docs/NEXT-UI-LIST.md`](docs/NEXT-UI-LIST.md) | The open UI backlog. |
+| [`docs/AI-SIDEBAR-PLAN.md`](docs/AI-SIDEBAR-PLAN.md) | **The Copilot rail** — `services/core-v2`, a Python/FastAPI service serving one AG-UI agent endpoint. Active side effort on `learn/api-v2-python`, never wired into prod. Supersedes `PYTHON-LEARNING-PLAN.md`, whose FastAPI port of `services/core` is **cancelled**. |
 
 `AGENTS.md` is a symlink to this file — one source of truth, not two that drift.

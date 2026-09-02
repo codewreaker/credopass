@@ -10,3 +10,7 @@ __pycache__/
 # Local config. `uv.lock` is NOT ignored — it is committed, same reasoning as
 # bun.lock at the repo root: the lockfile is reviewed like any other code.
 .env
+
+# Throwaway practice code — day 2 puts a toy agent here. Committing it would
+# make it code someone maintains; it is meant to be disposable.
+scratch/

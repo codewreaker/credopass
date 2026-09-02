@@ -15,6 +15,7 @@ requires-python = ">=3.13"
 # week 0 is meant to leave behind.
 dependencies = [
     "fastapi[standard]>=0.141.1",
+    "pydantic-settings>=2.15.0",
 ]
 
 [dependency-groups]
@@ -72,6 +73,14 @@ ignore = [
 testpaths = ["tests"]
 pythonpath = ["src"]
 addopts = "-q --strict-markers"
+# `starlette.testclient` warns that httpx is deprecated in favour of httpx2.
+# Pinned and ignored deliberately (day 1): it is a warning about Starlette's own
+# import, not about our code, and chasing it costs a day we do not have before
+# the interview. Revisit if TestClient actually breaks.
+filterwarnings = [
+    "ignore:Using `httpx` with `starlette.testclient` is deprecated:DeprecationWarning",
+    "ignore:Using `httpx` with `starlette.testclient` is deprecated",
+]
 
 # ---------------------------------------------------------------------------
 # pyright — the type checker (plan §7). `basic` for now; tighten in week 7
