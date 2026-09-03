@@ -17,15 +17,18 @@ The feature works when everything works. Today: what it does when things don't. 
 than another tool would be.
 
 ### Objectives
+
 - Say what a tool should do when its upstream call fails, and when `ModelRetry` is right versus
   when failing hard is right.
 
 ### New today
+
 - [pydantic-ai — error handling / `ModelRetry`](https://pydantic.dev/docs/ai/tools-toolsets/tools/#tool-errors-and-retries)
   — a tool raising `ModelRetry` hands the error *back to the model* to try again. Powerful and
   easy to misuse: retrying a 403 just burns tokens on something that will never succeed.
 
 ### Task (Mode B)
+
 Work through these deliberately, one at a time, and fix what's wrong:
 
 1. **v1 returns 403** (caller lacks `event:read`) → the agent should say it can't see that, not
@@ -43,6 +46,7 @@ Work through these deliberately, one at a time, and fix what's wrong:
 Add a test per case where cheap. Case 2 is the one to test properly.
 
 ### Done when
+
 - Each of the five produces something a user could act on, and nothing leaks cross-tenant existence.
 - `uv run pytest` green.
 
@@ -67,6 +71,7 @@ Add a test per case where cheap. Case 2 is the one to test properly.
    convention and this is a real architectural addition.
 
 ### Done when
+
 - `nx run corev2:verify` green.
 - Someone else could follow the README.
 
@@ -111,6 +116,7 @@ bad story, and there's no time to recover.
    saved to a file, plus a screen recording of the full demo. Record it on day 13.
 
 ### Done when
+
 - Two clean cold runs.
 - Five answers, out loud, without notes.
 - A recording exists.

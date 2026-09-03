@@ -1,12 +1,13 @@
 # The Copilot rail — 14-day plan (pydantic-ai · AG-UI · FastAPI)
 
-**Status: active. This supersedes [`PYTHON-LEARNING-PLAN.md`](PYTHON-LEARNING-PLAN.md) as the
-thing being built.** Written 2026-09-02, when the Citadel interview moved to ~2026-09-16 and the
-scope was cut from "port the backend to Python" to "ship one AI feature in Python."
+**Status: active.** Written 2026-09-02, when the Citadel interview moved to ~2026-09-16 and the
+scope was cut from "port the backend to Python" to "ship one AI feature in Python." The previous
+8-week plan and its week files have been deleted — this is the only plan.
 
-Live progress: [`learning/STATUS.md`](learning/STATUS.md). How sessions run:
-[`LEARNING-WORKFLOW.md`](LEARNING-WORKFLOW.md) (the three tutoring modes still apply; the schedule
-in it does not).
+- **Live progress:** [`learning/STATUS.md`](learning/STATUS.md) — start every session here.
+- **Day files:** [`learning/day-NN-*.md`](learning/) — one per working day, and the only thing you
+  open to work. Each is self-contained: **Learn → Build → Done when → If it breaks → Say it out
+  loud → Retro.** Read top to bottom; the teaching is in the file, not in a separate course.
 
 ---
 
@@ -15,7 +16,7 @@ in it does not).
 The old plan ported ~35 of v1's routes to FastAPI across 8 weeks, and treated the agent as a
 feature riding on top of that port. **The port is cancelled.** Not deferred with a nice word on
 it — cancelled. `me.ts`, `organizations.ts`, `people.ts`, `events.ts`, `attendance.ts` stay in
-TypeScript, permanently, and `core-v2` never grows a REST surface.
+TypeScript, permanently, and `ai-chat` never grows a REST surface.
 
 What replaces it: **one FastAPI service whose entire job is one AG-UI endpoint.** Every tool it
 exposes calls the existing v1 TypeScript API over HTTP, forwarding the caller's own bearer token.
@@ -48,10 +49,11 @@ Three technologies, one screen, all three visible in it. That is the whole deliv
 
 ### Explicitly not in scope
 
-- Any REST port. No `/api/v2/core/*`. `core-v2` serves one agent endpoint and a health check.
+- Any REST port. No `/api/v1/core/*`. `ai-chat` serves one agent endpoint and a health check.
 - Any database access from Python. **The FastAPI service never opens a DB connection.** It has no
   SQLAlchemy, no `asyncpg`, no `DATABASE_URL`. Everything comes through v1's HTTP API.
-- `credopass_v2_dev`. Week 0 created and migrated it. It is now unused — leave it, don't wire it.
+- `credopass_v2_dev`. Created and migrated during the cancelled port; **dropped 2026-09-02**,
+  along with `scripts/create-db.sh` and the `docker/initdb` mount that recreated it.
 - Mobile. Web only.
 - Production. The rail stays behind a dev-only flag; `apps/web`'s default config never points at
   `:8090`.
@@ -73,18 +75,18 @@ Three technologies, one screen, all three visible in it. That is the whole deliv
                       │  Authorization: Bearer <supabase jwt>
                       │  X-Organization-Id: <active org>
                       ▼
-  services/core-v2  (FastAPI, :8090)
-  ┌──────────────────────────────────────────────┐
-  │  POST /api/v2/agent/organizer-copilot        │
-  │    AGUIAdapter.dispatch_request(...)         │
-  │                                              │
-  │  organizer_copilot: Agent[StateDeps[...], …] │
-  │    @agent.tool   list_events        ─┐       │
-  │    @agent.tool   get_event_summary   │ httpx │
-  │    @agent.tool   get_checkin_state   │       │
-  │    @agent.tool_plain(requires_approval=True) │
-  │                  cancel_event       ─┘       │
-  └───────────────────┬──────────────────────────┘
+  services/ai-chat  (FastAPI, :8090)
+  ┌──────────────────────────────────────────────────────┐
+  │  POST /api/v1/ai-chat/agent/organizer-copilot        │
+  │    AGUIAdapter.dispatch_request(...)                 │
+  │                                                       │
+  │  organizer_copilot: Agent[StateDeps[...], …]         │
+  │    @agent.tool   list_events        ─┐               │
+  │    @agent.tool   get_event_summary   │ httpx         │
+  │    @agent.tool   get_checkin_state   │               │
+  │    @agent.tool(requires_approval=True)               │
+  │                  cancel_event       ─┘               │
+  └───────────────────┬──────────────────────────────────┘
                       │  httpx, forwarding the caller's OWN token
                       ▼
   services/core  (Hono, :8080)  — unchanged, untouched
@@ -96,20 +98,34 @@ Three technologies, one screen, all three visible in it. That is the whole deliv
 
 | Decision | Call | Why |
 |---|---|---|
-| **Python owns the agent, nothing else** | `core-v2` = one AG-UI endpoint + `/health` | The three target technologies all live in that one endpoint. Anything else is hours spent away from them. |
+| **Python owns the agent, nothing else** | `ai-chat` = one AG-UI endpoint + `/health` | The three target technologies all live in that one endpoint. Anything else is hours spent away from them. |
 | **No database in Python** | Tools call v1 over `httpx` | Deletes SQLAlchemy, `asyncpg`, models, sessions, and the whole "second migrated DB" apparatus from the critical path. The DB access happens — in TypeScript, where it already works and is already tested. |
 | **The agent gets no new permissions** | Every tool forwards the caller's real bearer token + `X-Organization-Id` | The agent can see and do exactly what the signed-in organizer could already do through the browser. There is no new authz surface to audit. **This is the strongest security answer you have — §8.** |
-| **Approval is a UX gate, not a security gate** | `requires_approval=True` on `cancel_event`; the real control is v1's org-scoped permission check | Approval stops the *model* acting unilaterally. It does not stop a malicious *client* — that client could call v1 directly. Knowing which one it is separates people who've read the docs from people who've shipped it. |
+| **Approval is a UX gate, not a security gate** | `requires_approval=True` on `cancel_event` (`@agent.tool`, since it needs deps — the docs' example uses `tool_plain`); the real control is v1's org-scoped permission check | Approval stops the *model* acting unilaterally. It does not stop a malicious *client* — that client could call v1 directly. Knowing which one it is separates people who've read the docs from people who've shipped it. |
 | **CopilotKit for the React half** | `@copilotkit/react-core/v2` + `@copilotkit/react-ui` | Hand-building a streaming chat UI is a week of React that teaches nothing about AG-UI. The prebuilt chat plus `useRenderTool` / `useHumanInTheLoop` is the shortest path to the generative-UI moment that *is* the demo. |
 | **The rendered calendar is the existing component** | `useRenderTool` renders `<EventCalendar>` from `@credopass/ui` | This is what makes it generative UI rather than a chatbot printing markdown. It also means the AI rail and the old rail render identically — the tool call replaces the `useEventsCalendar` hook, not the component. |
 | **Never wired into prod** | Rail is behind `VITE_COPILOT_ENABLED` | Same posture as the old plan. Zero blast radius. |
 
-### Two things the old plan got right, kept
+### How the work is done — you write the code
 
-- **`core-v2` is additive.** `services/core` keeps running unchanged. Nothing in this plan edits a
-  TypeScript route handler.
-- **The tutoring modes** in `LEARNING-WORKFLOW.md` §3 — A (worked example first), B (tests-as-spec,
-  you implement), C (I scaffold pure infra). Every day below is labelled with its mode.
+**You implement every day of this plan.** Not me. The point is that you can talk about this code in
+two weeks' time, and you can't do that about code you watched appear.
+
+What I do instead, per day:
+
+| Mode | When | What I actually do |
+|---|---|---|
+| **A — worked example** | The first time a genuinely new concept appears (first `@agent.tool`, first `AGUIAdapter`, first approval round trip) | Write a small, **throwaway**, unrelated example — a dice tool, not a CredoPass tool — and explain it. You then build the real thing from the spec, not by editing my example. |
+| **B — spec + failing tests** | The default. Applying a pattern you've now seen | Write a spec and, where useful, failing tests that encode the expected behaviour. You implement until green. You show me the diff; I review for what tests can't catch — idiom, a blocking call in an `async def`, a leak the one fixture happened not to expose. |
+| **C — I scaffold** | Pure infrastructure with no learning in it (`uv init`, ruff config) | I do it, and say so. Day 1 was the last of these. |
+
+If you ask me to just write a route, I'll ask once whether you want to try it first. If you say
+you're short on time, I'll do it — but the default is always that you write it.
+
+### One thing the old plan got right, kept
+
+**`ai-chat` is additive.** `services/core` keeps running unchanged. Nothing in this plan edits a
+TypeScript route handler.
 
 ---
 
@@ -164,7 +180,7 @@ never from 1–8.
 
 | Day | Focus | Mode | Artifact at end of day |
 |---|---|---|---|
-| **1** | Cleanup + FastAPI refresher. Strip `core-v2` to the agent shape: kill the `/api/v2/core` ambitions from `main.py`'s docstring, keep `/health`, add settings via `pydantic-settings`. Write the pytest test for `/health` that week 1 never got to. | C + B | `nx run corev2:verify` green; `/health` has a test. |
+| **1** | Cleanup + FastAPI refresher. Strip `ai-chat` to the agent shape: kill the `/api/v1/core` ambitions from `main.py`'s docstring, keep `/health`, add settings via `pydantic-settings`. Write the pytest test for `/health` that week 1 never got to. | C + B | `nx run ai-chat:verify` green; `/health` has a test. |
 | **2** | **pydantic-ai fundamentals.** `Agent`, `@agent.tool` vs `@agent.tool_plain`, `RunContext`, `deps_type`. Docstrings-become-schemas. | A → B | A toy agent with a dice tool, tested with `TestModel`, in `scratch/`. |
 | **3** | **The real agent, offline.** `organizer_copilot` with `list_events` + `get_event_summary` calling v1 over `httpx`, with a real forwarded token. | B | `uv run python scripts/ask_copilot.py "what's coming up?"` prints a real, tool-derived answer from real data. |
 | **4** | **`TestModel` / `FunctionModel`.** Agent tests with zero live LLM calls, `ALLOW_MODEL_REQUESTS = False`. | A → B | `uv run pytest` green with the API key unset. |
@@ -175,8 +191,8 @@ never from 1–8.
 | **9** | **HITL, backend.** `cancel_event` with `requires_approval=True`, `output_type=[str, DeferredToolRequests]`. Watch the interrupt on the wire with `curl` before touching React. | A → B | The run pauses; the resume round-trip works from `curl`. |
 | **10** | **HITL, frontend.** `useHumanInTheLoop('cancel_event')` → confirm/deny card. | B | Deny in the browser; the event survives. **Demo moment 2.** |
 | **11** | **Errors + edges.** v1 returns 403/404/500 → what does the agent say? Tool errors as `ModelRetry` vs. hard failures. Expired token mid-stream. | B | Each failure produces a sensible chat message, not a stack trace. |
-| **12** | **Polish + `README.md`.** Loading/streaming states in the rail. Structured logging on the endpoint. `services/core-v2/README.md` a stranger could follow. | B + C | `nx run corev2:verify` green; README written. |
-| **13** | **Write-up.** The architecture note: the four decisions in §1, the approval-vs-authz distinction, what you'd do differently. | — | One page, in `services/core-v2/README.md`. |
+| **12** | **Polish + `README.md`.** Loading/streaming states in the rail. Structured logging on the endpoint. `services/ai-chat/README.md` a stranger could follow. | B + C | `nx run ai-chat:verify` green; README written. |
+| **13** | **Write-up.** The architecture note: the four decisions in §1, the approval-vs-authz distinction, what you'd do differently. | — | One page, in `services/ai-chat/README.md`. |
 | **14** | **Rehearsal.** No new code. Cold end-to-end demo run, twice. §8 out loud. | — | You can run the demo from a closed laptop and explain every layer. |
 
 ### Milestones, in one line each
@@ -281,7 +297,8 @@ async def run_agent(request: Request) -> Response:
     return await AGUIAdapter.dispatch_request(request, agent=agent, deps=replace(deps))
 ```
 
-**Approval** — `DeferredToolRequests` must be in `output_type`, not just on the tool:
+**Approval** — `DeferredToolRequests` must be in `output_type`, not just on the tool. (Verbatim
+from the docs, so `tool_plain`; ours is `@agent.tool` because it needs `ctx.deps` for the client.)
 
 ```python
 from pydantic_ai.tools import DeferredToolRequests
@@ -348,10 +365,10 @@ fewer security-critical thing to get wrong in a fortnight, and it's the same tru
 browser already relies on.
 
 **Model choice.** Pick one provider on day 2 and don't revisit it. `OPENAI_API_KEY` or
-`ANTHROPIC_API_KEY` in `services/core-v2/.env`, never committed. The suite must pass with it unset
+`ANTHROPIC_API_KEY` in `services/ai-chat/.env`, never committed. The suite must pass with it unset
 (day 4) — that's the check that no test is quietly making live calls.
 
-**Ports.** `core-v2` on `:8090`, beside v1 on `:8080` and web on `:5000`/`:5001`.
+**Ports.** `ai-chat` on `:8090`, beside v1 on `:8080` and web on `:5000`/`:5001`.
 
 ---
 
@@ -362,7 +379,7 @@ browser already relies on.
 | **CopilotKit's v2 hooks move under you.** `@copilotkit/react-core/v2` is new. | Import doesn't resolve, or `render` has different args. | Day 7 is the day you find out, not day 10. If v2 is unstable, fall back to the AG-UI React client directly — more code, same protocol. Don't spend more than half a day fighting it. |
 | **Tool-name mismatch silently renders nothing.** | Chat streams text; your component never appears. | Check the Python tool name against the hook's `name` string *first*, before debugging React. This is the single most common failure in this stack. |
 | **The model doesn't call the tool you expected.** | "What's coming up?" returns prose, no calendar. | It's the docstring, not the model. Tool docstrings are prompt surface — rewrite them as instructions to a colleague. Day 4's `FunctionModel` tests are how you assert this deterministically. |
-| **Day 7 is the biggest single step** — first React, first auth wiring, first CORS. | Runs past its slot. | Wire and verify the token + org header with `curl` on day 6, so day 7 is only React. CORS: `core-v2` must allow `:5000`/`:5001` — copy v1's dev branch. |
+| **Day 7 is the biggest single step** — first React, first auth wiring, first CORS. | Runs past its slot. | Wire and verify the token + org header with `curl` on day 6, so day 7 is only React. CORS: `ai-chat` must allow `:5000`/`:5001` — copy v1's dev branch. |
 | **Approval round-trip is fiddly on the wire.** | Interrupt fires, resume doesn't. | Day 9 exists to see this in `curl` before React is in the picture. Don't skip that ordering. |
 | **You've never used any of this.** | Day 2 or 5 takes twice its slot. | Expected. That's why days 9–12 are the cut zone and the spine ends on day 8. |
 

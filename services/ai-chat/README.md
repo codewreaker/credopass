@@ -1,77 +1,67 @@
-# services/core-v2 — `/api/v2/core`
+# services/ai-chat — the Organizer Copilot
 
-**Stub. Week 0 of 8.** This README gets written properly in week 7
-([`docs/learning/week-07-testing-polish.md`](../../docs/learning/week-07-testing-polish.md)); right
-now it only covers what exists, which is a scaffold.
+A Python/FastAPI service with exactly one job: serve the CredoPass Organizer Copilot over the
+**AG-UI** protocol, so the dashboard's right-hand rail can be a chat that answers in prose *and*
+rendered UI.
 
-A Python/FastAPI port of `services/core`, built as a learning project. The plan is
-[`docs/PYTHON-LEARNING-PLAN.md`](../../docs/PYTHON-LEARNING-PLAN.md); how it's run week to week is
-[`docs/LEARNING-WORKFLOW.md`](../../docs/LEARNING-WORKFLOW.md); current progress is
-[`docs/learning/STATUS.md`](../../docs/learning/STATUS.md).
+Plan: [`docs/AI-SIDEBAR-PLAN.md`](../../docs/AI-SIDEBAR-PLAN.md) · Progress:
+[`docs/learning/STATUS.md`](../../docs/learning/STATUS.md)
 
 ## What this is not
 
-- **Not a replacement for `services/core`.** That service keeps running, unchanged, and stays the
-  only thing that writes migrations.
-- **Not wired into anything.** `apps/web`'s default config never points here. No Nx target, not in
-  `bun start` — deliberately, until it's stable (plan §7).
-- **Not pointed at a shared database.** It gets its own local `credopass_v2_dev`, migrated with
-  `services/core`'s existing Drizzle migrations. It never touches the remote instance.
+- **Not a port of `services/core`.** There was a plan to rewrite the TypeScript API in Python; it
+  was cancelled on 2026-09-02. There is no `/api/v1/core`-competing REST surface and there will not be.
+- **Not a database client.** This service opens **no** database connection — no SQLAlchemy, no
+  `asyncpg`, no `DATABASE_URL`. Every agent tool calls the existing v1 API over HTTP, forwarding
+  the caller's own bearer token, so the agent inherits the caller's permissions and gains none of
+  its own. That is the security property the design rests on; don't erode it.
+- **Not wired into production.** `apps/web` reaches this only behind `VITE_COPILOT_ENABLED`.
+
+## Routes
+
+```
+GET  /health                                  liveness (no readiness — there's nothing to be ready)
+POST /api/v1/ai-chat/agent/organizer-copilot  the agent, over AG-UI      (day 5)
+```
 
 ## Layout
 
 ```
-pyproject.toml       deps, ruff, pytest, pyright config — one file, no setup.py/setup.cfg era stuff
-uv.lock              committed, reviewed like bun.lock
-src/app/             the service (empty until week 1 adds main.py + health routes)
-tests/               pytest suite
-scripts/create-db.sh idempotent creation of the local credopass_v2_dev database
+pyproject.toml      deps, ruff, pytest, pyright — one file
+uv.lock             committed, reviewed like bun.lock
+src/app/main.py     the FastAPI app
+src/app/settings.py typed config (pydantic-settings), cached behind get_settings()
+tests/              pytest; must pass with no model API key set
 ```
 
 ## Running it
 
 Requires [`uv`](https://docs.astral.sh/uv/) (`brew install uv`). It manages the virtualenv *and*
-the Python version — `.python-version` pins 3.13, and `uv` fetches it if the machine doesn't have
-it. There is no `pip install`, no `source .venv/bin/activate`.
+the Python version — `.python-version` pins 3.13. No `pip install`, no `activate`.
 
 ```bash
-cd services/core-v2
-
-uv sync                  # create/refresh .venv from uv.lock
-uv run pytest            # tests
-uv run ruff check .      # lint
-uv run ruff format .     # format
+nx run ai-chat:start      # → :8090   (sets GIT_COMMIT for /health)
+nx run ai-chat:test
+nx run ai-chat:lint
+nx run ai-chat:typecheck
+nx run ai-chat:verify     # all three — run before saying "done"
 ```
 
-Nothing serves yet. From week 1 on:
+The agent's tools call v1, so `nx run coreservice:start` (:8080) must also be running for anything
+beyond `/health` to work.
+
+## Configuration
+
+`services/ai-chat/.env`, gitignored:
+
+```
+V1_API_URL=http://localhost:8080
+LLM_API_KEY=...            # your model provider's key
+```
+
+**The test suite must pass with the key unset.** That's the check that no test is quietly making a
+live model call:
 
 ```bash
-uv run uvicorn app.main:app --reload --port 8090
+env -u LLM_API_KEY uv run pytest
 ```
-
-Port 8090 is free — see the ports table in the repo root [`CLAUDE.md`](../../CLAUDE.md).
-
-## The database
-
-One-time setup, with Docker running and the dev stack up (`nx run coreservice:dev:up`):
-
-```bash
-# 1. create the (empty) database
-./scripts/create-db.sh
-
-# 2. migrate it with services/core's Drizzle migrations — schema authority does
-#    not move to this service. Run from services/core, with DATABASE_URL overridden:
-cd ../core
-DATABASE_URL=postgresql://postgres:<password>@localhost:5432/credopass_v2_dev \
-  bun run scripts/db.ts migrate
-```
-
-`<password>` is `POSTGRES_PASSWORD` from [`docker/docker-compose.dev.yml`](../../docker/docker-compose.dev.yml).
-
-**Why the inline `DATABASE_URL=` is safe:** a shell-assigned variable takes precedence over
-`services/core/.env` in Bun (verified, not assumed), so that command migrates `credopass_v2_dev`
-and leaves `credopass_db` alone. Get it wrong and you migrate the main dev database instead —
-which is harmless today (same migrations, already applied) but is not a habit worth forming.
-
-There is no Alembic and there will not be one. Two migration tools against one schema would be two
-sources of truth for no benefit (plan §1, revisited in week 3's retro).

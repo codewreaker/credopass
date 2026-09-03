@@ -71,3 +71,7 @@ audit/*
 # own self-ignoring .gitignore; bytecode does not, so it goes here.
 __pycache__/
 *.py[cod]
+
+.nx/polygraph
+.claude/worktrees
+.claude/settings.local.json

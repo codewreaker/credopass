@@ -5,7 +5,7 @@ a tool call, as a confusing 401. `BaseSettings` types and validates the whole se
 when the process starts, so a missing or malformed value is a boot failure with a
 field name on it.
 
-Values come from the environment, falling back to `services/core-v2/.env` (which is
+Values come from the environment, falling back to `services/ai-chat/.env` (which is
 gitignored — see `.gitignore`).
 """
 

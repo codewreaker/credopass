@@ -1,4 +1,4 @@
-"""CredoPass core-v2 — the Copilot rail's backend.
+"""CredoPass ai-chat — the Copilot rail's backend.
 
 This service has exactly one job: serve the Organizer Copilot agent over the
 AG-UI protocol. See `docs/AI-SIDEBAR-PLAN.md`.
@@ -9,8 +9,8 @@ over HTTP, forwarding the caller's own bearer token, so the agent inherits the
 caller's permissions and gains no new ones.
 
 Routes:
-    GET  /health                            liveness
-    POST /api/v2/agent/organizer-copilot    the agent (day 5)
+    GET  /health                                liveness
+    POST /api/v1/ai-chat/agent/organizer-copilot the agent (day 5)
 """
 
 from datetime import UTC, datetime
@@ -24,7 +24,7 @@ from app.settings import get_settings
 VERSION = "0.1.0"
 
 app = FastAPI(
-    title="CredoPass core-v2",
+    title="CredoPass ai-chat",
     version=VERSION,
     description="The Organizer Copilot, over AG-UI. See docs/AI-SIDEBAR-PLAN.md.",
 )

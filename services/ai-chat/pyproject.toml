@@ -1,18 +1,17 @@
 [project]
-name = "core-v2"
+name = "ai-chat"
 version = "0.1.0"
-description = "CredoPass /api/v2/core — a FastAPI port of services/core, built as a learning project (docs/PYTHON-LEARNING-PLAN.md)"
+description = "CredoPass Organizer Copilot — a pydantic-ai agent served over AG-UI (docs/AI-SIDEBAR-PLAN.md)"
 readme = "README.md"
 authors = [{ name = "codewreaker", email = "israel.agyeman.prempeh@gmail.com" }]
 requires-python = ">=3.13"
 
-# Runtime dependencies land week by week, with `uv add`, as the plan needs them:
-#   week 1  uv add fastapi "uvicorn[standard]" pydantic-settings
-#   week 2  uv add sqlalchemy asyncpg pyjwt cryptography httpx
-#   week 4  uv add pydantic-ai
-#   week 5  uv add "pydantic-ai[ag-ui]"
-# Adding them here by hand instead would skip the one bit of packaging practice
-# week 0 is meant to leave behind.
+# Dependencies land day by day, with `uv add`, as AI-SIDEBAR-PLAN.md §6 needs them:
+#   day 3  uv add pydantic-ai httpx
+#   day 5  uv add "pydantic-ai[ag-ui]"
+# Deliberately absent and staying absent: sqlalchemy, asyncpg, pyjwt. This
+# service holds no database connection and verifies no tokens — it forwards the
+# caller's token to v1 and lets v1 decide.
 dependencies = [
     "fastapi[standard]>=0.141.1",
     "pydantic-settings>=2.15.0",
@@ -24,7 +23,7 @@ dev = [
     "ruff>=0.14.4",
 ]
 
-# The importable package is `app`, not `core_v2` (which is what uv derives from
+# The importable package is `app`, not `ai_chat` (which is what uv derives from
 # the project name by default), so the plan's documented run command works
 # verbatim:  uv run uvicorn app.main:app --reload --port 8090
 [tool.uv.build-backend]

@@ -13,21 +13,56 @@ By the end of today you can:
   load-bearing — it's how the card distinguishes "awaiting your answer" from "already answered,
   showing history." Without it, old cards re-prompt on every re-render.
 
-## New today
+---
 
-- [CopilotKit HITL with Pydantic AI](https://docs.showcase.copilotkit.ai/pydantic-ai/human-in-the-loop)
-  — `useHumanInTheLoop`, the `render: ({ args, respond }) =>` signature, and the `respond` guard.
-- Re-skim yesterday's [deferred tools](https://pydantic.dev/docs/ai/tools-toolsets/deferred-tools/)
-  page — now from the client's side of the round trip.
+# Learn
 
-**Note the docs' framing carefully:** their `useHumanInTheLoop` example declares a tool with
-`parameters`, i.e. a *frontend* tool. Yours already exists in Python. Work out which of `name` /
-`parameters` you actually need for binding to a backend approval — the docs lean toward the
-frontend-tool case and your case is the other one. **If this fights you for more than an hour**,
-fall back to `useRenderTool` plus a manual resume through `useAgent`; more code, same protocol,
-same demo. Don't lose the day to hook archaeology.
+Docs: [CopilotKit HITL with Pydantic AI](https://docs.showcase.copilotkit.ai/pydantic-ai/human-in-the-loop).
+Re-skim day 9's [deferred tools](https://pydantic.dev/docs/ai/tools-toolsets/deferred-tools/) page
+— now from the client's side of the round trip.
 
-## Hands-on task
+## The React half
+
+```tsx
+import { useHumanInTheLoop } from "@copilotkit/react-core/v2";
+
+useHumanInTheLoop({
+  name: "cancel_event",
+  render: ({ args, respond }) => {
+    if (!respond) return <></>;            // load-bearing, see below
+    return (
+      <ConfirmCard
+        onConfirm={() => respond("approved")}
+        onDeny={() => respond("denied")}
+      />
+    );
+  },
+});
+```
+
+> **Why `if (!respond)` matters.** `respond` is absent for a card that's already been answered.
+> Without the guard, every resolved card in your scroll-back re-prompts on each re-render. Better
+> than returning `<></>`: render the *outcome* ("Cancelled" / "Kept"), so the transcript reads as
+> a history.
+
+## A doc-shape warning
+
+The docs' `useHumanInTheLoop` example declares a tool with `parameters` — i.e. a *frontend* tool.
+Yours already exists in Python. Work out which of `name` / `parameters` you actually need to bind
+to a **backend** approval; the docs lean toward the other case.
+
+**If this fights you for more than an hour**, fall back to `useRenderTool` plus a manual resume
+through `useAgent` — more code, same protocol, same demo. Don't lose the day to hook archaeology.
+
+## The card is the safety mechanism
+
+If a human is the control, they need enough information to be one. "Cancel *Touching Gods Heart*
+(Aug 18)?" — not "Approve tool call `cancel_event`?" with a raw id. The `args` give you the id; you
+may need a name lookup to make it readable.
+
+---
+
+# Build
 
 **Mode B — you write:**
 
@@ -44,12 +79,36 @@ same demo. Don't lose the day to hook archaeology.
 
 Style within the rail's dark/lime language — see the design memory. Time-box to 45 minutes.
 
-## Done when
+---
+
+# Done when
 
 - In the real app: "cancel \<event\>" → a card naming the event, blocking the run.
 - **Deny → the event is still there.** Confirm in the events list, not in the chat transcript.
 - Confirm → it's cancelled, and the chat says so.
 - Old cards in scroll-back don't re-prompt.
+
+---
+
+# If it breaks
+
+| Looks like | Actually is |
+|---|---|
+| Old cards re-prompt on scroll | Missing `if (!respond)`. |
+| Card shows a raw id | No name lookup. A human can't approve what they can't read. |
+| Hook doesn't bind | Frontend-tool vs backend-approval shape — see the warning above. |
+| Deny appears to work but the event is gone | Check the events list, not the chat transcript. |
+
+---
+
+# Say it out loud
+
+> "The approval card is a UX gate on the *model*, not an authorization boundary — the real
+> control is the org-scoped permission check in the existing API, which runs whether the
+> caller is a browser or an agent. `respond` is absent once a card has been answered, which
+> is how the transcript distinguishes a live prompt from history."
+
+---
 
 ## Retro
 

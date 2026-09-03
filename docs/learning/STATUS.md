@@ -1,24 +1,35 @@
 # Status
 
-The live "where are we" pointer. Plan: [`../AI-SIDEBAR-PLAN.md`](../AI-SIDEBAR-PLAN.md).
-Process: [`../LEARNING-WORKFLOW.md`](../LEARNING-WORKFLOW.md) (the three tutoring modes still
-apply; its 8-week schedule does not).
+The live "where are we" pointer — **start every session here.**
+
+Plan: [`../AI-SIDEBAR-PLAN.md`](../AI-SIDEBAR-PLAN.md) · Day files: `day-NN-*.md` in this
+directory.
+
+**Each day is one self-contained file, read top to bottom:**
+
+| Section | What it's for |
+|---|---|
+| **Learn** | The concepts, before you write anything. Doc links live here. |
+| **Build** | The task. Mode A (I write a throwaway example) / Mode B (you implement to a spec). |
+| **Done when** | The checks that decide whether the day is finished. |
+| **If it breaks** | Symptom → actual cause. Come back here at 11pm; this is the part that saves time. |
+| **Say it out loud** | The interview answer the day earns. If you can't say it without notes, re-read Learn. |
+| **Retro** | Fill in at the end. Becomes the record of what actually happened. |
 
 **Resume here:** Day 2 — pydantic-ai fundamentals.
 [`day-02-pydantic-ai-fundamentals.md`](day-02-pydantic-ai-fundamentals.md). **Day 1 is done and
 verified** — it was Mode C scaffolding, so it was implemented for you rather than left as an
 exercise; day 2 is where you start writing.
 
-Before day 2: `cd services/core-v2 && uv add pydantic-ai`, and put your provider key in
-`services/core-v2/.env` (gitignored). One provider, chosen once.
+Before day 2: `cd services/ai-chat && uv add pydantic-ai`, and put your provider key in
+`services/ai-chat/.env` (gitignored). One provider, chosen once.
 
 ---
 
 ## ⚠️ Scope changed 2026-09-02 — read this before anything else
 
-The Citadel interview moved to **~2026-09-16**. The 8-week plan
-([`PYTHON-LEARNING-PLAN.md`](../PYTHON-LEARNING-PLAN.md)) is **superseded**, and the FastAPI port of
-`services/core` is **cancelled** — not deferred.
+The Citadel interview moved to **~2026-09-16**. The 8-week plan is **deleted**, and the FastAPI
+port of `services/core` is **cancelled** — not deferred.
 
 What's being built instead, in 14 days: **the right-hand rail of the dashboard becomes an AI chat.**
 A FastAPI service whose only job is one AG-UI endpoint, backed by a pydantic-ai agent whose tools
@@ -29,28 +40,31 @@ cancelling an event.
 Three consequences for anyone picking this up cold:
 
 - **No database access from Python, ever.** No SQLAlchemy, no `asyncpg`, no `DATABASE_URL` in
-  `core-v2`. `credopass_v2_dev` was created and migrated in week 0 and is now unused — leave it.
-- **No REST port.** `core-v2` serves `/api/v2/agent/organizer-copilot` and `/health`. There is no
-  `/api/v2/core/*` and there will not be. Week 1's "routes stay unprefixed while learning" decision
-  is moot; the agent endpoint has its own explicit path.
-- **Week files 02–08 are archived** in [`archive-week-plan/`](archive-week-plan/) and describe
-  cancelled work. Weeks 0 and 1 stayed here because that work was actually done.
+  `ai-chat`. `credopass_v2_dev` has been **dropped**, along with `scripts/create-db.sh` and the
+  `docker/initdb` mount that recreated it on a fresh volume.
+- **No REST port.** `ai-chat` serves `/api/v1/ai-chat/agent/organizer-copilot` and `/health`. There is
+  no other REST surface and there will not be.
+- **The old plan's docs are deleted** — `PYTHON-LEARNING-PLAN.md`, `LEARNING-WORKFLOW.md`, and all
+  nine week files. If you find a reference to them, it's a stale link, not a missing file.
+
+**You write the code from here on.** Day 1 was scaffolding (Mode C) and was done for you; that was
+the last of those. See [`../AI-SIDEBAR-PLAN.md`](../AI-SIDEBAR-PLAN.md) §1 "How the work is done".
 
 ---
 
 ## Where the code actually is
 
-`services/core-v2` on uv 0.12.5 / Python 3.13. nx targets wired — **the nx project is `corev2`,
-not `core-v2`** (`corev2:start` / `test` / `lint` / `typecheck` / `verify`).
+`services/ai-chat` on uv 0.12.5 / Python 3.13. nx targets wired as `ai-chat:start` / `test` /
+`lint` / `typecheck` / `verify`.
 
 **After day 1 (2026-09-02, verified):**
-- `src/app/main.py` — `GET /health` only. `GET /` gone; the commented-out `/api/v2/core` block
+- `src/app/main.py` — `GET /health` only. `GET /` gone; the commented-out `/api/v1/core` block
   gone. Its docstring now states the service's actual job: one AG-UI endpoint, no database.
 - `src/app/settings.py` — new. `Settings(BaseSettings)` with `v1_api_url`, `llm_api_key`,
   `git_commit`, cached behind `get_settings()`. `Health.commit` reads from it.
 - `tests/test_health.py` — new, 3 tests. `tests/test_scaffold.py` deleted.
 - `scratch/` gitignored (day 2 puts a toy agent there; it's meant to be disposable).
-- `nx run corev2:verify` green: 0 lint errors, 0 pyright errors, 3 tests in 0.20s.
+- `nx run ai-chat:verify` green: 0 lint errors, 0 pyright errors, 3 tests in 0.20s.
 - Booted and curled: `{"status":"ok","version":"0.1.0","commit":"fda5e82","timestamp":"…Z"}`.
   `/openapi.json` lists `/health` and nothing else.
 
@@ -60,15 +74,15 @@ not `core-v2`** (`corev2:start` / `test` / `lint` / `typecheck` / `verify`).
 - **`httpx2` deprecation warning — settled: pinned and ignored.** It's Starlette's own import, not
   our code, and chasing it costs a day. Suppressed via `filterwarnings` in `pyproject.toml`, with
   the reasoning in a comment there.
-- **`GIT_COMMIT` — settled: wired into the nx target.** `corev2:start` now sets it from
+- **`GIT_COMMIT` — settled: wired into the nx target.** `ai-chat:start` now sets it from
   `git rev-parse --short HEAD`, so `/health` reports a real hash in dev. Verified: `fda5e82`.
 
-**Carried from week 0's retro:** the fundamentals gap was syntax recall, not concepts — `for … in`
+**Carried from the crash course:** the fundamentals gap was syntax recall, not concepts — `for … in`
 and decorators. Decorators are load-bearing from day 2 onward (`@agent.tool` is the whole API), so
 they'll re-seat through use. The TS mapping that worked — uv≈bun, Pydantic≈Zod, type hints≈TS types
 — still holds for pydantic-ai (`Agent`≈a client with a tool registry, `deps_type`≈a DI container).
 **Where it runs out:** there's no TS analogue for "the docstring is part of the contract." Day 2's
-deliberate experiment is aimed at exactly that.
+Learn section covers both — Part 1 the syntax, Part 2 the docstring point.
 
 ---
 

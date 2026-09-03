@@ -8,6 +8,10 @@ pretending, gets a settings module, and finally gets the test week 1 never wrote
 Low-drama day on purpose — day 2 starts the actual new material, and starting it on a service
 that still has `/api/v2/core` scaffolding in it would mean carrying dead weight for two weeks.
 
+> **This one was done for you** — it's Mode C (config plumbing, a docstring rewrite, a shallow
+> test), and there's no pydantic-ai, AG-UI or FastAPI depth in it. It's kept here as the record of
+> what changed and why. **Every day from 2 onward, you write the code.**
+
 ## Objectives
 
 By the end of today you can:

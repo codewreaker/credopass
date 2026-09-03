@@ -1,7 +1,7 @@
 {
-  "name": "corev2",
+  "name": "ai-chat",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "services/core-v2/src",
+  "sourceRoot": "services/ai-chat/src",
   "projectType": "application",
   "tags": [
     "type:service",
@@ -41,9 +41,9 @@
       "executor": "nx:run-commands",
       "options": {
         "commands": [
-          "nx run corev2:lint",
-          "nx run corev2:typecheck",
-          "nx run corev2:test"
+          "nx run ai-chat:lint",
+          "nx run ai-chat:typecheck",
+          "nx run ai-chat:test"
         ],
         "parallel": false
       }

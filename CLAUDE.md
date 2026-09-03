@@ -18,16 +18,17 @@ Read both before changing the API, the schema, or anything tenancy-related.
 
 **Two API surfaces exist at once. This is deliberate.**
 
-| Surface | Status | Use for |
-|---|---|---|
-| `/api/core/*` | **Gone.** `src/routes/` and `crud-factory.ts` were deleted; the service 404s this path. | Nothing. If you see it in a config, that config is a bug. |
-| `/api/v1/core/*` | The only one. | Everything. |
+| Surface          | Status                                                                                  | Use for                                                   |
+| ---------------- | --------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| `/api/core/*`    | **Gone.** `src/routes/` and `crud-factory.ts` were deleted; the service 404s this path. | Nothing. If you see it in a config, that config is a bug. |
+| `/api/v1/core/*` | The only one.                                                                           | Everything.                                               |
 
 The `/core` suffix is there because more services will sit beside it later (`/api/v1/billing`, …). Code lives in `services/core/src/api/v1/core/`.
 
 Phase 0 is done. **Phase 1 is mostly done**: `accounts` / `identities` / `people` / `invitations` / SSO tables, RLS policies, issuer registry, auth + tenant middleware, `/me`, `/me/context`, organizations, members, invitations.
 
 **Still open in Phase 1:**
+
 - The API connects as `postgres`, which bypasses RLS — so the policies in `services/core/drizzle/0001_rls.sql` are currently inert on the API path. Switching `DATABASE_URL` to `credopass_api` requires wiring `SET LOCAL app.account_id` per transaction first, or every query returns nothing.
 - No data migration from `users` → `accounts` + `people` yet.
 
@@ -39,7 +40,7 @@ plan and the "web app moved onto /api/v1/core" entry in the rebuild log for what
 D20–D26. Three things to internalise before touching auth, roles or onboarding:
 
 - **There is no guest tier and no onboarding screen.** Signing in commissions an organisation
-  (`ensureDefaultOrganization` in `requireCaller`). That *is* onboarding.
+  (`ensureDefaultOrganization` in `requireCaller`). That _is_ onboarding.
 - **There are no device tokens.** A door tablet is a person signed in with the `checkin` role.
   Do not reintroduce a second authentication system for it.
 - **`/events/new` renders without a session**, with sign-in overlaid. That overlay is
@@ -47,7 +48,7 @@ D20–D26. Three things to internalise before touching auth, roles or onboarding
 
 ## What this is
 
-**CredoPass** — an attendance platform. It records who *actually attends* events (durable `attendance` rows), not just who signed up. Nx monorepo, Bun workspaces: 3 frontends + 1 backend, all sharing one schema/type/data core.
+**CredoPass** — an attendance platform. It records who _actually attends_ events (durable `attendance` rows), not just who signed up. Nx monorepo, Bun workspaces: 3 frontends + 1 backend, all sharing one schema/type/data core.
 
 ```
 apps/web        the product (dashboard, kiosk, public event page) · React 19 + TanStack Router · Vercel
@@ -67,7 +68,7 @@ packages/ui-mobile    React Native design system
 3. **Forms are pages, not dialogs.** Anything with a keyboard → a page or `SheetDialog`. `Dialog` is only for granular single-value edits.
 4. **Base UI uses render props, not `asChild`.** Spread: `render={(props) => <a {...props} />}`.
 5. **Two design systems, on purpose.** `@credopass/ui` (web, DOM+Tailwind) and `@credopass/ui-mobile` (React Native) share visual intent, not code. Don't import one into the other.
-6. **Attendance ≠ a UI flag.** `events.checkInMethods` is config for *which* check-in UI a door shows. The `attendance` row (unique on `eventId,patronId`) is the real record.
+6. **Attendance ≠ a UI flag.** `events.checkInMethods` is config for _which_ check-in UI a door shows. The `attendance` row (unique on `eventId,patronId`) is the real record.
 
 ## Golden rules for `/api/v1` (the rebuild)
 
@@ -83,31 +84,31 @@ These are enforced by code, not by convention. Breaking one fails the build, the
 
 ## Where things live
 
-| Need to touch… | Go to |
-|----------------|-------|
-| DB schema / model | `packages/lib/src/schemas/tables/` (+ relations in `tables/index.ts`) |
-| Validation / shared types | `packages/lib/src/schemas/enums.ts`, `email.schemas.ts`. Request validation lives in the Zod schemas beside each route — there are no per-table `*.schema.ts` validators any more. |
-| **Database: migrating, resetting, the remote cutover** | [`docs/DATABASE-MIGRATION.md`](docs/DATABASE-MIGRATION.md) |
-| Data fetching / mutations | `packages/api-client/src/hooks/` (TanStack Query, one file per endpoint group) |
-| Contract types for the client | `packages/api-client/src/types.ts` — **derived** from `generated/schema.d.ts`, never restated |
-| Active organization (client) | `packages/api-client/src/active-organization.ts` |
-| App bootstrap / permission gates | `apps/web/src/contexts/session.tsx` (`useSession`, `useCan`) |
-| **API endpoints (new, `/api/v1`)** | `services/core/src/api/v1/` |
-| **Route + permission declaration** | `services/core/src/http/define-route.ts`, `http/route-registry.ts` |
-| **Error format** | `services/core/src/http/problem.ts` |
-| **Permissions & role matrix** | `services/core/src/authz/permissions.ts` |
-| **Tenant scoping types** | `services/core/src/tenancy/context.ts` |
-| **Domain services** (Phase 1+) | `services/core/src/services/` |
-| **Tests: unit / structural** | `services/core/src/test/*.test.ts` |
-| **Tests: adversarial tenancy** | `services/core/src/test/adversarial/` |
-| Auth (server) | `services/core/src/middleware/caller.ts` (`requireCaller` / `requireTenant`) + `identity/issuer-registry.ts` |
-| Auth (client) | `apps/web/src/supabase.ts`, `packages/lib/src/supabase/` |
-| Web routes | `apps/web/src/routes/` (file-based; `routeTree.gen.ts` is generated — don't edit) |
-| Web screens | `apps/web/src/Pages/` |
-| Web shell/cross-page | `apps/web/src/containers/` |
-| Web components / design | `packages/ui/src/components/` |
-| Marketing pages | `apps/website/src/pages/` (router in `apps/website/src/App.tsx`) |
-| Mobile screens/nav | `apps/mobile/src/screens/`, `apps/mobile/src/navigation/` |
+| Need to touch…                                         | Go to                                                                                                                                                                              |
+| ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| DB schema / model                                      | `packages/lib/src/schemas/tables/` (+ relations in `tables/index.ts`)                                                                                                              |
+| Validation / shared types                              | `packages/lib/src/schemas/enums.ts`, `email.schemas.ts`. Request validation lives in the Zod schemas beside each route — there are no per-table `*.schema.ts` validators any more. |
+| **Database: migrating, resetting, the remote cutover** | [`docs/DATABASE-MIGRATION.md`](docs/DATABASE-MIGRATION.md)                                                                                                                         |
+| Data fetching / mutations                              | `packages/api-client/src/hooks/` (TanStack Query, one file per endpoint group)                                                                                                     |
+| Contract types for the client                          | `packages/api-client/src/types.ts` — **derived** from `generated/schema.d.ts`, never restated                                                                                      |
+| Active organization (client)                           | `packages/api-client/src/active-organization.ts`                                                                                                                                   |
+| App bootstrap / permission gates                       | `apps/web/src/contexts/session.tsx` (`useSession`, `useCan`)                                                                                                                       |
+| **API endpoints (new, `/api/v1`)**                     | `services/core/src/api/v1/`                                                                                                                                                        |
+| **Route + permission declaration**                     | `services/core/src/http/define-route.ts`, `http/route-registry.ts`                                                                                                                 |
+| **Error format**                                       | `services/core/src/http/problem.ts`                                                                                                                                                |
+| **Permissions & role matrix**                          | `services/core/src/authz/permissions.ts`                                                                                                                                           |
+| **Tenant scoping types**                               | `services/core/src/tenancy/context.ts`                                                                                                                                             |
+| **Domain services** (Phase 1+)                         | `services/core/src/services/`                                                                                                                                                      |
+| **Tests: unit / structural**                           | `services/core/src/test/*.test.ts`                                                                                                                                                 |
+| **Tests: adversarial tenancy**                         | `services/core/src/test/adversarial/`                                                                                                                                              |
+| Auth (server)                                          | `services/core/src/middleware/caller.ts` (`requireCaller` / `requireTenant`) + `identity/issuer-registry.ts`                                                                       |
+| Auth (client)                                          | `apps/web/src/supabase.ts`, `packages/lib/src/supabase/`                                                                                                                           |
+| Web routes                                             | `apps/web/src/routes/` (file-based; `routeTree.gen.ts` is generated — don't edit)                                                                                                  |
+| Web screens                                            | `apps/web/src/Pages/`                                                                                                                                                              |
+| Web shell/cross-page                                   | `apps/web/src/containers/`                                                                                                                                                         |
+| Web components / design                                | `packages/ui/src/components/`                                                                                                                                                      |
+| Marketing pages                                        | `apps/website/src/pages/` (router in `apps/website/src/App.tsx`)                                                                                                                   |
+| Mobile screens/nav                                     | `apps/mobile/src/screens/`, `apps/mobile/src/navigation/`                                                                                                                          |
 
 ## Running the app (agents: read this)
 
@@ -116,7 +117,7 @@ These are enforced by code, not by convention. Breaking one fails the build, the
 Two corollaries worth knowing:
 
 - **Never hand-roll `bun src/index.ts` for the API.** `NODE_ENV` would be unset, so `isDevelopment`
-  (`std-env`) is false and `services/core/src/index.ts` takes the *production* CORS branch, which
+  (`std-env`) is false and `services/core/src/index.ts` takes the _production_ CORS branch, which
   allow-lists only `app.credopass.com` / `credopass.com`. The browser then blocks `localhost:5000` with
   a CORS error. The Nx target sets `NODE_ENV=development` for exactly this reason.
 - **`nx run coreservice:migrate` writes to whatever `DATABASE_URL` points at.** The default in
@@ -174,13 +175,13 @@ Verify a change compiles with `nx run <project>:typecheck` / `nx run <project>:b
 - **Docs:** Scalar at `http://localhost:8080/api/v1/core/docs`, raw spec at `/api/v1/core/openapi.json`.
 - **`AUTH_DISABLED=true`** bypassed JWT verification for `/api/core`, which no longer exists. **Do not use it.** Run local Supabase so the auth path actually gets exercised.
 - **`drizzle/` is now tracked in git.** Migrations are reviewed like any other code. Don't re-ignore it.
-- **Adding a column is not additive at runtime.** Drizzle builds an explicit column list from the schema, so a new column makes *every* query — including `/api/core`'s — ask for it. Every database the code runs against must be migrated before the code ships. The remote instance is currently un-migrated, so `/api/core` events queries 500 there.
+- **Adding a column is not additive at runtime.** Drizzle builds an explicit column list from the schema, so a new column makes _every_ query — including `/api/core`'s — ask for it. Every database the code runs against must be migrated before the code ships. The remote instance is currently un-migrated, so `/api/core` events queries 500 there.
 - **A `drizzle-kit push` database has tables but no migration journal**, so `migrate` fails on it. `nx run coreservice:db status` detects this; `db reset` fixes it.
-- **`db` takes its subcommand as an argument:** `nx run coreservice:db reset`. (`db:reset` also works — there are matching nx *configurations* — but prefer the argument form, it is what `scripts/db.ts` documents.) `migrate`, `seed` and `verify:public-access` are top-level targets in their own right.
+- **`db` takes its subcommand as an argument:** `nx run coreservice:db reset`. (`db:reset` also works — there are matching nx _configurations_ — but prefer the argument form, it is what `scripts/db.ts` documents.) `migrate`, `seed` and `verify:public-access` are top-level targets in their own right.
 - **Tests must never touch the real database.** `TEST_DATABASE_URL` points at a throwaway Postgres; the adversarial suite truncates every table.
 - **`routeTree.gen.ts`** (web) is generated by the TanStack Router Vite plugin; edit `src/routes/*` instead.
 - **Analytics are fabricated** (`services/core/src/services/analytics/`) — deterministic placeholder numbers behind the real `AnalyticsResponse` contract. Don't assume they read the DB yet. `/analytics` in the web app deliberately renders an empty state rather than drawing charts from them.
-- **Never `.nullable()` a registered Zod schema** in the API. `Ref.nullable()` renders as `allOf` with a nullable object type, which openapi-typescript turns into an uninhabited intersection *and silently drops the nullability*. Use `z.union([Ref, z.null()])`.
+- **Never `.nullable()` a registered Zod schema** in the API. `Ref.nullable()` renders as `allOf` with a nullable object type, which openapi-typescript turns into an uninhabited intersection _and silently drops the nullability_. Use `z.union([Ref, z.null()])`.
 - **No email exists yet.** Pass URLs and invitation links are returned in responses and must be shown on screen. Never write "check your email".
 - **Tailwind v4**: prefer canonical class names (`bg-linear-to-t`, not `bg-gradient-to-t`) to avoid lint warnings.
 
@@ -200,13 +201,37 @@ Say plainly what you could not verify and why.
 
 Each package README goes further: [lib](packages/lib/README.md) · [api-client](packages/api-client/README.md) · [ui](packages/ui/README.md) · [ui-mobile](packages/ui-mobile/README.md) · [web](apps/web/README.md) · [mobile](apps/mobile/README.md) · [website](apps/website/README.md) · [core](services/core/README.md).
 
-| Doc | For |
-|---|---|
-| [`docs/API-FIRST-REBUILD.md`](docs/API-FIRST-REBUILD.md) | The plan — decisions, target schema, full endpoint list, phases. Historical; some links in it are dead and the header says which. |
-| [`docs/REBUILD-LOG.md`](docs/REBUILD-LOG.md) | What actually happened. **Wins wherever it disagrees with the plan.** |
-| [`docs/DATABASE-MIGRATION.md`](docs/DATABASE-MIGRATION.md) | Getting the schema onto a database — local, test, and the remote Supabase cutover. |
-| [`docs/LIVE-UPDATES.md`](docs/LIVE-UPDATES.md) | Why a check-in doesn't reach other screens, and the plan for it — polling first, then SSE (supersedes D4/D5 in the details). |
-| [`docs/NEXT-UI-LIST.md`](docs/NEXT-UI-LIST.md) | The open UI backlog. |
-| [`docs/AI-SIDEBAR-PLAN.md`](docs/AI-SIDEBAR-PLAN.md) | **The Copilot rail** — `services/core-v2`, a Python/FastAPI service serving one AG-UI agent endpoint. Active side effort on `learn/api-v2-python`, never wired into prod. Supersedes `PYTHON-LEARNING-PLAN.md`, whose FastAPI port of `services/core` is **cancelled**. |
+| Doc                                                        | For                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| ---------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`docs/API-FIRST-REBUILD.md`](docs/API-FIRST-REBUILD.md)   | The plan — decisions, target schema, full endpoint list, phases. Historical; some links in it are dead and the header says which.                                                                                                                                                                                                                                                                                                                                                                     |
+| [`docs/REBUILD-LOG.md`](docs/REBUILD-LOG.md)               | What actually happened. **Wins wherever it disagrees with the plan.**                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| [`docs/DATABASE-MIGRATION.md`](docs/DATABASE-MIGRATION.md) | Getting the schema onto a database — local, test, and the remote Supabase cutover.                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| [`docs/LIVE-UPDATES.md`](docs/LIVE-UPDATES.md)             | Why a check-in doesn't reach other screens, and the plan for it — polling first, then SSE (supersedes D4/D5 in the details).                                                                                                                                                                                                                                                                                                                                                                          |
+| [`docs/NEXT-UI-LIST.md`](docs/NEXT-UI-LIST.md)             | The open UI backlog.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| [`docs/AI-SIDEBAR-PLAN.md`](docs/AI-SIDEBAR-PLAN.md)       | **The Copilot rail** — `services/ai-chat`, a Python/FastAPI service serving one AG-UI agent endpoint (pydantic-ai) at `/api/v1/ai-chat`. A learning project on `learn/api-v2-python`, never wired into prod. It holds **no database connection**: its tools call `/api/v1/core` over HTTP with the caller's own token. An earlier plan to port the whole API to Python was **cancelled**; don't add REST routes or SQLAlchemy here. Day-by-day plan and teaching: [`docs/learning/`](docs/learning/). |
 
 `AGENTS.md` is a symlink to this file — one source of truth, not two that drift.
+
+<!-- nx configuration start-->
+<!-- Leave the start & end comments to automatically receive updates. -->
+
+## General Guidelines for working with Nx
+
+- For navigating/exploring the workspace, invoke the `nx-workspace` skill first - it has patterns for querying projects, targets, and dependencies
+- When running tasks (for example build, lint, test, e2e, etc.), always prefer running the task through `nx` (i.e. `nx run`, `nx run-many`, `nx affected`) instead of using the underlying tooling directly
+- Prefix nx commands with the workspace's package manager (e.g., `pnpm nx build`, `npm exec nx test`) - avoids using globally installed CLI
+- You have access to the Nx MCP server and its tools, use them to help the user
+- For Nx plugin best practices, check `node_modules/@nx/<plugin>/PLUGIN.md`. Not all plugins have this file - proceed without it if unavailable.
+- NEVER guess CLI flags - always check nx_docs or `--help` first when unsure
+
+## Scaffolding & Generators
+
+- For scaffolding tasks (creating apps, libs, project structure, setup), ALWAYS invoke the `nx-generate` skill FIRST before exploring or calling MCP tools
+
+## When to use nx_docs
+
+- USE for: advanced config options, unfamiliar flags, migration guides, plugin configuration, edge cases
+- DON'T USE for: basic generator syntax (`nx g @nx/react:app`), standard commands, things you already know
+- The `nx-generate` skill handles generator discovery internally - don't call nx_docs just to look up generator syntax
+
+<!-- nx configuration end-->
