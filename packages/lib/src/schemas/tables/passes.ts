@@ -1,6 +1,6 @@
 // ============================================================================
 // FILE: packages/lib/src/schemas/tables/passes.ts
-// The attendee's bearer credential. docs/API-FIRST-REBUILD.md §3.2, D12, D17
+// The attendee's bearer credential. docs/rebuild/API-FIRST-REBUILD.md §3.2, D12, D17
 // ============================================================================
 
 import { pgTable, timestamp, index, uuid, integer, text, uniqueIndex } from 'drizzle-orm/pg-core';

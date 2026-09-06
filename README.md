@@ -127,7 +127,7 @@ sequenceDiagram
 - **A resource in another tenant returns 404, not 403.** 403 means "your tenant, wrong role". Never leak that a row exists.
 - **There is no guest tier and no device tier.** A door tablet is a person signed in with the `checkin` role.
 
-> ⚠️ **RLS is currently inert on the API path.** The membership-scoped policies in `services/core/drizzle/0001_rls.sql` exist and are correct, but the API connects as `postgres`, which is `BYPASSRLS` — so today tenancy rests on exactly one layer: the explicit `ctx.organizationId` predicate every domain service applies, which the 47-test adversarial suite polices. Switching to the `credopass_api` role requires wiring `SET LOCAL app.account_id` per transaction first. The ordered fix is [`docs/DATABASE-MIGRATION.md` §6](docs/DATABASE-MIGRATION.md).
+> ⚠️ **RLS is currently inert on the API path.** The membership-scoped policies in `services/core/drizzle/0001_rls.sql` exist and are correct, but the API connects as `postgres`, which is `BYPASSRLS` — so today tenancy rests on exactly one layer: the explicit `ctx.organizationId` predicate every domain service applies, which the 47-test adversarial suite polices. Switching to the `credopass_api` role requires wiring `SET LOCAL app.account_id` per transaction first. The ordered fix is [`docs/rebuild/DATABASE-MIGRATION.md` §6](docs/rebuild/DATABASE-MIGRATION.md).
 
 ## Data model
 
@@ -175,12 +175,12 @@ The repo has been rebuilt API-first. What that meant, and what is left:
 
 | Document | Read it to understand… |
 |---|---|
-| 📐 [**API-FIRST-REBUILD**](docs/API-FIRST-REBUILD.md) | The plan — decisions, target schema, the full endpoint list, the phases. |
-| 📓 [**REBUILD-LOG**](docs/REBUILD-LOG.md) | What was **actually** built, decided differently, or broke. Updated at the end of every phase. |
-| 🖥️ [**API-SECOND-REBUILD**](docs/API-SECOND-REBUILD.md) | Moving the web app onto `/api/v1/core`. |
-| 🚪 [**API-THIRD-REBUILD**](docs/API-THIRD-REBUILD.md) | The sign-up funnel (D20–D26): no guest tier, no device tokens, no onboarding screen. |
-| 🗄️ [**DATABASE-MIGRATION**](docs/DATABASE-MIGRATION.md) | How to get the schema onto a database — local, test, and the remote Supabase cutover. |
-| 📋 [**NEXT-UI-LIST**](docs/NEXT-UI-LIST.md) | The open UI backlog. |
+| 📐 [**API-FIRST-REBUILD**](docs/rebuild/API-FIRST-REBUILD.md) | The plan — decisions, target schema, the full endpoint list, the phases. |
+| 📓 [**REBUILD-LOG**](docs/rebuild/REBUILD-LOG.md) | What was **actually** built, decided differently, or broke. Updated at the end of every phase. |
+| 🖥️ [**API-SECOND-REBUILD**](docs/rebuild/API-SECOND-REBUILD.md) | Moving the web app onto `/api/v1/core`. |
+| 🚪 [**API-THIRD-REBUILD**](docs/rebuild/API-THIRD-REBUILD.md) | The sign-up funnel (D20–D26): no guest tier, no device tokens, no onboarding screen. |
+| 🗄️ [**DATABASE-MIGRATION**](docs/rebuild/DATABASE-MIGRATION.md) | How to get the schema onto a database — local, test, and the remote Supabase cutover. |
+| 📋 [**NEXT-UI-LIST**](docs/web/NEXT-UI-LIST.md) | The open UI backlog. |
 
 **The two largest open items** are both in `DATABASE-MIGRATION.md`: the `users` → `accounts` + `people` data migration has not been written, and RLS is not yet live on the API path.
 
@@ -280,7 +280,7 @@ nx run coreservice:dev:down    # stop everything
 
 `db reset` and `db seed` **refuse to run against any host that isn't localhost.** That is a hostname allow-list, not a `--force` flag, because a flag is something you can pass by accident and a hostname is a fact about where you are aimed.
 
-**Which database am I pointed at?** `services/core/.env` → `DATABASE_URL`. Local is the default. The remote Supabase instance has *not* been migrated for the rebuild, so pointing at it makes `/api/v1/core` return 500 on everything — and the API says so at boot rather than leaving you to guess. Read [`docs/DATABASE-MIGRATION.md`](docs/DATABASE-MIGRATION.md) before changing it.
+**Which database am I pointed at?** `services/core/.env` → `DATABASE_URL`. Local is the default. The remote Supabase instance has *not* been migrated for the rebuild, so pointing at it makes `/api/v1/core` return 500 on everything — and the API says so at boot rather than leaving you to guess. Read [`docs/rebuild/DATABASE-MIGRATION.md`](docs/rebuild/DATABASE-MIGRATION.md) before changing it.
 
 ### Checking your work
 

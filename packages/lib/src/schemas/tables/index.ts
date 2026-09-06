@@ -1,6 +1,6 @@
 // ============================================================================
 // FILE: packages/lib/src/schemas/tables/index.ts
-// The schema. docs/API-FIRST-REBUILD.md §3
+// The schema. docs/rebuild/API-FIRST-REBUILD.md §3
 // ============================================================================
 //
 // Eleven tables, all snake_case, no legacy. Gone from the old shape:

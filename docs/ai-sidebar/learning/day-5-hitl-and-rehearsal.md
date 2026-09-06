@@ -193,7 +193,7 @@ much; you don't need to implement it.)*
 - **`services/ai-chat/README.md`** following the repo's other package READMEs. A stranger goes from
   clone to a working chat. Cover: what the service is (one endpoint, no database, on purpose), how
   to run it, the tools, how token forwarding works, how to run tests with no API key.
-- **`docs/REBUILD-LOG.md`** — a dated entry for the Copilot rail. Repo convention, and this is a
+- **`docs/rebuild/REBUILD-LOG.md`** — a dated entry for the Copilot rail. Repo convention, and this is a
   real architectural addition.
 - **Clean up:** keep `scripts/ask_copilot.py` (genuinely useful, and a demo fallback). `scratch/`
   gitignored or gone.

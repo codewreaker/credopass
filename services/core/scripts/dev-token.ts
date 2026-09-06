@@ -10,7 +10,7 @@
  * This is a real token through the real auth path — not a bypass. There is
  * deliberately no way to fabricate one, because a dev-only "skip auth" switch
  * is how the auth path ends up being the least exercised code in the product
- * (docs/API-FIRST-REBUILD.md §9.3).
+ * (docs/rebuild/API-FIRST-REBUILD.md §9.3).
  */
 
 import { createClient } from '@supabase/supabase-js';

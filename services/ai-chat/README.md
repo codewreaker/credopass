@@ -4,8 +4,8 @@ A Python/FastAPI service with exactly one job: serve the CredoPass Organizer Cop
 **AG-UI** protocol, so the dashboard's right-hand rail can be a chat that answers in prose *and*
 rendered UI.
 
-Plan: [`docs/AI-SIDEBAR-PLAN.md`](../../docs/AI-SIDEBAR-PLAN.md) · Progress:
-[`docs/learning/STATUS.md`](../../docs/learning/STATUS.md)
+Plan: [`docs/ai-sidebar/AI-SIDEBAR-PLAN.md`](../../docs/ai-sidebar/AI-SIDEBAR-PLAN.md) · Progress:
+[`docs/ai-sidebar/learning/STATUS.md`](../../docs/ai-sidebar/learning/STATUS.md)
 
 ## What this is not
 

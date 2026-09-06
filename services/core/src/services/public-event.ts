@@ -1,6 +1,6 @@
 /**
  * The public projection of an event, and of a pass.
- * docs/API-FIRST-REBUILD.md §5.10
+ * docs/rebuild/API-FIRST-REBUILD.md §5.10
  *
  * Lives in a service rather than the route file because deciding what an
  * anonymous visitor may see is a domain question, not a transport one — and

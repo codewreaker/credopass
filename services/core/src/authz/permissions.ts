@@ -1,6 +1,6 @@
 /**
  * The permission vocabulary and the org-role matrix.
- * docs/API-FIRST-REBUILD.md §6.1–6.3.
+ * docs/rebuild/API-FIRST-REBUILD.md §6.1–6.3.
  *
  * Note what is absent: `event:publish`. Dropping `draft` (D2) removed it, and
  * nothing may reintroduce it without reintroducing the state machine.

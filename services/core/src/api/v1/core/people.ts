@@ -1,5 +1,5 @@
 /**
- * People read paths. docs/API-FIRST-REBUILD.md §5.5
+ * People read paths. docs/rebuild/API-FIRST-REBUILD.md §5.5
  *
  * `standing` and `eventsAttended` arrive already decided — the client renders
  * them, it does not compute them.

@@ -64,7 +64,7 @@ services:
       - services
 
   # ---------------------------------------------------------------------------
-  # MinIO — S3-compatible object storage (docs/API-FIRST-REBUILD.md §9.1, §9.3)
+  # MinIO — S3-compatible object storage (docs/rebuild/API-FIRST-REBUILD.md §9.1, §9.3)
   # ---------------------------------------------------------------------------
   # Event covers and avatars. Bytes go client → storage directly via a presigned
   # URL and never touch the API, so local dev needs a real S3 API rather than a

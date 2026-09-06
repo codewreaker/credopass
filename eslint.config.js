@@ -25,7 +25,7 @@ export default defineConfig([
 
   // -------------------------------------------------------------------------
   // Structural rules for the API-first rebuild.
-  // docs/API-FIRST-REBUILD.md §1.1 (rules 1 and 3) and §7.1.
+  // docs/rebuild/API-FIRST-REBUILD.md §1.1 (rules 1 and 3) and §7.1.
   //
   // These are not style preferences. Each one closes an architectural hole that
   // would otherwise be enforced only by everyone remembering it.

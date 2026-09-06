@@ -1,5 +1,5 @@
 /**
- * Organisations, members and invitations. docs/API-FIRST-REBUILD.md §5.2
+ * Organisations, members and invitations. docs/rebuild/API-FIRST-REBUILD.md §5.2
  *
  * Note the two different scopes in one file, and why:
  *

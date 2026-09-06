@@ -2,7 +2,7 @@
 
 One agent endpoint and a health check. No database, no REST surface: the agent's
 tools call the existing v1 TypeScript API over HTTP with the caller's own token.
-See `docs/AI-SIDEBAR-PLAN.md`.
+See `docs/ai-sidebar/AI-SIDEBAR-PLAN.md`.
 """
 
 __all__: list[str] = []

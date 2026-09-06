@@ -1,5 +1,5 @@
 /**
- * The attendee walk. docs/API-FIRST-REBUILD.md §12.3a
+ * The attendee walk. docs/rebuild/API-FIRST-REBUILD.md §12.3a
  *
  * The scenario, automated exactly as stated: someone with no app and no account
  * opens a link, registers, closes the tab, opens the pass on another device

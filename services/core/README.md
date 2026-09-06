@@ -88,7 +88,7 @@ Four route scopes, declared per route:
 
 **There is no guest tier and no device tier.** A door tablet is a person signed in with the
 `checkin` role, which can read the event and record arrivals and nothing else. See
-[`docs/API-THIRD-REBUILD.md`](../../docs/API-THIRD-REBUILD.md), D20 and D24 — and do not
+[`docs/rebuild/API-THIRD-REBUILD.md`](../../docs/rebuild/API-THIRD-REBUILD.md), D20 and D24 — and do not
 reintroduce a second authentication system for doors without reading why the first one went.
 
 Signing in commissions an organisation (`ensureDefaultOrganization`, called from `requireCaller`
@@ -132,7 +132,7 @@ To generate a migration **without applying it** (no database contact):
 cd services/core && bunx drizzle-kit generate --name=<what_it_does>
 ```
 
-**Read [`docs/DATABASE-MIGRATION.md`](../../docs/DATABASE-MIGRATION.md) before pointing
+**Read [`docs/rebuild/DATABASE-MIGRATION.md`](../../docs/rebuild/DATABASE-MIGRATION.md) before pointing
 `DATABASE_URL` at anything remote.** The remote Supabase instance still runs the pre-rewrite schema,
 and there is no automatic path from `users` to `accounts` + `identities` + `people`.
 
@@ -146,7 +146,7 @@ which is what the adversarial suite polices.
 
 Switching is not a one-line change: the policies read the caller from
 `current_setting('app.account_id')`, and nothing in `src/` sets it. Point the API at `credopass_api`
-today and every query returns zero rows. The ordered fix is in `docs/DATABASE-MIGRATION.md` §6.
+today and every query returns zero rows. The ordered fix is in `docs/rebuild/DATABASE-MIGRATION.md` §6.
 
 ## Environment
 

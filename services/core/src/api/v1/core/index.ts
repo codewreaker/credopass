@@ -1,5 +1,5 @@
 /**
- * The `/api/v1` surface. docs/API-FIRST-REBUILD.md §5.
+ * The `/api/v1` surface. docs/rebuild/API-FIRST-REBUILD.md §5.
  *
  * **The only surface.** `/api/core/*` and its CRUD factory are deleted; the
  * service 404s that path, and every client — web, mobile, Scalar — is on

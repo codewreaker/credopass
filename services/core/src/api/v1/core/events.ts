@@ -1,5 +1,5 @@
 /**
- * Event read paths. docs/API-FIRST-REBUILD.md §5.3
+ * Event read paths. docs/rebuild/API-FIRST-REBUILD.md §5.3
  *
  * Every value these return is DECIDED here — status, counts, organisation name,
  * the upcoming/past split, the calendar grouping. There is nothing left for the

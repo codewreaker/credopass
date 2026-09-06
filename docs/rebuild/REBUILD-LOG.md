@@ -685,7 +685,7 @@ target — `migrate` only existed as an nx *configuration* of `db`, and the publ
 shell script nothing pointed at. Both are real targets now. The probe was also still testing
 `users`, `event_members` and `loyalty`; it tests the eleven tables that exist.
 
-### New: `docs/DATABASE-MIGRATION.md`
+### New: `docs/rebuild/DATABASE-MIGRATION.md`
 
 The step-by-step for getting the schema onto a database — fresh local, the throwaway test one, and
 the remote Supabase cutover. §5 is the cutover, including the shape the `users` →
@@ -693,7 +693,7 @@ the remote Supabase cutover. §5 is the cutover, including the shape the `users`
 on the API path** and gives the ordered fix, because the policies exist and look like they are
 protecting you.
 
-`docs/API-FIRST-REBUILD.md` now carries a header saying which of its links are dead and why, rather
+`docs/rebuild/API-FIRST-REBUILD.md` now carries a header saying which of its links are dead and why, rather
 than being rewritten — it is the record of what was decided, and reality lives here.
 
 
@@ -747,7 +747,7 @@ to post regardless, which is how a deleted org absorbed an event.
 org disappearing from `loadMemberships`, re-provisioning after every org was deleted). Full suite:
 68 unit + 109 integration + 39 adversarial, all green.
 
-### New: `docs/LIVE-UPDATES.md`
+### New: `docs/web/LIVE-UPDATES.md`
 
 QA finding 3 — *"I checked in from a separate window and the number didn't move"* — is a real gap,
 and only partly the missing SSE work. The kiosk counter **is** shared and correct (it polls

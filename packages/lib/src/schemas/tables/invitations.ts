@@ -1,7 +1,7 @@
 // ============================================================================
 // FILE: packages/lib/src/schemas/tables/invitations.ts
 // Inviting someone who does not yet have an account. (D-B)
-// docs/API-FIRST-REBUILD.md §3.2
+// docs/rebuild/API-FIRST-REBUILD.md §3.2
 // ============================================================================
 
 import { pgTable, text, timestamp, index, uuid, uniqueIndex } from 'drizzle-orm/pg-core';

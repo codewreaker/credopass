@@ -54,7 +54,7 @@ The consequence, and the mechanism behind tomorrow afternoon:
 > see it happening and render its own component for it. That's how one answer is both streamed
 > prose and a rendered calendar.
 
-**You already know the transport.** [`docs/LIVE-UPDATES.md`](../LIVE-UPDATES.md) plans SSE for
+**You already know the transport.** [`docs/web/LIVE-UPDATES.md`](../LIVE-UPDATES.md) plans SSE for
 check-in fanout. AG-UI is SSE plus an agreed vocabulary for what the events *mean*. The novelty is
 the schema, not the pipe.
 

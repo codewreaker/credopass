@@ -1,6 +1,6 @@
 /**
  * PeopleService — the tenant's roll of attendees.
- * docs/API-FIRST-REBUILD.md §4.3
+ * docs/rebuild/API-FIRST-REBUILD.md §4.3
  *
  * This replaces the ~150-line `useMemo` at Attendees/index.tsx:342-435 and the
  * full-table attendance scan at :295. Two reasons that matters beyond tidiness:

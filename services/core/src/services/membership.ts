@@ -1,6 +1,6 @@
 /**
  * MembershipService — organisations, memberships, roles, invitations.
- * docs/API-FIRST-REBUILD.md §4.2
+ * docs/rebuild/API-FIRST-REBUILD.md §4.2
  *
  * Invariants, all enforced here rather than by the caller remembering them:
  *

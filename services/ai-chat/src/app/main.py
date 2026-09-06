@@ -1,7 +1,7 @@
 """CredoPass ai-chat — the Copilot rail's backend.
 
 This service has exactly one job: serve the Organizer Copilot agent over the
-AG-UI protocol. See `docs/AI-SIDEBAR-PLAN.md`.
+AG-UI protocol. See `docs/ai-sidebar/AI-SIDEBAR-PLAN.md`.
 
 It is deliberately *not* a REST API and never becomes one. It holds no database
 connection: every tool the agent exposes calls the existing v1 TypeScript API
@@ -26,7 +26,7 @@ VERSION = "0.1.0"
 app = FastAPI(
     title="CredoPass ai-chat",
     version=VERSION,
-    description="The Organizer Copilot, over AG-UI. See docs/AI-SIDEBAR-PLAN.md.",
+    description="The Organizer Copilot, over AG-UI. See docs/ai-sidebar/AI-SIDEBAR-PLAN.md.",
 )
 
 
