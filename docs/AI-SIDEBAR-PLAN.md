@@ -1,66 +1,81 @@
-# The Copilot rail — 14-day plan (pydantic-ai · AG-UI · FastAPI)
+# The Copilot rail — 5-day plan (pydantic-ai · AG-UI · FastAPI)
 
-**Status: active.** Written 2026-09-02, when the Citadel interview moved to ~2026-09-16 and the
-scope was cut from "port the backend to Python" to "ship one AI feature in Python." The previous
-8-week plan and its week files have been deleted — this is the only plan.
+**Status: active. Recompressed 2026-09-06 from 14 days to 5.** Working days **Mon 8 – Fri 12
+September**, ~6–8h/day (~35h). Interview ~2026-09-16, so Sat 13 – Mon 15 are slack, not plan.
+
+The 14-day plan and its eleven day files are gone. This is the only plan. **The scope has not
+changed** — same deliverable, same three technologies, same interview answers. What changed is who
+types what, and the removal of every hour that wasn't buying one of those three things.
 
 - **Live progress:** [`learning/STATUS.md`](learning/STATUS.md) — start every session here.
-- **Day files:** [`learning/day-NN-*.md`](learning/) — one per working day, and the only thing you
-  open to work. Each is self-contained: **Learn → Build → Done when → If it breaks → Say it out
-  loud → Retro.** Read top to bottom; the teaching is in the file, not in a separate course.
+- **Day files:** [`learning/day-NN-*.md`](learning/) — five files, one per day. Each is
+  self-contained: **Learn → Build → Done when → If it breaks → Say it out loud → Retro.**
 
 ---
 
-## 0. The cut, stated plainly
+## 0. What changed, and what didn't
 
-The old plan ported ~35 of v1's routes to FastAPI across 8 weeks, and treated the agent as a
-feature riding on top of that port. **The port is cancelled.** Not deferred with a nice word on
-it — cancelled. `me.ts`, `organizations.ts`, `people.ts`, `events.ts`, `attendance.ts` stay in
-TypeScript, permanently, and `ai-chat` never grows a REST surface.
+### Unchanged
 
-What replaces it: **one FastAPI service whose entire job is one AG-UI endpoint.** Every tool it
-exposes calls the existing v1 TypeScript API over HTTP, forwarding the caller's own bearer token.
-Phase B — the "swap the tools to native in-process calls" step from the old §3 — is gone with the
-port that would have made it possible.
-
-**Why this is the right cut and not just the panicked one.** The three technologies you're being
-assessed on are pydantic-ai, AG-UI and FastAPI. Porting `organizations.ts` teaches you SQLAlchemy
-and a tenancy model you already understand in TypeScript. It teaches you *nothing* about any of the
-three. The port was the majority of the hours and the minority of the learning. Cutting it costs
-one interview answer ("I ported a multi-tenant authz model") and buys the depth to actually answer
-the three that matter.
-
-**What it costs, honestly.** You will not have written async SQLAlchemy. If Citadel asks "how do
-you talk to a database from FastAPI," you will be answering from reading, not from having done it.
-That is a real hole and §8 tells you to name it rather than bluff it. It is the correct trade at
-14 days: a shallow port plus a shallow agent loses to no port plus an agent you built every layer
-of.
-
-### What "done" means
-
-One artifact, demoed live from the real app:
+The deliverable, verbatim from the 14-day plan:
 
 > The right-hand rail of the CredoPass dashboard is a chat. You ask it "what's coming up?" and it
 > streams back prose **plus a real rendered calendar of your actual events** — not a text list, the
 > same `EventCalendar` component the rail used to hold, drawn from a tool call. You ask it to
 > cancel one, and a confirm/deny card blocks the run until you answer. Deny it and nothing happens.
 
-Three technologies, one screen, all three visible in it. That is the whole deliverable.
+Also unchanged: the architecture (§1), the four tools (§2), the no-database rule, the
+token-forwarding property, and all five interview answers in §8. **Nothing has been cut from the
+scope.** The port stays cancelled; it was cancelled on 2026-09-02 and that decision is not revisited
+here.
 
-### Explicitly not in scope
+### Changed — the three compressions
 
-- Any REST port. No `/api/v1/core/*`. `ai-chat` serves one agent endpoint and a health check.
-- Any database access from Python. **The FastAPI service never opens a DB connection.** It has no
-  SQLAlchemy, no `asyncpg`, no `DATABASE_URL`. Everything comes through v1's HTTP API.
-- `credopass_v2_dev`. Created and migrated during the cancelled port; **dropped 2026-09-02**,
-  along with `scripts/create-db.sh` and the `docker/initdb` mount that recreated it.
-- Mobile. Web only.
-- Production. The rail stays behind a dev-only flag; `apps/web`'s default config never points at
-  `:8090`.
+**1. I write all tests, and all boilerplate. You write everything load-bearing.**
+
+The 14-day plan's rule was "you write every line." At 5 days that rule costs you the demo. The new
+split, agreed 2026-09-06:
+
+| Who | What | Why |
+|---|---|---|
+| **You** | The agent, its tools, the deps and their composition with `StateDeps`, the v1 client, the AG-UI mount, the approval tool, the React hooks (`useRenderTool`, `useHumanInTheLoop`), the header/state wiring | This is the entire set of things you will be asked about. **You must be able to say "I implemented an AG-UI integration" and have it be true** — so the mount, the deps-per-request, the state sync and the hook bindings are all yours. |
+| **Me** | Every test, without exception. Plus: CORS config, the FastAPI provider/`CopilotKitProvider` scaffolding, `ConfirmCard` styling, the throwaway worked examples | Test-writing is the highest-hours/lowest-interview-value work in the plan. You asked me to take it; taken. |
+
+You still **read** the tests — they are the executable spec for what you're building, and on day 2
+and day 4 they're how you know you're done. You just don't write them.
+
+**2. Learning is compressed into the build, not staged before it.**
+
+The 14-day plan had a Python-fundamentals day (old day 2, part 1) and a protocol-reading day (old
+day 5) that produced no artifact. Both are folded in: the Python you need appears in a single
+20-minute primer in day 1's Learn, and AG-UI's event vocabulary is learned **from your own `curl -N`
+output on day 3**, with the docs open beside it, rather than read cold the day before.
+
+This is the one genuinely risky compression, and §9 says so.
+
+**3. Days 11–12 of the old plan (errors, polish) collapse into a half-day.**
+
+Old day 11 walked five failure modes one at a time. The new day 5 does the two that carry an
+interview answer — the 404 cross-tenant phrasing (golden rule 6) and the expired token — and I
+write tests for the rest. Old day 12's structured logging survives; its README work merges into the
+day-5 write-up.
+
+### What the compression costs, honestly
+
+- **You'll have written less Python by hand.** Roughly 35h of build instead of 90h. The code you
+  write is the interview-relevant code, but there's less of it, and less repetition to make it
+  stick. Mitigation: day 5 morning is a re-derivation pass, not a polish pass — you delete and
+  rewrite the AG-UI mount from memory.
+- **No `FunctionModel` deep-dive day.** You'll be able to say what `TestModel` and `FunctionModel`
+  each do and read the tests I wrote, but you won't have written one from scratch. If asked "how do
+  you test an agent," that's a read-and-reviewed answer, not a wrote-it answer. Say so.
+- **Still no async SQLAlchemy.** Unchanged from the 14-day plan. §8's honest answer stands verbatim.
 
 ---
 
 ## 1. Architecture
+
+Unchanged from the 14-day plan.
 
 ```
   apps/web  (React 19, :5000)
@@ -79,7 +94,7 @@ Three technologies, one screen, all three visible in it. That is the whole deliv
   ┌──────────────────────────────────────────────────────┐
   │  POST /api/v1/ai-chat/agent/organizer-copilot        │
   │    AGUIAdapter.dispatch_request(...)                 │
-  │                                                       │
+  │                                                      │
   │  organizer_copilot: Agent[StateDeps[...], …]         │
   │    @agent.tool   list_events        ─┐               │
   │    @agent.tool   get_event_summary   │ httpx         │
@@ -102,36 +117,32 @@ Three technologies, one screen, all three visible in it. That is the whole deliv
 | **No database in Python** | Tools call v1 over `httpx` | Deletes SQLAlchemy, `asyncpg`, models, sessions, and the whole "second migrated DB" apparatus from the critical path. The DB access happens — in TypeScript, where it already works and is already tested. |
 | **The agent gets no new permissions** | Every tool forwards the caller's real bearer token + `X-Organization-Id` | The agent can see and do exactly what the signed-in organizer could already do through the browser. There is no new authz surface to audit. **This is the strongest security answer you have — §8.** |
 | **Approval is a UX gate, not a security gate** | `requires_approval=True` on `cancel_event` (`@agent.tool`, since it needs deps — the docs' example uses `tool_plain`); the real control is v1's org-scoped permission check | Approval stops the *model* acting unilaterally. It does not stop a malicious *client* — that client could call v1 directly. Knowing which one it is separates people who've read the docs from people who've shipped it. |
-| **CopilotKit for the React half** | `@copilotkit/react-core/v2` + `@copilotkit/react-ui` | Hand-building a streaming chat UI is a week of React that teaches nothing about AG-UI. The prebuilt chat plus `useRenderTool` / `useHumanInTheLoop` is the shortest path to the generative-UI moment that *is* the demo. |
-| **The rendered calendar is the existing component** | `useRenderTool` renders `<EventCalendar>` from `@credopass/ui` | This is what makes it generative UI rather than a chatbot printing markdown. It also means the AI rail and the old rail render identically — the tool call replaces the `useEventsCalendar` hook, not the component. |
-| **Never wired into prod** | Rail is behind `VITE_COPILOT_ENABLED` | Same posture as the old plan. Zero blast radius. |
+| **CopilotKit for the React half** | `@copilotkit/react-core/v2` + `@copilotkit/react-ui` | Hand-building a streaming chat UI is a week of React that teaches nothing about AG-UI. At 5 days it is not a preference, it is the only option. |
+| **The rendered calendar is the existing component** | `useRenderTool` renders `<EventCalendar>` from `@credopass/ui` | This is what makes it generative UI rather than a chatbot printing markdown. The tool call replaces the `useEventsCalendar` hook, not the component. |
+| **Never wired into prod** | Rail is behind `VITE_COPILOT_ENABLED` | Zero blast radius. |
 
-### How the work is done — you write the code
+### How the work is done — the 5-day split
 
-**You implement every day of this plan.** Not me. The point is that you can talk about this code in
-two weeks' time, and you can't do that about code you watched appear.
+**You implement everything the interview touches.** The point is unchanged: you can talk about this
+code because you wrote it. What's changed is that I absorb the parts nobody will ask you about.
 
-What I do instead, per day:
-
-| Mode | When | What I actually do |
+| Mode | When | What I do |
 |---|---|---|
-| **A — worked example** | The first time a genuinely new concept appears (first `@agent.tool`, first `AGUIAdapter`, first approval round trip) | Write a small, **throwaway**, unrelated example — a dice tool, not a CredoPass tool — and explain it. You then build the real thing from the spec, not by editing my example. |
-| **B — spec + failing tests** | The default. Applying a pattern you've now seen | Write a spec and, where useful, failing tests that encode the expected behaviour. You implement until green. You show me the diff; I review for what tests can't catch — idiom, a blocking call in an `async def`, a leak the one fixture happened not to expose. |
-| **C — I scaffold** | Pure infrastructure with no learning in it (`uv init`, ruff config) | I do it, and say so. Day 1 was the last of these. |
+| **A — worked example** | First `@agent.tool` (day 1), first `AGUIAdapter` mount (day 3), first approval round trip (day 4) | A small **throwaway**, unrelated example — a dice tool, not a CredoPass tool. You build the real thing from the spec, not by editing mine. Three of these all week; each is ~20 lines. |
+| **B — spec + my failing tests** | The default | I write a spec and the tests that encode it. You implement until green. You show me the diff; I review for what tests can't catch — a blocking call in an `async def`, a leaked header, a docstring that won't earn a tool call. |
+| **C — I scaffold** | Infrastructure with no learning in it: CORS, the CopilotKit provider, `ConfirmCard` CSS, every test file | I do it and say so. |
 
-If you ask me to just write a route, I'll ask once whether you want to try it first. If you say
-you're short on time, I'll do it — but the default is always that you write it.
-
-### One thing the old plan got right, kept
-
-**`ai-chat` is additive.** `services/core` keeps running unchanged. Nothing in this plan edits a
-TypeScript route handler.
+**The one rule that survives from the 14-day plan:** if you find yourself asking me to write a
+tool, a deps class, or the AG-UI mount, that's the plan failing. Those four things are the whole
+point. Ask me for anything else.
 
 ---
 
 ## 2. The feature, concretely
 
-### `CopilotState` — what the agent knows without being told
+Unchanged from the 14-day plan.
+
+### `CopilotState`
 
 ```python
 class CopilotState(BaseModel):
@@ -140,122 +151,115 @@ class CopilotState(BaseModel):
 ```
 
 Synced from the browser via AG-UI's `state`. This is why "how many are checked in?" works while
-you're looking at an event, with no event id in the sentence. `active_organization_id` mirrors
-`packages/api-client/src/active-organization.ts`; `active_event_id` is whatever the rail is
-currently next to.
+you're looking at an event, with no event id in the sentence.
 
 ### Tools
 
-| Tool | Approval | Calls | Renders as |
-|---|---|---|---|
-| `list_events(when: Literal['upcoming','past','all'])` | no | `GET /api/v1/core/events` | **`<EventCalendar>`** — the generative-UI moment |
-| `get_event_summary(event_id=None)` | no | `GET /api/v1/core/events/{id}` | a summary card |
-| `get_checkin_state(event_id=None)` | no | `GET /api/v1/core/events/{id}/checkin-state` | a live counts card |
-| `cancel_event(event_id)` | **yes** | `POST /api/v1/core/events/{id}/cancel` | **confirm/deny card** — the HITL moment |
+| Tool | Approval | Calls | Renders as | Day |
+|---|---|---|---|---|
+| `list_events(when: Literal['upcoming','past','all'])` | no | `GET /api/v1/core/events` | **`<EventCalendar>`** | 2 → 4 |
+| `get_event_summary(event_id=None)` | no | `GET /api/v1/core/events/{id}` | a summary card | 2 → 4 |
+| `get_checkin_state(event_id=None)` | no | `GET /api/v1/core/events/{id}/checkin-state` | a live counts card | **cut first** |
+| `cancel_event(event_id)` | **yes** | `POST /api/v1/core/events/{id}/cancel` | **confirm/deny card** | 4 → 5 |
 
-`event_id=None` means "use `active_event_id` from state" — that's the state sync earning its keep.
-
-Cut from the old plan's tool list: `search_people`, `find_likely_no_shows`, `draft_reminder_message`.
-Four tools is enough to demonstrate read tools, structured output, state-derived arguments, and
-approval. A fifth teaches nothing new. **If a day runs short, cut `get_checkin_state` before
-cutting anything else** — it's the most redundant with `get_event_summary`.
+**`get_checkin_state` is now explicitly optional** — build it on day 5 only if day 5 morning runs
+clean. It's the most redundant with `get_event_summary` and teaches nothing the other three don't.
+The 14-day plan already named it as the first cut; at 5 days it starts cut.
 
 ### The two moments that are the demo
 
 1. **Generative UI.** "What's coming up?" → the agent calls `list_events` → `useRenderTool` draws
-   the real `EventCalendar` inline in the chat. Text and UI in one answer.
-2. **Human-in-the-loop.** "Cancel Touching Gods Heart" → the run pauses on
-   `DeferredToolRequests` → `useHumanInTheLoop` renders confirm/deny → deny, and the event is
-   still there.
+   the real `EventCalendar` inline in the chat. **End of day 4.**
+2. **Human-in-the-loop.** "Cancel Touching Gods Heart" → the run pauses on `DeferredToolRequests`
+   → `useHumanInTheLoop` renders confirm/deny → deny, and the event is still there. **Day 5.**
 
-Rehearse both. Deny at least once in the live demo; confirming is the boring half.
+Deny at least once in the live demo; confirming is the boring half.
 
 ---
 
-## 3. The 14 days
+## 3. The 5 days
 
-Two weeks, ~10–12h/week, same assumption as before. Day numbers are working days, not calendar
-days. **Days 1–8 are the spine; 9–12 are depth; 13–14 are prep.** If you slip, cut from 9–12,
-never from 1–8.
+**Mon 8 – Fri 12 September, ~7h/day.** Each day has a morning block and an afternoon block, because
+at this density "a day" is too coarse a unit to notice slippage in.
 
-| Day | Focus | Mode | Artifact at end of day |
+| Day | Morning (~3.5h) | Afternoon (~3.5h) | Artifact at end of day |
 |---|---|---|---|
-| **1** | Cleanup + FastAPI refresher. Strip `ai-chat` to the agent shape: kill the `/api/v1/core` ambitions from `main.py`'s docstring, keep `/health`, add settings via `pydantic-settings`. Write the pytest test for `/health` that week 1 never got to. | C + B | `nx run ai-chat:verify` green; `/health` has a test. |
-| **2** | **pydantic-ai fundamentals.** `Agent`, `@agent.tool` vs `@agent.tool_plain`, `RunContext`, `deps_type`. Docstrings-become-schemas. | A → B | A toy agent with a dice tool, tested with `TestModel`, in `scratch/`. |
-| **3** | **The real agent, offline.** `organizer_copilot` with `list_events` + `get_event_summary` calling v1 over `httpx`, with a real forwarded token. | B | `uv run python scripts/ask_copilot.py "what's coming up?"` prints a real, tool-derived answer from real data. |
-| **4** | **`TestModel` / `FunctionModel`.** Agent tests with zero live LLM calls, `ALLOW_MODEL_REQUESTS = False`. | A → B | `uv run pytest` green with the API key unset. |
-| **5** | **AG-UI, the protocol.** Read the event types first. Mount the agent with `AGUIAdapter.dispatch_request`. Inspect the raw stream. | A → B | `curl -N` shows a real SSE event stream; you can name what's on the wire. |
-| **6** | **`StateDeps`.** Add `CopilotState`, make `event_id=None` resolve from `active_event_id`. | B | `curl` with a `state` payload proves the agent used it. |
-| **7** | **The rail, plain chat.** `CopilotView` in `RightSidebar`, `<CopilotChat>`, `VITE_COPILOT_ENABLED`, token + org header wired. | A → B | Chat in the real app, streaming a real answer. **Spine complete.** |
-| **8** | **Generative UI.** `useRenderTool('list_events')` → `<EventCalendar>`. | B | Ask "what's coming up?" in the app, get a rendered calendar. **Demo moment 1.** |
-| **9** | **HITL, backend.** `cancel_event` with `requires_approval=True`, `output_type=[str, DeferredToolRequests]`. Watch the interrupt on the wire with `curl` before touching React. | A → B | The run pauses; the resume round-trip works from `curl`. |
-| **10** | **HITL, frontend.** `useHumanInTheLoop('cancel_event')` → confirm/deny card. | B | Deny in the browser; the event survives. **Demo moment 2.** |
-| **11** | **Errors + edges.** v1 returns 403/404/500 → what does the agent say? Tool errors as `ModelRetry` vs. hard failures. Expired token mid-stream. | B | Each failure produces a sensible chat message, not a stack trace. |
-| **12** | **Polish + `README.md`.** Loading/streaming states in the rail. Structured logging on the endpoint. `services/ai-chat/README.md` a stranger could follow. | B + C | `nx run ai-chat:verify` green; README written. |
-| **13** | **Write-up.** The architecture note: the four decisions in §1, the approval-vs-authz distinction, what you'd do differently. | — | One page, in `services/ai-chat/README.md`. |
-| **14** | **Rehearsal.** No new code. Cold end-to-end demo run, twice. §8 out loud. | — | You can run the demo from a closed laptop and explain every layer. |
+| **1 — Mon 8** | Python primer (20 min) + pydantic-ai: `Agent`, `@agent.tool` vs `tool_plain`, `RunContext`, `deps_type`, **docstrings-are-prompt-surface**. My dice worked example. | Your toy agent in `scratch/` — two tools, one with deps. Break a docstring on purpose and watch tool choice change. | A toy agent that calls both tools. You can say what `RunContext` carries. |
+| **2 — Tue 9** | **The real agent, offline.** `deps.py`, `client.py` (one place that builds headers), `copilot.py` with `list_events` + `get_event_summary`. | `scripts/ask_copilot.py`. Get a real answer about real events. Watch it chain two tools. I write the `TestModel`/`FunctionModel` suite alongside. | **Milestone:** `uv run python scripts/ask_copilot.py "what's coming up?"` prints a real, tool-derived answer. Suite green with the key unset. |
+| **3 — Wed 10** | **AG-UI.** Read the events page, mount `AGUIAdapter.dispatch_request`, build deps from **request headers**. `curl -N` and name what's on the wire. I do CORS. | **`StateDeps`.** Compose your deps with `StateDeps[CopilotState]`, `replace(deps)` per request, `event_id=None` resolves from state. `curl` proves both. | `curl -N` streams SSE; you can name three event types from your own terminal. State works and doesn't leak between requests. |
+| **4 — Thu 11** | **The rail becomes a chat.** `CopilotView` in `RightSidebar`, `<CopilotChat>`, token + org header + state wired, `VITE_COPILOT_ENABLED`. I scaffold the provider. | **Generative UI.** `useRenderTool('list_events')` → the real `<EventCalendar>`. Plus a summary card for `get_event_summary`. | **The demo.** Ask "what's coming up?" in the real app, get prose *and* a rendered calendar. |
+| **5 — Fri 12** | **HITL, both halves.** `output_type=[str, DeferredToolRequests]`, `cancel_event(requires_approval=True)`, `curl` the round trip **first**, then `useHumanInTheLoop`. My worked example de-risks the resume body. | **Errors, write-up, rehearsal.** The 404 phrasing, the expired token, structured logging. The one-page architecture note. Two cold demo runs. Record a fallback video. | **The better demo.** Deny in the browser, the event survives. README written. Recording exists. |
 
 ### Milestones, in one line each
 
-- **End of day 3** — the agent works in a terminal. Everything after this is transport and UI.
-- **End of day 7** — it's in the app. This is the fallback demo if days 8–10 collapse.
-- **End of day 8** — generative UI works. This is the demo.
-- **End of day 10** — HITL works. This is the demo you'd rather give.
+- **End of day 2** — the agent works in a terminal. Everything after this is transport and UI.
+- **End of day 3** — the protocol works. This is the day that earns the AG-UI answer.
+- **End of day 4** — generative UI in the real app. **This is the demo.**
+- **End of day 5** — HITL. This is the demo you'd rather give.
+
+### If you slip
+
+The order to sacrifice, most-expendable first:
+
+1. `get_checkin_state` — already cut, don't uncut it.
+2. Day 5 afternoon's polish (logging, the second summary-card renderer). **Never the rehearsal.**
+3. Day 5's `useHumanInTheLoop` React half — keep the backend half and demo the pause via `curl`.
+   You keep the whole interview answer; you lose a screenshot.
+4. Day 4 afternoon's generative UI — the plain chat from day 4 morning is still a demo.
+
+**Never cut:** day 2 (the agent), day 3 (AG-UI), or Friday's rehearsal. An unrehearsed demo of a
+polished feature goes worse than a rehearsed demo of a rough one.
+
+**Saturday 13 – Monday 15 are slack.** If Friday afternoon is a mess, that's what they're for.
+Don't plan into them; they exist so a bad Thursday isn't fatal.
 
 ---
 
 ## 4. What to read, and when
 
-Ordered by the day that needs it. Don't read ahead — day 5's protocol pages are noise on day 2.
+Ordered by the day that needs it. Don't read ahead. **Total reading budget this week: about 3
+hours.** If you're reading more than that, you're avoiding the keyboard.
 
-**Day 2 — pydantic-ai**
+**Day 1 — pydantic-ai** (~50 min)
 - [Agents](https://pydantic.dev/docs/ai/core-concepts/agent/) — the core abstraction.
 - [Dependencies](https://pydantic.dev/docs/ai/core-concepts/dependencies/) — `deps_type` /
   `RunContext`, and why the wiring is type-checked rather than stringly-typed.
 - [Tools](https://pydantic.dev/docs/ai/tools-toolsets/tools/) — `@agent.tool` vs `@agent.tool_plain`.
-  The function's **signature and docstring become the schema the model sees** — the same
-  "types are the contract" idea as FastAPI's OpenAPI generation, one layer up.
+  The function's **signature and docstring become the schema the model sees**.
 
-**Day 3 — httpx**
+**Day 2 — httpx** (~15 min)
 - [httpx async](https://www.python-httpx.org/async/) — `AsyncClient`, and why one long-lived client
   beats one per call.
+- *Skim only, since I'm writing the tests:* [Unit testing](https://pydantic.dev/docs/ai/guides/testing/)
+  — enough to read my suite and say what `TestModel` and `FunctionModel` each replace.
 
-**Day 4 — testing agents**
-- [Unit testing](https://pydantic.dev/docs/ai/guides/testing/) and
-  [`TestModel`](https://pydantic.dev/docs/ai/api/models/test/). Note `ALLOW_MODEL_REQUESTS = False`
-  — it makes "no live calls in the suite" enforced rather than a convention.
-
-**Day 5 — AG-UI, the protocol before the SDK**
+**Day 3 — AG-UI, the protocol before the SDK** (~60 min, the biggest read of the week)
 - [AG-UI introduction](https://docs.ag-ui.com/introduction) and
   [architecture](https://docs.ag-ui.com/concepts/architecture).
 - [**AG-UI events**](https://docs.ag-ui.com/concepts/events) — the page that matters most. The ~16
-  standard event types are the vocabulary. Have it open beside your `curl -N` output.
+  standard event types are the vocabulary. **Have it open beside your `curl -N` output**, not
+  before it.
 - [pydantic-ai — AG-UI integration](https://pydantic.dev/docs/ai/integrations/ui/ag-ui/) —
-  `AGUIAdapter.dispatch_request`, `StateDeps`, and the approval example. **Verified current
+  `AGUIAdapter.dispatch_request`, `StateDeps`, the approval example. **Verified current
   2026-09-02**; older write-ups showing `agent.to_ag_ui()` predate this API.
 
-**Day 7–8 — CopilotKit**
+**Day 4 — CopilotKit** (~30 min)
 - [CopilotKit × Pydantic AI showcase](https://docs.showcase.copilotkit.ai/pydantic-ai) — this exact
   pairing, which is why it's the primary source over the generic CopilotKit docs.
 - [`useRenderTool`](https://docs.showcase.copilotkit.ai/pydantic-ai/generative-ui/tool-rendering) —
   **the hook's `name` must exactly match the Python tool's name.** That one line is the whole
   contract between the two halves.
-- [Generative UI overview](https://docs.copilotkit.ai/concepts/generative-ui-overview) — the
-  distinction between rendering a *backend* tool call (`useRenderTool`, what you want) and
-  registering a *frontend* tool the agent can invoke (`useComponent` / `useFrontendTool`).
 
-**Day 9–10 — human-in-the-loop**
+**Day 5 — human-in-the-loop** (~30 min)
 - [pydantic-ai deferred tools](https://pydantic.dev/docs/ai/tools-toolsets/deferred-tools/) —
   `requires_approval=True`, `DeferredToolRequests`, `DeferredToolResults`, and that the run is
   *paused and resumed*, not blocked.
 - [CopilotKit HITL with Pydantic AI](https://docs.showcase.copilotkit.ai/pydantic-ai/human-in-the-loop)
   — `useHumanInTheLoop`, and the `render: ({ args, respond }) =>` signature. **`if (!respond)
-  return <></>` is load-bearing** — it's how the card knows it's historical rather than awaiting an
-  answer.
+  return <></>` is load-bearing.**
 
-**Repo context, day 7**
-- `apps/web/src/containers/RightSidebar/` — `index.tsx` and `OverviewView.tsx`. You're adding a
-  third view beside `OverviewView` / `ProfileView`, matching the existing shape.
+**Repo context, day 4** (read, don't budget — it's your own code)
+- `apps/web/src/containers/RightSidebar/` — `index.tsx` and `OverviewView.tsx`.
 - `packages/api-client/src/active-organization.ts` — where the org id comes from.
 - `apps/web/src/contexts/session.tsx` — `useSession` / `useCan`, for the token and the gate.
 
@@ -345,28 +349,27 @@ Dependencies land day by day, with `uv add`, not all at once:
 
 ```bash
 # day 1
-uv add pydantic-settings
+uv add pydantic-ai
+# day 2
+uv add httpx
 # day 3
-uv add pydantic-ai httpx
-# day 5
 uv add "pydantic-ai[ag-ui]"
 ```
 
-Frontend, day 7, in `apps/web`:
+Frontend, day 4, in `apps/web`:
 
 ```bash
 bun add @copilotkit/react-core @copilotkit/react-ui
 ```
 
-**Removed from the old plan's list, deliberately:** `sqlalchemy`, `asyncpg`, `pyjwt`,
-`cryptography`. No DB, and **no JWT verification in Python** — the service forwards the token to v1
-and lets v1 verify it. If v1 rejects it, the tool call fails and the agent says so. That's one
-fewer security-critical thing to get wrong in a fortnight, and it's the same trust boundary the
-browser already relies on.
+**Deliberately absent:** `sqlalchemy`, `asyncpg`, `pyjwt`, `cryptography`. No DB, and **no JWT
+verification in Python** — the service forwards the token to v1 and lets v1 verify it. If v1
+rejects it, the tool call fails and the agent says so. That's one fewer security-critical thing to
+get wrong, and it's the same trust boundary the browser already relies on.
 
-**Model choice.** Pick one provider on day 2 and don't revisit it. `OPENAI_API_KEY` or
-`ANTHROPIC_API_KEY` in `services/ai-chat/.env`, never committed. The suite must pass with it unset
-(day 4) — that's the check that no test is quietly making live calls.
+**Model choice.** Pick one provider on **day 1, in the first hour**, and don't revisit it.
+`OPENAI_API_KEY` or `ANTHROPIC_API_KEY` in `services/ai-chat/.env`, never committed. The suite must
+pass with it unset — that's the check that no test is quietly making live calls.
 
 **Ports.** `ai-chat` on `:8090`, beside v1 on `:8080` and web on `:5000`/`:5001`.
 
@@ -374,20 +377,24 @@ browser already relies on.
 
 ## 7. Risks, and what to do about each
 
+Reordered for 5 days: the top three are the ones that can actually cost you the demo now.
+
 | Risk | Signal | Response |
 |---|---|---|
-| **CopilotKit's v2 hooks move under you.** `@copilotkit/react-core/v2` is new. | Import doesn't resolve, or `render` has different args. | Day 7 is the day you find out, not day 10. If v2 is unstable, fall back to the AG-UI React client directly — more code, same protocol. Don't spend more than half a day fighting it. |
-| **Tool-name mismatch silently renders nothing.** | Chat streams text; your component never appears. | Check the Python tool name against the hook's `name` string *first*, before debugging React. This is the single most common failure in this stack. |
-| **The model doesn't call the tool you expected.** | "What's coming up?" returns prose, no calendar. | It's the docstring, not the model. Tool docstrings are prompt surface — rewrite them as instructions to a colleague. Day 4's `FunctionModel` tests are how you assert this deterministically. |
-| **Day 7 is the biggest single step** — first React, first auth wiring, first CORS. | Runs past its slot. | Wire and verify the token + org header with `curl` on day 6, so day 7 is only React. CORS: `ai-chat` must allow `:5000`/`:5001` — copy v1's dev branch. |
-| **Approval round-trip is fiddly on the wire.** | Interrupt fires, resume doesn't. | Day 9 exists to see this in `curl` before React is in the picture. Don't skip that ordering. |
-| **You've never used any of this.** | Day 2 or 5 takes twice its slot. | Expected. That's why days 9–12 are the cut zone and the spine ends on day 8. |
+| **Day 4 is two old days in one.** First React, first auth across the boundary, first CopilotKit, *and* generative UI. | Morning runs past 1pm. | Day 3's `curl` work is the mitigation — headers, CORS and state are all proven before React exists. If the morning slips, **ship plain chat and move `useRenderTool` to Friday morning**, pushing HITL to Friday afternoon. The order in §3's "If you slip" is the fallback ladder. |
+| **CopilotKit's v2 hooks move under you.** `@copilotkit/react-core/v2` is new. | Import doesn't resolve, or `render` has different args. | **Two hours maximum**, then fall back to the AG-UI React client directly — more code, same protocol, and arguably a better interview answer. Do not spend Thursday afternoon on hook archaeology. |
+| **Tool-name mismatch silently renders nothing.** | Chat streams text; your component never appears. | Check the Python tool name against the hook's `name` string *first*, before debugging React. The single most common failure in this stack. |
+| **AG-UI in one day instead of two.** Day 3 carries the whole protocol *and* `StateDeps`. | Afternoon starts and the mount still 422s. | The `RunAgentInput` body shape is the usual culprit and my worked example hands it to you working. If the mount isn't streaming by 1pm, take the mount from the worked example and spend the afternoon on `StateDeps` — the state composition is the part with an interview answer in it. |
+| **The model doesn't call the tool you expected.** | "What's coming up?" returns prose, no calendar. | It's the docstring, not the model. Tool docstrings are prompt surface — rewrite them as instructions to a colleague. Day 1's deliberate docstring-breaking exercise is why you'll recognise this. |
+| **Approval round-trip is fiddly on the wire.** | Interrupt fires, resume doesn't. | Friday morning does `curl` before React, in that order, for exactly this reason. Don't reorder it. |
+| **Expired tokens eat your Tuesday.** Supabase access tokens last about an hour. | Every tool 401s, suddenly, having worked ten minutes ago. | Re-copy from devtools. From day 3 the browser supplies it and this stops. Budget for hitting it three or four times on Tuesday. |
 
 ---
 
 ## 8. Interview answers this actually earns
 
-The point of the cut is that these get *better*, not worse. Rehearse these five out loud on day 14.
+Unchanged from the 14-day plan — the compression was designed around keeping these intact.
+Rehearse all five out loud on **Friday afternoon**.
 
 1. **"How do you stop an agent doing something destructive?"** — Two different controls, and
    conflating them is the mistake. `requires_approval=True` stops the *model* acting without a
@@ -404,7 +411,8 @@ The point of the cut is that these get *better*, not worse. Rehearse these five 
 3. **"What is AG-UI actually?"** — A typed SSE event stream, ~16 event types, between an agent and
    a UI. Not request/response. It's what lets a single answer be *both* streamed prose and a
    rendered React component: the tool call is an event on that stream, and the frontend binds a
-   component to the tool's name. Name three events and what they carry.
+   component to the tool's name. Name three events and what they carry — **from your own day-3
+   terminal output, not from the docs page.**
 
 4. **"Why Python for this and not your existing TypeScript service?"** — pydantic-ai's typed tool
    calling and the deferred-tool/approval machinery. And a boundary that's honest about itself: the
@@ -413,14 +421,22 @@ The point of the cut is that these get *better*, not worse. Rehearse these five 
 
 5. **"What would you do differently?"** — Two real ones. The tools call v1 over HTTP, so every
    agent question costs a network hop; in-process would be faster but would mean the agent lives in
-   TypeScript, which was the trade. And there's no evaluation harness — `TestModel` proves the
+   TypeScript, which was the trade. And there's no evaluation harness — the test suite proves the
    wiring, but nothing measures whether the agent picks the *right* tool across a spread of real
    phrasings. That's the first thing I'd build next.
 
-**And the honest one, unprompted if it fits:** you didn't write async SQLAlchemy. If asked about
-databases from FastAPI, say you deliberately kept persistence out of the Python service and can
-speak to the design reason, rather than claiming depth you don't have. Naming a scope cut you made
-on purpose reads as judgment; bluffing it reads as the opposite.
+**And the honest ones, unprompted if they fit.** Two now, not one:
+
+- **Databases from FastAPI.** You deliberately kept persistence out of the Python service and can
+  speak to the design reason, rather than claiming depth you don't have.
+- **The test suite.** You specified its behaviour and reviewed it, but you didn't write it — the
+  week was five days and you spent them on the agent, the protocol and the UI binding. If asked
+  about testing strategy, answer about `TestModel` vs `FunctionModel` and about stubbing the httpx
+  transport (both true, both yours to explain), and be straight that a pairing partner wrote the
+  suite to that spec.
+
+Naming a scope cut you made on purpose reads as judgment; bluffing it reads as the opposite. That
+was true of the port and it's true of this.
 
 ---
 
@@ -428,18 +444,21 @@ on purpose reads as judgment; bluffing it reads as the opposite.
 
 Where it's weak, so you know before someone else notices.
 
-- **14 days is not a lot of slack.** Days 9–12 are the buffer. If day 5 (AG-UI) or day 7 (React
-  wiring) doubles, you'll land on day 8's generative UI with the HITL half unbuilt. That's a real
-  possibility, and the milestone ordering in §3 exists so the demo degrades gracefully instead of
-  vanishing.
-- **The learning is narrow by construction.** You'll know pydantic-ai, AG-UI, and enough FastAPI to
-  serve one endpoint. You won't know FastAPI's dependency-injection depth, its testing story
-  against a database, or SQLAlchemy at all. `Depends` barely appears. That is the trade §0 makes
-  and it should be stated in an interview, not hidden.
-- **One agent, four tools, no evaluation.** Nothing here measures agent *quality* — only that the
-  wiring works. If Citadel probes on evals, that's the gap, and answer 5 in §8 is how you meet it.
+- **Five days has almost no slack, and the slack it has is a weekend.** The 14-day plan had days
+  9–12 as a buffer; this one has Saturday. The fallback ladder in §3 exists because the demo has to
+  degrade gracefully rather than vanish, and you should expect to use at least one rung of it.
+- **Day 3 is the compression that could break.** AG-UI's protocol *and* `StateDeps` in one day,
+  where the old plan took two, and it's the day that earns interview answer #3. If any day is
+  going to overrun, it's this one. That's why day 3's afternoon has an explicit escape hatch.
+- **You didn't write the tests.** A deliberate trade for build hours, and §8 tells you to say so.
+  The cost is real: writing a `FunctionModel` test is how most people finally understand that the
+  model is a replaceable component, and you're getting that understanding by reading instead.
+- **The learning is narrow by construction, and now narrower.** pydantic-ai, AG-UI, enough FastAPI
+  for one endpoint. No `Depends` depth, no SQLAlchemy, and now no hand-written test suite.
+- **One agent, three tools, no evaluation.** Nothing here measures agent *quality* — only that the
+  wiring works. If Citadel probes on evals, that's the gap, and answer 5 is how you meet it.
 - **CopilotKit is a dependency on someone else's abstraction.** You'll understand AG-UI the
-  protocol well; you'll understand the React layer only as far as its hooks. That's the right trade
-  for a backend-focused interview, but don't claim the frontend depth.
+  protocol well; you'll understand the React layer only as far as its hooks. Right trade for a
+  backend-focused interview, but don't claim the frontend depth.
 - **Every tool is a read except one.** The write path is exercised exactly once, by `cancel_event`.
-  A second write tool would test more, and there isn't time. Acknowledged, not fixed.
+  Acknowledged, not fixed — and at 5 days, not fixable.
