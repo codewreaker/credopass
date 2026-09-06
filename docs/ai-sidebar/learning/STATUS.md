@@ -4,6 +4,8 @@ The live "where are we" pointer — **start every session here.**
 
 Plan: [`../AI-SIDEBAR-PLAN.md`](../AI-SIDEBAR-PLAN.md) · Day files: `day-N-*.md` in this directory.
 
+*Last updated 2026-09-06 — end of prep, before day 1.*
+
 **Each day is one self-contained file, read top to bottom:**
 
 | Section | What it's for |
@@ -16,9 +18,15 @@ Plan: [`../AI-SIDEBAR-PLAN.md`](../AI-SIDEBAR-PLAN.md) · Day files: `day-N-*.md
 | **Retro** | Fill in at the end. Becomes the record of what actually happened. |
 
 **Resume here:** Day 1 — pydantic-ai. [`day-1-pydantic-ai.md`](day-1-pydantic-ai.md).
+Start at *Learn*, Part 1. The prep below is already done.
 
-Before Monday: `cd services/ai-chat && uv add pydantic-ai`, and put your provider key in
-`services/ai-chat/.env` (gitignored). One provider, chosen once, not revisited.
+**Pre-Monday prep: done (2026-09-06).** `pydantic-ai 2.40.0` is in `pyproject.toml` and resolved in
+`uv.lock`; `LLM_API_KEY` is in `services/ai-chat/.env` (gitignored). One provider, chosen once, not
+revisited. `nx run ai-chat:verify` re-run after the add and still green — 0 lint, 0 pyright, 3 tests
+in 0.24s.
+
+`pyproject.toml` and `uv.lock` are **modified but uncommitted**. Commit them before Monday so day 1
+starts from a clean tree.
 
 ---
 
@@ -58,14 +66,21 @@ and `/health`, and no other REST surface.
 `services/ai-chat` on uv 0.12.5 / Python 3.13. nx targets wired as `ai-chat:start` / `test` /
 `lint` / `typecheck` / `verify`.
 
+**Dependencies:** `fastapi[standard]`, `pydantic-settings`, and — added 2026-09-06 —
+`pydantic-ai>=2.40.0`. Nothing else. No SQLAlchemy, no `asyncpg`, and there is no `DATABASE_URL` to
+add one against.
+
 **Scaffold complete (2026-09-02, verified) — this was the old day 1, and it is done:**
 - `src/app/main.py` — `GET /health` only. Its docstring states the service's actual job: one AG-UI
   endpoint, no database.
 - `src/app/settings.py` — `Settings(BaseSettings)` with `v1_api_url`, `llm_api_key`, `git_commit`,
   cached behind `get_settings()`.
 - `tests/test_health.py` — 3 tests.
-- `scratch/` gitignored (day 1 puts a toy agent there; it's meant to be disposable).
-- `nx run ai-chat:verify` green: 0 lint errors, 0 pyright errors, 3 tests in 0.20s.
+- `scratch/` gitignored (day 1 puts a toy agent there; it's meant to be disposable). Currently holds
+  only a two-line `main.py` from poking at the interpreter — **no agent in it yet.** Day 1's
+  warm-ups and both Mode A / Mode B agents are still to be written.
+- `nx run ai-chat:verify` green: 0 lint errors, 0 pyright errors, 3 tests. Last re-run 2026-09-06
+  after the `pydantic-ai` add, still green (0.24s).
 - Booted and curled: `{"status":"ok","version":"0.1.0","commit":"fda5e82",…}`.
 
 **Both earlier findings closed:** the `httpx2` deprecation warning is pinned and ignored (it's
@@ -87,7 +102,7 @@ both — Part 1 the syntax, Part 2 the docstring point.
 
 | Day | File | Status | Milestone |
 |---|---|---|---|
-| **1 — Mon 8** | [day-1-pydantic-ai.md](day-1-pydantic-ai.md) | ⬜ not started | Toy agent in `scratch/`. Docstrings-are-prompt-surface is the idea that pays for the week. |
+| **1 — Mon 8** | [day-1-pydantic-ai.md](day-1-pydantic-ai.md) | ⬜ not started (deps ready) | Toy agent in `scratch/`. Docstrings-are-prompt-surface is the idea that pays for the week. |
 | **2 — Tue 9** | [day-2-real-agent.md](day-2-real-agent.md) | ⬜ not started | **The agent works in a terminal.** Real answer, real events. Everything after is transport and UI. |
 | **3 — Wed 10** | [day-3-ag-ui.md](day-3-ag-ui.md) | ⬜ not started | **The protocol works.** `curl -N` streams SSE; `StateDeps` composed. Most compressed day — has a 1pm escape hatch. |
 | **4 — Thu 11** | [day-4-rail-and-generative-ui.md](day-4-rail-and-generative-ui.md) | ⬜ not started | **The demo.** Chat in the real app before lunch, rendered `EventCalendar` after it. Biggest day. |
