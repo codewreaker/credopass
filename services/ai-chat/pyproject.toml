@@ -1,0 +1,95 @@
+[project]
+name = "ai-chat"
+version = "0.1.0"
+description = "CredoPass Organizer Copilot — a pydantic-ai agent served over AG-UI (docs/ai-sidebar/AI-SIDEBAR-PLAN.md)"
+readme = "README.md"
+authors = [{ name = "codewreaker", email = "israel.agyeman.prempeh@gmail.com" }]
+requires-python = ">=3.13"
+
+# Dependencies land day by day, with `uv add`, as AI-SIDEBAR-PLAN.md §6 needs them:
+#   day 3  uv add pydantic-ai httpx
+#   day 5  uv add "pydantic-ai[ag-ui]"
+# Deliberately absent and staying absent: sqlalchemy, asyncpg, pyjwt. This
+# service holds no database connection and verifies no tokens — it forwards the
+# caller's token to v1 and lets v1 decide.
+dependencies = [
+    "fastapi[standard]>=0.141.1",
+    "pydantic-ai>=2.40.0",
+    "pydantic-settings>=2.15.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.2",
+    "ruff>=0.14.4",
+]
+
+# The importable package is `app`, not `ai_chat` (which is what uv derives from
+# the project name by default), so the plan's documented run command works
+# verbatim:  uv run uvicorn app.main:app --reload --port 8090
+[tool.uv.build-backend]
+module-name = "app"
+
+[build-system]
+requires = ["uv_build>=0.12.5,<0.13.0"]
+build-backend = "uv_build"
+
+# ---------------------------------------------------------------------------
+# ruff — lint + format, the ESLint+Prettier of this service
+# ---------------------------------------------------------------------------
+# Deliberately a small rule set. Every rule here catches something that is a
+# real bug or a real inconsistency in a FastAPI codebase; nothing is on purely
+# because it was available.
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes — unused imports/names, the highest-value rules here
+    "I",    # isort — import ordering
+    "UP",   # pyupgrade — flags pre-3.10 typing forms (Optional[x], List[x]) automatically
+    "B",    # bugbear — incl. B008, mutable default arguments
+    "ASYNC",# blocking calls inside async def — the event-loop trap from plan §6
+    "SIM",  # simplifiable constructs
+    "RUF",  # ruff's own rules
+]
+ignore = [
+    # FastAPI's whole dependency system is `def handler(x = Depends(...))`,
+    # which is exactly what B008 exists to flag. It is correct here.
+    "B008",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["E501"]
+
+# ---------------------------------------------------------------------------
+# pytest
+# ---------------------------------------------------------------------------
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = "-q --strict-markers"
+# `starlette.testclient` warns that httpx is deprecated in favour of httpx2.
+# Pinned and ignored deliberately (day 1): it is a warning about Starlette's own
+# import, not about our code, and chasing it costs a day we do not have before
+# the interview. Revisit if TestClient actually breaks.
+filterwarnings = [
+    "ignore:Using `httpx` with `starlette.testclient` is deprecated:DeprecationWarning",
+    "ignore:Using `httpx` with `starlette.testclient` is deprecated",
+]
+
+# ---------------------------------------------------------------------------
+# pyright — the type checker (plan §7). `basic` for now; tighten in week 7
+# once there is enough real code for `strict` to be informative rather than
+# just noisy.
+# ---------------------------------------------------------------------------
+[tool.pyright]
+include = ["src", "tests"]
+pythonVersion = "3.13"
+typeCheckingMode = "basic"
+venvPath = "."
+venv = ".venv"

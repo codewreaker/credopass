@@ -1,6 +1,6 @@
 /**
  * EventService — the single authority on event status and event reads.
- * docs/API-FIRST-REBUILD.md §4.4
+ * docs/rebuild/API-FIRST-REBUILD.md §4.4
  *
  * Everything the `/events` and `/attendees` screens compute in the browser
  * today happens here instead: the status badge, the upcoming/past split, the

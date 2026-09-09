@@ -1,7 +1,7 @@
 // ============================================================================
 // FILE: packages/lib/src/schemas/tables/identities.ts
 // (issuer, subject) → account. The ONLY join to any identity provider.
-// docs/API-FIRST-REBUILD.md §3.2, D1
+// docs/rebuild/API-FIRST-REBUILD.md §3.2, D1
 // ============================================================================
 
 import { pgTable, text, timestamp, index, uuid, boolean, unique } from 'drizzle-orm/pg-core';

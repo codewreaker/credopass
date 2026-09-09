@@ -1,6 +1,6 @@
 /**
  * `TenantContext` — non-forgeable proof that a caller's org membership was
- * verified. docs/API-FIRST-REBUILD.md §7.1.
+ * verified. docs/rebuild/API-FIRST-REBUILD.md §7.1.
  *
  * The type carries a private brand backed by a module-local `unique symbol`.
  * Nothing outside this file can produce a value that satisfies the type: a

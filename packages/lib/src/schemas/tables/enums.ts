@@ -1,7 +1,7 @@
 // ============================================================================
 // FILE: packages/lib/src/schemas/tables/enums.ts
 // Postgres enum types shared by the rebuild's tables.
-// docs/API-FIRST-REBUILD.md §6.1
+// docs/rebuild/API-FIRST-REBUILD.md §6.1
 // ============================================================================
 
 import { pgEnum } from 'drizzle-orm/pg-core';

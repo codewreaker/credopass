@@ -1,6 +1,6 @@
 /**
  * AttendanceService — the ONE place a check-in happens.
- * docs/API-FIRST-REBUILD.md §4.6
+ * docs/rebuild/API-FIRST-REBUILD.md §4.6
  *
  * Replaces use-attendee-checkin.ts entirely, including the line that decided
  * whether a person exists by scanning `userCollection.toArray` — i.e. by asking

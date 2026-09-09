@@ -1,5 +1,5 @@
 /**
- * Analytics. docs/API-FIRST-REBUILD.md §5.9
+ * Analytics. docs/rebuild/API-FIRST-REBUILD.md §5.9
  *
  * **The numbers this returns are fabricated.** A deterministic generator in
  * `src/services/analytics/` invents believable attendance figures; nothing here

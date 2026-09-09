@@ -1,0 +1,52 @@
+{
+  "name": "ai-chat",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "services/ai-chat/src",
+  "projectType": "application",
+  "tags": [
+    "type:service",
+    "scope:api"
+  ],
+  "targets": {
+    "start": {
+      "continuous": true,
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "GIT_COMMIT=$(git rev-parse --short HEAD) uv run fastapi dev src/app/main.py --port 8090",
+        "cwd": "{projectRoot}"
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "uv run pytest",
+        "cwd": "{projectRoot}"
+      }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "uv run ruff check .",
+        "cwd": "{projectRoot}"
+      }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "uv run --with pyright pyright",
+        "cwd": "{projectRoot}"
+      }
+    },
+    "verify": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "nx run ai-chat:lint",
+          "nx run ai-chat:typecheck",
+          "nx run ai-chat:test"
+        ],
+        "parallel": false
+      }
+    }
+  }
+}

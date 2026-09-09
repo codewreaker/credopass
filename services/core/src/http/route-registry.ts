@@ -1,5 +1,5 @@
 /**
- * The fail-closed hinge. docs/API-FIRST-REBUILD.md §6.4.
+ * The fail-closed hinge. docs/rebuild/API-FIRST-REBUILD.md §6.4.
  *
  * Every route declares a scope, and `scope: 'organization'` additionally
  * declares a permission. At boot, `assertRouteRegistryComplete()` walks the
@@ -66,7 +66,7 @@ export class RouteRegistryError extends Error {
       `Route registry is incomplete — refusing to boot.\n` +
         violations.map((v) => `  · ${v}`).join('\n') +
         `\n\nEvery route must declare a scope, and scope:'organization' must declare ` +
-        `exactly one permission. See docs/API-FIRST-REBUILD.md §6.4.`
+        `exactly one permission. See docs/rebuild/API-FIRST-REBUILD.md §6.4.`
     );
     this.name = 'RouteRegistryError';
     this.violations = violations;

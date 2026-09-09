@@ -131,7 +131,7 @@ import { getAccessToken } from '@credopass/lib/supabase';
 5. Commit the table, the migration and the regenerated client together.
 
 The full procedure — including the remote Supabase cutover — is in
-[`docs/DATABASE-MIGRATION.md`](../../docs/DATABASE-MIGRATION.md).
+[`docs/rebuild/DATABASE-MIGRATION.md`](../../docs/rebuild/DATABASE-MIGRATION.md).
 
 > **Adding a column is not additive at runtime.** Drizzle builds an explicit column list from the
 > schema, so a new column makes *every* query ask for it. Every database the code runs against must

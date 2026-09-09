@@ -1,7 +1,7 @@
 // ============================================================================
 // FILE: packages/lib/src/schemas/tables/org-identity-providers.ts
 // Per-tenant SSO config + verified domains for home-realm discovery.
-// docs/API-FIRST-REBUILD.md §3.2, D1
+// docs/rebuild/API-FIRST-REBUILD.md §3.2, D1
 // ============================================================================
 
 import { pgTable, text, timestamp, index, uuid, boolean, uniqueIndex } from 'drizzle-orm/pg-core';

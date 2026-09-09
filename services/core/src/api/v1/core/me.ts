@@ -1,6 +1,6 @@
 /**
  * The account scope: /me and /me/context.
- * docs/API-FIRST-REBUILD.md §5.1
+ * docs/rebuild/API-FIRST-REBUILD.md §5.1
  *
  * These are `scope: 'account'` — self-scoped. They take no X-Organization-Id,
  * they never consult a tenant, and they read only rows belonging to the caller.

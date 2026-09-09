@@ -1,6 +1,6 @@
 // ============================================================================
 // FILE: packages/lib/src/schemas/tables/events.ts
-// docs/API-FIRST-REBUILD.md §3.2
+// docs/rebuild/API-FIRST-REBUILD.md §3.2
 // ============================================================================
 
 import {

@@ -1,7 +1,7 @@
 // ============================================================================
 // FILE: packages/lib/src/schemas/tables/people.ts
 // A tenant-scoped attendee record. THE keystone change.
-// docs/API-FIRST-REBUILD.md §3.2, D17
+// docs/rebuild/API-FIRST-REBUILD.md §3.2, D17
 // ============================================================================
 
 import { pgTable, text, timestamp, index, uuid, uniqueIndex } from 'drizzle-orm/pg-core';

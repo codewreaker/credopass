@@ -1,5 +1,5 @@
 /**
- * The attendee surface. docs/API-FIRST-REBUILD.md §5.10, D17, D19
+ * The attendee surface. docs/rebuild/API-FIRST-REBUILD.md §5.10, D17, D19
  *
  * Someone sends you a link. You have no app, no account, and no relationship
  * with the organisation running the event. You must be able to register, get

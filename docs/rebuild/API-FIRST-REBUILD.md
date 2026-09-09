@@ -16,7 +16,7 @@
 >
 > For the current state, start at [`README.md`](../README.md); for the database, at
 > [`DATABASE-MIGRATION.md`](DATABASE-MIGRATION.md); for what is left, at
-> [`NEXT-UI-LIST.md`](NEXT-UI-LIST.md).
+> [`NEXT-UI-LIST.md`](../web/NEXT-UI-LIST.md).
 
 > **The plan to make the API the product.** Today CredoPass is a React app with a database attached.
 > After this work, every capability is reachable with `curl`, the UI is a rendering client, and the
@@ -306,7 +306,7 @@ into every other subsystem.
 
 ### D4 — Domain events: Postgres table only. No Redis.
 
-> **Updated.** [`LIVE-UPDATES.md`](LIVE-UPDATES.md) carries the current analysis and plan for D4/D5 —
+> **Updated.** [`LIVE-UPDATES.md`](../web/LIVE-UPDATES.md) carries the current analysis and plan for D4/D5 —
 > what changed (device tokens are gone, so the stream cannot use `EventSource`), what the freshness
 > problem actually is on non-kiosk screens, and what to build first. Decisions D27–D30 there.
 
@@ -326,7 +326,7 @@ correct; it must be built, not assumed.
 
 ### D5 — Live kiosk updates: SSE
 
-> **Updated by [`LIVE-UPDATES.md`](LIVE-UPDATES.md)** — the path, the auth and the client transport
+> **Updated by [`LIVE-UPDATES.md`](../web/LIVE-UPDATES.md)** — the path, the auth and the client transport
 > all changed. Read that before implementing this.
 
 **Choice.** `GET /api/v1/events/{id}/stream` (`text/event-stream`), with `Last-Event-ID` replay.

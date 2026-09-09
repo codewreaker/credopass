@@ -47,7 +47,7 @@ Thumbs.db
 **/data/credopass/*
 # Migrations are tracked on purpose: every schema change must be reviewable, and
 # a migration nobody can read is a migration nobody can audit. See
-# docs/API-FIRST-REBUILD.md §9.4. Drizzle's local scratch output stays ignored.
+# docs/rebuild/API-FIRST-REBUILD.md §9.4. Drizzle's local scratch output stays ignored.
 **/drizzle/**/*.timestamp*
 vite.config.*.timestamp*
 vitest.config.*.timestamp*
@@ -71,3 +71,7 @@ audit/*
 # own self-ignoring .gitignore; bytecode does not, so it goes here.
 __pycache__/
 *.py[cod]
+
+.nx/polygraph
+.claude/worktrees
+.claude/settings.local.json

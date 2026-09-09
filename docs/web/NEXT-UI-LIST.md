@@ -2,10 +2,10 @@
 
 > **Read this if you are picking up the web app.** It is the live list of what is *not* done.
 >
-> What *was* done lives in [`REBUILD-LOG.md`](REBUILD-LOG.md) — this file no longer duplicates it.
-> Companions: [`API-SECOND-REBUILD.md`](API-SECOND-REBUILD.md) (moving the web app onto
-> `/api/v1/core`) · [`API-THIRD-REBUILD.md`](API-THIRD-REBUILD.md) (the sign-up funnel, D20–D26) ·
-> [`DATABASE-MIGRATION.md`](DATABASE-MIGRATION.md).
+> What *was* done lives in [`REBUILD-LOG.md`](../rebuild/REBUILD-LOG.md) — this file no longer duplicates it.
+> Companions: [`API-SECOND-REBUILD.md`](../rebuild/API-SECOND-REBUILD.md) (moving the web app onto
+> `/api/v1/core`) · [`API-THIRD-REBUILD.md`](../rebuild/API-THIRD-REBUILD.md) (the sign-up funnel, D20–D26) ·
+> [`DATABASE-MIGRATION.md`](../rebuild/DATABASE-MIGRATION.md).
 >
 > **Last refreshed:** 2026-07-27, after the account/profile pass and the repo-wide documentation
 > cleanup.
@@ -116,8 +116,8 @@ Carried from `API-SECOND-REBUILD.md` §3, still true.
 
 | Item | Blocks | Note |
 |---|---|---|
-| **RLS cutover** | Layer 2 actually biting | The API connects as `postgres` (BYPASSRLS), so the policies are untested code. Needs `SET LOCAL app.account_id` per transaction first. Ordered fix in [`DATABASE-MIGRATION.md` §6](DATABASE-MIGRATION.md). |
-| **`users` → `accounts` + `people` migration** | The remote Supabase cutover | Not written. Shape and constraints in [`DATABASE-MIGRATION.md` §5.4](DATABASE-MIGRATION.md). |
+| **RLS cutover** | Layer 2 actually biting | The API connects as `postgres` (BYPASSRLS), so the policies are untested code. Needs `SET LOCAL app.account_id` per transaction first. Ordered fix in [`DATABASE-MIGRATION.md` §6](../rebuild/DATABASE-MIGRATION.md). |
+| **`users` → `accounts` + `people` migration** | The remote Supabase cutover | Not written. Shape and constraints in [`DATABASE-MIGRATION.md` §5.4](../rebuild/DATABASE-MIGRATION.md). |
 | **Adversarial suite fixtures** | Trustworthy security tests | Many actors are placeholders with `token: ''`. Until they mint real tokens, those tests prove less than the count suggests. |
 | `NotificationService` (Resend) | Emailed passes and invitations | **Until this lands, every pass URL and invite link must be shown on screen.** Never write "check your email". |
 | `/me/tickets`, `/me/claim` | The personal scope | An attendee's own view across organizations. Designed, not built. |

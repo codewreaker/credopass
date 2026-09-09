@@ -1,6 +1,6 @@
 -- ============================================================================
 -- Row Level Security — layer 2 of tenancy enforcement.
--- docs/API-FIRST-REBUILD.md §7.2
+-- docs/rebuild/API-FIRST-REBUILD.md §7.2
 -- ----------------------------------------------------------------------------
 -- Layer 1 is `scoped(db, ctx)` in the application. This is the independent
 -- second layer: even if a service forgets its predicate, Postgres refuses the

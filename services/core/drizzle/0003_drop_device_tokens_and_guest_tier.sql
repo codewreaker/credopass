@@ -1,4 +1,4 @@
--- Drop the device tier and the guest tier. docs/API-THIRD-REBUILD.md D20, D24.
+-- Drop the device tier and the guest tier. docs/rebuild/API-THIRD-REBUILD.md D20, D24.
 --
 -- device_tokens: a door tablet is a person holding the `checkin` role now, which
 --   already carried exactly these permissions. CASCADE takes the

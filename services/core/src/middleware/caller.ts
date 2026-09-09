@@ -1,6 +1,6 @@
 /**
  * Auth and tenant resolution for /api/v1/core.
- * docs/API-FIRST-REBUILD.md §5.0, §6.4, §7.1
+ * docs/rebuild/API-FIRST-REBUILD.md §5.0, §6.4, §7.1
  *
  * Two middlewares, in order:
  *

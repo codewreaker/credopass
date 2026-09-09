@@ -1,6 +1,6 @@
 // ============================================================================
 // FILE: packages/lib/src/schemas/tables/organizations.ts
-// THE tenant boundary. docs/API-FIRST-REBUILD.md §3.2, D7
+// THE tenant boundary. docs/rebuild/API-FIRST-REBUILD.md §3.2, D7
 // ============================================================================
 
 import { pgTable, text, timestamp, index, uuid, jsonb, uniqueIndex } from 'drizzle-orm/pg-core';

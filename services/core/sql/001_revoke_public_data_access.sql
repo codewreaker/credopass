@@ -47,7 +47,7 @@ END $$;
 -- 2 · Revoke privileges from the public-facing roles ------------------------
 --
 -- `authenticated` is revoked alongside `anon`, which goes further than
--- docs/API-FIRST-REBUILD.md §9.5 proposes, and deliberately so: the app offers
+-- docs/rebuild/API-FIRST-REBUILD.md §9.5 proposes, and deliberately so: the app offers
 -- "Continue as guest" via supabase.auth.signInAnonymously()
 -- (packages/lib/src/supabase/auth.ts:18), so ANY visitor can mint an
 -- `authenticated` JWT with no credentials. Revoking only `anon` would leave the

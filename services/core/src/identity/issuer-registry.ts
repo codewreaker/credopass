@@ -1,5 +1,5 @@
 /**
- * The trust anchor is the ISSUER, not a vendor. docs/API-FIRST-REBUILD.md D1.
+ * The trust anchor is the ISSUER, not a vendor. docs/rebuild/API-FIRST-REBUILD.md D1.
  *
  * A token is trusted because its `iss` is registered here and its signature
  * verifies against that issuer's JWKS — never because it came from a particular

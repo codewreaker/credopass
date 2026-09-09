@@ -1,5 +1,5 @@
 /**
- * The ONE implementation of event status. docs/API-FIRST-REBUILD.md D2, §12.4
+ * The ONE implementation of event status. docs/rebuild/API-FIRST-REBUILD.md D2, §12.4
  *
  * Today this rule is duplicated in three places — the api-client collection,
  * the public route, and a `status` column that never ages — and they disagree.

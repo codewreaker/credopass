@@ -17,7 +17,7 @@ on:
       - '.github/workflows/ci-api.yml'
 
   # Quality gates must run BEFORE a merge, not after. The adversarial tenancy
-  # suite blocks merge unconditionally (docs/API-FIRST-REBUILD.md §12.1), which
+  # suite blocks merge unconditionally (docs/rebuild/API-FIRST-REBUILD.md §12.1), which
   # it cannot do if it only runs on push to main.
   pull_request:
     paths:
@@ -96,7 +96,7 @@ jobs:
   # ==========================================================================
   # Job 2: Adversarial tenancy suite — blocks merge unconditionally
   # ==========================================================================
-  # docs/API-FIRST-REBUILD.md §12.1. This is a separate job from the unit tests
+  # docs/rebuild/API-FIRST-REBUILD.md §12.1. This is a separate job from the unit tests
   # on purpose: a tenancy failure is not "some tests are red", it is "the
   # product leaks between customers", and it should be legible as such in the
   # checks list.

@@ -3,7 +3,7 @@
  *
  * Every error the API emits — validation, authorization, not-found, conflict,
  * unhandled — leaves through here, so a client only ever has to parse one shape.
- * See docs/API-FIRST-REBUILD.md §5.0.
+ * See docs/rebuild/API-FIRST-REBUILD.md §5.0.
  *
  * `code` is the field clients should branch on. `type`/`title` are for humans;
  * `code` is a stable machine string that survives copy edits.

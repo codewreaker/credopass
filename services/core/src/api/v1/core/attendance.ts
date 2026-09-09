@@ -1,5 +1,5 @@
 /**
- * Attendance write paths. docs/API-FIRST-REBUILD.md §5.6
+ * Attendance write paths. docs/rebuild/API-FIRST-REBUILD.md §5.6
  *
  * `POST /events/{id}/check-in` is the kiosk's ONE endpoint — scan, manual and
  * walk-in all land here, and the server decides which happened. The client

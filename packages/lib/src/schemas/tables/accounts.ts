@@ -1,7 +1,7 @@
 // ============================================================================
 // FILE: packages/lib/src/schemas/tables/accounts.ts
 // An account is a human who can sign in. Ours, not any provider's.
-// docs/API-FIRST-REBUILD.md §3.2, D1
+// docs/rebuild/API-FIRST-REBUILD.md §3.2, D1
 // ============================================================================
 
 import { pgTable, text, timestamp, index, uuid, uniqueIndex } from 'drizzle-orm/pg-core';

@@ -1,6 +1,6 @@
 // ============================================================================
 // FILE: packages/lib/src/schemas/tables/org-memberships.ts
-// An account's role in an organisation. docs/API-FIRST-REBUILD.md §3.2
+// An account's role in an organisation. docs/rebuild/API-FIRST-REBUILD.md §3.2
 // ============================================================================
 
 import { pgTable, text, timestamp, index, uuid, unique } from 'drizzle-orm/pg-core';

@@ -1,6 +1,6 @@
 // ============================================================================
 // FILE: packages/lib/src/schemas/tables/attendance.ts
-// The real record: one row per (event, person). docs/API-FIRST-REBUILD.md §3.2
+// The real record: one row per (event, person). docs/rebuild/API-FIRST-REBUILD.md §3.2
 // ============================================================================
 
 import { pgTable, timestamp, index, uuid, unique, text } from 'drizzle-orm/pg-core';

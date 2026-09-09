@@ -1,6 +1,6 @@
 /**
  * IdentityService — turn a verified token into a caller.
- * docs/API-FIRST-REBUILD.md §4.1, D1
+ * docs/rebuild/API-FIRST-REBUILD.md §4.1, D1
  *
  * This is the one service that is PRE-TENANT by definition: it runs before an
  * organisation is known, so it is exempt from the `scoped(db, ctx)` rule.

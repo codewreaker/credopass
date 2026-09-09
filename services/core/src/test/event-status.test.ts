@@ -1,5 +1,5 @@
 /**
- * The `deriveStatus` boundary table. docs/API-FIRST-REBUILD.md §12.4
+ * The `deriveStatus` boundary table. docs/rebuild/API-FIRST-REBUILD.md §12.4
  *
  * This is the most-touched piece of logic in the product and the rule most
  * likely to be reimplemented slightly wrong somewhere else. It gets an

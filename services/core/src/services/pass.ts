@@ -1,6 +1,6 @@
 /**
  * PassService — issue, verify and revoke attendee passes.
- * docs/API-FIRST-REBUILD.md §4.7, D12, D19
+ * docs/rebuild/API-FIRST-REBUILD.md §4.7, D12, D19
  *
  * WHAT WAS WRONG. The old pass QR encoded `{eventId}:{userId}` — a raw event id
  * and a raw user id, both of which appear in URLs and API responses. Anyone who
