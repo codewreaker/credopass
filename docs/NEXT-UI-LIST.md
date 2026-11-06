@@ -12,8 +12,10 @@
 >
 > **See also [`NEXT-PHASE-PLAN.md`](NEXT-PHASE-PLAN.md)** (2026-11-06) for the next round of product work and the
 > public-API plan. Two confirmed bugs live there rather than here because they were found while writing it:
-> **B1** — ⌘V/⌘A/⌘N/⌘T/⌘P are intercepted globally with no focus guard, so paste does not work in any input —
-> and **B2**, the composer showing "No organization" as a loading state.
+> **B1** — ⌘V/⌘A/⌘N/⌘T/⌘P intercepted globally with no focus guard, so paste did not work in any
+> input (**fixed 2026-11-06**; navigation is `g` chords now, registry in
+> `apps/web/src/hooks/shortcuts.ts`) — and **B2**, the composer showing "No organization" as a
+> loading state (still open).
 
 ---
 

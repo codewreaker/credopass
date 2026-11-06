@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect, useRef } from 'react';
-import { useHotkey } from '@tanstack/react-hotkeys';
 import {
   Calendar,
   User,
@@ -8,9 +7,9 @@ import {
   Users,
   ChartNoAxesCombined,
   LogIn,
-  QrCode,
   UserRound,
   Hash,
+  Keyboard,
 } from 'lucide-react';
 
 import {
@@ -25,6 +24,18 @@ import {
 } from '@credopass/ui/components/command';
 
 import { useNavigate } from '@tanstack/react-router';
+import { SHORTCUTS, type Shortcut } from '../../hooks/shortcuts';
+
+/**
+ * The palette does not bind any keys.
+ *
+ * It used to register nine `useHotkey('Mod+…')` handlers that duplicated — and
+ * disagreed with — the global listener in `hooks/index.tsx`. Both are gone;
+ * `hooks/shortcuts.ts` is the single registry, and this component reads the
+ * labels off it so the cheat sheet cannot drift from the bindings.
+ */
+const shortcutByItem = (id: string): string =>
+  SHORTCUTS.find((shortcut: Shortcut) => shortcut.id === id)?.display ?? '';
 
 const CommandPalette: React.FC<{
   onClose: () => void;
@@ -58,11 +69,6 @@ const CommandPalette: React.FC<{
     navigate({ to: '/login' });
   }, [onClose, navigate]);
 
-  const handleProfile = useCallback(() => {
-    onClose();
-    navigate({ to: '/profile' });
-  }, [onClose, navigate]);
-
   const handleNavigate = useCallback(
     (path: string) => {
       onClose();
@@ -71,51 +77,14 @@ const CommandPalette: React.FC<{
     [onClose, navigate]
   );
 
-  // Register keyboard shortcuts using TanStack Hotkeys
-  useHotkey('Mod+E', (event) => {
-    event.preventDefault();
-    handleNewEvent();
-  });
-
-  useHotkey('Mod+N', (event) => {
-    event.preventDefault();
-    handleNewMember();
-  });
-
-  useHotkey('Mod+I', (event) => {
-    event.preventDefault();
-    handleNavigate('/events');
-  });
-
-  useHotkey('Mod+M', (event) => {
-    event.preventDefault();
-    handleNavigate('/attendees');
-  });
-
-  useHotkey('Mod+V', (event) => {
-    event.preventDefault();
-    handleNavigate('/events');
-  });
-
-  useHotkey('Mod+A', (event) => {
-    event.preventDefault();
-    handleNavigate('/analytics');
-  });
-
-  useHotkey('Mod+T', (event) => {
-    event.preventDefault();
-    handleNavigate('/account');
-  });
-
-  useHotkey('Mod+P', (event) => {
-    event.preventDefault();
-    handleProfile();
-  });
-
-  useHotkey('Mod+S', (event) => {
-    event.preventDefault();
-    // Settings behavior not implemented yet
-  });
+  // `/account` is three screens behind one route, so its entries carry the tab.
+  const handleAccountTab = useCallback(
+    (tab: string) => {
+      onClose();
+      navigate({ to: '/account', search: { tab } });
+    },
+    [onClose, navigate]
+  );
 
   return (
     <Command className="command-palette" label="Command Palette">
@@ -134,12 +103,12 @@ const CommandPalette: React.FC<{
           <CommandItem onSelect={handleNewEvent} className="command-palette-item">
             <Calendar className="command-palette-item-icon" />
             <span>New Event</span>
-            <CommandShortcut>{'⌘E'}</CommandShortcut>
+            <CommandShortcut>{shortcutByItem('new-event')}</CommandShortcut>
           </CommandItem>
           <CommandItem onSelect={handleNewMember} className="command-palette-item">
             <UserPlus className="command-palette-item-icon" />
             <span>Add Attendee</span>
-            <CommandShortcut>{'⌘N'}</CommandShortcut>
+            <CommandShortcut>{shortcutByItem('new-attendee')}</CommandShortcut>
           </CommandItem>
           <CommandItem onSelect={handleSignIn} className="command-palette-item">
             <LogIn className="command-palette-item-icon" />
@@ -149,47 +118,70 @@ const CommandPalette: React.FC<{
 
         <CommandSeparator />
 
+        {/*
+          There was a "Check-In" entry here that navigated to `/events`. The real
+          kiosk route is `/checkin/$eventId` and the palette has no event in
+          hand, so the entry was a second, mislabelled way to reach the events
+          list. Removed rather than relabelled.
+        */}
         <CommandGroup heading="Navigation">
           <CommandItem onSelect={() => handleNavigate('/events')} className="command-palette-item">
-            <QrCode className="command-palette-item-icon" />
-            <span>Check-In</span>
-            <CommandShortcut>{'⌘I'}</CommandShortcut>
+            <Calendar className="command-palette-item-icon" />
+            <span>Events</span>
+            <CommandShortcut>{shortcutByItem('events')}</CommandShortcut>
           </CommandItem>
           <CommandItem onSelect={() => handleNavigate('/attendees')} className="command-palette-item">
             <Users className="command-palette-item-icon" />
             <span>Attendees</span>
-            <CommandShortcut>{'⌘M'}</CommandShortcut>
-          </CommandItem>
-          <CommandItem onSelect={() => handleNavigate('/events')} className="command-palette-item">
-            <Calendar className="command-palette-item-icon" />
-            <span>Events</span>
-            <CommandShortcut>{'⌘V'}</CommandShortcut>
+            <CommandShortcut>{shortcutByItem('attendees')}</CommandShortcut>
           </CommandItem>
           <CommandItem onSelect={() => handleNavigate('/analytics')} className="command-palette-item">
             <ChartNoAxesCombined className="command-palette-item-icon" />
             <span>Analytics</span>
-            <CommandShortcut>{'⌘A'}</CommandShortcut>
-          </CommandItem>
-          <CommandItem onSelect={() => handleNavigate('/account')} className="command-palette-item">
-            <UserRound className="command-palette-item-icon" />
-            <span>Profile & Organizations</span>
-            <CommandShortcut>{'⌘T'}</CommandShortcut>
+            <CommandShortcut>{shortcutByItem('analytics')}</CommandShortcut>
           </CommandItem>
         </CommandGroup>
 
         <CommandSeparator />
 
         <CommandGroup heading="Account">
-          <CommandItem onSelect={handleProfile} className="command-palette-item">
+          <CommandItem onSelect={() => handleAccountTab('profile')} className="command-palette-item">
             <User className="command-palette-item-icon" />
             <span>Profile</span>
-            <CommandShortcut>{'⌘P'}</CommandShortcut>
+            <CommandShortcut>{shortcutByItem('profile')}</CommandShortcut>
           </CommandItem>
-          <CommandItem className="command-palette-item">
+          <CommandItem onSelect={() => handleAccountTab('organizations')} className="command-palette-item">
+            <UserRound className="command-palette-item-icon" />
+            <span>Organizations</span>
+            <CommandShortcut>{shortcutByItem('organizations')}</CommandShortcut>
+          </CommandItem>
+          <CommandItem onSelect={() => handleAccountTab('settings')} className="command-palette-item">
             <Settings className="command-palette-item-icon" />
-            <span>Settings</span>
-            <CommandShortcut>{'⌘S'}</CommandShortcut>
+            <span>Organization Settings</span>
+            <CommandShortcut>{shortcutByItem('settings')}</CommandShortcut>
           </CommandItem>
+        </CommandGroup>
+
+        <CommandSeparator />
+
+        {/*
+          The cheat sheet. The bindings changed from ⌘-letters to `g` chords, so
+          there has to be somewhere that says what they are now — and the palette
+          is where someone looks when they are hunting for a command anyway.
+        */}
+        <CommandGroup heading="Keyboard Shortcuts">
+          <CommandItem className="command-palette-item" disabled>
+            <Keyboard className="command-palette-item-icon" />
+            <span>Open this palette</span>
+            <CommandShortcut>{'⌘K'}</CommandShortcut>
+          </CommandItem>
+          {SHORTCUTS.map((shortcut) => (
+            <CommandItem key={shortcut.id} className="command-palette-item" disabled>
+              <Keyboard className="command-palette-item-icon" />
+              <span>{shortcut.label}</span>
+              <CommandShortcut>{shortcut.display}</CommandShortcut>
+            </CommandItem>
+          ))}
         </CommandGroup>
       </CommandList>
 

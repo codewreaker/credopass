@@ -34,7 +34,6 @@ Nothing is "in progress" unless someone is actually working on it today.
 
 | | Work | Where it is specified | Size |
 |---|---|---|---|
-| 🔴 | **⌘V/⌘A/⌘N/⌘T/⌘P are intercepted globally** — paste does not work in any input | [`NEXT-PHASE-PLAN.md`](NEXT-PHASE-PLAN.md) §5.1 | S |
 | 🔴 | The composer shows "No organization" as a loading state | [`NEXT-PHASE-PLAN.md`](NEXT-PHASE-PLAN.md) §5.2 | S |
 | ⬜ | RLS is inert on the API path — the API connects as `postgres` and bypasses it | [`DATABASE-MIGRATION.md`](DATABASE-MIGRATION.md) §6 | M |
 | ⬜ | No data migration from the pre-rewrite `users` table | [`DATABASE-MIGRATION.md`](DATABASE-MIGRATION.md) §5.4 | M |
@@ -51,7 +50,7 @@ Nothing is "in progress" unless someone is actually working on it today.
 | ⬜ | Online events, optional location, offline handling, posters, first-run, chat panel | [`NEXT-PHASE-PLAN.md`](NEXT-PHASE-PLAN.md) §5 |
 | ⬜ | The paid public API, webhooks, test mode, `pii_mode` | [`NEXT-PHASE-PLAN.md`](NEXT-PHASE-PLAN.md) Parts A |
 | ⬜ | Phases 4–7: domain events, recurrence, media, real analytics, enterprise SSO | [`API-FIRST-REBUILD.md`](API-FIRST-REBUILD.md) phase map |
-| 🟡 | Python / pydantic-ai / AG-UI — week 0 done, week 1 next | [`learning/STATUS.md`](learning/STATUS.md) |
+| ⬜ | The AI chat panel — `services/ai-chat` (pydantic-ai) + an AG-UI client in the web app | [`NEXT-PHASE-PLAN.md`](NEXT-PHASE-PLAN.md) §5.7 |
 
 Legend: 🔴 confirmed bug · 🟡 in progress · ⬜ not started · S ≤ ½ day · M 1–3 days · L a week+
 
@@ -69,9 +68,6 @@ Legend: 🔴 confirmed bug · 🟡 in progress · ⬜ not started · S ≤ ½ da
 | [`NEXT-PHASE-PLAN.md`](NEXT-PHASE-PLAN.md) | Public API, data ownership, product backlog. D31–D38 | Plan, nothing built |
 | [`NEXT-UI-LIST.md`](NEXT-UI-LIST.md) | The open UI backlog | Plan |
 | [`LIVE-UPDATES.md`](LIVE-UPDATES.md) | Why a check-in doesn't reach other screens. D27–D30 | Plan |
-| [`PYTHON-LEARNING-PLAN.md`](PYTHON-LEARNING-PLAN.md) | The `core-v2` learning project | Plan, in progress |
-| [`LEARNING-WORKFLOW.md`](LEARNING-WORKFLOW.md) | How that project is run week to week | Reference |
-| [`learning/`](learning/) | Per-week task files · [`STATUS.md`](learning/STATUS.md) is the live one | Reference |
 
 ### Partly historical — read with the header
 
@@ -94,8 +90,9 @@ Legend: 🔴 confirmed bug · 🟡 in progress · ⬜ not started · S ≤ ½ da
 | `MULTI-TENANCY.md` | A patch plan for the pre-rewrite system. Every phase done; it described deleted files. |
 | `MVP-READINESS.md` | Its sole P0 was the tenancy work above. |
 | `.claude/commands/rebuild-api.md` | The brief that produced `API-FIRST-REBUILD.md`. Running it again would plan a rebuild that has happened. Deleted 2026-11-06. |
+| `PYTHON-LEARNING-PLAN.md`, `LEARNING-WORKFLOW.md`, `learning/` | The eight-week Python curriculum, and the `/api/v2/core` port it was built around. Scope cut: the AI feature is being built as `services/ai-chat` on its own terms, not as a teaching vehicle. `services/core-v2`, `credopass_v2_dev` and `docker/initdb/` went with them. Deleted 2026-11-06. |
 
-All four are in git history if the reasoning is ever wanted.
+All of them are in git history if the reasoning is ever wanted.
 
 ---
 
@@ -106,7 +103,7 @@ Scoped to their own directory and maintained with it — not plans, and not list
 [ui](../packages/ui/README.md) · [ui-mobile](../packages/ui-mobile/README.md) ·
 [web](../apps/web/README.md) · [mobile](../apps/mobile/README.md) ·
 [website](../apps/website/README.md) · [core](../services/core/README.md) ·
-[core-v2](../services/core-v2/README.md) · [docker](../docker/README.md) ·
+[docker](../docker/README.md) ·
 [workflows](../.github/workflows/README.md)
 
 ---

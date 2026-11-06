@@ -3,9 +3,15 @@ import { useEffect, useCallback, useRef } from 'react';
 import CommandPalette from '../containers/Command/index';
 import { useNavigate } from '@tanstack/react-router';
 import { useLauncher } from '@credopass/lib/stores';
+import { CHORD_TIMEOUT_MS, LEADER_KEY, SHORTCUTS, isTypingContext } from './shortcuts';
 
-
-
+/**
+ * ⌘K opens the palette; `g`-chords navigate. Nothing else is bound globally.
+ *
+ * See `./shortcuts.ts` for why — in short, the previous version bound seven
+ * `Mod+` letters with no focus guard, which broke paste, select-all, new tab,
+ * new window and print across the whole app.
+ */
 export const useCommandPallete = () => {
     const { openLauncher, closeLauncher } = useLauncher();
     const navigate = useNavigate();
@@ -24,47 +30,49 @@ export const useCommandPallete = () => {
     shortcutsRef.current = { openCommandPalette, navigate };
 
     useEffect(() => {
+        // Whether `g` was the last key pressed, and when. The chord is held in a
+        // closure rather than state: it changes on every keystroke and nothing
+        // renders from it.
+        let leaderArmedAt = 0;
+
         const down = (e: KeyboardEvent) => {
             const { openCommandPalette, navigate } = shortcutsRef.current;
 
-            if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
+            // ⌘K is the one modifier binding that survives. It is expected
+            // everywhere, including from inside a text field, so it is checked
+            // before the typing guard.
+            if (e.key.toLowerCase() === 'k' && (e.metaKey || e.ctrlKey) && !e.altKey) {
                 e.preventDefault();
+                leaderArmedAt = 0;
                 openCommandPalette();
                 return;
             }
 
-            if (e.metaKey || e.ctrlKey) {
-                switch (e.key) {
-                    case 'e':
-                        e.preventDefault();
-                        navigate({ to: '/events/new' });
-                        break;
-                    case 'n':
-                        e.preventDefault();
-                        navigate({ to: '/attendees/new' });
-                        break;
-                    case 'm':
-                        e.preventDefault();
-                        navigate({ to: '/attendees' });
-                        break;
-                    case 'v':
-                        e.preventDefault();
-                        navigate({ to: '/events' });
-                        break;
-                    case 'a':
-                        e.preventDefault();
-                        navigate({ to: '/analytics' });
-                        break;
-                    case 't':
-                        e.preventDefault();
-                        navigate({ to: '/account', search: { tab: 'organizations' } });
-                        break;
-                    case 'p':
-                        e.preventDefault();
-                        navigate({ to: '/profile' });
-                        break;
-                }
+            // Hands off anything the browser or the OS owns. Navigation does not
+            // use modifiers any more, so a modifier here is never ours.
+            if (e.metaKey || e.ctrlKey || e.altKey) {
+                leaderArmedAt = 0;
+                return;
             }
+
+            if (isTypingContext(e.target)) {
+                leaderArmedAt = 0;
+                return;
+            }
+
+            const key = e.key.toLowerCase();
+
+            if (leaderArmedAt && Date.now() - leaderArmedAt <= CHORD_TIMEOUT_MS) {
+                leaderArmedAt = 0;
+                const match = SHORTCUTS.find((shortcut) => shortcut.key === key);
+                if (match) {
+                    e.preventDefault();
+                    navigate({ to: match.target.to, search: match.target.search });
+                }
+                return;
+            }
+
+            leaderArmedAt = key === LEADER_KEY ? Date.now() : 0;
         };
 
         document.addEventListener('keydown', down);
@@ -75,4 +83,3 @@ export const useCommandPallete = () => {
         openCommandPalette
     }
 }
-

@@ -1,11 +1,11 @@
 {
     "tailwindCSS.experimental.configFile": "packages/ui/src/styles/globals.css",
 
-    // services/core-v2 is a Python service with its own uv-managed venv.
+    // services/ai-chat is a Python service with its own uv-managed venv.
     // The workspace root is the monorepo, so Pylance needs pointing at it
     // explicitly or `import fastapi` resolves against system Python.
-    "python.defaultInterpreterPath": "${workspaceFolder}/services/core-v2/.venv/bin/python",
+    "python.defaultInterpreterPath": "${workspaceFolder}/services/ai-chat/.venv/bin/python",
     "python.analysis.extraPaths": [
-        "${workspaceFolder}/services/core-v2/src"
+        "${workspaceFolder}/services/ai-chat/src"
     ]
 }

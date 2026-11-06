@@ -16,8 +16,7 @@
 > Companions: [`API-FIRST-REBUILD.md`](API-FIRST-REBUILD.md) (the architecture and the phase map) ·
 > [`REBUILD-LOG.md`](REBUILD-LOG.md) (what actually happened — **wins over any plan**) ·
 > [`NEXT-UI-LIST.md`](NEXT-UI-LIST.md) (the existing UI backlog) ·
-> [`LIVE-UPDATES.md`](LIVE-UPDATES.md) (polling → SSE; §2.4 below shares its machinery) ·
-> [`PYTHON-LEARNING-PLAN.md`](PYTHON-LEARNING-PLAN.md) (§5.9's chat UI is that plan's front end).
+> [`LIVE-UPDATES.md`](LIVE-UPDATES.md) (polling → SSE; §2.4 below shares its machinery).
 
 ---
 
@@ -311,7 +310,13 @@ through a door.
 
 Sizes: **S** ≤ half a day · **M** 1–3 days · **L** a week or more. Verified-against-code items say so.
 
-## 5.1 B1 · Keyboard shortcuts hijack typing anywhere in the app · S — **CONFIRMED, SEVERE**
+## 5.1 B1 · Keyboard shortcuts hijack typing anywhere in the app · S — ✅ **SHIPPED 2026-11-06**
+
+> Fixed as written, all three parts, plus the B8b cheat sheet. `apps/web/src/hooks/shortcuts.ts` is
+> the single registry; navigation moved to `g` chords; the nine duplicate `useHotkey('Mod+…')` calls
+> in the palette are gone. The diagnosis below is kept because it is the record of what was wrong.
+> See [`REBUILD-LOG.md`](REBUILD-LOG.md).
+
 
 The reported symptom was "an analytics shortcut triggered while I was typing". The cause is worse
 than that.
@@ -449,9 +454,14 @@ belongs, not on a new screen.
 
 ## 5.7 B7 · The chat panel (AG-UI) · L — groundwork now, backend later
 
-This is the front end of [`PYTHON-LEARNING-PLAN.md`](PYTHON-LEARNING-PLAN.md) §3's "Organizer
-Copilot" (`services/core-v2`, pydantic-ai, `StateDeps[CopilotState]`). Do not design a second agent
-here; that plan owns the agent.
+This is the front end of the agent in `services/ai-chat` — a separate Python service (pydantic-ai),
+which holds no database of its own: every read and write goes through the existing v1 TypeScript API
+carrying the caller's own token. That service owns the agent; do not design a second one here.
+
+**Supersedes the learning project.** This used to point at `PYTHON-LEARNING-PLAN.md` and
+`services/core-v2`. Both were deleted on 2026-11-06 — the eight-week Python curriculum and the
+`/api/v2/core` port it was built around are not happening, and `credopass_v2_dev` went with them.
+`services/ai-chat` is the AI feature on its own terms, not a teaching vehicle.
 
 What can land in the web app before any Python exists:
 
@@ -460,8 +470,8 @@ What can land in the web app before any Python exists:
   tool-call start/args/result, state patches, the approval interrupt). This is the bulk of the work
   and it is entirely independent of what produces the stream.
 - A mock stream fixture so the UI is buildable and testable with no backend.
-- The approval UI for destructive tools, which §3 of that plan requires and which is the most
-  interesting part to get right.
+- The approval UI for destructive tools — the most interesting part to get right, and a hard
+  requirement before any tool can write.
 
 **On "free models that work in-browser" — an honest read.** WebLLM and `transformers.js` can run 1–3B
 models via WebGPU, but: a 1–2 GB download before first token, no reliable tool-calling at that size,
@@ -475,7 +485,7 @@ behave.
 | | Item | Size | Note |
 |---|---|---|---|
 | B8a | "About" link to the marketing story | S | `apps/website` already has `/how-it-works`. Link it; do not rebuild it. |
-| B8b | Shortcuts cheat-sheet in ⌘K | S | Do it with B1, once the bindings are final. |
+| B8b | Shortcuts cheat-sheet in ⌘K | S | ✅ Shipped with B1 — the palette renders it from `hooks/shortcuts.ts`. |
 
 ---
 

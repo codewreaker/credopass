@@ -817,6 +817,102 @@ this took a browser session to find instead of being legible from the response b
 
 ---
 
+## B1 — paste was broken in every input in the product (2026-11-06)
+
+### What was wrong
+
+`apps/web/src/hooks/index.tsx` bound a document-level `keydown` listener that, under
+`metaKey || ctrlKey`, called `preventDefault()` and navigated for **e, n, m, v, a, t, p** — with no
+check for where focus was. So in a form-heavy app:
+
+| Pressed | Expected | Got |
+|---|---|---|
+| ⌘V | paste | navigate to `/events` |
+| ⌘A | select all | navigate to `/analytics` |
+| ⌘N / ⌘T / ⌘P | new window / new tab / print | navigate |
+
+The symptom that got reported was the mild one — "an analytics shortcut triggered while I was
+typing". The real defect was that **paste did not work anywhere in the product**.
+
+There were also *two* shortcut systems: the listener above, and nine `useHotkey('Mod+…')`
+registrations inside `containers/Command/index.tsx`. They disagreed (⌘P went to `/profile` in one
+and `/account` in the other), and which one won depended on whether the palette was mounted.
+
+### What was built
+
+**`apps/web/src/hooks/shortcuts.ts` — one registry.** Eight bindings, each with its key, its
+on-screen label and its route target. The palette renders its cheat sheet by mapping over this
+array, so a binding and its documentation cannot drift.
+
+**Navigation moved to `g` chords.** `g e` events · `g m` attendees · `g a` analytics · `g c` create
+event · `g n` add attendee · `g p` profile · `g o` organizations · `g s` organization settings.
+⌘K still opens the palette and is the only modifier binding left.
+
+> **D39 · Navigation shortcuts never use a modifier.** ⌘V, ⌘A, ⌘T, ⌘N and ⌘P are native shortcuts
+> people rely on; overriding them is wrong even outside a text field, so a focus guard alone would
+> not have been enough. `g` chords are what Linear, GitHub and Gmail use, and they cannot collide
+> with anything native. ⌘K is the exception because it shadows nothing anyone depends on and is the
+> one shortcut every user of this kind of app already expects.
+
+**A focus guard, which the old handler had none of** — `isTypingContext()` ignores keystrokes from
+`input`, `textarea`, `select`, `[contenteditable]` and `role="textbox|searchbox|combobox"`, walking
+up from the target so a contenteditable's descendants count too.
+
+An **open dialog also counts as typing**, even when focus is not in a field. A modal is a committed
+context, and pulling someone out of a half-filled form because they typed `g` would be the same bug
+wearing a different coat. Base UI unmounts closed dialogs, so `[role="dialog"]` being present means
+one is genuinely open.
+
+The chord leader stays armed for **1500 ms** — long enough to type deliberately, short enough that a
+stray `g` cannot swallow a keystroke a minute later. Any modifier, or any guard hit, disarms it.
+
+**The duplicate system is gone.** All nine `useHotkey` calls were deleted from the palette; it binds
+nothing now. `@tanstack/react-hotkeys` is left in `package.json` — nothing else imports it, so it is
+a dependency to drop, not a behaviour to change.
+
+### Two palette entries fixed while in there
+
+- **"Check-In" navigated to `/events`.** The kiosk route is `/checkin/$eventId` and the palette has
+  no event in hand, so the entry was a second, mislabelled route to the events list. Removed rather
+  than relabelled.
+- **"Settings" was a no-op** (`// Settings behavior not implemented yet`). It now opens
+  `/account?tab=settings`, which exists. "Profile" and "Organizations" likewise carry their `tab`
+  rather than dropping the user on whichever tab `/account` defaults to.
+
+### Verified
+
+`nx run web:build` and `nx run web:lint` both pass — the one remaining lint warning is a
+pre-existing unused-disable in the generated `routeTree.gen.ts`.
+
+**Not verified in a browser.** The chord behaviour, the typing guard and the dialog guard have not
+been exercised against a running app; this was a static change confirmed by build and lint only.
+
+---
+
+## The Python learning project is deleted (2026-11-06)
+
+`docs/PYTHON-LEARNING-PLAN.md`, `docs/LEARNING-WORKFLOW.md`, `docs/learning/` (nine week files),
+`services/core-v2/` and `docker/initdb/` are gone.
+
+> **D40 · The AI feature is a service, not a curriculum.** The eight-week plan existed to learn
+> Python by porting `/api/v1/core` to `/api/v2/core`. The port is not happening, and the teaching
+> frame was making the AI feature answer to a syllabus instead of to the product.
+> **`services/ai-chat` replaces it** — a separate Python service for the AI feature, holding no
+> database of its own: every read and write goes through the existing v1 TypeScript API carrying the
+> caller's own token.
+
+What went with it: the `credopass_v2_dev` database and the `initdb` mount in
+`docker/docker-compose.dev.yml` that created it, and the `core-v2` row in `docs/README.md` §4.
+`.vscode/settings.json` now points Pylance at `services/ai-chat/.venv` instead.
+`NEXT-PHASE-PLAN.md` §5.7 (the chat panel) was rewritten to name `services/ai-chat` — its AG-UI
+client, mock-stream fixture and approval UI are all still the plan; only the backend's name and
+provenance changed.
+
+`services/ai-chat` is early: `src/app/settings.py` and nothing else committed. It refers to an
+`AI-SIDEBAR-PLAN.md` §1 that does not exist in `docs/` yet.
+
+---
+
 ## Conventions worth knowing
 
 1. Every route is created with `defineRoute` and declares `scope` (+ `permission` if org-scoped).
