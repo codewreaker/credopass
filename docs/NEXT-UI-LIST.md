@@ -77,6 +77,55 @@ Check in this order:
 5. **Old QR format.** Anything generated before the rebuild is `{eventId}:{userId}` and will never
    verify. Regenerate passes after `db reset`.
 
+### U5 🔴 Every pass link is dead in production · S — **CONFIRMED 2026-11-06**
+
+Found by walking the add-attendee flow against the deployed API. A pass URL handed to an organiser
+reads:
+
+```
+http://api.credopass.com/p/CP1.…
+```
+
+Two faults in one string, and either alone breaks it:
+
+| | |
+|---|---|
+| **Wrong host** | `/p/$token` is a **web app** route. `api.credopass.com` does not serve it. |
+| **Wrong scheme** | `http://`, not `https://`. |
+
+Measured:
+
+| URL | Result |
+|---|---|
+| as printed | 302 → **404** |
+| `https://api.credopass.com/p/…` | **404** |
+| `https://app.credopass.com/p/…` | **200** |
+
+So the pass — the single artefact this product exists to hand an attendee, and the only copy of it,
+since nothing is emailed (D18) — resolves to a 404 for every organiser using the live product.
+
+**Root cause, one line.** `services/core/src/api/v1/core/attendance.ts:109` and
+`services/core/src/api/v1/core/public.ts:112` both build the link with:
+
+```ts
+origin: originOf(c.req.url)   //  → the origin of the INCOMING API request
+```
+
+`services/core/src/services/pass.ts:141` then does `${origin}/p/${token}`. The origin of a request
+to the API is the API's own host, which is the wrong host; and the service sits behind a TLS
+terminator, so `c.req.url` is plain `http` — there is **no `X-Forwarded-Proto` handling anywhere in
+the service**, which is the other half.
+
+**Fix:** a configured public app origin — an env var such as `PUBLIC_APP_URL=https://app.credopass.com`
+— read once at boot and used for every user-facing link, instead of inferring an origin from the
+request. Inferring it can never be right: the API host is by definition not the app host. Those are
+the only two `originOf` callers, so the change is contained.
+
+Needs a deploy-config change (the variable must be set in Coolify) as well as the code change.
+
+Invitation links are **not** affected — the client builds `/invitations/$token` against its own
+origin.
+
 ### U3 ⬜ Audit every screen in a browser · M
 
 A pass over all 19 routes against a live API. **Nothing below has been run in a browser** except the
