@@ -2,18 +2,39 @@
    APP SHELL - Layout, Header, Content Area
    ================================================================ */
 
+/*
+ * THE DOCUMENT SCROLLS, NOT A BOX INSIDE IT (UI-REDESIGN R1).
+ *
+ * This shell used to be a fixed-height frame — `height: 100svh` plus
+ * `overflow: hidden` at three levels — with an internal scroller
+ * (`.page-content`). On a desktop browser that is invisible. On a phone it
+ * costs four things, none of them cosmetic:
+ *
+ *   1. The browser chrome never collapses. Safari and Chrome hide the address
+ *      bar when the DOCUMENT scrolls; a div scrolling inside a frozen document
+ *      is not that, so roughly a tenth of the screen is spent permanently on
+ *      browser furniture.
+ *   2. No pull-to-refresh — it is a gesture on the document.
+ *   3. iOS keyboard avoidance works on the document. Inside a clipped frame a
+ *      focused input can end up under the keyboard with nothing able to scroll
+ *      it back.
+ *   4. Scroll restoration breaks. The router restores document scroll, so
+ *      going back landed you at the top of a list you had scrolled.
+ *
+ * So: `min-height`, not `height`, and no `overflow: hidden` anywhere in the
+ * chain. The sidebar is `position: fixed` already (packages/ui), and the header
+ * is sticky below, so both stay put while the page moves under them.
+ */
 .app-container {
-  height: 100svh;
+  min-height: 100svh;
   display: flex;
   flex-direction: column;
   background-color: var(--background);
-  overflow: hidden;
 }
 
 .app-layout {
   display: flex;
   flex: 1;
-  overflow: hidden;
 }
 
 .main-content {
@@ -21,8 +42,6 @@
   display: flex;
   flex-direction: column;
   background-color: var(--background);
-  overflow: hidden;
-  min-height: 0;
 }
 
 /* Header bar with glass effect */
@@ -30,6 +49,10 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  /* Sticky, because the document is what scrolls now. The blur was already
+     here for the glass effect; it only ever made sense over moving content. */
+  position: sticky;
+  top: 0;
   height: 3.5rem;
   padding: 0 1rem;
   gap: 0.5rem;
@@ -41,12 +64,12 @@
   flex-shrink: 0;
 }
 
-/* Main content area -- Luma-like generous padding */
+/* Main content area -- Luma-like generous padding.
+   `flex: 1` so a short page still fills the viewport; no `overflow`, so the
+   document does the scrolling (R1). */
 .page-content {
   padding: 1.5rem 1.75rem;
   flex: 1;
-  overflow-y: auto;
-  min-height: 0;
 }
 
 /* Page header component */

@@ -6,7 +6,8 @@
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
-  height: 100%;
+  /* R1: the page flows, it does not fill a frozen box. */
+  min-height: 100%;
   max-width: 48rem;
   margin: 0 auto;
   padding: 0 1rem;
@@ -17,6 +18,9 @@
   align-items: center;
   justify-content: center;
   text-align: center;
+  /* An explicit height, now that the parent no longer supplies one (R1).
+     Without it `justify-content: center` has nothing to centre within. */
+  min-height: 60svh;
 }
 
 .loading-content,

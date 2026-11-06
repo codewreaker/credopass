@@ -431,9 +431,16 @@ const EventsPage = () => {
             <div className="events-content">
                 {actionsEnabled && <ActionCards />}
                 <Separator className={'my-4 bg-linear-to-r from-transparent via-muted to-transparent'} />
-                <div className={`flex gap-4 md:h-[calc(100vh-274px)] ${actionsEnabled ? 'h-[calc(100vh-400px)]' : 'h-[calc(100vh-350px)]'}`}>
-                    <div className='w-full md:w-2/3 md:border-r md:pr-4 min-h-0'>
-                        <div className='h-full overflow-auto flex flex-col gap-4'>
+                {/* No fixed height and no inner scroller (UI-REDESIGN R1).
+                    This was `h-[calc(100vh-350px)]` — three hardcoded offsets
+                    that had to be kept in step with the header, the action
+                    cards and the separator, and were wrong the moment any of
+                    them changed. The list now runs down the page and the
+                    document scrolls. The calendar is sticky so it stays in
+                    view beside a long list on desktop. */}
+                <div className="flex gap-4 items-start">
+                    <div className='w-full md:w-2/3 md:border-r md:pr-4'>
+                        <div className='flex flex-col gap-4'>
                             <HeroSpotlight
                                 nextEvent={summary?.next ?? null}
                                 stats={heroStats}
@@ -466,7 +473,7 @@ const EventsPage = () => {
                         </div>
                     </div>
                     {!isMobile && (
-                        <div className='w-1/3'>
+                        <div className='w-1/3 sticky top-20'>
                             <EventCalendar
                                 events={calendarEvents}
                                 month={calendarMonth}

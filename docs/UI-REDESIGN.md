@@ -45,7 +45,7 @@
 These are not per-screen nits. Each one affects every screen, and each one is a decision to make
 before any cosmetic work is worth doing.
 
-### R1 · The app scrolls an inner container, not the document — **fix first**
+### R1 · The app scrolls an inner container, not the document — **implemented 2026-11-06, not yet verified on screen**
 
 Measured on `/events/$eventId`:
 
@@ -491,3 +491,53 @@ saving. The `Attendee updated` toast came from the name change in the same submi
 Driven properly — tap the row, type, `Done`, `Save changes` — the email persists through a reload.
 Verified 2026-11-06. The server was never at fault: `updatePerson` in
 `services/core/src/services/people.ts` handles `email` like every other field.
+
+---
+
+## 6. R1 as built (2026-11-06)
+
+The shell no longer clips to the viewport. `height: 100svh` became `min-height`, the three
+`overflow: hidden` rules in `.app-container` / `.app-layout` / `.main-content` are gone, and
+`.page-content` lost `overflow-y: auto`. The header is `position: sticky; top: 0`; the sidebar was
+already `position: fixed` in `packages/ui`, so it needed nothing.
+
+**The design system was not changed.** `SidebarProvider`'s wrapper is `h-svh … overflow-hidden`,
+which would have re-imposed the frame. `cn` is tailwind-merge and the app is the component's only
+consumer, so `className="h-auto min-h-svh overflow-visible"` at the call site overrides it. A
+sidebar shell that clips to the viewport is a reasonable default for the component; it is this
+app's shell that should not.
+
+**Two pages had built their own frames on top of it**, and this is the part the original finding
+understated:
+
+- **`/events`** wrapped the list in `h-[calc(100vh-400px)]` / `h-[calc(100vh-350px)]` /
+  `md:h-[calc(100vh-274px)]` — three hardcoded offsets that had to track the header, the action
+  cards and a separator, and were wrong the moment any of them moved — with `h-full overflow-auto`
+  inside. All removed. The calendar beside the list is `sticky top-20` so it still follows on
+  desktop.
+- **`/attendees`** pinned its header, billboard and scope dropdown in a `shrink-0` block and
+  scrolled the list inside `min-h-0 flex-1 overflow-auto`. On a 375px screen that is R3 and R4 in
+  one: a third of the screen permanently spent on a billboard you could not scroll away. Now one
+  flow.
+
+Percentage heights that resolved against the old frame were re-anchored rather than deleted:
+`.events-page` and `.event-detail-page` take `min-height: 100%`, and the centred states
+(`.event-detail-page.loading-state`, `.not-found`, the kiosk's `.loading-state`, the attendees
+loading and empty states) take an explicit `min-height` so `justify-content: center` still has
+something to centre within.
+
+**What is verified:** `web:build` and `web:lint` pass; no `calc(100vh…)` offsets remain outside the
+right sidebar's own panel.
+
+**What is not:** nothing has been looked at on screen. The shell only renders on authenticated
+routes — every unauthenticated route is in `STANDALONE_ROUTES` and bypasses it — and the local
+session's refresh token expired mid-change (a 400 from Supabase), so the app redirects to
+`/login`. Sign in once at `localhost:5001` and these are the checks:
+
+1. `document.documentElement.scrollHeight > clientHeight` on `/events` — the measurement that
+   defined this finding. It read 812/812 before.
+2. No element left with `overflow-y: auto|scroll` and overflowing content, apart from the right
+   sidebar panel.
+3. The header stays put while the page moves under it, and the desktop sidebar does not scroll away.
+4. `/events` and `/attendees` scroll as one page, and the events calendar follows on desktop.
+5. Going back to a scrolled list restores the position.

@@ -226,7 +226,7 @@ const CheckInPage: React.FC = () => {
 
   if (!event) {
     return (
-      <div className="checkin-page flex h-full flex-col items-center justify-center p-6">
+      <div className="checkin-page flex min-h-[60svh] flex-col items-center justify-center p-6">
         <EmptyState
           error
           icon={<QrCodeIcon className="size-16 text-primary" />}
@@ -246,7 +246,7 @@ const CheckInPage: React.FC = () => {
   // the organiser at the attendance summary instead (B4 / §3.5).
   if (ev.status === 'completed' || ev.status === 'cancelled') {
     return (
-      <div className="checkin-page flex h-full flex-col items-center justify-center p-6">
+      <div className="checkin-page flex min-h-[60svh] flex-col items-center justify-center p-6">
         <EmptyState
           icon={<CalendarCheck className="size-16 text-primary" />}
           title={ev.status === 'cancelled' ? 'This event was cancelled' : 'This event has ended'}

@@ -96,6 +96,13 @@ const MainSidebar: React.FC<SidebarProps> = ({
     return (
         <SidebarProvider
             defaultOpen={isOpen}
+            // The design-system wrapper is `h-svh … overflow-hidden`, which
+            // freezes the document and forces an inner scroller (UI-REDESIGN
+            // R1). Overridden here rather than in `packages/ui`: a sidebar
+            // shell that clips to the viewport is a reasonable default for the
+            // component, and this app is its only consumer. `cn` is
+            // tailwind-merge, so these win over the defaults.
+            className="h-auto min-h-svh overflow-visible"
             style={{
                 // @ts-expect-error: Allow custom CSS variables
                 "--sidebar-width": "13.5rem"

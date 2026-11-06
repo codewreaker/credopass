@@ -6,7 +6,8 @@
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
-  height: 100%;
+  /* R1: the page flows, it does not fill a frozen box. */
+  min-height: 100%;
 }
 
 /* ---- Header ---- */

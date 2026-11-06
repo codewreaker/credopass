@@ -14,7 +14,8 @@
 
 /* Loading state */
 .loading-state {
-  height: 100%;
+  /* R1: `height: 100%` against an auto-height parent resolves to nothing. */
+  min-height: 60svh;
   display: flex;
   flex-direction: column;
   align-items: center;
