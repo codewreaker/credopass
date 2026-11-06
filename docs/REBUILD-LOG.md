@@ -975,7 +975,15 @@ screenshot.
 
 The fixtures were renamed out of `ZZ TEST` and into `Sunday Morning Service`, `Ama Mensah` and
 `Kwame Boateng`, because the screenshots are published on the marketing site and a page of test
-data reads as an unfinished product. Renaming them turned up U7.
+data reads as an unfinished product.
+
+Renaming them appeared to turn up a bug — an attendee's email reporting `Attendee updated` and not
+changing — which was filed as U7 and then **retracted**. The contact rows on that composer are
+buttons that open a one-field sheet, so the test had typed into the sheet and then dismissed it.
+The email saves correctly. Recorded here because the shape of the error is worth remembering: a
+control that looks like a text field and is a button will fool a test harness the same way it
+fools a person, and the only safe check is to read the accessibility tree rather than click where
+the value appears to be.
 
 ---
 

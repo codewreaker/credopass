@@ -163,22 +163,6 @@ credential, so three options, in order of preference:
 Until one of those lands, `Invite` creates something that only works if you copy the link in the
 same breath — which is not stated anywhere.
 
-### U7 🔴 Editing an attendee's email reports success and changes nothing · S — **CONFIRMED 2026-11-06**
-
-On `/attendees/$personId/edit`, change the email, press `Save changes`. The app shows
-`Attendee updated`, returns to the list, and the old address is still there — after a full reload,
-so it is not a cache.
-
-The name saves fine on the same form, in the same request. Only the email is dropped.
-
-Most likely cause: the address lives on the **identity** row, not the person row (`CLAUDE.md`
-gotchas — "`accounts.email` is a MIRROR of what the provider asserted … the address always lands on
-the identity row"), so the update has nowhere valid to go and is being ignored silently.
-
-Whatever the cause, the UI claiming success for a write that did not happen is the defect. Either
-persist it, or make the field read-only and say why — the same way the profile tab already says
-`Read-only for now — editing your profile isn't built yet`.
-
 ### U3 ⬜ Audit every screen in a browser · M
 
 A pass over all 19 routes against a live API. **Nothing below has been run in a browser** except the

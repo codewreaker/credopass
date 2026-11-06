@@ -467,12 +467,24 @@ The "add attendee" two-second gap with a stale sheet (§3.13), the greeting that
 product and it is one decision, not three fixes: **a screen must never render a value it does not
 have.**
 
-### 3.21 Two more defects found while preparing the screenshots
+### 3.21 Found while preparing the screenshots
 
-- **Editing an attendee's email reports success and changes nothing** (filed as
-  `NEXT-UI-LIST.md` U7). The name saves in the same request; only the email is dropped, and the
-  toast says `Attendee updated` either way.
 - **The command palette offers `Sign In` while you are signed in.** It sits in `QUICK ACTIONS`
   above `New Event` and `Add Attendee`.
 - **A person's email is masked in the detail sheet (`••••••com`, `TAP TO COPY`) and shown in full
   in the list behind it.** One of the two is wrong; the list is the one more people see.
+- **Tapping outside the contact-field sheet discards what you typed, silently.** The `EMAIL`,
+  `PHONE` and `NOTES` rows on the attendee composer are buttons that open a one-field bottom sheet
+  with a `Done` button. Dismissing it any other way throws the value away with no warning, and the
+  row behind it still reads as if nothing happened. Standard sheet behaviour, but this sheet holds
+  a value the user has just typed rather than a selection they can redo at a glance.
+
+**A retraction.** An earlier version of this section, and `NEXT-UI-LIST.md` U7, claimed that
+editing an attendee's email reported success and changed nothing. That was wrong, and the mistake
+was in how it was tested, not in the product: the contact rows are buttons, so clicking one opened
+the sheet, the typed text went into the sheet, and the next click dismissed the sheet rather than
+saving. The `Attendee updated` toast came from the name change in the same submit.
+
+Driven properly — tap the row, type, `Done`, `Save changes` — the email persists through a reload.
+Verified 2026-11-06. The server was never at fault: `updatePerson` in
+`services/core/src/services/people.ts` handles `email` like every other field.
