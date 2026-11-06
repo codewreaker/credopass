@@ -137,6 +137,31 @@ is a client-settable header, and the app's origin is deployment knowledge, not r
 deploy, or the service will not start. Passes already issued stay dead — their URL was stored
 nowhere, only printed, so there is nothing to backfill.
 
+### U6 🔴 A pending invitation's link cannot be recovered · S — **CONFIRMED 2026-11-06**
+
+`/account?tab=members` tells you, correctly:
+
+> CredoPass does not send email yet — copy each link and pass it on yourself.
+
+Every invitation already in the list then says **`link not shown`**. Two are in that state in
+production today.
+
+So the screen instructs you to do the one thing it will not let you do, and an invitation you
+created yesterday can never be delivered. Same shape as U5: a link that exists in principle and is
+unreachable in practice, in a product that has no email to fall back on (D18).
+
+The token is in the row; the question is whether showing it again is acceptable. It is a bearer
+credential, so three options, in order of preference:
+
+1. **Regenerate** — a `Regenerate link` action that rotates the token and shows the new one once.
+   Keeps the "shown once" property and fixes the dead end.
+2. **Show it** — simplest, and consistent with the pass, which is also a bearer URL shown on screen.
+3. **Say so** — if neither, the row must say *"this link can no longer be shown — delete and
+   re-invite"* rather than `link not shown`, which reads like a loading state.
+
+Until one of those lands, `Invite` creates something that only works if you copy the link in the
+same breath — which is not stated anywhere.
+
 ### U3 ⬜ Audit every screen in a browser · M
 
 A pass over all 19 routes against a live API. **Nothing below has been run in a browser** except the

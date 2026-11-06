@@ -2,6 +2,7 @@ import { useSyncExternalStore } from 'react';
 import { ThemeProvider } from '@credopass/lib/theme';
 import { Home } from './pages/Home';
 import { HowItWorks } from './pages/HowItWorks';
+import { HowTo } from './pages/how-to/HowTo';
 
 /**
  * Dependency-free path router. The marketing site is a handful of pages, so we
@@ -56,7 +57,13 @@ export default function App() {
 
   return (
     <ThemeProvider defaultTheme="dark">
-      {pathname === '/how-it-works' ? <HowItWorks /> : <Home />}
+      {pathname === '/how-it-works' ? (
+        <HowItWorks />
+      ) : pathname === '/how-to' ? (
+        <HowTo />
+      ) : (
+        <Home />
+      )}
     </ThemeProvider>
   );
 }

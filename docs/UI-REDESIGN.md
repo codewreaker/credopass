@@ -21,20 +21,20 @@
 | 2 | `/events` (Past) | ✅ | §3.3 |
 | 3 | `/events/$eventId` | ✅ | §3.4, §3.8 — walked both completed and ongoing |
 | 4 | `/events/new` | ✅ | §3.7 |
-| 5 | `/events/$eventId/edit` | ⬜ | |
-| 6 | `/attendees` | ⬜ | |
-| 7 | `/attendees/new` | ⬜ | |
-| 8 | `/attendees/$userId/edit` | ⬜ | |
+| 5 | `/events/$eventId/edit` | ✅ | §3.12 |
+| 6 | `/attendees` | ✅ | §3.13 |
+| 7 | `/attendees/new` | ✅ | §3.14 |
+| 8 | `/attendees/$userId/edit` | ✅ | §3.13 |
 | 9 | `/checkin/$eventId` | ✅ | §3.11 |
-| 10 | `/e/$eventId` | ⬜ | public event page |
+| 10 | `/e/$eventId` | ✅ | §3.15 — walked both ended and scheduled |
 | 11 | `/p/$token` | ✅ | §3.10 |
-| 12 | `/analytics` | ⬜ | currently an empty state (U1) |
-| 13 | `/account?tab=profile` | ⬜ | |
+| 12 | `/analytics` | ✅ | §3.16 — **not** an empty state; see the correction |
+| 13 | `/account?tab=profile` | ✅ | §3.17 |
 | 14 | `/account?tab=organizations` | ✅ | §3.5 |
-| 15 | `/account?tab=members` | ⬜ | |
-| 16 | `/account?tab=settings` | ⬜ | |
-| 17 | `/upgrade` | ⬜ | |
-| 18 | `/upgrade/checkout` | ⬜ | |
+| 15 | `/account?tab=members` | ✅ | §3.18 |
+| 16 | `/account?tab=settings` | ✅ | §3.19 |
+| 17 | `/upgrade` | ✅ | §3.20 |
+| 18 | `/upgrade/checkout` | ⬜ | not walked — a live billing surface on a real account |
 | 19 | `/invitations/$token` | ⬜ | needs a real token |
 | 20 | `/login` | ✅ | §3.6 |
 
@@ -271,3 +271,198 @@ needs confirming with a real camera, but the next person should start here rathe
 "how do people get their pass" versus "I am taking passes now". They are not peers and should not
 be equal pill tabs. Scanning is the kiosk's job; the event QR is setup, and belongs behind the
 Maximise/share affordance.
+
+### 3.12 `/events/$eventId/edit`
+
+The best-composed screen in the product. The event name is edited **in the lime billboard itself**,
+with an `EDITING` chip where the status chip normally sits, so you are editing the thing you are
+looking at rather than a form that represents it. Start and end are pill buttons that open a
+bottom-sheet calendar; location and description are rows that say `Tap to change`.
+
+Three things worth keeping:
+
+- **Moving the start moves the end with it.** Changing `Fri 6 Nov` to `Fri 13 Nov` carried the end
+  date along, so you cannot accidentally create an event that ends a week before it starts.
+- **A photo slot already exists** — an `Add photo` button over an illustrated placeholder at the
+  top. B5 (generated posters) has somewhere to land; it does not need a new surface.
+- Saving shows an `Event updated` toast and returns to the detail screen.
+
+Problems:
+
+| | |
+|---|---|
+| **The confirm control in the date sheet is an unlabelled circle** | A lime disc with a tick, bottom-right; `Reset` is plain text bottom-left. The destructive-ish action is a word and the committing action is a glyph. Both should be labelled. |
+| **The sheet does not take the screen** | The bottom navigation bar stays visible beneath it. On a phone a modal sheet should own the viewport. |
+| **The toast lands on top of the billboard** | It covers the event name and status on arrival, which is the one thing you look at to confirm the save did what you meant. |
+| **No way to cancel or delete the event from here** | The edit screen is the obvious home for it. (`WHEN IT'S OVER` on the detail screen has the end/cancel actions.) |
+
+### 3.13 `/attendees` and `/attendees/$personId/edit`
+
+The list is strong: a lime stat billboard (`3 PEOPLE · 1 SIGNED UP · 2 ATTENDED`), a scope filter,
+then one card per person with a status chip and an attendance count.
+
+The detail opens as a **right-anchored sheet** covering about 75% of the width, leaving a dead
+strip of list behind it. That is a desktop drawer rendered at phone width. On a phone it should be
+a bottom sheet or a full screen — the leftover strip is not usable and not decorative.
+
+Inside the sheet the content is excellent and worth keeping as-is: `EVENTS ATTENDED 1`,
+`TURN-UP RATE 100%`, `1 of 1 events they signed up for`, and a masked `ATTENDEE ID ••••••929` with
+`TAP TO COPY`.
+
+Two real defects:
+
+1. **Only the chevron opens a person.** Tapping the card — the name, the avatar, the chips — does
+   nothing. The chevron is a ~24px target at the right edge, which is also the hardest place to
+   reach one-handed. The whole card should be the target.
+2. **`Edit attendee` takes about two seconds, with the old sheet still on screen.** The URL changes
+   immediately; the detail sheet stays rendered, unchanged, with no spinner, until the edit screen
+   appears. For two seconds the app looks broken. This is R2 in its most literal form — the UI
+   stating something that is no longer true.
+
+The subtitle is **clipped, not wrapped**: `Everyone who has been to one of your pr…`. Truncating a
+one-line description to save a line of vertical space is a bad trade on a 375px screen, and it
+recurs — three truncated emails on the members tab, a truncated surname in the register form.
+
+### 3.14 `/attendees/new`
+
+Same billboard-as-form idea as the edit screen, and it reads well.
+
+**Three tiles below the contact fields do nothing.** `QR check-in`, `Attendance history` and
+`Event invites` are rendered as bordered, icon-topped buttons with proper tap targets, and tapping
+any of them has no effect. They are presumably meant as a preview of what you get once the person
+exists — but nothing says so, and on a creation screen the natural reading is "these are options
+for the attendee I am adding". Either label them as what-comes-next, or remove them until they do
+something.
+
+The placeholder name in the billboard (`First name / Last name`, with `their@email.com` beneath) is
+grey-on-lime at the largest type size on the screen. It is the lowest-contrast text in the product
+at the biggest size — an unusual combination, and it reads as data rather than as a prompt. Same
+family as R2.
+
+### 3.15 `/e/$eventId` — the public event page
+
+Walked in both states. **Ended:** billboard, time, location, and a single grey row,
+`This event has ended`. Correct and calm. **Scheduled:** the same, plus
+`Here now? Check yourself in`, `Already registered but lost your pass?` and a full-width
+`Register`.
+
+`Already registered but lost your pass?` is the recovery path for exactly the situation U5 created,
+and it is styled in the same muted grey as disabled text, directly under a lime link. It does not
+read as something you can tap.
+
+The register sheet is prefilled with the **signed-in** user's name and email when a session exists.
+That is convenient for an organiser testing their own link, and surprising on a page whose whole
+premise is that it works for people with no account. Worth a decision rather than leaving it
+implicit.
+
+The body copy is the best in the product:
+
+> Let the host know you're coming to "…". We'll show your pass on the next screen — save the link,
+> it's the only copy.
+
+### 3.16 `/analytics` — **a correction to the docs**
+
+`CLAUDE.md` and `docs/README.md` both say this screen "deliberately renders an empty state rather
+than drawing charts from" the fabricated numbers. **It does not.** It renders the entire dashboard
+— average attendance 83%, 15 events, 1,352 people, a 90% attendance goal gauge, arrivals by hour,
+check-in method breakdown — above a banner that reads:
+
+> **These numbers are made up.** This dashboard runs on a placeholder service — a deterministic
+> generator, not your attendance records. It is here so the layout, the contract and the
+> permissions are real before the aggregates are. Don't report anything from this page.
+
+That is a better decision than an empty state, and the warning is well written. But:
+
+| | |
+|---|---|
+| **The warning is only at the top** | Scroll two screens and you are reading confident charts with no reminder. The disclosure should ride with the content — a repeated chip, or a watermark. |
+| **`Arrivals by hour` is blue** | Every other chart in the product is lime. The bars are the only off-palette element seen anywhere in this audit. |
+| **`Export` is offered on fabricated data** | It carries a lock icon, so presumably it is plan-gated rather than wired — but exporting made-up numbers is precisely what the banner tells you not to do. Hide it until the data is real. |
+
+The doc text should be corrected either way.
+
+### 3.17 `/account?tab=profile`
+
+Also a correction: an earlier note in this audit recorded the profile fields as blank. They are
+not — that was the CORS session, not the screen. Signed in properly it shows the avatar, name,
+email, a `STARTER` plan card and `Sign out`, and says plainly
+`Read-only for now — editing your profile isn't built yet` (that is U4).
+
+One nit: the display name is `israel.agyeman.prempeh` — the email local part, not the account's
+real name. Supabase gives a name claim; this screen is not using it.
+
+### 3.18 `/account?tab=members` — **a second dead link**
+
+The tab is honest about email:
+
+> CredoPass does not send email yet — copy each link and pass it on yourself.
+
+And then every existing invitation in the list says **`link not shown`**.
+
+So the screen instructs you to do the one thing it does not let you do. A pending invitation whose
+link is not recoverable is as dead as a pass URL that 404s — same shape as U5, and it is sitting in
+production right now with two invitations in that state. Either show the link, or offer
+`regenerate`, or say the invitation must be deleted and re-created.
+
+Three emails are truncated mid-string on this tab (`israel.agyeman.prem…`,
+`developer.agyeman.prem…`, `developer.prempeh@gma…`), which makes two different invitations for
+two different addresses visually indistinguishable.
+
+Good detail worth keeping: `An organization needs at least one owner, so the only one cannot be
+demoted or removed` — the rule is explained where it bites, instead of a disabled button.
+
+### 3.19 `/account?tab=settings`
+
+Name, web address (slug, in a monospaced field), `Save changes`, a delete block, and a
+`Coming later — Built in the schema, not yet reachable from here` section. Honest and tidy.
+
+`Save changes` is dim olive — presumably disabled until the form is dirty, but it reads as a
+permanently-disabled button rather than an idle one. The delete block explains why deletion may be
+refused *before* you try it (`You always belong to at least one organization…`), which is the right
+way round and the same instinct as the owner rule above.
+
+### 3.20 `/upgrade`
+
+Current plan in a lime billboard, then Free / Starter / Pro / Enterprise as full-width cards with
+tick lists. Clear, and the feature lines are concrete (`QR, manual and walk-in check-in`,
+`Attendance records that persist`).
+
+`Change takes effect immediately` sits above a `Switch to Free` button, and there is no visible
+confirmation step for a downgrade. **Not exercised** — this is a real billing surface on a real
+account — so treat this as a question rather than a finding: does switching down ask first, and
+what happens to organisations beyond the Free limit?
+
+---
+
+## 5. Second pass — what the rest of the walk added
+
+The five structural findings in §2 all survived the remaining screens. Two should be promoted, and
+one new one emerged:
+
+### R6 · Text is truncated where it should wrap
+
+Counted on this pass: the attendees subtitle, three emails on the members tab, a surname in the
+register form, an organisation name in a chip. All single-line clips with an ellipsis, all on a
+375px screen where a second line costs 20px and the clipped half of an email address is the half
+that identifies it. Truncation is for lists of hundreds, not for the one description at the top of
+a page.
+
+### R7 · The most consequential sentence on the pass page is the quietest
+
+`/p/$token` ends with, in the smallest and lowest-contrast type on the screen:
+
+> Save this link. It is the only copy of your pass.
+
+Above it, in full-contrast body text, is the much less important `Show this at the door`. And there
+is **no copy button** — the only place the link exists is the browser's address bar, which an
+in-app browser may not even show. The sentence is true, load-bearing, and styled as fine print.
+
+This is the user-facing half of U5: the server now builds a correct URL, and the page still makes
+it hard to keep. A `Copy link` button and an `Add to home screen` hint would close it.
+
+### Promote: R2 now has three confirmed instances
+
+The "add attendee" two-second gap with a stale sheet (§3.13), the greeting that says
+`Good afternoon, there`, and `0 events` while loading. It is the single most repeated defect in the
+product and it is one decision, not three fixes: **a screen must never render a value it does not
+have.**

@@ -109,7 +109,7 @@ export const SCREENS: readonly Screen[] = [
     path: '/events/:eventId/edit',
     title: 'Edit an event',
     purpose: 'Change the details after it exists.',
-    actions: ['Change name, time or venue', 'Adjust capacity', 'Cancel the event'],
+    actions: ['Rename it in the billboard itself', 'Move the date — the end moves with the start', 'Change the venue or description', 'Set a capacity', 'Turn self check-in on or off', 'Add a photo'],
     group: 'Events',
     auth: 'org',
     fixtures: ['eventId'],
@@ -165,7 +165,7 @@ export const SCREENS: readonly Screen[] = [
     actions: ['Pick a range', 'Read attendance rates'],
     group: 'Attendees',
     auth: 'org',
-    note: 'Not wired to real data yet — the screen deliberately shows an empty state rather than drawing charts from placeholder numbers.',
+    note: 'The numbers are generated, not measured. The screen says so at the top: don\'t report anything from this page yet.',
   },
 
   // -------------------------------------------------------------- account
@@ -192,7 +192,7 @@ export const SCREENS: readonly Screen[] = [
     path: '/account?tab=members',
     title: 'Members',
     purpose: 'Who can do what in this organisation.',
-    actions: ['Invite someone', 'Change a role', 'Remove a member'],
+    actions: ['Invite someone by email and role', 'Copy the invitation link and send it yourself', 'Change a role', 'Remove a member'],
     group: 'Account',
     auth: 'org',
     note: 'Roles: owner, admin, member, viewer, check-in. The check-in role is what a door tablet signs in as.',

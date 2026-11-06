@@ -126,6 +126,7 @@ export function Home() {
             <div className="hidden lg:flex items-center gap-8">
               <a href="#features" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Features</a>
               <a href="/how-it-works" onClick={(e) => { e.preventDefault(); navigate('/how-it-works'); }} className="text-sm text-muted-foreground hover:text-foreground transition-colors">How it works</a>
+              <a href="/how-to" onClick={(e) => { e.preventDefault(); navigate('/how-to'); }} className="text-sm text-muted-foreground hover:text-foreground transition-colors">Every screen</a>
               <a href="#product" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Product</a>
               <a href="#pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Pricing</a>
               <a href="#customers" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Customers</a>
@@ -154,6 +155,7 @@ export function Home() {
             <div className="container mx-auto px-4 py-6 flex flex-col gap-4">
               <a href="#features" className="py-2 text-sm text-muted-foreground hover:text-foreground">Features</a>
               <a href="/how-it-works" onClick={(e) => { e.preventDefault(); navigate('/how-it-works'); }} className="py-2 text-sm text-muted-foreground hover:text-foreground">How it works</a>
+              <a href="/how-to" onClick={(e) => { e.preventDefault(); navigate('/how-to'); }} className="py-2 text-sm text-muted-foreground hover:text-foreground">Every screen</a>
               <a href="#product" className="py-2 text-sm text-muted-foreground hover:text-foreground">Product</a>
               <a href="#pricing" className="py-2 text-sm text-muted-foreground hover:text-foreground">Pricing</a>
               <a href="#customers" className="py-2 text-sm text-muted-foreground hover:text-foreground">Customers</a>
