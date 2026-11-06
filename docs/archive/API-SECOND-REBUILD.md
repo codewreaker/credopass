@@ -1,13 +1,24 @@
 # API-SECOND-REBUILD — the UI rewiring plan
 
+> ## ⚠️ ARCHIVED — this plan shipped. Do not plan from it.
+>
+> It is kept for the **decision record**, not as a description of the system. Anything it says about
+> the present tense is from 2026-07-27 and is probably no longer true.
+>
+> · What is true now: [`../../CLAUDE.md`](../../CLAUDE.md)
+> · What actually happened: [`../REBUILD-LOG.md`](../REBUILD-LOG.md) — "The web app moved onto `/api/v1/core`"
+> · What is still open: [`../README.md`](../README.md)
+
+---
+
 > **Read this before touching `apps/web`.** The API was rebuilt from the ground up. The web app has
 > not moved, and currently **does not compile** — 18 files import modules that no longer exist.
 >
 > Part 1 tells you what the API now is. Part 2 is the work.
 
 **Status:** ready to build · **Date:** 2026-07-27 · **API surface:** 45 operations
-**Companion docs:** [`API-FIRST-REBUILD.md`](API-FIRST-REBUILD.md) (the original plan) ·
-[`REBUILD-LOG.md`](REBUILD-LOG.md) (what was actually built, and what broke)
+**Companion docs:** [`API-FIRST-REBUILD.md`](../API-FIRST-REBUILD.md) (the original plan) ·
+[`REBUILD-LOG.md`](../REBUILD-LOG.md) (what was actually built, and what broke)
 
 ---
 
@@ -614,8 +625,8 @@ tool.
 | What does this endpoint return? | The Zod schema in `services/core/src/api/v1/core/` |
 | What are the rules? | `services/core/src/services/` |
 | What is the schema? | `packages/lib/src/schemas/tables/` |
-| What was decided, and why? | [`API-FIRST-REBUILD.md`](API-FIRST-REBUILD.md) |
-| What actually happened? | [`REBUILD-LOG.md`](REBUILD-LOG.md) |
+| What was decided, and why? | [`API-FIRST-REBUILD.md`](../API-FIRST-REBUILD.md) |
+| What actually happened? | [`REBUILD-LOG.md`](../REBUILD-LOG.md) |
 
 Run the API and use the Scalar client at `/api/v1/core/docs` before writing UI against any endpoint.
 It sends real requests. Guessing at shapes when the contract is one command away is how drift starts.

@@ -91,7 +91,7 @@ brand ever weakens, the build fails.
 |---|---|
 | [`http/problem.ts`](../services/core/src/http/problem.ts) | RFC 9457 envelope, 30 stable machine codes |
 | [`authz/permissions.ts`](../services/core/src/authz/permissions.ts) | 26 permissions + the role matrix |
-| [`db/scoped.ts`](../services/core/src/db/scoped.ts) | Tenant-scoped repository accessor |
+| `db/scoped.ts` *(since deleted)* | Tenant-scoped repository accessor |
 | `/api/v1/core/docs` | Scalar — reference **and** a working API client |
 | [`test/contract.ts`](../services/core/src/test/contract.ts) | Validates every response against the emitted spec |
 | 47 adversarial tests | Written ahead of the code they guard |
@@ -173,7 +173,7 @@ Enforced in [`membership.ts`](../services/core/src/services/membership.ts), not 
 
 ### RLS
 
-[`0004_rls_tenancy.sql`](../services/core/drizzle/0004_rls_tenancy.sql) — 12 policies, two
+[`0001_rls.sql`](../services/core/drizzle/0001_rls.sql) *(written as `0004_rls_tenancy.sql`, renumbered before it landed)* — 12 policies, two
 `SECURITY DEFINER` helpers, and a `credopass_api` role with `rolbypassrls = false`.
 
 The subtlety worth remembering: **`USING` carries the self-branch, `WITH CHECK` does not.** An
@@ -347,7 +347,7 @@ would mean the tests were too weak.
 
 ## The web app moved onto `/api/v1/core` (2026-07-27)
 
-The plan for this is [`API-SECOND-REBUILD.md`](API-SECOND-REBUILD.md); this is what actually
+The plan for this is [`API-SECOND-REBUILD.md`](archive/API-SECOND-REBUILD.md); this is what actually
 happened. `apps/web` did not compile before this — 18 files imported
 `@credopass/api-client/collections`, which had been deleted. It builds now, and every screen reads
 the new API.
@@ -533,7 +533,7 @@ from using it, but the endpoint stays open until the project setting is turned o
 
 ## The sign-up funnel; guests and device tokens deleted (2026-07-27)
 
-Plan: [`API-THIRD-REBUILD.md`](API-THIRD-REBUILD.md), decisions D20–D26. This is what happened.
+Plan: [`API-THIRD-REBUILD.md`](archive/API-THIRD-REBUILD.md), decisions D20–D26. This is what happened.
 
 **26 files deleted, ~2,900 lines removed, 3 added.** Almost all of it was subtraction, because
 three systems had stopped meaning anything and were holding the funnel up.

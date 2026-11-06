@@ -9,7 +9,7 @@
 | Doc | What it is |
 |---|---|
 | [`API-FIRST-REBUILD.md`](API-FIRST-REBUILD.md) | D4, D5 and §8.1 are the original design. Still the target; **superseded in the details listed in §6 below.** |
-| [`API-THIRD-REBUILD.md`](API-THIRD-REBUILD.md) | D24 deleted device tokens. That is what forces the auth rethink in §5.3. |
+| [`API-THIRD-REBUILD.md`](archive/API-THIRD-REBUILD.md) | D24 deleted device tokens. That is what forces the auth rethink in §5.3. |
 | [`REBUILD-LOG.md`](REBUILD-LOG.md) | What actually shipped. |
 
 **Status:** analysis + plan. Nothing in §5 is built. §4 is the part worth doing first.

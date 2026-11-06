@@ -88,7 +88,7 @@ Four route scopes, declared per route:
 
 **There is no guest tier and no device tier.** A door tablet is a person signed in with the
 `checkin` role, which can read the event and record arrivals and nothing else. See
-[`docs/API-THIRD-REBUILD.md`](../../docs/API-THIRD-REBUILD.md), D20 and D24 — and do not
+[`docs/API-THIRD-REBUILD.md`](../../docs/archive/API-THIRD-REBUILD.md), D20 and D24 — and do not
 reintroduce a second authentication system for doors without reading why the first one went.
 
 Signing in commissions an organisation (`ensureDefaultOrganization`, called from `requireCaller`

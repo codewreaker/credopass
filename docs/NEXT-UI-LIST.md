@@ -3,12 +3,17 @@
 > **Read this if you are picking up the web app.** It is the live list of what is *not* done.
 >
 > What *was* done lives in [`REBUILD-LOG.md`](REBUILD-LOG.md) — this file no longer duplicates it.
-> Companions: [`API-SECOND-REBUILD.md`](API-SECOND-REBUILD.md) (moving the web app onto
-> `/api/v1/core`) · [`API-THIRD-REBUILD.md`](API-THIRD-REBUILD.md) (the sign-up funnel, D20–D26) ·
+> Companions: [`API-SECOND-REBUILD.md`](archive/API-SECOND-REBUILD.md) (moving the web app onto
+> `/api/v1/core`) · [`API-THIRD-REBUILD.md`](archive/API-THIRD-REBUILD.md) (the sign-up funnel, D20–D26) ·
 > [`DATABASE-MIGRATION.md`](DATABASE-MIGRATION.md).
 >
 > **Last refreshed:** 2026-07-27, after the account/profile pass and the repo-wide documentation
 > cleanup.
+>
+> **See also [`NEXT-PHASE-PLAN.md`](NEXT-PHASE-PLAN.md)** (2026-11-06) for the next round of product work and the
+> public-API plan. Two confirmed bugs live there rather than here because they were found while writing it:
+> **B1** — ⌘V/⌘A/⌘N/⌘T/⌘P are intercepted globally with no focus guard, so paste does not work in any input —
+> and **B2**, the composer showing "No organization" as a loading state.
 
 ---
 

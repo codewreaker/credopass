@@ -1,15 +1,26 @@
 # API-THIRD-REBUILD — the sign-up funnel
 
+> ## ⚠️ ARCHIVED — this plan shipped. Do not plan from it.
+>
+> It is kept for the **decision record**, not as a description of the system. Anything it says about
+> the present tense is from 2026-07-27 and is probably no longer true.
+>
+> · What is true now: [`../../CLAUDE.md`](../../CLAUDE.md)
+> · What actually happened: [`../REBUILD-LOG.md`](../REBUILD-LOG.md) — "The sign-up funnel; guests and device tokens deleted"
+> · What is still open: [`../README.md`](../README.md)
+
+---
+
 > **In one line.** The guest tier and the device tier are deleted, onboarding *is* signing in,
 > and `/events/new` is the front door — the composer renders for a visitor who has never heard
 > of CredoPass, with sign-in laid over it rather than in front of it.
 
 | Doc | What it is |
 |---|---|
-| [`API-FIRST-REBUILD.md`](API-FIRST-REBUILD.md) | Target architecture, D1–D19, schema, endpoint list. Still authoritative except where D20–D26 below supersede it. |
+| [`API-FIRST-REBUILD.md`](../API-FIRST-REBUILD.md) | Target architecture, D1–D19, schema, endpoint list. Still authoritative except where D20–D26 below supersede it. |
 | [`API-SECOND-REBUILD.md`](API-SECOND-REBUILD.md) | The UI rewiring onto `/api/v1/core`. Done. Its device sections (§1.5 Devices, §2.10) are obsolete. |
 | ~~`GUEST-ONBOARDING.md`~~ | A design study for anonymous guest onboarding. **Deleted** — this document superseded it, and the guest tier it assumed no longer exists. Its conclusion (§10.1: measure before building) was right; the answer was "don't". Recoverable from git history if the reasoning is ever wanted again. |
-| [`REBUILD-LOG.md`](REBUILD-LOG.md) | What actually happened. |
+| [`REBUILD-LOG.md`](../REBUILD-LOG.md) | What actually happened. |
 
 ---
 
@@ -139,7 +150,7 @@ contract says so.
 
 # Part 3 — Schema
 
-One migration, [`0003_drop_device_tokens_and_guest_tier.sql`](../services/core/drizzle/0003_drop_device_tokens_and_guest_tier.sql):
+One migration, [`0003_drop_device_tokens_and_guest_tier.sql`](../../services/core/drizzle/0003_drop_device_tokens_and_guest_tier.sql):
 
 ```sql
 DROP TABLE "device_tokens" CASCADE;
@@ -178,12 +189,12 @@ deliberate Phase 7 SSO scaffolding (D-M: "accept the schema now, defer the flows
 
 | Piece | File |
 |---|---|
-| Route renders unauthenticated | [`routes/events/new.tsx`](../apps/web/src/routes/events/new.tsx) — `beforeLoad: requireAuth` removed |
-| Composer + inert fields + overlay | [`Pages/Events/EventComposer/index.tsx`](../apps/web/src/Pages/Events/EventComposer/index.tsx) |
-| The glass panel | [`EventComposer/sign-in-overlay.tsx`](../apps/web/src/Pages/Events/EventComposer/sign-in-overlay.tsx) — **new** |
-| Create-organisation form | `NewOrganizationDialog` in [`Pages/Account/index.tsx`](../apps/web/src/Pages/Account/index.tsx) — **new** |
-| Sign-up nudge | `SignUpNudge` in [`Pages/Pass/index.tsx`](../apps/web/src/Pages/Pass/index.tsx) — **new** |
-| Marketing CTA | [`apps/website/src/pages/Home.tsx`](../apps/website/src/pages/Home.tsx) — `startCreating` → `/events/new`, `signIn` → `/login` |
+| Route renders unauthenticated | [`routes/events/new.tsx`](../../apps/web/src/routes/events/new.tsx) — `beforeLoad: requireAuth` removed |
+| Composer + inert fields + overlay | [`Pages/Events/EventComposer/index.tsx`](../../apps/web/src/Pages/Events/EventComposer/index.tsx) |
+| The glass panel | [`EventComposer/sign-in-overlay.tsx`](../../apps/web/src/Pages/Events/EventComposer/sign-in-overlay.tsx) — **new** |
+| Create-organisation form | `NewOrganizationDialog` in [`Pages/Account/index.tsx`](../../apps/web/src/Pages/Account/index.tsx) — **new** |
+| Sign-up nudge | `SignUpNudge` in [`Pages/Pass/index.tsx`](../../apps/web/src/Pages/Pass/index.tsx) — **new** |
+| Marketing CTA | [`apps/website/src/pages/Home.tsx`](../../apps/website/src/pages/Home.tsx) — `startCreating` → `/events/new`, `signIn` → `/login` |
 
 The overlay shows **on load**, not on first interaction. With the fields disabled, an
 interactive-looking form that silently does nothing would be worse than an honest ask.
@@ -205,12 +216,12 @@ Four, none of them in the brief.
 ```
 
 The service only serves `/api/v1/core` and 404s everything else
-([`index.ts:50-61`](../services/core/src/index.ts#L50-L61)). `apps/mobile` had the same problem
+([`index.ts:50-61`](../../services/core/src/index.ts#L50-L61)). `apps/mobile` had the same problem
 against `localhost:3000/api/core`. This is a live bug, not cleanup.
 
 ### `/upgrade` told signed-in users they were guests
 
-Two live callers navigate to it — [`OrgSelector`](../apps/web/src/containers/OrgSelector/index.tsx)
+Two live callers navigate to it — [`OrgSelector`](../../apps/web/src/containers/OrgSelector/index.tsx)
 and the `UpgradeSpotlight` on `/events` — and both mean *upgrade your plan*. What rendered was
 *"You're in guest mode. Create a free account to save your check-ins"*, with a **"Continue as
 guest instead"** button and a sign-up form whose submit was a one-second `setTimeout` standing in

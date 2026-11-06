@@ -32,10 +32,10 @@ Phase 0 is done. **Phase 1 is mostly done**: `accounts` / `identities` / `people
 - No data migration from `users` → `accounts` + `people` yet.
 
 **The web app now talks to `/api/v1/core`.** Every screen reads the new API through
-`@credopass/api-client` hooks — see [`docs/API-SECOND-REBUILD.md`](docs/API-SECOND-REBUILD.md) for the
+`@credopass/api-client` hooks — see [`docs/API-SECOND-REBUILD.md`](docs/archive/API-SECOND-REBUILD.md) for the
 plan and the "web app moved onto /api/v1/core" entry in the rebuild log for what was actually done.
 
-**The sign-up funnel landed** — [`docs/API-THIRD-REBUILD.md`](docs/API-THIRD-REBUILD.md), decisions
+**The sign-up funnel landed** — [`docs/API-THIRD-REBUILD.md`](docs/archive/API-THIRD-REBUILD.md), decisions
 D20–D26. Four things to internalise before touching auth, roles or onboarding:
 
 - **Google is the only sign-in.** Email+password and GitHub were removed, and with them the
@@ -214,12 +214,21 @@ Say plainly what you could not verify and why.
 
 Each package README goes further: [lib](packages/lib/README.md) · [api-client](packages/api-client/README.md) · [ui](packages/ui/README.md) · [ui-mobile](packages/ui-mobile/README.md) · [web](apps/web/README.md) · [mobile](apps/mobile/README.md) · [website](apps/website/README.md) · [core](services/core/README.md).
 
+**[`docs/README.md`](docs/README.md) is the front door** — every document, whether to trust it, and
+the single list of what is still open. Start there rather than guessing from filenames.
+
 | Doc | For |
 |---|---|
+| [`docs/README.md`](docs/README.md) | **The index, and the one list of what is left.** |
 | [`docs/API-FIRST-REBUILD.md`](docs/API-FIRST-REBUILD.md) | The plan — decisions, target schema, full endpoint list, phases. Historical; some links in it are dead and the header says which. |
 | [`docs/REBUILD-LOG.md`](docs/REBUILD-LOG.md) | What actually happened. **Wins wherever it disagrees with the plan.** |
 | [`docs/DATABASE-MIGRATION.md`](docs/DATABASE-MIGRATION.md) | Getting the schema onto a database — local, test, and the remote Supabase cutover. |
 | [`docs/LIVE-UPDATES.md`](docs/LIVE-UPDATES.md) | Why a check-in doesn't reach other screens, and the plan for it — polling first, then SSE (supersedes D4/D5 in the details). |
 | [`docs/NEXT-UI-LIST.md`](docs/NEXT-UI-LIST.md) | The open UI backlog. |
+| [`docs/NEXT-PHASE-PLAN.md`](docs/NEXT-PHASE-PLAN.md) | **What's next** — the paid public API + webhooks (Phase 8), data ownership for churches that keep their own PII, and the product backlog. Plan only; nothing in it is built. |
+
+**When a plan ships, `git mv` it to [`docs/archive/`](docs/archive/)** and write the outcome in
+[`docs/REBUILD-LOG.md`](docs/REBUILD-LOG.md). A shipped plan left in `docs/` is written in the present
+tense about a system that has moved, and the next person reads it as current.
 
 `AGENTS.md` is a symlink to this file — one source of truth, not two that drift.

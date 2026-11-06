@@ -177,8 +177,8 @@ The repo has been rebuilt API-first. What that meant, and what is left:
 |---|---|
 | 📐 [**API-FIRST-REBUILD**](docs/API-FIRST-REBUILD.md) | The plan — decisions, target schema, the full endpoint list, the phases. |
 | 📓 [**REBUILD-LOG**](docs/REBUILD-LOG.md) | What was **actually** built, decided differently, or broke. Updated at the end of every phase. |
-| 🖥️ [**API-SECOND-REBUILD**](docs/API-SECOND-REBUILD.md) | Moving the web app onto `/api/v1/core`. |
-| 🚪 [**API-THIRD-REBUILD**](docs/API-THIRD-REBUILD.md) | The sign-up funnel (D20–D26): no guest tier, no device tokens, no onboarding screen. |
+| 🖥️ [**API-SECOND-REBUILD**](docs/archive/API-SECOND-REBUILD.md) | Moving the web app onto `/api/v1/core`. |
+| 🚪 [**API-THIRD-REBUILD**](docs/archive/API-THIRD-REBUILD.md) | The sign-up funnel (D20–D26): no guest tier, no device tokens, no onboarding screen. |
 | 🗄️ [**DATABASE-MIGRATION**](docs/DATABASE-MIGRATION.md) | How to get the schema onto a database — local, test, and the remote Supabase cutover. |
 | 📋 [**NEXT-UI-LIST**](docs/NEXT-UI-LIST.md) | The open UI backlog. |
 
