@@ -151,7 +151,7 @@ nx run coreservice:setup             # one-command fresh-clone setup
 nx run coreservice:verify            # lint + typecheck + test (run before saying "done")
 nx run coreservice:test              # unit + structural — no DB, must always pass
 nx run coreservice:test:integration  # services against real Postgres; starts its own DB
-nx run coreservice:test:adversarial  # 47 tenancy tests; red until the endpoints they guard exist
+nx run coreservice:test:adversarial  # 51 tenancy tests; GREEN as of 2026-11-06 — and CI will not deploy past a red one
 nx run coreservice:typecheck
 
 nx run coreservice:dev:up            # postgres + MinIO
