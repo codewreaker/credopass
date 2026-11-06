@@ -40,12 +40,44 @@ function nxViteTsPathsFixed(opts?: Parameters<typeof nxViteTsPaths>[0]): Plugin 
   }
 }
 
+/**
+ * Dev-only proxy, so the local UI can be run against a deployed API.
+ *
+ * `nx run web:serve:remote` sets this. Pointing `VITE_API_URL` straight at
+ * `https://api.credopass.com` is not enough on its own: the deployed service
+ * runs the allow-list CORS branch in `services/core/src/index.ts`
+ * (`app.credopass.com` plus two Vercel hosts), so a preflight from
+ * `localhost:5001` comes back with no `access-control-allow-origin` and the
+ * browser blocks every call. The failure is quiet — screens render their empty
+ * state, so the app says you have no events rather than that it could not ask.
+ *
+ * Loosening the deployed allow-list to include localhost would weaken the
+ * production service for a local convenience. A proxy avoids the question: the
+ * browser talks to its own origin and Vite forwards server-side, where CORS
+ * does not apply.
+ *
+ * Unset for every other target, so `serve` and `serve:production` behave
+ * exactly as before.
+ */
+const proxyTarget = process.env.VITE_PROXY_API_TARGET
+
 // https://vite.dev/config/
 export default defineConfig({
   server: {
     port: 5000,
     host: '0.0.0.0',
     allowedHosts: true,
+    ...(proxyTarget
+      ? {
+        proxy: {
+          '/api': {
+            target: proxyTarget,
+            changeOrigin: true,
+            secure: true,
+          },
+        },
+      }
+      : {}),
     watch: {
       // Replit: polling avoids inotify limits; restrict scope to src dirs only
       // to prevent the chokidar daemon from crashing on large monorepos.

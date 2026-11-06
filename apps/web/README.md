@@ -105,3 +105,29 @@ nx run web:lint
 
 In dev, point `VITE_API_URL` at the local core service (`http://localhost:8080/api/v1/core`) in
 `apps/web/.env`. In production Vercel rewrites `/api/*` to `https://api.credopass.com`.
+
+### Running the local UI against the deployed API
+
+```bash
+nx run web:serve:remote     # :5001, reading real data from api.credopass.com
+```
+
+Setting `VITE_API_URL` to the remote URL is **not** enough on its own, and `serve:production` is
+not a way to do this. The deployed service runs the allow-list CORS branch in
+`services/core/src/index.ts` — `app.credopass.com` and two Vercel hosts — so a request from
+`localhost:5001` is refused with no `access-control-allow-origin` and the browser blocks it.
+
+The failure is quiet. Screens render their empty state, so a signed-in console will tell you that
+you have no events rather than that it could not ask. If data is missing and auth looks fine, open
+the console and look for CORS before suspecting the data.
+
+`serve:remote` sidesteps it: `VITE_API_URL=/api/v1/core` makes requests same-origin, and
+`VITE_PROXY_API_TARGET` turns on a `/api` proxy in `vite.config.ts` that forwards them server-side,
+where CORS does not apply. Both are set in the target in `apps/web/project.json` rather than in a
+`.env` file, because `.env.*` is gitignored and a target that depends on an untracked file fails on
+a fresh clone.
+
+Sign-in is separate: it goes to Supabase, not to this API. `http://localhost:5001/**` and
+`http://localhost:5000/**` must be in the project's **Redirect URLs** (Authentication → URL
+Configuration). Without them Supabase falls back to the Site URL and drops you on
+`app.credopass.com` with the session on the wrong origin. Leave Site URL alone.

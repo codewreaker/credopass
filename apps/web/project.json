@@ -13,6 +13,9 @@
       "configurations": {
         "production": {
           "command": "bun vite --mode production"
+        },
+        "remote": {
+          "command": "VITE_PROXY_API_TARGET=https://api.credopass.com VITE_API_URL=/api/v1/core bun vite --mode development"
         }
       }
     },
