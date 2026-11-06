@@ -71,3 +71,7 @@ audit/*
 # own self-ignoring .gitignore; bytecode does not, so it goes here.
 __pycache__/
 *.py[cod]
+
+# apps/website screenshot capture — a saved Google session, and ids of real rows
+apps/website/.auth/
+apps/website/capture.config.json

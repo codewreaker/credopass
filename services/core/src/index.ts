@@ -16,6 +16,7 @@ import { isDevelopment } from 'std-env';
 import { v1, V1_BASE_PATH } from './api/v1/core';
 import { assertRouteRegistryComplete, getRouteDeclarations } from './http/route-registry';
 import { reportSchemaAtBoot } from './db/schema-check';
+import { assertPublicAppUrl } from './config/public-url';
 
 export const app = new Hono();
 
@@ -70,6 +71,7 @@ app.notFound((c) =>
 // permission crashes the service HERE, before it serves a single request.
 // ---------------------------------------------------------------------------
 assertRouteRegistryComplete();
+assertPublicAppUrl();
 console.log(`🔒 Route registry: ${getRouteDeclarations().length} route(s), all declared`);
 
 // Non-fatal: a schema/DATABASE_URL mismatch is reported loudly at boot rather

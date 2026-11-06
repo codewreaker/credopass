@@ -16,6 +16,7 @@ import {
 } from '../../../middleware/caller';
 import { getDatabase } from '../../../db/client';
 import * as Attendance from '../../../services/attendance';
+import { publicAppUrl } from '../../../config/public-url';
 
 export const attendanceRoutes = new OpenAPIHono<{ Variables: CallerVars }>();
 
@@ -63,8 +64,6 @@ const AttendanceResultSchema = z
   })
   .openapi('AttendanceResult');
 
-const originOf = (url: string): string => new URL(url).origin;
-
 attendanceRoutes.openapi(
   defineRoute({
     method: 'post',
@@ -106,7 +105,7 @@ attendanceRoutes.openapi(
       eventId: c.req.valid('param').id,
       organizationId: c.get('tenant').organizationId,
       person: c.req.valid('json'),
-      origin: originOf(c.req.url),
+      origin: publicAppUrl(),
     });
     return c.json(result, 201);
   }

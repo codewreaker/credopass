@@ -34,7 +34,6 @@ Nothing is "in progress" unless someone is actually working on it today.
 
 | | Work | Where it is specified | Size |
 |---|---|---|---|
-| 🔴 | **Every pass link is dead in production** — built from the API's own origin, over `http` | [`NEXT-UI-LIST.md`](NEXT-UI-LIST.md) U5 | S |
 | 🔴 | The composer shows "No organization" as a loading state | [`NEXT-PHASE-PLAN.md`](NEXT-PHASE-PLAN.md) §5.2 | S |
 | ⬜ | RLS is inert on the API path — the API connects as `postgres` and bypasses it | [`DATABASE-MIGRATION.md`](DATABASE-MIGRATION.md) §6 | M |
 | ⬜ | No data migration from the pre-rewrite `users` table | [`DATABASE-MIGRATION.md`](DATABASE-MIGRATION.md) §5.4 | M |

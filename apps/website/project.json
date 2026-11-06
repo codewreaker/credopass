@@ -23,7 +23,9 @@
     },
     "build": {
       "executor": "nx:run-commands",
-      "outputs": ["{projectRoot}/dist"],
+      "outputs": [
+        "{projectRoot}/dist"
+      ],
       "options": {
         "command": "bun vite build --mode production",
         "cwd": "apps/website"
@@ -34,6 +36,21 @@
       "options": {
         "command": "bun vite preview",
         "cwd": "apps/website"
+      }
+    },
+    "shots": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun scripts/capture-screens.ts",
+        "cwd": "apps/website"
+      },
+      "configurations": {
+        "login": {
+          "command": "bun scripts/capture-screens.ts --login"
+        },
+        "mobile": {
+          "command": "bun scripts/capture-screens.ts --mobile-only"
+        }
       }
     }
   }

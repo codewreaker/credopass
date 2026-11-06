@@ -911,6 +911,64 @@ provenance changed.
 `services/ai-chat` is early: `src/app/settings.py` and nothing else committed. It refers to an
 `AI-SIDEBAR-PLAN.md` §1 that does not exist in `docs/` yet.
 
+## Pass links pointed at the API, and 404'd (2026-11-06)
+
+Found by walking the product on a phone viewport against the **deployed** API. Registering someone
+printed a pass URL of `http://api.credopass.com/p/CP1.…`. That is a 404, and has been for as long as
+the service has been deployed:
+
+| URL | Result |
+|---|---|
+| as the app printed it | 302 → **404** |
+| `https://api.credopass.com/p/…` | **404** |
+| `https://app.credopass.com/p/…` | **200** |
+
+`/p/:token` is a route in `apps/web`. The API has never served it.
+
+Both call sites built the link from `new URL(c.req.url).origin` — the origin of the incoming *API*
+request. Two faults fall out of that single expression, and neither shows up locally, where the API
+is reached over plain http on a host the developer also runs the app on:
+
+- the **host** is the API's, which is by definition not the app's;
+- the **scheme** is whatever reached the Bun process, which behind Coolify's TLS terminator is
+  `http`.
+
+Because no email exists yet (D18), the printed URL is the only copy of a pass anyone ever gets. The
+single artefact this product exists to hand an attendee was a dead link in production.
+
+**D41 — a user-facing origin is configuration, not something to infer from a request.**
+`services/core/src/config/public-url.ts` reads `PUBLIC_APP_URL`; `attendance.ts` and `public.ts` call
+`publicAppUrl()`. Unset in development it falls back to `http://localhost:5000` and warns once;
+unset under `NODE_ENV=production` the service refuses to boot, asserted next to
+`assertRouteRegistryComplete()`. A service that starts and then hands out dead links is worse than
+one that does not start.
+
+`X-Forwarded-Proto` was considered and rejected. It would fix the scheme and leave the host wrong,
+and it is a header a client can set — trusting it to build a credential-bearing URL trades one bug
+for a worse one.
+
+**Not done by code:** `PUBLIC_APP_URL=https://app.credopass.com` has to be set in Coolify before the
+next deploy. Passes already issued cannot be repaired; their URL was never stored, only printed.
+
+Found during the same walk and filed rather than fixed: `docs/UI-REDESIGN.md` R1–R5 (the app scrolls
+an inner box rather than the document, loading states render as confident content), and U2 looking
+less like a scanner bug than a kiosk that shows a QR its own scanner tab rejects.
+
+---
+
+## Screenshots for the how-to page are captured by a script (2026-11-06)
+
+`apps/website/scripts/capture-screens.ts` walks `apps/website/src/pages/how-to/screens.ts` and
+writes `public/how-to/<id>.<viewport>.png`. One list drives both the capture and the page, so a
+screen cannot be documented without an image and an image cannot go stale unnoticed.
+
+Google being the only sign-in means a headless run cannot log in, so the session is captured once by
+hand (`nx run website:shots:login`) into a gitignored `.auth/state.json` and reused. Public screens
+are deliberately captured in a **separate anonymous context** — a public page has to be proved to
+work with no session, and shooting it signed in would hide exactly the bug worth catching.
+
+---
+
 ---
 
 ## Conventions worth knowing

@@ -21,6 +21,7 @@
 import { OpenAPIHono, z } from '@hono/zod-openapi';
 import { defineRoute, problemResponse } from '../../../http/define-route';
 import { getDatabase } from '../../../db/client';
+import { publicAppUrl } from '../../../config/public-url';
 import { ProblemCode, problem } from '../../../http/problem';
 import { EVENT_STATUSES } from '../../../services/event-status';
 import * as Attendance from '../../../services/attendance';
@@ -45,8 +46,6 @@ const PublicEventSchema = z
     cancellationReason: z.string().nullable(),
   })
   .openapi('PublicEvent');
-
-const originOf = (url: string): string => new URL(url).origin;
 
 // ---------------------------------------------------------------------------
 // scope: 'public'
@@ -109,7 +108,7 @@ publicRoutes.openapi(
     const result = await Attendance.register(db, {
       eventId: c.req.valid('param').id,
       person: c.req.valid('json'),
-      origin: originOf(c.req.url),
+      origin: publicAppUrl(),
     });
 
     // The pass URL is in the body BEFORE any mail is attempted (D18). A mail

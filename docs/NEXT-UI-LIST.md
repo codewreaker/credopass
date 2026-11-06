@@ -77,7 +77,7 @@ Check in this order:
 5. **Old QR format.** Anything generated before the rebuild is `{eventId}:{userId}` and will never
    verify. Regenerate passes after `db reset`.
 
-### U5 🔴 Every pass link is dead in production · S — **CONFIRMED 2026-11-06**
+### U5 ✅ Every pass link is dead in production · S — **CONFIRMED 2026-11-06, FIXED 2026-11-06**
 
 Found by walking the add-attendee flow against the deployed API. A pass URL handed to an organiser
 reads:
@@ -125,6 +125,17 @@ Needs a deploy-config change (the variable must be set in Coolify) as well as th
 
 Invitation links are **not** affected — the client builds `/invitations/$token` against its own
 origin.
+
+**Fixed 2026-11-06.** `services/core/src/config/public-url.ts` reads `PUBLIC_APP_URL` and both call
+sites use it. Unset in development it falls back to `http://localhost:5000` and warns once; unset
+with `NODE_ENV=production` the service **refuses to start** (`assertPublicAppUrl()` next to
+`assertRouteRegistryComplete()` in `src/index.ts`), because a service that boots and then hands out
+dead links is worse than one that does not boot. `X-Forwarded-Proto` is deliberately *not* read — it
+is a client-settable header, and the app's origin is deployment knowledge, not request knowledge.
+
+**Still to do by hand:** set `PUBLIC_APP_URL=https://app.credopass.com` in Coolify before the next
+deploy, or the service will not start. Passes already issued stay dead — their URL was stored
+nowhere, only printed, so there is nothing to backfill.
 
 ### U3 ⬜ Audit every screen in a browser · M
 
