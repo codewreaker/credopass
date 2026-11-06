@@ -54,15 +54,6 @@ export const SCREENS: readonly Screen[] = [
     note: 'There is no separate onboarding step and no password to forget. Your first sign-in commissions an organisation for you.',
   },
   {
-    id: 'dashboard',
-    path: '/',
-    title: 'Dashboard',
-    purpose: 'Where you land. Today at a glance, and the way in to everything else.',
-    actions: ['See upcoming events', 'Jump to an event', 'Open the command palette with ⌘K'],
-    group: 'Getting started',
-    auth: 'org',
-  },
-  {
     id: 'command-palette',
     path: '/',
     title: 'Command palette',
@@ -77,11 +68,19 @@ export const SCREENS: readonly Screen[] = [
   {
     id: 'events',
     path: '/events',
-    title: 'Events',
-    purpose: 'Every event you run, past and upcoming.',
-    actions: ['Filter by status', 'Open an event', 'Create a new one'],
+    title: 'Events — where you land',
+    purpose:
+      'The home screen. What is next, what is running now, and everything you have already run.',
+    actions: [
+      'See what is up next',
+      'Check in guests straight from the card',
+      'Filter upcoming or past',
+      'Switch to calendar view',
+      'Create a new event',
+    ],
     group: 'Events',
     auth: 'org',
+    note: 'Signing in takes you here — / redirects to /events. There is no separate dashboard.',
   },
   {
     id: 'event-new',

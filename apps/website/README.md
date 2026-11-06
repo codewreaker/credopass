@@ -73,6 +73,9 @@ nx run website:shots                    # headless, writes public/how-to/*.png
   catching.
 - `--only=id,id` captures a subset, `--mobile-only` skips the desktop pass.
 
-**Before this page ships publicly:** the pass and public-event shots are currently taken from a
-real event. Point `capture.config.json` at a seeded local event first, or the site publishes a
-scannable QR for a live pass.
+**Note on the published images:** the pass and public-event shots are taken from a real event, so
+the pass image contains a scannable QR for a live pass. It is a demo event with no real attendees,
+but point `capture.config.json` at a seeded local event if you would rather it were not.
+
+`/invitations/$token` has no screenshot, and cannot have one until `NEXT-UI-LIST.md` U6 is fixed —
+no invitation link can be recovered to point the capture at.

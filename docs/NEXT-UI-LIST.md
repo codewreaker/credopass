@@ -126,16 +126,17 @@ Needs a deploy-config change (the variable must be set in Coolify) as well as th
 Invitation links are **not** affected — the client builds `/invitations/$token` against its own
 origin.
 
-**Fixed 2026-11-06.** `services/core/src/config/public-url.ts` reads `PUBLIC_APP_URL` and both call
-sites use it. Unset in development it falls back to `http://localhost:5000` and warns once; unset
-with `NODE_ENV=production` the service **refuses to start** (`assertPublicAppUrl()` next to
-`assertRouteRegistryComplete()` in `src/index.ts`), because a service that boots and then hands out
-dead links is worse than one that does not boot. `X-Forwarded-Proto` is deliberately *not* read — it
-is a client-settable header, and the app's origin is deployment knowledge, not request knowledge.
+**Fixed 2026-11-06.** `services/core/src/config/public-url.ts` holds the app origin and both call
+sites use it: `https://app.credopass.com` under `NODE_ENV=production`, `http://localhost:5000`
+otherwise, with `PUBLIC_APP_URL` as an override. There is one production web app and its host is
+not a surprise, so requiring the deployment to restate it would buy nothing and cost a boot failure
+the first time someone forgot.
 
-**Still to do by hand:** set `PUBLIC_APP_URL=https://app.credopass.com` in Coolify before the next
-deploy, or the service will not start. Passes already issued stay dead — their URL was stored
-nowhere, only printed, so there is nothing to backfill.
+`X-Forwarded-Proto` is deliberately *not* read — it is a client-settable header, and it would fix
+the scheme while leaving the host wrong.
+
+**No deploy-config change needed.** Passes already issued stay dead — their URL was stored nowhere,
+only printed, so there is nothing to backfill.
 
 ### U6 🔴 A pending invitation's link cannot be recovered · S — **CONFIRMED 2026-11-06**
 
@@ -161,6 +162,22 @@ credential, so three options, in order of preference:
 
 Until one of those lands, `Invite` creates something that only works if you copy the link in the
 same breath — which is not stated anywhere.
+
+### U7 🔴 Editing an attendee's email reports success and changes nothing · S — **CONFIRMED 2026-11-06**
+
+On `/attendees/$personId/edit`, change the email, press `Save changes`. The app shows
+`Attendee updated`, returns to the list, and the old address is still there — after a full reload,
+so it is not a cache.
+
+The name saves fine on the same form, in the same request. Only the email is dropped.
+
+Most likely cause: the address lives on the **identity** row, not the person row (`CLAUDE.md`
+gotchas — "`accounts.email` is a MIRROR of what the provider asserted … the address always lands on
+the identity row"), so the update has nowhere valid to go and is being ignored silently.
+
+Whatever the cause, the UI claiming success for a write that did not happen is the defect. Either
+persist it, or make the field read-only and say why — the same way the profile tab already says
+`Read-only for now — editing your profile isn't built yet`.
 
 ### U3 ⬜ Audit every screen in a browser · M
 

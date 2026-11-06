@@ -466,3 +466,13 @@ The "add attendee" two-second gap with a stale sheet (§3.13), the greeting that
 `Good afternoon, there`, and `0 events` while loading. It is the single most repeated defect in the
 product and it is one decision, not three fixes: **a screen must never render a value it does not
 have.**
+
+### 3.21 Two more defects found while preparing the screenshots
+
+- **Editing an attendee's email reports success and changes nothing** (filed as
+  `NEXT-UI-LIST.md` U7). The name saves in the same request; only the email is dropped, and the
+  toast says `Attendee updated` either way.
+- **The command palette offers `Sign In` while you are signed in.** It sits in `QUICK ACTIONS`
+  above `New Event` and `Add Attendee`.
+- **A person's email is masked in the detail sheet (`••••••com`, `TAP TO COPY`) and shown in full
+  in the list behind it.** One of the two is wrong; the list is the one more people see.

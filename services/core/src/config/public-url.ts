@@ -15,38 +15,33 @@
  * Since no email exists yet (D18), the pass URL shown on screen is the ONLY
  * copy an attendee ever gets. A dead link there is a dead feature.
  *
- * WHAT IT IS NOW. A configured value. The app's public origin is deployment
- * knowledge — it cannot be derived from a request, and inferring it from
- * forwarded headers would mean trusting a header a client can set.
+ * WHAT IT IS NOW. A known constant per environment, overridable with
+ * PUBLIC_APP_URL. The app's public origin is deployment knowledge — it cannot
+ * be derived from a request, and inferring it from forwarded headers would
+ * mean trusting a header a client can set.
  */
 
-const FALLBACK_DEV_ORIGIN = 'http://localhost:5000';
+const DEV_ORIGIN = 'http://localhost:5000';
 
-let warned = false;
+/**
+ * There is one production web app and its host is not a secret or a surprise,
+ * so requiring the deployment to restate it buys nothing and costs a boot
+ * failure the first time someone forgets. The env var is the override, not the
+ * obligation.
+ */
+const PRODUCTION_ORIGIN = 'https://app.credopass.com';
 
 /**
  * The public origin of the web app, with no trailing slash.
  *
- * Unset in development: falls back to the Vite dev server and warns once.
- * Unset anywhere else: throws. Silently emitting a wrong link is the bug.
+ * `PUBLIC_APP_URL` wins when set. Otherwise: the deployed app in production,
+ * the Vite dev server everywhere else.
  */
 export function publicAppUrl(): string {
   const raw = process.env.PUBLIC_APP_URL?.trim();
 
   if (!raw) {
-    if (process.env.NODE_ENV === 'production') {
-      throw new Error(
-        'PUBLIC_APP_URL is not set. Pass links would point at the API host and 404. ' +
-          'Set it to the origin of the web app, e.g. https://app.credopass.com'
-      );
-    }
-    if (!warned) {
-      warned = true;
-      console.warn(
-        `⚠️  PUBLIC_APP_URL is not set — pass links will use ${FALLBACK_DEV_ORIGIN}`
-      );
-    }
-    return FALLBACK_DEV_ORIGIN;
+    return process.env.NODE_ENV === 'production' ? PRODUCTION_ORIGIN : DEV_ORIGIN;
   }
 
   let parsed: URL;
@@ -62,9 +57,8 @@ export function publicAppUrl(): string {
 }
 
 /**
- * Called at boot so a misconfigured deployment fails on startup rather than on
- * the first registration — the same reason the route registry is asserted
- * there.
+ * Called at boot so a malformed override fails on startup rather than on the
+ * first registration.
  */
 export function assertPublicAppUrl(): void {
   publicAppUrl();

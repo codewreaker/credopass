@@ -39,6 +39,7 @@ Nothing is "in progress" unless someone is actually working on it today.
 | ⬜ | No data migration from the pre-rewrite `users` table | [`DATABASE-MIGRATION.md`](DATABASE-MIGRATION.md) §5.4 | M |
 | ⬜ | `/analytics` draws the full dashboard from placeholder numbers, under a "these are made up" banner | [`NEXT-UI-LIST.md`](NEXT-UI-LIST.md) U1 | S |
 | 🔴 | Pending invitations show `link not shown`, and there is no email — the link is unrecoverable | [`NEXT-UI-LIST.md`](NEXT-UI-LIST.md) U6 | S |
+| 🔴 | Editing an attendee's email says "updated" and changes nothing | [`NEXT-UI-LIST.md`](NEXT-UI-LIST.md) U7 | S |
 | ⬜ | QR scan check-in is reported broken, never reproduced | [`NEXT-UI-LIST.md`](NEXT-UI-LIST.md) U2 | M |
 | ⬜ | A check-in does not reach other screens — polling, then SSE | [`LIVE-UPDATES.md`](LIVE-UPDATES.md) | M→L |
 | ⬜ | No email exists. Pass and invitation links must be shown on screen | [`API-FIRST-REBUILD.md`](API-FIRST-REBUILD.md) D18 | M |

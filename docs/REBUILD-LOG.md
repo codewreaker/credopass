@@ -936,19 +936,21 @@ is reached over plain http on a host the developer also runs the app on:
 Because no email exists yet (D18), the printed URL is the only copy of a pass anyone ever gets. The
 single artefact this product exists to hand an attendee was a dead link in production.
 
-**D41 — a user-facing origin is configuration, not something to infer from a request.**
-`services/core/src/config/public-url.ts` reads `PUBLIC_APP_URL`; `attendance.ts` and `public.ts` call
-`publicAppUrl()`. Unset in development it falls back to `http://localhost:5000` and warns once;
-unset under `NODE_ENV=production` the service refuses to boot, asserted next to
-`assertRouteRegistryComplete()`. A service that starts and then hands out dead links is worse than
-one that does not start.
+**D41 — a user-facing origin is deployment knowledge, not something to infer from a request.**
+`services/core/src/config/public-url.ts` holds it; `attendance.ts` and `public.ts` call
+`publicAppUrl()`. It is `https://app.credopass.com` under `NODE_ENV=production` and
+`http://localhost:5000` otherwise, with `PUBLIC_APP_URL` as an override.
+
+The first cut made the variable mandatory and refused to boot without it. That was wrong: there is
+one production web app, its host is not a secret, and making the deployment restate a constant buys
+nothing while guaranteeing a failed deploy the first time someone forgets. A known default with an
+override is the same safety for none of the cost.
 
 `X-Forwarded-Proto` was considered and rejected. It would fix the scheme and leave the host wrong,
 and it is a header a client can set — trusting it to build a credential-bearing URL trades one bug
 for a worse one.
 
-**Not done by code:** `PUBLIC_APP_URL=https://app.credopass.com` has to be set in Coolify before the
-next deploy. Passes already issued cannot be repaired; their URL was never stored, only printed.
+Passes already issued cannot be repaired; their URL was never stored, only printed.
 
 Found during the same walk and filed rather than fixed: `docs/UI-REDESIGN.md` R1–R5 (the app scrolls
 an inner box rather than the document, loading states render as confident content), and U2 looking
@@ -966,6 +968,14 @@ Google being the only sign-in means a headless run cannot log in, so the session
 hand (`nx run website:shots:login`) into a gitignored `.auth/state.json` and reused. Public screens
 are deliberately captured in a **separate anonymous context** — a public page has to be proved to
 work with no session, and shooting it signed in would hide exactly the bug worth catching.
+
+18 of the 19 screens were captured on 2026-11-06. Only `/invitations/$token` is missing, because
+U6 means no invitation link can be recovered to point it at — the bug is blocking its own
+screenshot.
+
+The fixtures were renamed out of `ZZ TEST` and into `Sunday Morning Service`, `Ama Mensah` and
+`Kwame Boateng`, because the screenshots are published on the marketing site and a page of test
+data reads as an unfinished product. Renaming them turned up U7.
 
 ---
 
