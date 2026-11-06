@@ -497,6 +497,15 @@ function AddAttendeeDialog({
             Send this to them yourself — CredoPass does not email passes yet, and this is the only
             copy.
           </p>
+          {/* U8. An event allows one live pass per person, so registering
+              someone who had already signed up themselves silently killed the
+              link they were holding — and the replacement appeared here, on a
+              screen they cannot see. Saying so does not undo it, but it tells
+              the one person who can put it right. */}
+          <p className="text-xs text-warning">
+            If they had already registered, their previous link has stopped working. This is now
+            their only pass.
+          </p>
         </div>
       ) : (
         <>

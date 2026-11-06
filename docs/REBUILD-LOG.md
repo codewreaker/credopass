@@ -1022,6 +1022,44 @@ there until the next deploy.
 
 ---
 
+## The pass that stopped working, and two wrong fixes (2026-11-06)
+
+Reported as "a link is no longer valid". Reproduced: register, keep the link, register the same
+person for the same event again, open the first link → `410 Gone — That pass has been revoked.`
+
+`Attendance.register` upserts the attendance row and says why — *"a double-tapped button is not an
+error"* — then calls `Pass.issue` five lines later, which revokes every live pass for that
+`(event, person)`. With no email (D18) the URL shown at registration is the only copy, so the worst
+sequence is not a double-tap: it is **staff registering someone who had already self-registered**.
+The attendee's pass dies remotely and silently, and the replacement appears on a screen they cannot
+see.
+
+**Two fixes were attempted and both were wrong. Recording them, because each was refuted by the
+system rather than by argument.**
+
+1. *Make `resend-pass` the single rotation point and have `register` stop minting.*
+   `POST /public/events/{id}/resend-pass` does nothing — it calls `findRegistration` and returns
+   `202 {accepted: true}` whatever it finds, deliberately, so that it cannot be used as an oracle
+   for "is this person attending this event" (T39), and it has no email to send anyway. It is a
+   placeholder.
+2. *Let several live passes coexist, since a pass names `(event, person)` and `attendance` is
+   unique on that pair, so they are duplicates of one fact.* The integration suite answered with
+   `23505 uq_passes_event_person_live`: `passes` has a partial unique index on
+   `(event_id, person_id) WHERE revoked_at IS NULL`. **One live pass per person per event is a
+   schema invariant.** The service comment that stated it was not describing a preference.
+
+**D43 — rotation on re-registration stays; the silence does not.** Given the invariant and a
+hash-only token that cannot be re-shown, the pass must rotate. So all three places a pass is issued
+now say so, unconditionally: the pass page, the public register sheet, and the staff
+`Add an attendee` dialog — the last in `text-warning`, because that is the one where someone else's
+link just died. Unconditional phrasing matters: a message that appeared only when a previous pass
+existed would be the oracle `resend-pass` is built to avoid.
+
+This is mitigation, not a cure. There is still no way to recover a pass without replacing it, and
+no way to tell the attendee it happened. Both wait on `NotificationService` (D18).
+
+---
+
 ---
 
 ## Conventions worth knowing

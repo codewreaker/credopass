@@ -181,7 +181,7 @@ In the UI, `link not shown` is replaced by a `New link` button on the row, and t
 **Not verified end to end against production** — the deployed API still has the old code, so the
 button will 500 there until the next deploy.
 
-### U8 🔴 Registering someone twice silently kills the pass they are holding · M — **CONFIRMED 2026-11-06**
+### U8 ✅ Registering someone twice silently kills the pass they are holding · M — **CONFIRMED and ADDRESSED 2026-11-06**
 
 Measured against production. Register, keep the link, register the same person for the same event
 again, then open the first link:
@@ -215,16 +215,45 @@ Revoking on re-issue is right in itself — two live credentials for one seat is
 that it happens as a side effect of an action that claims to be idempotent, with nothing said to
 anyone.
 
-**Fix, and it has the same shape as U6.** The token is hashed, so the existing pass cannot be
-handed back. Therefore `register` must stop minting one when a live, unexpired pass already exists:
-return `alreadyRecorded: true` and no token, and let `POST /public/events/{id}/resend-pass` — which
-exists already — be the single place a pass is deliberately rotated. The UI then says *"You are
-already registered. Lost your pass? Get a new link — the old one will stop working."* That makes
-the rotation a choice someone makes rather than a side effect they never see.
+**The fix proposed above was wrong, and the database said so.** Two attempts, recorded because the
+reasoning matters more than the patch:
 
-**Related, and part of the same lie:** `register` returns `alreadyRecorded: false` as a hardcoded
-literal, so the API can never report that someone was already on the list. Any UI that wanted to
-say "you are already registered" has nothing to read.
+1. *"Let `register` skip minting when a live pass exists, and make `resend-pass` the rotation
+   point."* Dead on arrival: `POST /public/events/{id}/resend-pass` does nothing. It calls
+   `findRegistration` and returns `202 {accepted: true}` **whatever it finds**, on purpose — a
+   different answer for a registered address would turn it into an oracle for "is this person
+   attending this event" (T39). With no email (D18) it has nothing to deliver either. It is a
+   placeholder for a notification service that does not exist.
+2. *"Let several live passes coexist, since they all resolve to the same attendance row."* The
+   integration suite failed with `23505 uq_passes_event_person_live`. `passes` carries a partial
+   unique index on `(event_id, person_id) WHERE revoked_at IS NULL`. **One live pass per person
+   per event is a schema invariant**, not an incidental choice in the service — and the comment on
+   `Pass.issue` that said so was right.
+
+So rotation on re-registration is **required**. Given that, and given the token is stored only as
+a hash and cannot be re-shown, the defect is not that the pass rotates. It is that it rotates
+**silently**, and that the person who loses their link is often not the person looking at the
+screen.
+
+**What was done instead — say it, unconditionally, in all three places a pass is issued:**
+
+| Where | Copy |
+|---|---|
+| `/p/$token` | "Save this link — it is the only copy of your pass, and it replaces any earlier one you were sent." |
+| The public register sheet | "…save the link, it's the only copy, and it replaces any pass you were sent before." |
+| Staff `Add an attendee` | "If they had already registered, their previous link has stopped working. This is now their only pass." — in `text-warning`, because this is the case where someone *else's* link just died. |
+
+Each is phrased as a fact about the page rather than a branch on what the server found, so none of
+them becomes the oracle that `resend-pass` is careful to avoid. The pass page's line also moved
+from `/45` to `/60` opacity — it is load-bearing and was the faintest text on the screen (R7).
+
+**Still open, and now the honest version of this ticket:** there is no way to recover a pass
+without replacing it, and no way to warn the attendee that it happened. Both need
+`NotificationService` (D18). Until then the copy above is the whole mitigation.
+
+**Related, unchanged:** `register` returns `alreadyRecorded: false` as a hardcoded literal. Left
+alone deliberately — returning the truth would hand the public endpoint exactly the oracle
+described above.
 
 ### U3 ⬜ Audit every screen in a browser · M
 

@@ -127,8 +127,15 @@ export default function PassPage() {
           </p>
         )}
 
-        <p className="text-[11px] text-primary-foreground/45">
-          Save this link. It is the only copy of your pass.
+        {/* Said unconditionally, and that is deliberate (U8). Registering again
+            rotates the pass — `uq_passes_event_person_live` allows exactly one
+            live pass per person per event — so whoever arrives here holding an
+            older link needs to know it has stopped working. Phrasing it as a
+            fact about this page rather than a branch on what we found keeps it
+            from being an oracle for "was this person already registered". */}
+        <p className="max-w-xs text-center text-[11px] text-primary-foreground/60">
+          Save this link — it is the only copy of your pass, and it replaces any
+          earlier one you were sent.
         </p>
 
         <SignUpNudge />

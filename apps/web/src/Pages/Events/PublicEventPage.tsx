@@ -337,7 +337,7 @@ function RegisterDialog({
       </div>
       <Input type="email" inputMode="email" placeholder="you@email.com" value={email} onChange={(e) => setEmail(e.target.value)} className="h-11 rounded-xl" />
       <p className="px-1 text-xs text-muted-foreground">
-        {`Let the host know you’re coming to “${event.name}”. We'll show your pass on the next screen — save the link, it's the only copy.`}
+        {`Let the host know you’re coming to “${event.name}”. We'll show your pass on the next screen — save the link, it's the only copy, and it replaces any pass you were sent before.`}
       </p>
     </SheetDialog>
   );
