@@ -41,11 +41,19 @@ function GoogleMark() {
  * resolves here in the FAILURE case — which is why the spinner is not cleared
  * on the happy path. Clearing it would flash the idle button over a page that
  * is already navigating away.
+ *
+ * A failure goes to `onError` when the caller provides one, so the app can show
+ * the full error screen instead of a line of red text under a button. The
+ * inline fallback stays for callers that have nowhere to send it.
  */
 export function GoogleButton({
   signInWithGoogle,
+  onError,
 }: {
-  signInWithGoogle: () => Promise<{ error: { message: string } | null }>
+  // `error` is deliberately `unknown`: the design system does not model the
+  // app's auth errors, it just reports that one happened.
+  signInWithGoogle: () => Promise<{ error: unknown }>
+  onError?: (error: unknown) => void
 }) {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -55,11 +63,21 @@ export function GoogleButton({
     setError(null)
 
     const { error } = await signInWithGoogle()
+    if (!error) return
 
-    if (error) {
-      setError(error.message)
-      setIsLoading(false)
+    if (onError) {
+      // The caller navigates away; leave the spinner up rather than flashing
+      // the idle button during the transition.
+      onError(error)
+      return
     }
+
+    const message =
+      typeof error === 'object' && error !== null && typeof (error as { message?: unknown }).message === 'string'
+        ? (error as { message: string }).message
+        : 'Sign-in could not be started.'
+    setError(message)
+    setIsLoading(false)
   }
 
   return (

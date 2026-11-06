@@ -25,6 +25,7 @@ import { Route as EventsNewRouteImport } from './routes/events/new'
 import { Route as EventsEventIdRouteImport } from './routes/events/$eventId'
 import { Route as EEventIdRouteImport } from './routes/e/$eventId'
 import { Route as CheckinEventIdRouteImport } from './routes/checkin/$eventId'
+import { Route as AuthErrorRouteImport } from './routes/auth/error'
 import { Route as AttendeesNewRouteImport } from './routes/attendees/new'
 import { Route as EventsEventIdEditRouteImport } from './routes/events/$eventId_.edit'
 import { Route as AttendeesUserIdEditRouteImport } from './routes/attendees/$userId_.edit'
@@ -109,6 +110,11 @@ const CheckinEventIdRoute = CheckinEventIdRouteImport.update({
   path: '/checkin/$eventId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthErrorRoute = AuthErrorRouteImport.update({
+  id: '/auth/error',
+  path: '/auth/error',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AttendeesNewRoute = AttendeesNewRouteImport.update({
   id: '/attendees/new',
   path: '/attendees/new',
@@ -133,6 +139,7 @@ export interface FileRoutesByFullPath {
   '/organizations': typeof OrganizationsRoute
   '/profile': typeof ProfileRoute
   '/attendees/new': typeof AttendeesNewRoute
+  '/auth/error': typeof AuthErrorRoute
   '/checkin/$eventId': typeof CheckinEventIdRoute
   '/e/$eventId': typeof EEventIdRoute
   '/events/$eventId': typeof EventsEventIdRoute
@@ -154,6 +161,7 @@ export interface FileRoutesByTo {
   '/organizations': typeof OrganizationsRoute
   '/profile': typeof ProfileRoute
   '/attendees/new': typeof AttendeesNewRoute
+  '/auth/error': typeof AuthErrorRoute
   '/checkin/$eventId': typeof CheckinEventIdRoute
   '/e/$eventId': typeof EEventIdRoute
   '/events/$eventId': typeof EventsEventIdRoute
@@ -176,6 +184,7 @@ export interface FileRoutesById {
   '/organizations': typeof OrganizationsRoute
   '/profile': typeof ProfileRoute
   '/attendees/new': typeof AttendeesNewRoute
+  '/auth/error': typeof AuthErrorRoute
   '/checkin/$eventId': typeof CheckinEventIdRoute
   '/e/$eventId': typeof EEventIdRoute
   '/events/$eventId': typeof EventsEventIdRoute
@@ -199,6 +208,7 @@ export interface FileRouteTypes {
     | '/organizations'
     | '/profile'
     | '/attendees/new'
+    | '/auth/error'
     | '/checkin/$eventId'
     | '/e/$eventId'
     | '/events/$eventId'
@@ -220,6 +230,7 @@ export interface FileRouteTypes {
     | '/organizations'
     | '/profile'
     | '/attendees/new'
+    | '/auth/error'
     | '/checkin/$eventId'
     | '/e/$eventId'
     | '/events/$eventId'
@@ -241,6 +252,7 @@ export interface FileRouteTypes {
     | '/organizations'
     | '/profile'
     | '/attendees/new'
+    | '/auth/error'
     | '/checkin/$eventId'
     | '/e/$eventId'
     | '/events/$eventId'
@@ -263,6 +275,7 @@ export interface RootRouteChildren {
   OrganizationsRoute: typeof OrganizationsRoute
   ProfileRoute: typeof ProfileRoute
   AttendeesNewRoute: typeof AttendeesNewRoute
+  AuthErrorRoute: typeof AuthErrorRoute
   CheckinEventIdRoute: typeof CheckinEventIdRoute
   EEventIdRoute: typeof EEventIdRoute
   EventsEventIdRoute: typeof EventsEventIdRoute
@@ -391,6 +404,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CheckinEventIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/auth/error': {
+      id: '/auth/error'
+      path: '/auth/error'
+      fullPath: '/auth/error'
+      preLoaderRoute: typeof AuthErrorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/attendees/new': {
       id: '/attendees/new'
       path: '/attendees/new'
@@ -423,6 +443,7 @@ const rootRouteChildren: RootRouteChildren = {
   OrganizationsRoute: OrganizationsRoute,
   ProfileRoute: ProfileRoute,
   AttendeesNewRoute: AttendeesNewRoute,
+  AuthErrorRoute: AuthErrorRoute,
   CheckinEventIdRoute: CheckinEventIdRoute,
   EEventIdRoute: EEventIdRoute,
   EventsEventIdRoute: EventsEventIdRoute,

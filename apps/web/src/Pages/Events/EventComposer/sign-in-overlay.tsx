@@ -19,10 +19,14 @@
  */
 
 import { LogIn } from 'lucide-react'
+import { useNavigate } from '@tanstack/react-router'
 import AuthPage from '@credopass/ui/components/login'
 import { signInWithGoogle } from '../../../supabase'
+import { authErrorSearch } from '../../../lib/auth-error'
 
 export function SignInOverlay() {
+  const navigate = useNavigate()
+
   return (
     <div
       className="absolute inset-0 z-20 flex items-start justify-center overflow-y-auto bg-background/60 p-4 backdrop-blur-md sm:items-center"
@@ -42,6 +46,9 @@ export function SignInOverlay() {
             composer behind the glass is already holding their place. */}
         <AuthPage
           signInWithGoogle={() => signInWithGoogle('/events/new')}
+          onError={(error) =>
+            (navigate as any)({ to: '/auth/error', search: authErrorSearch(error) })
+          }
           title="Welcome to CredoPass"
           subtitle="Sign in to create your event."
         />

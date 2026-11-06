@@ -6,10 +6,12 @@ import { GoogleButton } from './google-button'
  */
 export function AuthPage({
   signInWithGoogle,
+  onError,
   title = 'Welcome back',
   subtitle = 'Sign in to your account to continue',
 }: {
-  signInWithGoogle: () => Promise<{ error: { message: string } | null }>
+  signInWithGoogle: () => Promise<{ error: unknown }>
+  onError?: (error: unknown) => void
   title?: string
   subtitle?: string
 }) {
@@ -20,7 +22,7 @@ export function AuthPage({
         <p className="mt-1.5 text-sm text-muted-foreground">{subtitle}</p>
       </div>
 
-      <GoogleButton signInWithGoogle={signInWithGoogle} />
+      <GoogleButton signInWithGoogle={signInWithGoogle} onError={onError} />
     </div>
   )
 }

@@ -3,6 +3,7 @@ import { Zap, CheckCircle2, BarChart3, CalendarCheck } from 'lucide-react'
 import AuthPage from '@credopass/ui/components/login'
 import { GlowingQRCode } from '@credopass/ui/components/glowing-qr-code'
 import { supabase as supabaseInstance, signInWithGoogle } from '../../supabase'
+import { authErrorSearch } from '../../lib/auth-error'
 import { useNavigate, useSearch } from '@tanstack/react-router'
 import { AuthScreen } from '../../containers/AuthScreen'
 import { AppShowcase } from './app-showcase'
@@ -69,6 +70,9 @@ export default function LoginPage() {
     >
       <AuthPage
         signInWithGoogle={() => signInWithGoogle(destination)}
+        onError={(error) =>
+          (navigate as any)({ to: '/auth/error', search: authErrorSearch(error) })
+        }
         title={out ? 'Signed out — see you soon' : 'Welcome back'}
         subtitle={out ? 'You’ve been safely signed out. Sign back in whenever you’re ready.' : 'Sign in to your account to continue'}
       />

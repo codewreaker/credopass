@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { createRootRoute, Outlet, useRouterState } from "@tanstack/react-router";
+import { createRootRoute, Outlet, redirect, useRouterState } from "@tanstack/react-router";
 import { TopNavBar } from "../containers/TopNavBar/index";
 import LeftSidebar, { SidebarInset, SidebarTrigger, OrgSelector } from "../containers/LeftSidebar";
 import { RightSidebar } from "../containers/RightSidebar";
@@ -14,6 +14,8 @@ import { useTheme } from "@credopass/lib/theme";
 import { useCommandPallete } from "../hooks";
 import { SessionProvider } from "../contexts/session";
 import { ToolbarSlotProvider } from "../containers/TopNavBar/toolbar-slot";
+import { readAuthErrorFromUrl } from "@credopass/lib/supabase";
+import { authErrorSearch } from "../lib/auth-error";
 
 /**
  * Routes that render standalone — no sidebar, no top bar, no org switcher.
@@ -29,6 +31,7 @@ import { ToolbarSlotProvider } from "../containers/TopNavBar/toolbar-slot";
  */
 const STANDALONE_ROUTES = [
   '/login',
+  '/auth/',
   '/upgrade',
   '/invitations/',
   '/e/',
@@ -36,6 +39,37 @@ const STANDALONE_ROUTES = [
 ];
 
 export const Route = createRootRoute({
+  /**
+   * Catch a provider error on the way BACK from Google.
+   *
+   * GoTrue's `redirectErrors` sends `error` / `error_description` / `error_code`
+   * to whatever `redirect_to` named — so the failure arrives on an ordinary app
+   * route, not on one built to receive it. Before this, declining consent at
+   * Google landed on `/events` with no session and no explanation: the console
+   * simply behaved as though you had never signed in.
+   *
+   * It has to run HERE, in the root's `beforeLoad`, rather than in an effect on
+   * mount. `/events` is behind `requireAuth`, whose own `beforeLoad` redirects
+   * to `/login` first — so a mount effect never got the chance, and the error
+   * was swallowed into a sign-in screen. The root's beforeLoad runs before any
+   * child's.
+   *
+   * `replace` keeps the error URL out of history, so Back does not re-trigger it.
+   */
+  beforeLoad: ({ location }) => {
+    if (location.pathname.startsWith('/auth/')) return;
+
+    const search = location.searchStr ?? '';
+    const hash = location.hash ? `#${location.hash}` : '';
+    const problem = readAuthErrorFromUrl(`${location.pathname}${search}${hash}`);
+    if (!problem) return;
+
+    throw redirect({
+      to: '/auth/error',
+      search: authErrorSearch(problem),
+      replace: true,
+    });
+  },
   component: RootRoute,
 })
 
