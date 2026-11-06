@@ -24,14 +24,11 @@ import {
   CommandShortcut,
 } from '@credopass/ui/components/command';
 
-import { launchSignInForm } from '../SignInModal/index';
-import type { LauncherState } from '@credopass/lib/stores';
 import { useNavigate } from '@tanstack/react-router';
 
 const CommandPalette: React.FC<{
   onClose: () => void;
-  openLauncher: ({ content, onClose, onOpen }: Omit<LauncherState, 'isOpen'>) => void;
-}> = ({ onClose, openLauncher }) => {
+}> = ({ onClose }) => {
   const navigate = useNavigate();
   const listRef = useRef<HTMLDivElement>(null);
 
@@ -54,10 +51,17 @@ const CommandPalette: React.FC<{
     navigate({ to: '/attendees/new' });
   }, [onClose, navigate]);
 
+  // Sign-in is a route, not a modal. The modal this replaced never called
+  // Supabase at all — it validated the fields and console.logged them.
   const handleSignIn = useCallback(() => {
     onClose();
-    launchSignInForm({}, openLauncher);
-  }, [onClose, openLauncher]);
+    navigate({ to: '/login' });
+  }, [onClose, navigate]);
+
+  const handleProfile = useCallback(() => {
+    onClose();
+    navigate({ to: '/profile' });
+  }, [onClose, navigate]);
 
   const handleNavigate = useCallback(
     (path: string) => {
@@ -105,7 +109,7 @@ const CommandPalette: React.FC<{
 
   useHotkey('Mod+P', (event) => {
     event.preventDefault();
-    handleSignIn();
+    handleProfile();
   });
 
   useHotkey('Mod+S', (event) => {
@@ -176,7 +180,7 @@ const CommandPalette: React.FC<{
         <CommandSeparator />
 
         <CommandGroup heading="Account">
-          <CommandItem onSelect={handleSignIn} className="command-palette-item">
+          <CommandItem onSelect={handleProfile} className="command-palette-item">
             <User className="command-palette-item-icon" />
             <span>Profile</span>
             <CommandShortcut>{'⌘P'}</CommandShortcut>

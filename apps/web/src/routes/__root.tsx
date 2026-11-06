@@ -18,8 +18,8 @@ import { ToolbarSlotProvider } from "../containers/TopNavBar/toolbar-slot";
 /**
  * Routes that render standalone — no sidebar, no top bar, no org switcher.
  *
- * Two reasons land here. `/login` and `/reset-password` are pre-console: there
- * is no organization to frame them with yet. `/e/`, `/p/` and `/invitations/`
+ * Two reasons land here. `/login` is pre-console: there is no organization to
+ * frame it with yet. `/e/`, `/p/` and `/invitations/`
  * are attendee surfaces — someone opened a link from a message. They have no
  * account, and console chrome would imply they could use one.
  *
@@ -29,7 +29,6 @@ import { ToolbarSlotProvider } from "../containers/TopNavBar/toolbar-slot";
  */
 const STANDALONE_ROUTES = [
   '/login',
-  '/reset-password',
   '/upgrade',
   '/invitations/',
   '/e/',

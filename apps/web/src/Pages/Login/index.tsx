@@ -1,15 +1,8 @@
 import { useEffect, useState } from 'react'
-import { ArrowLeft, Zap, CheckCircle2, BarChart3, CalendarCheck } from 'lucide-react'
+import { Zap, CheckCircle2, BarChart3, CalendarCheck } from 'lucide-react'
 import AuthPage from '@credopass/ui/components/login'
-import { EmailPasswordForm, type FormView } from '@credopass/ui/components/login/email-password-form'
 import { GlowingQRCode } from '@credopass/ui/components/glowing-qr-code'
-import {
-  supabase as supabaseInstance,
-  sendPasswordReset,
-  signInWithEmail,
-  signInWithGithub,
-  signUpWithEmail,
-} from '../../supabase'
+import { supabase as supabaseInstance, signInWithGoogle } from '../../supabase'
 import { useNavigate, useSearch } from '@tanstack/react-router'
 import { AuthScreen } from '../../containers/AuthScreen'
 import { AppShowcase } from './app-showcase'
@@ -22,12 +15,9 @@ const FEATURES = [
 ] as const
 
 export default function LoginPage() {
-  const { view, out, redirect } = useSearch({ from: '/login' })
+  const { out, redirect } = useSearch({ from: '/login' })
   const navigate = useNavigate({ from: '/login' })
   const [hasSession, setHasSession] = useState(false)
-  // Which view the email form is showing. The form draws its own "Back" in the
-  // forgot and notice views, so this page must not draw a second one.
-  const [formView, setFormView] = useState<FormView>('signIn')
 
   // Where to land after auth: the private route the guard sent us back from
   // (same-origin relative paths only), else the events home.
@@ -54,12 +44,6 @@ export default function LoginPage() {
     return () => sub.subscription.unsubscribe()
   }, [destination, navigate])
 
-  const showEmailForm = () =>
-    navigate({ search: (prev) => ({ ...prev, view: 'email' }), replace: true })
-
-  const showOptions = () =>
-    navigate({ search: (prev) => ({ ...prev, view: 'social' }), replace: true })
-
   return (
     <AuthScreen
       headline={<>Know who<br />actually shows up.</>}
@@ -83,32 +67,11 @@ export default function LoginPage() {
       onClose={() => (navigate as any)({ to: destination })}
       footerText={`© ${new Date().getFullYear()} CredoPass · Built for live events`}
     >
-      {view === 'email' ? (
-        <>
-          {formView !== 'forgot' && formView !== 'notice' && (
-            <button
-              onClick={showOptions}
-              className="mb-6 flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors duration-150 cursor-pointer"
-            >
-              <ArrowLeft size={14} />
-              Back
-            </button>
-          )}
-          <EmailPasswordForm
-            signInCallback={(values) => signInWithEmail(values.email, values.password)}
-            signUpCallback={(values) => signUpWithEmail(values.email, values.password)}
-            resetCallback={(email) => sendPasswordReset(email)}
-            onViewChange={setFormView}
-          />
-        </>
-      ) : (
-        <AuthPage
-          signInWithGithub={signInWithGithub}
-          signInAsEmail={showEmailForm}
-          title={out ? 'Signed out — see you soon' : 'Welcome back'}
-          subtitle={out ? 'You’ve been safely signed out. Sign back in whenever you’re ready.' : 'Sign in to your account to continue'}
-        />
-      )}
+      <AuthPage
+        signInWithGoogle={() => signInWithGoogle(destination)}
+        title={out ? 'Signed out — see you soon' : 'Welcome back'}
+        subtitle={out ? 'You’ve been safely signed out. Sign back in whenever you’re ready.' : 'Sign in to your account to continue'}
+      />
     </AuthScreen>
   )
 }

@@ -162,7 +162,7 @@ function SignUpNudge() {
         variant="ghost"
         size="sm"
         className="mt-2 rounded-full text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground"
-        render={(props) => <Link {...props} to="/login" search={{ view: 'social' }} />}
+        render={(props) => <Link {...props} to="/login" search={{}} />}
       >
         Create a free account <ArrowRight size={14} />
       </Button>

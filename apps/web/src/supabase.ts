@@ -7,13 +7,8 @@ import { SUPASE_CRED } from './config'
 
 export const supabase = createClient(SUPASE_CRED.URL, SUPASE_CRED.ANON_KEY)
 
-export const {
-  signInWithEmail,
-  signInWithGithub,
-  signUpWithEmail,
-  sendPasswordReset,
-  updatePassword,
-} = createAuthClient(supabase)
+/** Google is the only provider — see `packages/lib/src/supabase/auth.ts`. */
+export const { signInWithGoogle } = createAuthClient(supabase)
 
 /** Current session access token, for authenticated API requests. */
 export async function getAccessToken(): Promise<string | null> {

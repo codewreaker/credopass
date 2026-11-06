@@ -26,6 +26,6 @@ export const Route = createFileRoute('/')({
     }
 
     if (signedIn) throw redirect({ to: '/events', replace: true })
-    throw redirect({ to: '/login', search: { view: 'social' }, replace: true })
+    throw redirect({ to: '/login', search: {}, replace: true })
   },
 })

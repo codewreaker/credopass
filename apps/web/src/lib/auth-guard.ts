@@ -22,6 +22,6 @@ import { supabase } from '../supabase';
 export async function requireAuth({ location }: { location: { href: string } }) {
   const { data } = await supabase.auth.getSession();
   if (!data.session) {
-    throw redirect({ to: '/login', search: { view: 'social', redirect: location.href } });
+    throw redirect({ to: '/login', search: { redirect: location.href } });
   }
 }

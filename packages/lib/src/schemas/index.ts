@@ -12,5 +12,4 @@ export * from './tables';
 export * from './enums';
 
 // email from schemas
-export * from './email.schemas'
 

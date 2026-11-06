@@ -55,7 +55,7 @@ flowchart LR
 |------|------|
 | `src/routes/` | File-based route definitions (+ generated `routeTree.gen.ts`). |
 | `src/Pages/` | Screen implementations (`Events/`, `Attendees/`, `CheckIn/`, `Analytics/`, `Account/`, `Upgrade/`, `Pass/`, `Login/`, `AcceptInvitation/`). |
-| `src/containers/` | App shell + cross-page features: `LeftSidebar`, `TopNavBar`, `RightSidebar`, `UserMenu`, `OrgSelector`, `Command` (⌘K), `SignInModal`, `AuthScreen`, `ActionCards`. |
+| `src/containers/` | App shell + cross-page features: `LeftSidebar`, `TopNavBar`, `RightSidebar`, `UserMenu`, `OrgSelector`, `Command` (⌘K), `AuthScreen`, `ActionCards`. |
 | `src/contexts/session.tsx` | `SessionProvider`, `useSession`, `useCan`. The app's bootstrap. |
 | `src/lib/` | `auth-guard.ts`, `errors.ts`, `query-client.ts`. |
 | `src/hooks/`, `src/config.ts`, `src/supabase.ts` | Command palette hook, Mapbox token, Supabase client. |

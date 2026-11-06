@@ -35,7 +35,6 @@ the client's types all follow. **Never hand-write a type or validator that dupli
 | `src/schemas/tables/` | **Drizzle table definitions** — the source of truth. 11 tables (see below). |
 | `src/schemas/tables/index.ts` | Drizzle `relations()` + the composed `schema` object handed to the DB client. |
 | `src/schemas/enums.ts` | Shared Zod enums (event status, org plan, org role, check-in method, attendance state). |
-| `src/schemas/email.schemas.ts` | The sign-in / sign-up / reset-password form validators. |
 | `src/stores/` | Zustand stores (`appStore`, `toolbarStore`) shared by the web UI. |
 | `src/theme/` | `ThemeProvider` + `useTheme` (light/dark), used by web and website. |
 | `src/supabase/` | Shared Supabase client + auth helpers. |
@@ -111,7 +110,7 @@ There is no loyalty tier enum. Loyalty was deleted outright in the rebuild.
 import { schema, events, attendance } from '@credopass/lib/schemas';
 
 // Shared enums and the auth-form validators
-import { OrgRoleEnum, resetPasswordSchema } from '@credopass/lib/schemas';
+import { OrgRoleEnum } from '@credopass/lib/schemas';
 // NOTE: there are no per-table Zod validators here any more. Request validation
 // lives in the Zod schemas beside each route in services/core, which are also
 // what generate the OpenAPI document — one definition, not two.

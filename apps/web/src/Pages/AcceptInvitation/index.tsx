@@ -46,7 +46,7 @@ export default function AcceptInvitationPage() {
     if (!session) {
       navigate({
         to: '/login',
-        search: { view: 'social', redirect: `/invitations/${token}` },
+        search: { redirect: `/invitations/${token}` },
         replace: true,
       });
       return;
@@ -125,7 +125,7 @@ export default function AcceptInvitationPage() {
               onClick={() =>
                 navigate({
                   to: '/login',
-                  search: { view: 'email', out: true, redirect: `/invitations/${token}` },
+                  search: { out: true, redirect: `/invitations/${token}` },
                 })
               }
             >

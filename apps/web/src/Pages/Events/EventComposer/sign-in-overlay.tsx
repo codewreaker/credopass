@@ -18,18 +18,11 @@
  * disabled-until-authenticated design is simpler than saving one would be.
  */
 
-import { ArrowLeft, LogIn } from 'lucide-react'
+import { LogIn } from 'lucide-react'
 import AuthPage from '@credopass/ui/components/login'
-import { EmailPasswordForm, type FormView } from '@credopass/ui/components/login/email-password-form'
-import { useState } from 'react'
-import { sendPasswordReset, signInWithEmail, signInWithGithub, signUpWithEmail } from '../../../supabase'
+import { signInWithGoogle } from '../../../supabase'
 
 export function SignInOverlay() {
-  const [showEmail, setShowEmail] = useState(false)
-  // The email form draws its own "Back" in the forgot and notice views, so this
-  // component must not draw a second one.
-  const [formView, setFormView] = useState<FormView>('signIn')
-
   return (
     <div
       className="absolute inset-0 z-20 flex items-start justify-center overflow-y-auto bg-background/60 p-4 backdrop-blur-md sm:items-center"
@@ -45,32 +38,13 @@ export function SignInOverlay() {
           <LogIn size={18} />
         </div>
 
-        {showEmail ? (
-          <>
-            {formView !== 'forgot' && formView !== 'notice' && (
-              <button
-                onClick={() => setShowEmail(false)}
-                className="mb-6 flex items-center gap-1.5 text-sm text-muted-foreground transition-colors duration-150 hover:text-foreground cursor-pointer"
-              >
-                <ArrowLeft size={14} />
-                Back
-              </button>
-            )}
-            <EmailPasswordForm
-              signInCallback={(values) => signInWithEmail(values.email, values.password)}
-              signUpCallback={(values) => signUpWithEmail(values.email, values.password)}
-              resetCallback={(email) => sendPasswordReset(email)}
-              onViewChange={setFormView}
-            />
-          </>
-        ) : (
-          <AuthPage
-            signInWithGithub={signInWithGithub}
-            signInAsEmail={() => setShowEmail(true)}
-            title="Welcome to CredoPass"
-            subtitle="Sign in or sign up to create your event."
-          />
-        )}
+        {/* Back here, not /events: the visitor came to make THIS event, and the
+            composer behind the glass is already holding their place. */}
+        <AuthPage
+          signInWithGoogle={() => signInWithGoogle('/events/new')}
+          title="Welcome to CredoPass"
+          subtitle="Sign in to create your event."
+        />
       </div>
     </div>
   )

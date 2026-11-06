@@ -1,7 +1,6 @@
 //this hook is temporarily in the ui package, but it should be moved to lib once I figure out the best way to handle cross-package dependencies for hooks that are used in both packages (e.g. usePrevious)
 import { useEffect, useCallback, useRef } from 'react';
 import CommandPalette from '../containers/Command/index';
-import { launchSignInForm } from '../containers/SignInModal/index';
 import { useNavigate } from '@tanstack/react-router';
 import { useLauncher } from '@credopass/lib/stores';
 
@@ -13,20 +12,20 @@ export const useCommandPallete = () => {
 
     const openCommandPalette = useCallback(() => {
         openLauncher({
-            content: <CommandPalette onClose={closeLauncher} openLauncher={openLauncher} />,
+            content: <CommandPalette onClose={closeLauncher} />,
             onClose: closeLauncher,
         });
     }, [openLauncher, closeLauncher]);
 
     // Keyboard shortcuts - stable ref pattern (advanced-event-handler-refs)
-    const shortcutsRef = useRef({ openCommandPalette, openLauncher, navigate });
+    const shortcutsRef = useRef({ openCommandPalette, navigate });
     //@todo look into this
     // eslint-disable-next-line react-hooks/refs
-    shortcutsRef.current = { openCommandPalette, openLauncher, navigate };
+    shortcutsRef.current = { openCommandPalette, navigate };
 
     useEffect(() => {
         const down = (e: KeyboardEvent) => {
-            const { openCommandPalette, openLauncher, navigate } = shortcutsRef.current;
+            const { openCommandPalette, navigate } = shortcutsRef.current;
 
             if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
                 e.preventDefault();
@@ -62,7 +61,7 @@ export const useCommandPallete = () => {
                         break;
                     case 'p':
                         e.preventDefault();
-                        launchSignInForm({}, openLauncher);
+                        navigate({ to: '/profile' });
                         break;
                 }
             }
