@@ -6,7 +6,7 @@
 >
 > Read it top to bottom to understand the system as it stands.
 
-**Status:** Phase 1 mostly complete · web app rewired onto `/api/v1/core` · **Last updated:** 2026-07-27
+**Status:** Phase 1 mostly complete · web app rewired onto `/api/v1/core` · **Last updated:** 2026-11-06
 
 ---
 
@@ -759,6 +759,61 @@ half-day polling fix that closes the report everywhere except the sub-second doo
 SSE design rewritten for the system as it exists — no device tokens (so `EventSource` can't carry
 the bearer token and the client reads the stream with `fetch`), `/api/v1/core` paths, a dedicated
 `LISTEN` connection outside the pool, and `bigserial` gaps in replay. Decisions D27–D30.
+
+---
+
+## A second identity for the same email 500'd every authenticated request (2026-11-06)
+
+Reported as "the API is broken when I try to create events". It was not the events endpoint:
+`POST /api/v1/core/events` answered **201** to curl every time, including the exact body the
+composer sends. `/me/context` and `/organizations` were answering **500**, so the console never
+had a tenant and nothing in it worked — event creation was just the first thing noticed.
+
+### The bug: `accounts.email` was treated as a key by the database and as a mirror by the code
+
+`resolveCaller` identifies a caller by `(issuer, subject)` and — correctly, and loudly
+commented — refuses to look up an existing account by email, because any issuer that will mint
+a token for an address could then take that account over.
+
+But on first sight of a new `(issuer, subject)` it inserted an `accounts` row carrying the
+asserted address, and `uq_accounts_email` is `UNIQUE (lower(email)) WHERE email IS NOT NULL`.
+So the moment one human arrived with a *second* provider identity — a password sign-up and the
+GitHub button, or (the case that found it) a Supabase user recreated under a new `sub` — the
+insert raised, nothing caught it, and **every authenticated request that account made answered
+500**. Not the first one: every one, forever, because the identity row was never created and
+the next request took the same branch again.
+
+```
+identities                                  accounts
+  sub a69c2b86…  →  account 9a3c6d9d…          9a3c6d9d…  israel…@gmail.com
+  sub 3c245db0…  →  💥 insert accounts(email: 'israel…@gmail.com') → 23505
+```
+
+### The fix
+
+The address is a **mirror** of what the provider asserted, not an identity. When it is already
+claimed, the new account takes none and the address lives on the identity row, which has no
+such index — so nothing asserted is lost, and `(issuer, subject)` remains the only key. The
+two identities get two accounts, which is the honest answer: nothing has proved they are the
+same person.
+
+- Pre-flight `emailIsUnclaimed` decides whether to mirror.
+- A unique-violation on `uq_accounts_email` is caught and retried once with no mirrored
+  address, for the race between the check and the insert.
+- `Caller.email` falls back to the asserted address when the account row holds none, so the
+  greeting and `/me` still show something.
+
+### Verification
+
+Three tests in `src/test/integration/identity.test.ts`, red before the change and green after:
+a second identity gets its own account rather than raising; the address and its verified flag
+survive on the identity row; and six concurrent first-sightings of one address all answer, with
+exactly one of them mirroring it. Full `lint` + `typecheck` + `test` + `test:integration` pass.
+
+### Not fixed here
+
+A driver error still escapes as a bare 500 rather than a `ProblemError`. That is the reason
+this took a browser session to find instead of being legible from the response body.
 
 ---
 

@@ -70,6 +70,35 @@ class LostIdentityRace extends Error {
   }
 }
 
+const UNIQUE_VIOLATION = '23505';
+
+/**
+ * Did this fail because `uq_accounts_email` rejected the row?
+ *
+ * Drizzle wraps the driver error in a `DrizzleQueryError`, so the pg error —
+ * the only thing carrying `code` and `constraint` — is one level down in
+ * `cause`. Postgres reports the INDEX name in `constraint` for a unique-index
+ * violation, which is why the literal below is the index name.
+ */
+const isAccountEmailConflict = (error: unknown): boolean => {
+  const driver = ((error as { cause?: unknown })?.cause ?? error) as {
+    code?: string;
+    constraint?: string;
+  };
+  return driver?.code === UNIQUE_VIOLATION && driver?.constraint === 'uq_accounts_email';
+};
+
+/** Is this address free to mirror onto a NEW account row? */
+async function emailIsUnclaimed(db: Database, email: string | null): Promise<boolean> {
+  if (!email) return false;
+  const [taken] = await db
+    .select({ id: accounts.id })
+    .from(accounts)
+    .where(sql`lower(${accounts.email}) = ${email.toLowerCase()}`)
+    .limit(1);
+  return !taken;
+}
+
 /**
  * Find the account behind `(issuer, subject)`, creating it on first sight.
  *
@@ -99,10 +128,23 @@ export async function resolveCaller(db: Database, input: ResolveInput): Promise<
       .set({ email, emailVerified, lastLoginAt: new Date() })
       .where(eq(identities.id, existing[0].id));
   } else {
-    // A new (issuer, subject). Note we do NOT look for an existing account by
-    // email and attach to it — that would let anyone who can get a token from
-    // any registered issuer for an address take over that account.
+    // A new (issuer, subject).
     //
+    // `accounts.email` is a MIRROR of what the provider asserted, not a key.
+    // `uq_accounts_email` exists so one address is not spread over several
+    // account rows — it is NOT an identity, and it must never be treated as
+    // one: attaching to the account that already holds the address would let
+    // anyone who can get a token for it from any registered issuer take that
+    // account over.
+    //
+    // So when the address is already claimed, the new account takes none and
+    // the address lives on the identity row, which has no such index. This is
+    // the ordinary case of one human with two provider identities — a password
+    // sign-up and the GitHub button, or a Supabase user that was recreated —
+    // and before this it was a 500 on EVERY authenticated request they made,
+    // because the account insert below raised and nothing caught it.
+    const accountEmail = (await emailIsUnclaimed(db, email)) ? email : null;
+
     // Concurrency matters here, and used to be got wrong. A brand-new caller's
     // first page load fires several requests at once; every one of them misses
     // the SELECT above, and every one of them tried to insert. The unique index
@@ -112,12 +154,12 @@ export async function resolveCaller(db: Database, input: ResolveInput): Promise<
     // Two things fix it. The insert tolerates the conflict instead of raising,
     // and the pair is one transaction — so a lost race rolls the account back
     // rather than leaving an orphan with no identity pointing at it.
-    const created = await db
-      .transaction(async (tx) => {
+    const createAccount = (mirroredEmail: string | null) =>
+      db.transaction(async (tx) => {
         const [account] = await tx
           .insert(accounts)
           .values({
-            email,
+            email: mirroredEmail,
             displayName: asString(input.claims.name),
             lastSeenAt: new Date(),
           })
@@ -131,6 +173,8 @@ export async function resolveCaller(db: Database, input: ResolveInput): Promise<
             subject: input.subject,
             providerKind: input.providerKind,
             orgIdentityProviderId: input.orgIdentityProviderId ?? null,
+            // The address is recorded HERE regardless of whether the account
+            // row could mirror it, so nothing the provider asserted is lost.
             email,
             emailVerified,
             lastLoginAt: new Date(),
@@ -143,11 +187,20 @@ export async function resolveCaller(db: Database, input: ResolveInput): Promise<
         if (inserted.length === 0) throw new LostIdentityRace();
 
         return account.id;
-      })
-      .catch((error: unknown) => {
-        if (error instanceof LostIdentityRace) return null;
-        throw error;
       });
+
+    const lostRace = (error: unknown): null => {
+      if (error instanceof LostIdentityRace) return null;
+      throw error;
+    };
+
+    const created = await createAccount(accountEmail).catch((error: unknown) => {
+      // Another sign-in claimed the address between the check and the insert.
+      // Rare, and the answer is the same as the checked case: keep the address
+      // on the identity only.
+      if (isAccountEmailConflict(error)) return createAccount(null).catch(lostRace);
+      return lostRace(error);
+    });
 
     if (created) {
       accountId = created;
@@ -182,7 +235,10 @@ export async function resolveCaller(db: Database, input: ResolveInput): Promise<
 
   return {
     accountId,
-    email: account?.email ?? null,
+    // The account row may carry no address — another account already holds it
+    // (see the mirror note above) — so fall back to what this token asserted.
+    // Display data either way; nothing identifies a caller by it.
+    email: account?.email ?? email,
     displayName: account?.displayName ?? null,
     memberships,
   };
