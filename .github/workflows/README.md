@@ -6,7 +6,12 @@ This directory contains CI/CD workflows for the CredoPass monorepo.
 
 ## Workflows
 
-### 1. `ci-web.yml` - Web App CI/CD
+### 1. `ci-web.yml` - Web App CI/CD — **DISABLED**
+
+> This workflow is `disabled_manually` in GitHub Actions and does not run. The frontends are
+> deployed by **Vercel's own Git integration** on every push, with no involvement from Actions.
+> The `VERCEL_*` secrets below are only needed if this workflow is ever re-enabled. Kept for that
+> possibility; delete it if Vercel's integration is the permanent answer.
 **Triggers:** 
 - Push to `main`/`develop` (with path filters)
 - Manual workflow dispatch
@@ -55,7 +60,7 @@ This directory contains CI/CD workflows for the CredoPass monorepo.
 
 The workflows are completely independent:
 
-- **Web changes** → Only `ci-web.yml` runs
+- **Web changes** → Vercel deploys directly (`ci-web.yml` is disabled)
 - **API changes** → Only `ci-api.yml` runs (manual trigger)
 - **Manual trigger** → Choose which to deploy via `manual-deploy.yml`
 
@@ -73,7 +78,7 @@ The workflows are completely independent:
 
 ## Required Secrets
 
-### Vercel (Web App)
+### Vercel (Web App) — only if `ci-web.yml` is re-enabled
 ```
 VERCEL_TOKEN          # Vercel API token
 VERCEL_ORG_ID         # Vercel organization ID
@@ -165,7 +170,7 @@ bun nx show projects --affected
 **Scenario 1: Only Web Changes**
 1. Modify code in `apps/web/` or `packages/ui/`
 2. Push to `main` or `develop`
-3. `ci-web.yml` runs: quality checks → build → deploy to Vercel
+3. Vercel's Git integration builds and deploys the frontends (`ci-web.yml` is disabled and does not run)
 
 **Scenario 2: API Changes**
 1. Modify code in `services/api/`

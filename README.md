@@ -313,14 +313,16 @@ nx graph                      # visualise the dependency graph
 
 ```mermaid
 flowchart LR
-    Push["push to main"] --> GH["GitHub Actions"]
-    GH --> V["apps/web + website → Vercel"]
-    GH --> CR["services/core → ghcr.io image → Coolify (Hetzner)"]
+    Push["push to main"] --> V["Vercel Git integration"]
+    Push --> GH["GitHub Actions · ci-api.yml"]
     V --> App["app.credopass.com / credopass.com"]
+    GH --> CR["ghcr.io image → Coolify (Hetzner)"]
     CR --> Api["api.credopass.com/api/v1/core"]
 ```
 
-- **Frontends → Vercel.** `apps/web/vercel.json` proxies `/api/*` to the API and adds security headers; `apps/website/vercel.json` does the SPA fallback + API proxy.
+**Two independent paths, and only one of them is GitHub Actions.**
+
+- **Frontends → Vercel, direct.** Vercel's own Git integration builds and deploys on every push; nothing in `.github/workflows/` is involved. `ci-web.yml` still exists but is **disabled** in GitHub Actions — if you are looking for why a web deploy did or did not happen, look in the Vercel dashboard, not the Actions tab. `apps/web/vercel.json` proxies `/api/*` to the API and adds security headers; `apps/website/vercel.json` does the SPA fallback + API proxy.
 - **API → Coolify on Hetzner.** `.github/workflows/ci-api.yml` builds `services/core/Dockerfile`, pushes `ghcr.io/codewreaker/credopass-core:latest`, then calls the Coolify deploy webhook. It is triggered by a push to `main`/`develop` touching `services/core/**` or `packages/lib/**` — there is no local deploy command.
 - CI/CD workflows and required secrets are documented in [`.github/workflows/`](.github/workflows/README.md).
 - **Every database the code runs against must be migrated before the code ships.** Adding a column is not additive at runtime.

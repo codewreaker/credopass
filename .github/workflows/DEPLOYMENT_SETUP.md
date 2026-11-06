@@ -9,6 +9,11 @@
 
 ## 1. Vercel Setup
 
+> **The frontends deploy through Vercel's own Git integration**, which needs none of this — it
+> builds on every push by itself. The steps below set up the `VERCEL_*` GitHub secrets, which are
+> only used by `ci-web.yml`, and that workflow is currently **disabled**. Skip this section unless
+> you are re-enabling it.
+
 ### Install Vercel CLI
 ```bash
 bun install -g vercel
