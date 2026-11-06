@@ -987,6 +987,41 @@ the value appears to be.
 
 ---
 
+## Re-inviting someone used to be a 500 (2026-11-06)
+
+`/account?tab=members` says, correctly, *"CredoPass does not send email yet — copy each link and
+pass it on yourself."* Every invitation already in the list then said **`link not shown`**. The
+token is stored as a SHA-256 hash and returned once, so a link not copied in that moment was gone,
+and with no email there was no second channel. Two invitations were sitting in production in that
+state.
+
+Underneath it was a worse bug nobody had hit yet. `inviteMember` checked whether the address was
+already a **member**, and nothing else — but `uq_invitations_org_email_pending` makes
+`(organization, lower(email))` unique while a row is neither accepted nor revoked. Inviting the
+same person a second time therefore went straight into a constraint violation: a 500, where the
+route's own contract promises a 409. The same applied to anyone whose invitation had merely
+expired, because expiry does not clear that index.
+
+**D42 — re-inviting rotates, it does not duplicate or fail.** `inviteMember` looks for a live
+invitation for that address and, finding one, updates its token hash, role and expiry and returns
+the new token. "Send it again" is now the same request as "send it".
+
+The alternative was a `POST …/invitations/{id}/regenerate` endpoint. Rotation on re-invite is
+better because it needs no new route, no new permission and no new UI concept, and it fixes the
+500 as a side effect rather than leaving it for later. Storing the plaintext token so it could be
+shown again was rejected outright: it is a bearer credential for organisation access, and the
+hash-only rule is the reason a database dump does not hand out memberships.
+
+The shown-once property survives. Rotating issues a new token and the previous one stops working
+immediately — covered by a test that accepts with the stale token and expects a refusal.
+
+In the web app, `link not shown` became a `New link` button on the row.
+
+**Not verified against production:** the deployed API still has the old code, so the button 500s
+there until the next deploy.
+
+---
+
 ---
 
 ## Conventions worth knowing

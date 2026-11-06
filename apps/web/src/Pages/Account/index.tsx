@@ -21,6 +21,7 @@ import {
   Copy,
   LogOut,
   Plus,
+  RefreshCw,
   Settings,
   ShieldCheck,
   Sparkles,
@@ -563,29 +564,46 @@ function InvitationsSection({
 
   const canSend = /.+@.+\..+/.test(email) && !createInvitation.isPending;
 
-  const send = async () => {
-    if (!canSend) return;
+  /**
+   * Issue a link for an address.
+   *
+   * The same call does double duty (U6). The server rotates a live invitation
+   * rather than refusing one, so "invite" and "send that link again" are the
+   * same request — which is the only way to recover a link that was never
+   * copied, since the token is stored as a hash and there is no email (D18).
+   */
+  const issue = async (to: string, as: Role) => {
     try {
-      const invitation = await createInvitation.mutateAsync({ email: email.trim(), role });
+      const invitation = await createInvitation.mutateAsync({ email: to.trim(), role: as });
       setLinks((current) => ({
         ...current,
         [invitation.id]: `${window.location.origin}/invitations/${invitation.token}`,
       }));
-      setEmail('');
-      toast.success('Invitation created — copy the link and send it');
+      toast.success(
+        invitation.regenerated
+          ? 'New link created — the old one no longer works'
+          : 'Invitation created — copy the link and send it'
+      );
+      return true;
     } catch (error) {
       toast.error(
         hasProblemCode(error, ProblemCode.ALREADY_MEMBER)
           ? 'They are already in this organization.'
           : errorMessage(error, 'Could not create that invitation')
       );
+      return false;
     }
+  };
+
+  const send = async () => {
+    if (!canSend) return;
+    if (await issue(email, role)) setEmail('');
   };
 
   return (
     <Section
       title="Invitations"
-      description="CredoPass does not send email yet — copy each link and pass it on yourself."
+      description="CredoPass does not send email yet — copy each link and pass it on yourself. A link is shown once; use New link if you lose it."
     >
       <div className="flex flex-col gap-2 sm:flex-row">
         <Input
@@ -635,12 +653,18 @@ function InvitationsSection({
               {links[invitation.id] ? (
                 <CopyLinkButton url={links[invitation.id]} />
               ) : (
-                <span
-                  className="shrink-0 text-[11px] text-muted-foreground"
-                  title="The token is shown once, when the invitation is created"
+                /* The token is hashed, so the original link is gone for good.
+                   Issuing a new one is the recovery path, not a dead end. */
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="shrink-0 gap-1.5 rounded-full text-xs"
+                  disabled={createInvitation.isPending}
+                  title="The first link is shown only once. This issues a new one and retires it."
+                  onClick={() => issue(invitation.email, invitation.role)}
                 >
-                  link not shown
-                </span>
+                  <RefreshCw size={13} /> New link
+                </Button>
               )}
               <Button
                 variant="ghost"

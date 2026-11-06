@@ -2048,7 +2048,7 @@
         }
       },
       "post": {
-        "summary": "Invite someone by email",
+        "summary": "Invite someone by email, or regenerate a live invitation",
         "tags": [
           "Organizations"
         ],
@@ -2099,7 +2099,7 @@
         },
         "responses": {
           "201": {
-            "description": "Created. `token` is returned ONCE — it is emailed to the invitee and never stored in plain text.",
+            "description": "Created, or regenerated. `token` is returned ONCE — only its hash is stored, so it can never be retrieved again. Inviting an address that already has a live invitation rotates that invitation rather than failing, which is how a lost link is re-sent; `regenerated` says which happened, and any previous token stops working immediately.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2112,10 +2112,14 @@
                       "properties": {
                         "token": {
                           "type": "string"
+                        },
+                        "regenerated": {
+                          "type": "boolean"
                         }
                       },
                       "required": [
-                        "token"
+                        "token",
+                        "regenerated"
                       ]
                     }
                   ]

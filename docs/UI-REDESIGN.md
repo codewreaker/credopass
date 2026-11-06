@@ -404,6 +404,9 @@ link is not recoverable is as dead as a pass URL that 404s — same shape as U5,
 production right now with two invitations in that state. Either show the link, or offer
 `regenerate`, or say the invitation must be deleted and re-created.
 
+**Fixed 2026-11-06** — the row now carries a `New link` button, and re-inviting rotates the
+invitation server-side. See `NEXT-UI-LIST.md` U6.
+
 Three emails are truncated mid-string on this tab (`israel.agyeman.prem…`,
 `developer.agyeman.prem…`, `developer.prempeh@gma…`), which makes two different invitations for
 two different addresses visually indistinguishable.

@@ -725,7 +725,7 @@ export interface paths {
             };
         };
         put?: never;
-        /** Invite someone by email */
+        /** Invite someone by email, or regenerate a live invitation */
         post: {
             parameters: {
                 query?: never;
@@ -746,7 +746,7 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description Created. `token` is returned ONCE — it is emailed to the invitee and never stored in plain text. */
+                /** @description Created, or regenerated. `token` is returned ONCE — only its hash is stored, so it can never be retrieved again. Inviting an address that already has a live invitation rotates that invitation rather than failing, which is how a lost link is re-sent; `regenerated` says which happened, and any previous token stops working immediately. */
                 201: {
                     headers: {
                         [name: string]: unknown;
@@ -754,6 +754,7 @@ export interface paths {
                     content: {
                         "application/json": components["schemas"]["Invitation"] & {
                             token: string;
+                            regenerated: boolean;
                         };
                     };
                 };

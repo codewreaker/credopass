@@ -138,7 +138,7 @@ the scheme while leaving the host wrong.
 **No deploy-config change needed.** Passes already issued stay dead — their URL was stored nowhere,
 only printed, so there is nothing to backfill.
 
-### U6 🔴 A pending invitation's link cannot be recovered · S — **CONFIRMED 2026-11-06**
+### U6 ✅ A pending invitation's link cannot be recovered · S — **CONFIRMED and FIXED 2026-11-06**
 
 `/account?tab=members` tells you, correctly:
 
@@ -160,8 +160,26 @@ credential, so three options, in order of preference:
 3. **Say so** — if neither, the row must say *"this link can no longer be shown — delete and
    re-invite"* rather than `link not shown`, which reads like a loading state.
 
-Until one of those lands, `Invite` creates something that only works if you copy the link in the
-same breath — which is not stated anywhere.
+**Fixed 2026-11-06 — option 1, and it closed a second bug on the way.**
+
+`inviteMember` now rotates a live invitation instead of inserting beside it. Inviting an address
+that already has a pending invitation updates that row's token hash, role and expiry and returns
+the new token once. So "send it again" is the same request as "send it" — no new endpoint, no new
+concept, and the shown-once rule is untouched because the old token stops working the moment the
+new one is issued.
+
+The second bug: nothing checked for an existing invitation before inserting, and
+`uq_invitations_org_email_pending` makes `(organization, lower(email))` unique while a row is
+neither accepted nor revoked. So **inviting the same person twice hit a constraint violation** — a
+500, not the 409 the route documents. It would also have blocked re-inviting anyone whose
+invitation had merely expired. Two integration tests cover it now: rotation returns the same row
+with a different token, and the previous token is refused afterwards.
+
+In the UI, `link not shown` is replaced by a `New link` button on the row, and the section says
+"A link is shown once; use New link if you lose it."
+
+**Not verified end to end against production** — the deployed API still has the old code, so the
+button will 500 there until the next deploy.
 
 ### U3 ⬜ Audit every screen in a browser · M
 

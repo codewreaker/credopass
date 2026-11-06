@@ -518,8 +518,10 @@ export interface CreatedInvitation {
   email: string;
   role: OrgRole;
   expiresAt: Date;
-  /** Returned ONCE, to be emailed. Never stored, never retrievable again. */
+  /** Returned ONCE. Only its hash is stored, so this is never retrievable again. */
   token: string;
+  /** True when this replaced a live invitation rather than creating one. */
+  regenerated: boolean;
 }
 
 export async function inviteMember(
@@ -555,6 +557,55 @@ export async function inviteMember(
   const token = randomBytes(32).toString('base64url');
   const expiresAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
 
+  // Inviting an address that already has a live invitation ROTATES it rather
+  // than failing (U6).
+  //
+  // Two reasons, and the first is a bug this also fixes. `uq_invitations_org_email_pending`
+  // makes (organisation, lower(email)) unique while the row is neither accepted
+  // nor revoked, so the plain insert below used to hit a constraint violation —
+  // a 500, not the 409 the route documents — the second time anyone invited the
+  // same person. Nothing checked for it, because the only pre-flight check was
+  // for existing *membership*.
+  //
+  // The second is the point of U6. The token is shown once and stored only as a
+  // hash, so an invitation whose link was not copied in that moment can never be
+  // delivered — and with no email (D18) there is no second channel. Rotating on
+  // re-invite makes "send it again" the same gesture as "send it", with no new
+  // endpoint and no weakening of the shown-once rule: the previous token stops
+  // working the instant a new one is issued.
+  const [live] = await db
+    .select({ id: invitations.id })
+    .from(invitations)
+    .where(
+      and(
+        eq(invitations.organizationId, organizationId),
+        sql`lower(${invitations.email}) = ${email}`,
+        isNull(invitations.acceptedAt),
+        isNull(invitations.revokedAt)
+      )
+    )
+    .limit(1);
+
+  if (live) {
+    const [rotated] = await db
+      .update(invitations)
+      .set({
+        role: input.role,
+        tokenHash: hashToken(token),
+        invitedByAccountId: actorAccountId,
+        expiresAt,
+      })
+      .where(eq(invitations.id, live.id))
+      .returning({
+        id: invitations.id,
+        email: invitations.email,
+        role: invitations.role,
+        expiresAt: invitations.expiresAt,
+      });
+
+    return { ...rotated, role: rotated.role as OrgRole, token, regenerated: true };
+  }
+
   const [row] = await db
     .insert(invitations)
     .values({
@@ -567,7 +618,7 @@ export async function inviteMember(
     })
     .returning({ id: invitations.id, email: invitations.email, role: invitations.role, expiresAt: invitations.expiresAt });
 
-  return { ...row, role: row.role as OrgRole, token };
+  return { ...row, role: row.role as OrgRole, token, regenerated: false };
 }
 
 export async function revokeInvitation(

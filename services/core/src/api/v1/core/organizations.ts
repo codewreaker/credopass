@@ -396,7 +396,7 @@ organizations.openapi(
     path: '/organizations/{id}/invitations',
     scope: 'organization',
     permission: 'member:invite',
-    summary: 'Invite someone by email',
+    summary: 'Invite someone by email, or regenerate a live invitation',
     tags: ['Organizations'],
     security: [{ bearerAuth: [] }],
     middleware: [requirePermission('member:invite')] as const,
@@ -413,8 +413,15 @@ organizations.openapi(
     responses: {
       201: {
         description:
-          'Created. `token` is returned ONCE — it is emailed to the invitee and never stored in plain text.',
-        content: { 'application/json': { schema: InvitationSchema.extend({ token: z.string() }) } },
+          'Created, or regenerated. `token` is returned ONCE — only its hash is stored, so it ' +
+          'can never be retrieved again. Inviting an address that already has a live invitation ' +
+          'rotates that invitation rather than failing, which is how a lost link is re-sent; ' +
+          '`regenerated` says which happened, and any previous token stops working immediately.',
+        content: {
+          'application/json': {
+            schema: InvitationSchema.extend({ token: z.string(), regenerated: z.boolean() }),
+          },
+        },
       },
       403: problemResponse('Insufficient role, or inviting above your own'),
       404: problemResponse('Not found, or not yours'),

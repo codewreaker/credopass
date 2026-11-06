@@ -169,6 +169,53 @@ describe('invitations (T22, D-B)', () => {
     expect(JSON.stringify(row)).not.toContain(invite.token);
   });
 
+  it('U6 · re-inviting the same address rotates the invitation instead of failing', async () => {
+    const owner = await newAccount('rotator@example.com');
+    const org = await Membership.createOrganization(db, owner, { name: 'Rotate Org' });
+
+    const first = await Membership.inviteMember(db, org.id, 'owner', owner, {
+      email: 'lostlink@example.com',
+      role: 'viewer',
+    });
+    expect(first.regenerated).toBe(false);
+
+    // Before this, the plain insert hit uq_invitations_org_email_pending and
+    // threw a constraint violation — so a lost link could never be re-sent.
+    const second = await Membership.inviteMember(db, org.id, 'owner', owner, {
+      email: 'lostlink@example.com',
+      role: 'organizer',
+    });
+
+    expect(second.regenerated).toBe(true);
+    expect(second.id).toBe(first.id);
+    expect(second.token).not.toBe(first.token);
+    // The role on the re-invite wins, so a mistake can be corrected by resending.
+    expect(second.role).toBe('organizer');
+
+    // Still exactly one invitation for that address, not two.
+    const pending = await Membership.listPendingInvitations(db, org.id);
+    expect(pending.filter((i) => i.email === 'lostlink@example.com')).toHaveLength(1);
+  });
+
+  it('U6 · rotating kills the previous token immediately', async () => {
+    const owner = await newAccount('rotator2@example.com');
+    const org = await Membership.createOrganization(db, owner, { name: 'Rotate Org 2' });
+
+    const first = await Membership.inviteMember(db, org.id, 'owner', owner, {
+      email: 'joiner@example.com',
+      role: 'viewer',
+    });
+    await Membership.inviteMember(db, org.id, 'owner', owner, {
+      email: 'joiner@example.com',
+      role: 'viewer',
+    });
+
+    const joiner = await newAccount('joiner@example.com');
+    await expect(
+      Membership.acceptInvitation(db, joiner, ['joiner@example.com'], first.token)
+    ).rejects.toThrow();
+  });
+
   it('refuses to invite above your own role', async () => {
     const admin = await newAccount('admin6@example.com');
     const org = await Membership.createOrganization(db, admin, { name: 'Invite Limits' });
