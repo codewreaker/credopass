@@ -185,7 +185,10 @@
 @media (max-width: 768px) {
   .page-content {
     padding: 1rem;
-    margin-bottom: 4rem;
+    /* Clearance for the floating tab bar: its height, its inset, and the home
+       indicator. It floats over the content now, so without this the last row
+       of a list sits permanently behind glass. */
+    padding-bottom: calc(5.5rem + env(safe-area-inset-bottom));
   }
 
   .page-header {

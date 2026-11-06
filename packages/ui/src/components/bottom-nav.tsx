@@ -42,13 +42,6 @@ interface BottomNavProps {
      * When provided, navigation items will be split into left and right sections.
      */
     centerButton?: CenterButton
-    /**
-     * Auto-hide the bar after a few seconds of inactivity and bring it back on
-     * any tap/scroll — reclaims vertical estate under mobile browser chrome.
-     */
-    autoHide?: boolean
-    /** Idle time in ms before the bar hides (default 3000). */
-    autoHideDelay?: number
 }
 
 const defaultNavigate: NavigateFn = (url: string) => {
@@ -64,77 +57,61 @@ export function BottomNavMenuButton({ item, isActive, navigate, onClick }: Botto
     return (
         <button
             onClick={onClickHandler}
+            aria-current={isActive ? "page" : undefined}
             className={cn(
-                "flex flex-col items-center justify-center gap-1 py-2 px-3 rounded-2xl transition-all duration-200 active:scale-95",
+                "flex min-w-14 flex-col items-center justify-center gap-0.5 rounded-full px-2 py-1.5",
+                "transition-colors duration-150 active:scale-95",
                 isActive
-                    ? "text-primary bg-primary/10"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50 active:bg-muted",
+                    ? "text-primary"
+                    : "text-muted-foreground hover:text-foreground",
             )}
         >
-            <item.icon className={cn(
-                "h-5 w- transition-transform",
-                isActive && "stroke-[2.5] scale-110"
-            )} />
-            <span className="text-[0.4rem] font-medium">
+            <item.icon className={cn("h-5 w-5 shrink-0", isActive && "stroke-[2.5]")} />
+            <span className={cn("text-[0.5625rem] leading-none font-medium", isActive && "font-semibold")}>
                 {item.label}
             </span>
         </button>
     )
 }
 
+/**
+ * The mobile tab bar.
+ *
+ * WHAT CHANGED AND WHY. This used to be an edge-to-edge bar that hid itself
+ * after three seconds of inactivity and came back on the next tap or scroll.
+ * It read well in a demo and got in the way in use: the bar you want is the
+ * one that is already there, and the auto-hide took the primary action with
+ * it, so creating something meant tapping once to summon the bar and again to
+ * use it (UI-REDESIGN R4). It is now always present.
+ *
+ * The shape follows iOS 26's tab bar: a floating, inset glass pill rather than
+ * a slab welded to the bottom edge, with the primary action as its own circle
+ * beside it. Floating is not only decoration — the page visibly continues
+ * underneath, so it reads as an overlay rather than as the end of the content,
+ * which matters now that the document itself scrolls (R1).
+ */
 export function BottomNav({
     items,
     maxVisibleItems = 5,
     currentPathname,
     navigate = defaultNavigate,
     centerButton,
-    autoHide = false,
-    autoHideDelay = 3000,
 }: BottomNavProps) {
     const [open, setOpen] = React.useState(false)
-    const [idle, setIdle] = React.useState(false)
-
-    React.useEffect(() => {
-        if (!autoHide) { setIdle(false); return }
-        let timer: ReturnType<typeof setTimeout>
-        const arm = () => {
-            clearTimeout(timer)
-            timer = setTimeout(() => setIdle(true), autoHideDelay)
-        }
-        const wake = () => {
-            setIdle(false)
-            arm()
-        }
-        window.addEventListener('pointerdown', wake, { passive: true })
-        window.addEventListener('scroll', wake, { passive: true, capture: true })
-        window.addEventListener('keydown', wake)
-        arm()
-        return () => {
-            clearTimeout(timer)
-            window.removeEventListener('pointerdown', wake)
-            window.removeEventListener('scroll', wake, { capture: true } as EventListenerOptions)
-            window.removeEventListener('keydown', wake)
-        }
-    }, [autoHide, autoHideDelay])
-
-    // Never hide while the overflow menu is open
-    const isHidden = autoHide && idle && !open
 
     // Get pathname from window if not provided
     const pathname = React.useMemo(() => {
         return currentPathname ?? (typeof window !== 'undefined' ? window.location.pathname : '/')
     }, [currentPathname])
 
-    // When center button exists, adjust visible items to accommodate it
-    const maxItems = centerButton ? maxVisibleItems - 1 : maxVisibleItems
+    // No split any more: the primary action is its own circle beside the pill
+    // (iOS 26), not a bulge in the middle of it. That keeps the tab bar a row
+    // of equals and stops the action overlapping the items either side of it.
+    const maxItems = maxVisibleItems
     const visibleItems = items.slice(0, maxItems)
     const hiddenItems = items.slice(maxItems)
     const shouldShowMore = hiddenItems.length > 0
-    
-    // Split items for center button layout
-    const leftItems = centerButton ? visibleItems.slice(0, Math.ceil(visibleItems.length / 2)) : []
-    const rightItems = centerButton ? visibleItems.slice(Math.ceil(visibleItems.length / 2)) : []
-    
+
     const handleCenterButtonClick = () => {
         if (centerButton?.onClick) {
             centerButton.onClick()
@@ -143,96 +120,51 @@ export function BottomNav({
         }
     }
 
+    // One glass recipe, used by the pill and the action button so they read as
+    // the same material. The tokens are themed (packages/ui/src/styles/globals.css).
+    const glass = cn(
+        "border border-[var(--glass-border)] bg-[var(--glass-bg)]",
+        "backdrop-blur-[var(--glass-blur)] backdrop-saturate-150",
+        "shadow-[0_8px_32px_-8px_oklch(0_0_0/35%)]"
+    )
+
     return (
-        <nav className={cn(
-            "fixed bottom-0 left-0 right-0 z-2000 sm:hidden transition-all duration-300 ease-out",
-            isHidden && "translate-y-full opacity-0 pointer-events-none"
-        )}>
-            {/* Gradient fade effect at top */}
-            <div className="absolute inset-x-0 -top-6 h-6 bg-linear-to-t from-background to-transparent pointer-events-none" />
+        <nav
+            aria-label="Primary"
+            className={cn(
+                "pointer-events-none fixed inset-x-0 bottom-0 z-2000 sm:hidden",
+                // Clear of the home indicator on a notched phone, and of nothing
+                // at all on a device without one.
+                "pb-[max(0.5rem,env(safe-area-inset-bottom))] px-3"
+            )}
+        >
+            <div className="pointer-events-auto flex items-center justify-center gap-2">
+                <div className={cn("flex items-center gap-0.5 rounded-full px-1.5 py-1", glass)}>
+                    {visibleItems.map((item) => (
+                        <BottomNavMenuButton
+                            key={item.label}
+                            item={item}
+                            isActive={pathname === item.url}
+                            navigate={navigate}
+                        />
+                    ))}
 
-            {/* Main nav container */}
-            <div className="bg-background/95 backdrop-blur-lg border-t border-border/50 shadow-[0_-4px_20px_-4px_rgba(0,0,0,0.1)]">
-                <div className="flex h-1/2 items-center justify-around py-1 pb-safe">
-                    {centerButton ? (
-                        // Layout with center button
-                        <>
-                            {/* Left side items */}
-                            <div className="flex items-center justify-around flex-1">
-                                {leftItems.map((item) => {
-                                    const isActive = pathname === item.url;
-                                    return (
-                                        <BottomNavMenuButton
-                                            key={item.label}
-                                            item={item}
-                                            isActive={isActive}
-                                            navigate={navigate}
-                                        />
-                                    )
-                                })}
-                            </div>
-
-                            {/* Prominent center button */}
-                            <div className="flex items-center justify-center px-4">
-                                <button
-                                    onClick={handleCenterButtonClick}
-                                    className="flex flex-col items-center justify-center gap-1 bg-primary text-primary-foreground rounded-full h-12 w-12 shadow-lg hover:shadow-xl transition-all duration-200 active:scale-95 hover:scale-105 -mt-3"
-                                >
-                                    <centerButton.icon className="h-6 w-6 stroke-[2.5]" />
-                                    {centerButton.label && (
-                                        <span className="text-[9px] font-semibold mt-0.5">
-                                            {centerButton.label}
-                                        </span>
-                                    )}
-                                </button>
-                            </div>
-
-                            {/* Right side items */}
-                            <div className="flex items-center justify-around flex-1">
-                                {rightItems.map((item) => {
-                                    const isActive = pathname === item.url;
-                                    return (
-                                        <BottomNavMenuButton
-                                            key={item.label}
-                                            item={item}
-                                            isActive={isActive}
-                                            navigate={navigate}
-                                        />
-                                    )
-                                })}
-                            </div>
-                        </>
-                    ) : (
-                        // Default layout without center button
-                        visibleItems.map((item) => {
-                            const isActive = pathname === item.url;
-                            return (
-                                <BottomNavMenuButton
-                                    key={item.label}
-                                    item={item}
-                                    isActive={isActive}
-                                    navigate={navigate}
-                                />
-                            )
-                        })
-                    )}
-
-                    {/* More menu for additional items */}
                     {shouldShowMore && (
                         <Popover open={open} onOpenChange={setOpen}>
                             <PopoverTrigger>
                                 <button
-                                    className={"flex flex-col items-center justify-center gap-1 min-w-16 py-2 px-3 rounded-2xl transition-all duration-200 active:scale-95 text-muted-foreground hover:text-foreground hover:bg-muted/50 active:bg-muted"}
+                                    aria-label="More"
+                                    className="flex min-w-14 flex-col items-center justify-center gap-0.5 rounded-full px-2 py-1.5 text-muted-foreground transition-colors duration-150 hover:text-foreground active:scale-95"
                                 >
-                                    <MoreVertical className="h-3 w-3" />
-                                    <span className="text-[10px] font-medium">More</span>
+                                    <MoreVertical className="h-5 w-5 shrink-0" />
+                                    <span className="text-[0.5625rem] leading-none font-medium">More</span>
                                 </button>
                             </PopoverTrigger>
                             <PopoverContent
                                 side="top"
                                 align="end"
-                                sideOffset={8}
-                                className="w-auto min-w-35 border-border/50 bg-background/95 backdrop-blur-lg p-2 rounded-2xl shadow-xl"
+                                sideOffset={10}
+                                className={cn("w-auto min-w-35 rounded-2xl p-2", glass)}
                             >
                                 <div className="flex flex-col gap-1">
                                     {hiddenItems.map((item) => {
@@ -245,20 +177,14 @@ export function BottomNav({
                                                     setOpen(false)
                                                 }}
                                                 className={cn(
-                                                    "flex items-center gap-3 w-full px-3 py-2.5 rounded-xl transition-all duration-200 active:scale-95",
+                                                    "flex w-full items-center gap-3 rounded-xl px-3 py-2.5 transition-colors duration-150 active:scale-95",
                                                     isActive
-                                                        ? "text-primary bg-primary/10"
-                                                        : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
+                                                        ? "bg-primary/10 text-primary"
+                                                        : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
                                                 )}
                                             >
-                                                <item.icon className={cn(
-                                                    "h-3 w-3",
-                                                    isActive && "stroke-[2.5]"
-                                                )} />
-                                                <span className={cn(
-                                                    "text-sm font-medium",
-                                                    isActive && "font-semibold"
-                                                )}>
+                                                <item.icon className={cn("h-4 w-4", isActive && "stroke-[2.5]")} />
+                                                <span className={cn("text-sm font-medium", isActive && "font-semibold")}>
                                                     {item.label}
                                                 </span>
                                             </button>
@@ -269,6 +195,21 @@ export function BottomNav({
                         </Popover>
                     )}
                 </div>
+
+                {centerButton && (
+                    <button
+                        onClick={handleCenterButtonClick}
+                        aria-label={centerButton.label ?? "Create"}
+                        className={cn(
+                            "flex size-13 shrink-0 items-center justify-center rounded-full",
+                            "bg-primary text-primary-foreground",
+                            "shadow-[0_8px_32px_-8px_oklch(0_0_0/45%)]",
+                            "transition-transform duration-150 active:scale-95"
+                        )}
+                    >
+                        <centerButton.icon className="h-6 w-6 stroke-[2.5]" />
+                    </button>
+                )}
             </div>
         </nav>
     )

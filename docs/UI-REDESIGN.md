@@ -103,7 +103,7 @@ This is **B6** territory (`NEXT-PHASE-PLAN.md` §5.6) approached from the other 
 for a first-run narrative, and the answer is partly to make *this* the first-run narrative and
 retire it afterwards. A returning organiser should see their next event there instead.
 
-### R4 · Primary navigation hides on scroll
+### R4 ✅ Primary navigation hides on scroll — **fixed 2026-11-06**
 
 The bottom tab bar is `fixed bottom-0 … z-2000 sm:hidden` with a transition, and it leaves the
 screen as you scroll down. On a 59px bar that buys very little room, and the cost is that the
@@ -544,3 +544,34 @@ One note for whoever reads this next: `window.scrollTo()` from the console did n
 under viewport emulation, while a real wheel event did. That is a quirk of the harness, not the
 app — measure with a wheel scroll, or you will conclude the document is still frozen when it is
 not.
+
+---
+
+## 7. The tab bar and the glass (2026-11-06)
+
+**R4 is closed, by removing the behaviour rather than tuning it.** The bar no longer auto-hides.
+It read well in a demo and got in the way in use — the bar you want is the one already on screen,
+and hiding it took the primary action with it, so creating something cost a tap to summon the bar
+and another to use it. `autoHide` / `autoHideDelay` are gone from `BottomNav`, the
+`bottomNavAutoHide` prop is gone from `Sidebar`, and `BOTTOM_NAV_AUTO_HIDE` is gone from
+`LeftSidebar`. There is no flag left to turn it back on, which is the point.
+
+**The shape now follows iOS 26.** A floating, inset glass pill rather than a slab welded to the
+bottom edge, with the primary action as its own circle beside it instead of a bulge in the middle.
+Two things fall out of that:
+
+- The action no longer overlaps the items either side of it, so the tab bar is a row of equals.
+- The page visibly continues underneath, so the bar reads as an overlay rather than as the end of
+  the content — which matters more now that the document itself scrolls (R1).
+
+Compact: one row, 20px icons over a 9px label, `size-13` action button, `env(safe-area-inset-bottom)`
+for the home indicator. `.page-content` carries `padding-bottom: calc(5.5rem + env(safe-area-inset-bottom))`
+on mobile, because a floating bar covers content that a docked one merely sat below.
+
+**The desktop sidebar is glass too**, matching the header and the tab bar — `blur(20px)
+saturate(1.5)` over a 70% surface, from the existing `--glass-*` tokens. The opaque `bg-sidebar` is
+kept underneath and the glass is applied behind `supports-[backdrop-filter]`, so an engine without
+`backdrop-filter` gets the solid rail rather than a transparent one over scrolling content.
+
+Verified at 375×812 and 1280×860: the bar stays put at the bottom of a scrolled page, the last row
+of a list clears it, and the sidebar's computed style is `blur(20px) saturate(1.5)`.

@@ -160,7 +160,6 @@ function Sidebar({
   navigate,
   currentPathname,
   onCenterClick,
-  bottomNavAutoHide,
   ...props
 }: React.ComponentProps<"div"> & {
   side?: "left" | "right"
@@ -168,8 +167,6 @@ function Sidebar({
   collapsible?: "offcanvas" | "icon" | "none"
   navItems?: BottomNavItem[]
   onCenterClick?: ()=>void;
-  /** Auto-hide the mobile bottom nav when idle (see BottomNav.autoHide). */
-  bottomNavAutoHide?: boolean; 
   /** Navigation function for mobile bottom nav - pass your router's navigate function */
   navigate?: NavigateFn
   /** Current pathname for mobile bottom nav - pass your router's pathname to track active state */
@@ -221,7 +218,6 @@ function Sidebar({
       items={navItems}
       navigate={navigate}
       currentPathname={currentPathname}
-      autoHide={bottomNavAutoHide}
       centerButton={{
         icon: PlusIcon,
         onClick: onCenterClick
@@ -270,7 +266,16 @@ function Sidebar({
         <div
           data-sidebar="sidebar"
           data-slot="sidebar-inner"
-          className="bg-sidebar group-data-[variant=floating]:ring-sidebar-border group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:shadow-sm group-data-[variant=floating]:ring-1 flex size-full flex-col"
+          /* Glass, to match the header and the mobile tab bar. The opaque
+             `bg-sidebar` is kept as the fallback underneath: `backdrop-filter`
+             is unsupported in a few engines and silently does nothing, which
+             would otherwise leave the rail transparent over scrolling content. */
+          className={cn(
+            "bg-sidebar supports-[backdrop-filter]:bg-[var(--glass-bg)]",
+            "supports-[backdrop-filter]:backdrop-blur-[var(--glass-blur)] supports-[backdrop-filter]:backdrop-saturate-150",
+            "group-data-[variant=floating]:ring-sidebar-border group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:shadow-sm group-data-[variant=floating]:ring-1",
+            "flex size-full flex-col"
+          )}
         >
           {children}
         </div>
