@@ -37,6 +37,7 @@ Nothing is "in progress" unless someone is actually working on it today.
 | 🔴 | The composer shows "No organization" as a loading state | [`NEXT-PHASE-PLAN.md`](NEXT-PHASE-PLAN.md) §5.2 | S |
 | ⬜ | RLS is inert on the API path — the API connects as `postgres` and bypasses it | [`DATABASE-MIGRATION.md`](DATABASE-MIGRATION.md) §6 | M |
 | ⬜ | No data migration from the pre-rewrite `users` table | [`DATABASE-MIGRATION.md`](DATABASE-MIGRATION.md) §5.4 | M |
+| 🔴 | Registering someone twice silently revokes the pass they already hold | [`NEXT-UI-LIST.md`](NEXT-UI-LIST.md) U8 | M |
 | ⬜ | `/analytics` draws the full dashboard from placeholder numbers, under a "these are made up" banner | [`NEXT-UI-LIST.md`](NEXT-UI-LIST.md) U1 | S |
 | ⬜ | QR scan check-in is reported broken, never reproduced | [`NEXT-UI-LIST.md`](NEXT-UI-LIST.md) U2 | M |
 | ⬜ | A check-in does not reach other screens — polling, then SSE | [`LIVE-UPDATES.md`](LIVE-UPDATES.md) | M→L |

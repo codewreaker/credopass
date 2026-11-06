@@ -526,18 +526,21 @@ Percentage heights that resolved against the old frame were re-anchored rather t
 loading and empty states) take an explicit `min-height` so `justify-content: center` still has
 something to centre within.
 
-**What is verified:** `web:build` and `web:lint` pass; no `calc(100vh…)` offsets remain outside the
-right sidebar's own panel.
+**Verified on screen, signed in, 2026-11-06.**
 
-**What is not:** nothing has been looked at on screen. The shell only renders on authenticated
-routes — every unauthenticated route is in `STANDALONE_ROUTES` and bypasses it — and the local
-session's refresh token expired mid-change (a 400 from Supabase), so the app redirects to
-`/login`. Sign in once at `localhost:5001` and these are the checks:
+| Check | Before | After |
+|---|---|---|
+| `/events/$id` document scroll | 812 / 812 — frozen | **1193 / 812 — scrolls** |
+| `/attendees` document scroll | inner box only | **923 / 812 — scrolls** |
+| Inner scrollers with overflowing content | `.page-content`, the events list, the attendees list | **none** |
+| `overflow-y` through the whole shell chain | `hidden` ×3 | **`visible` throughout** |
+| Header while scrolled | n/a | `position: sticky`, stays at `top: 0` (mobile at scrollY 111, desktop at 1300) |
+| Desktop sidebar while scrolled | n/a | rail still on screen at scrollY 1300 |
 
-1. `document.documentElement.scrollHeight > clientHeight` on `/events` — the measurement that
-   defined this finding. It read 812/812 before.
-2. No element left with `overflow-y: auto|scroll` and overflowing content, apart from the right
-   sidebar panel.
-3. The header stays put while the page moves under it, and the desktop sidebar does not scroll away.
-4. `/events` and `/attendees` scroll as one page, and the events calendar follows on desktop.
-5. Going back to a scrolled list restores the position.
+`web:build` and `web:lint` pass, and no `calc(100vh…)` offsets remain outside the right sidebar's
+own panel.
+
+One note for whoever reads this next: `window.scrollTo()` from the console did not move the page
+under viewport emulation, while a real wheel event did. That is a quirk of the harness, not the
+app — measure with a wheel scroll, or you will conclude the document is still frozen when it is
+not.

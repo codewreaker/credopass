@@ -181,6 +181,51 @@ In the UI, `link not shown` is replaced by a `New link` button on the row, and t
 **Not verified end to end against production** — the deployed API still has the old code, so the
 button will 500 there until the next deploy.
 
+### U8 🔴 Registering someone twice silently kills the pass they are holding · M — **CONFIRMED 2026-11-06**
+
+Measured against production. Register, keep the link, register the same person for the same event
+again, then open the first link:
+
+```
+410 Gone — "That pass has been revoked."
+```
+
+`Attendance.register` is careful to make the attendance row idempotent, and says so:
+
+```ts
+// Idempotent: registering twice returns the original row rather than failing
+// on the unique index. A double-tapped button is not an error.
+```
+
+Then, five lines later, it calls `Pass.issue` unconditionally — and `issue` revokes every live pass
+for that `(event, person)` before minting a new one. So the double-tapped button *is* an error: it
+destroys the credential the attendee already saved. The comment's promise is broken by the next
+statement.
+
+**Why it matters more here than it would elsewhere.** There is no email (D18), so the pass URL
+shown at registration is the only copy. Three ordinary sequences silently invalidate it:
+
+| | |
+|---|---|
+| The attendee taps **Register** twice, or goes back and resubmits | Their first link dies. They do get a new one on screen, so they are not stranded — unless they saved the first on another device. |
+| The attendee returns to the public link later and registers again *because* they lost the pass | Reasonable behaviour, and it works, but only by luck — nothing told them this is the recovery path. |
+| **Staff register someone who had already self-registered** | The attendee's saved pass dies **remotely and silently**. The replacement URL appears on the staff member's screen, not theirs. This is the bad one. |
+
+Revoking on re-issue is right in itself — two live credentials for one seat is worse. The defect is
+that it happens as a side effect of an action that claims to be idempotent, with nothing said to
+anyone.
+
+**Fix, and it has the same shape as U6.** The token is hashed, so the existing pass cannot be
+handed back. Therefore `register` must stop minting one when a live, unexpired pass already exists:
+return `alreadyRecorded: true` and no token, and let `POST /public/events/{id}/resend-pass` — which
+exists already — be the single place a pass is deliberately rotated. The UI then says *"You are
+already registered. Lost your pass? Get a new link — the old one will stop working."* That makes
+the rotation a choice someone makes rather than a side effect they never see.
+
+**Related, and part of the same lie:** `register` returns `alreadyRecorded: false` as a hardcoded
+literal, so the API can never report that someone was already on the list. Any UI that wanted to
+say "you are already registered" has nothing to read.
+
 ### U3 ⬜ Audit every screen in a browser · M
 
 A pass over all 19 routes against a live API. **Nothing below has been run in a browser** except the
