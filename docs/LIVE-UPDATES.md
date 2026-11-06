@@ -240,7 +240,7 @@ One module, `services/core/src/services/event-stream.ts` (`EventStreamService`, 
 - **A hard cap on concurrent streams per instance** (start at 200) answering 503 above it, and a
   connection-count metric. This is the Phase 4 risk called out in the plan; a cap makes it visible
   instead of fatal.
-- Cloud Run caps a request at 60 minutes, so every long-lived kiosk reconnects at least hourly. The
+- The API runs on Coolify now, not Cloud Run, so the 60-minute request cap that shaped this design is gone — but a long-lived kiosk must still survive a reconnect, because proxies, deploys and laptops closing all end a stream. Assume it reconnects. The
   replay path is not an edge case — it runs every hour on every door, and must be tested as such.
 
 ### 5.6 The client

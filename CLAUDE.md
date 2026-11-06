@@ -36,8 +36,12 @@ Phase 0 is done. **Phase 1 is mostly done**: `accounts` / `identities` / `people
 plan and the "web app moved onto /api/v1/core" entry in the rebuild log for what was actually done.
 
 **The sign-up funnel landed** — [`docs/API-THIRD-REBUILD.md`](docs/API-THIRD-REBUILD.md), decisions
-D20–D26. Three things to internalise before touching auth, roles or onboarding:
+D20–D26. Four things to internalise before touching auth, roles or onboarding:
 
+- **Google is the only sign-in.** Email+password and GitHub were removed, and with them the
+  password-reset route, the strength meter and `email.schemas.ts`. `createAuthClient` in
+  `packages/lib/src/supabase/auth.ts` exposes exactly one function. Do not add a provider without
+  deciding the account-linking question first — see the gotcha below.
 - **There is no guest tier and no onboarding screen.** Signing in commissions an organisation
   (`ensureDefaultOrganization` in `requireCaller`). That *is* onboarding.
 - **There are no device tokens.** A door tablet is a person signed in with the `checkin` role.
@@ -53,7 +57,7 @@ D20–D26. Three things to internalise before touching auth, roles or onboarding
 apps/web        the product (dashboard, kiosk, public event page) · React 19 + TanStack Router · Vercel
 apps/mobile     Expo / React Native companion
 apps/website    marketing site + /how-it-works · Vite
-services/core   Hono API on Bun · /api/core · Cloud Run
+services/core   Hono API on Bun · /api/v1/core · Coolify on Hetzner
 packages/lib          schemas, types, enums, stores, theme, Supabase auth  ← the core; everything imports it
 packages/api-client   typed TanStack Query hooks over a generated OpenAPI contract (the ONLY way apps get data)
 packages/ui           web design system (Base UI + Tailwind v4)
@@ -86,7 +90,7 @@ These are enforced by code, not by convention. Breaking one fails the build, the
 | Need to touch… | Go to |
 |----------------|-------|
 | DB schema / model | `packages/lib/src/schemas/tables/` (+ relations in `tables/index.ts`) |
-| Validation / shared types | `packages/lib/src/schemas/enums.ts`, `email.schemas.ts`. Request validation lives in the Zod schemas beside each route — there are no per-table `*.schema.ts` validators any more. |
+| Validation / shared types | `packages/lib/src/schemas/enums.ts`. Request validation lives in the Zod schemas beside each route — there are no per-table `*.schema.ts` validators any more. (`email.schemas.ts` held the password-form validators and went with email sign-in.) |
 | **Database: migrating, resetting, the remote cutover** | [`docs/DATABASE-MIGRATION.md`](docs/DATABASE-MIGRATION.md) |
 | Data fetching / mutations | `packages/api-client/src/hooks/` (TanStack Query, one file per endpoint group) |
 | Contract types for the client | `packages/api-client/src/types.ts` — **derived** from `generated/schema.d.ts`, never restated |
@@ -122,7 +126,9 @@ Two corollaries worth knowing:
 - **`nx run coreservice:migrate` writes to whatever `DATABASE_URL` points at.** The default in
   `services/core/.env` is the local Docker Postgres, not the remote instance — but check with
   `nx run coreservice:db status` (it flags `⚠️ REMOTE`) before running it. The remote Supabase
-  instance has never been migrated for the rewrite; read [`docs/DATABASE-MIGRATION.md`](docs/DATABASE-MIGRATION.md) §5 before aiming at it.
+  instance **is** migrated — 4/4, verified 2026-11-06. `db reset` and `db seed` refuse any host that
+  is not localhost, by design; `migrate` is the only command allowed to run against the remote.
+  Read [`docs/DATABASE-MIGRATION.md`](docs/DATABASE-MIGRATION.md) §5 before aiming at it.
 
 ## Commands
 
@@ -170,17 +176,25 @@ Verify a change compiles with `nx run <project>:typecheck` / `nx run <project>:b
 ## Gotchas
 
 - **Ports:** web `5000` (AirPlay often holds it — it usually lands on `5001`), API `8080`, website `4200`, MinIO `9000` (console `9001`), test Postgres `55432`.
-- **Two base paths.** Old: `/api/core`. New: `/api/v1`. Web still reads `VITE_API_URL` (fallback `/api/core`).
+- **One base path: `/api/v1/core`.** `/api/core` is gone and the service 404s it. The web app reads `VITE_API_URL`, falling back to `/api/v1/core`.
 - **Docs:** Scalar at `http://localhost:8080/api/v1/core/docs`, raw spec at `/api/v1/core/openapi.json`.
-- **`AUTH_DISABLED=true`** bypassed JWT verification for `/api/core`, which no longer exists. **Do not use it.** Run local Supabase so the auth path actually gets exercised.
+- **`AUTH_DISABLED=true`** bypassed JWT verification for `/api/core`, which no longer exists. **Do not use it.** The auth path must actually get exercised.
 - **`drizzle/` is now tracked in git.** Migrations are reviewed like any other code. Don't re-ignore it.
-- **Adding a column is not additive at runtime.** Drizzle builds an explicit column list from the schema, so a new column makes *every* query — including `/api/core`'s — ask for it. Every database the code runs against must be migrated before the code ships. The remote instance is currently un-migrated, so `/api/core` events queries 500 there.
+- **Adding a column is not additive at runtime.** Drizzle builds an explicit column list from the schema, so a new column makes *every* query ask for it. Every database the code runs against must be migrated before the code ships — and a `NOT NULL` column with no default breaks every INSERT, including `resolveCaller`'s.
 - **A `drizzle-kit push` database has tables but no migration journal**, so `migrate` fails on it. `nx run coreservice:db status` detects this; `db reset` fixes it.
 - **`db` takes its subcommand as an argument:** `nx run coreservice:db reset`. (`db:reset` also works — there are matching nx *configurations* — but prefer the argument form, it is what `scripts/db.ts` documents.) `migrate`, `seed` and `verify:public-access` are top-level targets in their own right.
 - **Tests must never touch the real database.** `TEST_DATABASE_URL` points at a throwaway Postgres; the adversarial suite truncates every table.
 - **`routeTree.gen.ts`** (web) is generated by the TanStack Router Vite plugin; edit `src/routes/*` instead.
 - **Analytics are fabricated** (`services/core/src/services/analytics/`) — deterministic placeholder numbers behind the real `AnalyticsResponse` contract. Don't assume they read the DB yet. `/analytics` in the web app deliberately renders an empty state rather than drawing charts from them.
 - **Never `.nullable()` a registered Zod schema** in the API. `Ref.nullable()` renders as `allOf` with a nullable object type, which openapi-typescript turns into an uninhabited intersection *and silently drops the nullability*. Use `z.union([Ref, z.null()])`.
+- **An account is `(issuer, subject)`, never an email.** `accounts.email` is a MIRROR of what the
+  provider asserted and is only written when `uq_accounts_email` leaves it free; the address always
+  lands on the identity row. Two provider identities for one address get two accounts — linking them
+  is an unbuilt feature, not an accident.
+- **Supabase sends no top-level `email_verified` claim.** It is inside `user_metadata`, which the
+  user can write via `auth.updateUser({ data })`. `identities.email_verified` is therefore always
+  false today, and `claimByVerifiedEmail` can never match. Never trust `user_metadata` for identity
+  decisions — use `app_metadata`, or derive it from `amr`.
 - **No email exists yet.** Pass URLs and invitation links are returned in responses and must be shown on screen. Never write "check your email".
 - **Tailwind v4**: prefer canonical class names (`bg-linear-to-t`, not `bg-gradient-to-t`) to avoid lint warnings.
 

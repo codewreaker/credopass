@@ -3,7 +3,7 @@
 ## Prerequisites
 - [ ] GitHub repository with admin access
 - [ ] Vercel account
-- [ ] Google Cloud Platform account with billing enabled
+- [ ] Coolify instance on Hetzner, with a deploy webhook for the API
 
 ---
 
@@ -48,242 +48,63 @@ VERCEL_PROJECT_ID=<projectId from .vercel/project.json>
 
 ---
 
-## 2. Google Cloud Setup
+## 2. API Setup — Coolify on Hetzner
 
-### Install gcloud CLI (if not installed)
-```bash
-# macOS
-brew install --cask google-cloud-sdk
+The API is **not** deployed from a developer machine and there is no `nx` deploy target. Everything
+happens in `ci-api.yml` on a push to `main` or `develop` that touches `services/core/**`,
+`packages/lib/**` or the workflow itself:
 
-# Initialize
-gcloud init
+```
+quality-checks ─┐
+                ├─► build image ─► push ghcr.io/codewreaker/credopass-core:latest ─► Coolify webhook
+adversarial ────┘
 ```
 
-### Set Variables
-```bash
-export PROJECT_ID="your-project-id"
-export REGION="us-central1"
-export SERVICE_ACCOUNT="github-actions"
+Both gate jobs must pass. The adversarial tenancy suite blocks the deploy unconditionally — a
+tenancy failure is not "some tests are red", it is "the product leaks between customers".
+
+### Coolify side
+
+1. Create an application backed by the Docker image `ghcr.io/codewreaker/credopass-core:latest`.
+2. If the GHCR package is private, add a registry credential in Coolify (a GitHub PAT with
+   `read:packages`).
+3. Set the runtime environment — at minimum `DATABASE_URL`, `SUPABASE_URL`, `PASS_SIGNING_KEY`,
+   `PORT=8080`, and `NODE_ENV=production`. **`PASS_SIGNING_KEY` must differ from every other
+   environment**: a staging leak must not be able to mint production passes.
+4. Copy the application's deploy webhook URL and an API token.
+
+### GitHub secrets
+
+```
+COOLIFY_WEBHOOK=<the deploy webhook URL for the API application>
+COOLIFY_TOKEN=<a Coolify API token>
+NX_CLOUD_ACCESS_TOKEN=<optional, for remote caching>
 ```
 
-### Create Service Account
-```bash
-gcloud iam service-accounts create $SERVICE_ACCOUNT \
-  --display-name="GitHub Actions Service Account" \
-  --project=$PROJECT_ID
-```
+`GITHUB_TOKEN` is provided by Actions and needs no setup; it is what pushes to GHCR.
 
-### Grant Permissions
-```bash
-# Cloud Run Admin
-gcloud projects add-iam-policy-binding $PROJECT_ID \
-  --member="serviceAccount:$SERVICE_ACCOUNT@$PROJECT_ID.iam.gserviceaccount.com" \
-  --role="roles/run.admin"
+### Deploying by hand
 
-# Service Account User (required to act as Cloud Run service account)
-gcloud projects add-iam-policy-binding $PROJECT_ID \
-  --member="serviceAccount:$SERVICE_ACCOUNT@$PROJECT_ID.iam.gserviceaccount.com" \
-  --role="roles/iam.serviceAccountUser"
-
-# Artifact Registry Admin
-gcloud projects add-iam-policy-binding $PROJECT_ID \
-  --member="serviceAccount:$SERVICE_ACCOUNT@$PROJECT_ID.iam.gserviceaccount.com" \
-  --role="roles/artifactregistry.admin"
-
-# Storage Admin (for build artifacts)
-gcloud projects add-iam-policy-binding $PROJECT_ID \
-  --member="serviceAccount:$SERVICE_ACCOUNT@$PROJECT_ID.iam.gserviceaccount.com" \
-  --role="roles/storage.admin"
-```
-
-### Create Service Account Key
-```bash
-gcloud iam service-accounts keys create github-actions-key.json \
-  --iam-account=$SERVICE_ACCOUNT@$PROJECT_ID.iam.gserviceaccount.com
-
-# View the key (you'll add this to GitHub)
-cat github-actions-key.json
-```
-
-### Create Artifact Registry Repository
-```bash
-gcloud artifacts repositories create credopass \
-  --repository-format=docker \
-  --location=$REGION \
-  --description="CredoPass Docker images" \
-  --project=$PROJECT_ID
-```
-
-### Create Secret Manager Secrets
-```bash
-# Enable Secret Manager API
-gcloud services enable secretmanager.googleapis.com --project=$PROJECT_ID
-
-# Create DATABASE_URL secret
-echo -n "postgresql://user:password@host:5432/dbname" | \
-  gcloud secrets create DATABASE_URL \
-  --data-file=- \
-  --project=$PROJECT_ID
-
-# Grant Cloud Run service account access to secrets
-gcloud secrets add-iam-policy-binding DATABASE_URL \
-  --member="serviceAccount:$SERVICE_ACCOUNT@$PROJECT_ID.iam.gserviceaccount.com" \
-  --role="roles/secretmanager.secretAccessor" \
-  --project=$PROJECT_ID
-```
-
-### Add GitHub Secrets
-```bash
-# Go to: GitHub Repo → Settings → Secrets and variables → Actions
-# Add the following secrets:
-
-GCP_SERVICE_ACCOUNT_KEY=<contents of github-actions-key.json>
-GCP_PROJECT_ID=<your project ID>
-GCP_REGION=us-central1
-```
-
-### Clean up local key (security)
-```bash
-# After adding to GitHub, delete the local key
-rm github-actions-key.json
-```
+Re-run the workflow (`workflow_dispatch`), or hit the Coolify webhook directly. There is no
+`gcloud`, no Artifact Registry and no service account — the earlier Cloud Run setup was removed
+along with `tools/setup-gcp.sh` and the `coreservice:deploy` target, which pointed at a service
+that is not the live deployment.
 
 ---
 
-## 3. GitHub Environment Setup
+## 3. Database
 
-### Create Environments
-Go to: GitHub Repo → Settings → Environments
-
-Create the following environments:
-1. **production-web**
-   - Protection rules: Require approvals (optional)
-   - Environment secrets: (none needed, uses repo secrets)
-
-2. **production-api**
-   - Protection rules: Require approvals (optional)
-   - Environment secrets: (none needed, uses repo secrets)
-
-3. **staging-api**
-   - Protection rules: (none)
-   - Environment secrets: Can override with staging-specific values
-
-4. **preview-web**
-   - Protection rules: (none)
-   - Environment secrets: (none needed)
+The API talks to the Supabase Postgres instance. Migrations are **not** applied by the deploy — see
+[`docs/DATABASE-MIGRATION.md`](../../docs/DATABASE-MIGRATION.md). Every database the code runs
+against must be migrated before the code ships.
 
 ---
 
-## 4. Optional: Nx Cloud Setup
+## Checklist
 
-Speed up CI with distributed caching:
-
-```bash
-# Connect to Nx Cloud
-bun nx connect
-
-# Copy the access token when prompted
-# Add to GitHub secrets as NX_CLOUD_ACCESS_TOKEN
-```
-
----
-
-## 5. Test Deployments
-
-### Test Locally First
-```bash
-# Build web
-bun nx build web
-
-# Build API
-bun nx build api
-
-# Test Docker build
-docker build -f services/api/Dockerfile -t test-api .
-```
-
-### Test GitHub Actions
-1. Create a new branch
-2. Make a small change (e.g., add a comment)
-3. Push and create a pull request
-4. Check Actions tab for workflow execution
-
-### Test Manual Deployment
-1. Go to Actions tab
-2. Select "Manual Deployment"
-3. Click "Run workflow"
-4. Choose target and environment
-5. Monitor execution
-
----
-
-## 6. Verification Checklist
-
-After setup, verify:
-
-- [ ] GitHub Actions workflows appear in Actions tab
-- [ ] All required secrets are set (8 total)
-- [ ] Environments are created (4 total)
-- [ ] Vercel project is linked
-- [ ] GCP Artifact Registry exists
-- [ ] GCP service account has correct permissions
-- [ ] Secrets in Secret Manager are accessible
-- [ ] Test deployment succeeds
-
----
-
-## Troubleshooting
-
-### Cannot authenticate to Vercel
-- Verify `VERCEL_TOKEN` is set correctly
-- Check token hasn't expired
-- Ensure token has deployment permissions
-
-### Cannot push to Artifact Registry
-```bash
-# Test authentication locally
-gcloud auth configure-docker us-central1-docker.pkg.dev
-
-# Try manual push
-docker push us-central1-docker.pkg.dev/PROJECT_ID/credopass/api:test
-```
-
-### Cloud Run deployment fails
-```bash
-# Check service account permissions
-gcloud projects get-iam-policy $PROJECT_ID \
-  --flatten="bindings[].members" \
-  --filter="bindings.members:serviceAccount:$SERVICE_ACCOUNT@$PROJECT_ID.iam.gserviceaccount.com"
-
-# Check Cloud Run logs
-gcloud run services logs read credopass-api --region=$REGION --limit=50
-```
-
-### Nx affected not working
-- Ensure `fetch-depth: 0` in checkout action
-- Verify `nrwl/nx-set-shas` action is used
-- Check base branch is set correctly in nx.json
-
----
-
-## Security Notes
-
-1. **Never commit secrets** to the repository
-2. **Rotate tokens regularly** (every 90 days recommended)
-3. **Use least privilege** for service accounts
-4. **Enable branch protection** for main/develop
-5. **Review GitHub Actions logs** - they don't show secret values
-6. **Use environment-specific secrets** when possible
-7. **Enable audit logging** in GCP
-
----
-
-## Next Steps
-
-After successful setup:
-1. Configure monitoring and alerting
-2. Set up error tracking (e.g., Sentry)
-3. Configure custom domains
-4. Set up database backups
-5. Document runbooks for common issues
-6. Create staging environment variables
+- [ ] Vercel project linked, `VERCEL_*` secrets set
+- [ ] Coolify application created from the GHCR image
+- [ ] Registry credential added if the package is private
+- [ ] Runtime env set, with an environment-specific `PASS_SIGNING_KEY`
+- [ ] `COOLIFY_WEBHOOK` and `COOLIFY_TOKEN` in GitHub secrets
+- [ ] A push to `main` touching `services/core/**` produces a green run and a new revision

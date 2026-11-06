@@ -123,7 +123,7 @@ nx run coreservice:docs               # Scalar at /api/v1/core/docs
 nx run coreservice:token              # mint a JWT for the Scalar auth box
 nx run coreservice:openapi:export     # write openapi.json for desktop clients
 nx run coreservice:build              # bundle with Bun
-nx run coreservice:deploy             # gcloud run deploy → Cloud Run
+# Deploys are CI-only: push to main touching services/core/** → ghcr.io image → Coolify.
 ```
 
 To generate a migration **without applying it** (no database contact):

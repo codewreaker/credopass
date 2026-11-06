@@ -166,10 +166,11 @@ That database is `tmpfs` and the adversarial suite `TRUNCATE`s every table betwe
 
 ## 5. Migrating the remote Supabase instance
 
-**This is the one-time cutover, and it is the riskiest thing in this repo.**
+**Done — the remote instance was migrated, and `status` reports 4 applied / 4 on disk
+(verified 2026-11-06).** What follows is kept as the record of what the cutover involved and what
+to do if you ever point the code at another pre-rewrite database.
 
-The remote instance still runs the pre-rewrite schema. The rewrite did not rename tables — it
-replaced the model:
+The rewrite did not rename tables — it replaced the model:
 
 | Pre-rewrite | Rewrite | Why there is no automatic mapping |
 |---|---|---|

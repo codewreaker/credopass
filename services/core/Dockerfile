@@ -8,7 +8,7 @@
 #   2. Build application (nx build coreservice)
 #   3. Build Docker image (copies pre-built files)
 #   4. Push to Artifact Registry
-#   5. Deploy to Cloud Run
+#   5. Push to ghcr.io; Coolify pulls and runs it
 #
 # The Docker image only contains the runtime - no build tools needed.
 # This results in faster builds, smaller images, and better caching.
@@ -31,21 +31,21 @@ WORKDIR /app
 # COPY packages/ui/package.json ./packages/ui/
 # COPY services/core/package.json ./services/core/
 
-# Environment variables for Cloud Run
+# Runtime environment (Coolify supplies the rest)
 ENV NODE_ENV=production
 ENV PORT=8080
 
 # Copy pre-built application (from CI: nx build coreservice)
 COPY dist/services/core ./services/core
 
-# Set up non-root user for security (Cloud Run best practice)
+# Set up non-root user for security
 RUN addgroup -g 1001 -S bunjs && \
     adduser -S bunjs -u 1001 && \
     chown -R bunjs:bunjs /app
 
 USER bunjs
 
-# Cloud Run uses PORT env var
+# The platform supplies PORT
 EXPOSE 8080
 
 # Health check endpoint

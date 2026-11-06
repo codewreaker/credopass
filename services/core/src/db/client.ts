@@ -23,7 +23,7 @@ let db: Database | null = null;
 export function createPostgresClient(connectionString: string) {
   // Query logging is development-only: `logger: true` prints every statement
   // *with its bound parameters*, which in production means emails, tokens and
-  // ids in the Cloud Run log stream.
+  // ids in the deployed log stream.
   return drizzlePostgres(connectionString, { schema, logger: isDevelopment });
 }
 

@@ -6,6 +6,13 @@
 > rewritten as the code moved; [`REBUILD-LOG.md`](REBUILD-LOG.md) is where the plan and reality are
 > reconciled, and it wins wherever the two disagree.
 >
+> **Platform note (2026-11-06):** this document reasons about **Cloud Run** in several places — the
+> 60-minute request cap that shapes the SSE design (§D4/D5), per-instance `LISTEN` fan-out, and an
+> image-derivative job. The API is deployed with **Coolify on Hetzner**; none of those Cloud Run
+> constraints apply. The *problems* they describe are still real (a stream must survive a reconnect;
+> `LISTEN` still needs a connection outside the pool), so the designs stand — the platform limits
+> quoted as their justification do not. [`LIVE-UPDATES.md`](LIVE-UPDATES.md) supersedes D4/D5.
+>
 > Three things it links to no longer exist, because this document is what made them obsolete:
 >
 > | Link | What happened |

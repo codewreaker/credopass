@@ -45,13 +45,6 @@ permissions:
 env:
   NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
   
-  # Google Cloud configuration
-  PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
-  GAR_LOCATION: ${{ vars.GCP_REGION }}
-  REPOSITORY: ${{ vars.GAR_REPOSITORY }}
-  SERVICE_NAME: credopass-core
-  REGION: ${{ vars.GCP_REGION }}
-  
   # Docker image configuration
   IMAGE_NAME: credopass-core
   DOCKERFILE_PATH: services/core/Dockerfile

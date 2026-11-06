@@ -145,8 +145,8 @@ Eleven tables, all hanging off `organizations`. The rewrite split the old `users
 | Marketing | **Vite** + React, dependency-free History router |
 | Backend | **Hono** on **Bun**, **Drizzle ORM**, **PostgreSQL 16** |
 | API contract | **Zod** → **@hono/zod-openapi** → `openapi.json` → **openapi-typescript** |
-| Auth | **Supabase** (JWT verified via JWKS) |
-| Hosting | Web/site → **Vercel** · API → **Google Cloud Run** |
+| Auth | **Supabase** (JWT verified via JWKS) · Google is the only provider |
+| Hosting | Web/site → **Vercel** · API → **Coolify** on Hetzner |
 
 ## Repository map
 
@@ -157,7 +157,7 @@ credopass/
 │   ├── mobile/      → Expo / React Native companion
 │   └── website/     → marketing site + /how-it-works                   (Vercel)
 ├── services/
-│   └── core/        → Hono API, /api/v1/core                           (Cloud Run)
+│   └── core/        → Hono API, /api/v1/core                            (Coolify)
 ├── packages/
 │   ├── lib/         → schemas, types, enums, stores, theme, auth  ← the core
 │   ├── api-client/  → typed TanStack Query hooks (the ONLY way apps get data)
@@ -315,13 +315,13 @@ nx graph                      # visualise the dependency graph
 flowchart LR
     Push["push to main"] --> GH["GitHub Actions"]
     GH --> V["apps/web + website → Vercel"]
-    GH --> CR["services/core → Cloud Run"]
+    GH --> CR["services/core → ghcr.io image → Coolify (Hetzner)"]
     V --> App["app.credopass.com / credopass.com"]
     CR --> Api["api.credopass.com/api/v1/core"]
 ```
 
 - **Frontends → Vercel.** `apps/web/vercel.json` proxies `/api/*` to the API and adds security headers; `apps/website/vercel.json` does the SPA fallback + API proxy.
-- **API → Google Cloud Run** via `nx run coreservice:deploy` (Docker build from `services/core/Dockerfile`).
+- **API → Coolify on Hetzner.** `.github/workflows/ci-api.yml` builds `services/core/Dockerfile`, pushes `ghcr.io/codewreaker/credopass-core:latest`, then calls the Coolify deploy webhook. It is triggered by a push to `main`/`develop` touching `services/core/**` or `packages/lib/**` — there is no local deploy command.
 - CI/CD workflows and required secrets are documented in [`.github/workflows/`](.github/workflows/README.md).
 - **Every database the code runs against must be migrated before the code ships.** Adding a column is not additive at runtime.
 

@@ -29,7 +29,7 @@ This directory contains CI/CD workflows for the CredoPass monorepo.
 **Jobs:**
 - **check-affected**: Determines if API should be deployed
 - **quality-checks**: Runs API-specific quality checks
-- **deploy**: Builds Docker image and deploys to Cloud Run
+- **deploy**: Builds the Docker image, pushes it to ghcr.io and calls the Coolify webhook
 
 **Key Features:**
 - ✅ Manual-only deployment for safety
@@ -80,12 +80,15 @@ VERCEL_ORG_ID         # Vercel organization ID
 VERCEL_PROJECT_ID     # Vercel project ID
 ```
 
-### Google Cloud (API Service)
+### Coolify (API Service)
+
 ```
-GCP_SERVICE_ACCOUNT_KEY  # GCP service account JSON key
-GCP_PROJECT_ID           # GCP project ID
-GCP_REGION               # e.g., us-central1
+COOLIFY_WEBHOOK          # Deploy webhook URL for the API application
+COOLIFY_TOKEN            # Coolify API token
 ```
+
+`GITHUB_TOKEN` is provided by Actions and is what pushes the image to ghcr.io — no setup needed.
+
 
 ### Optional
 ```
@@ -112,51 +115,20 @@ Add secrets to GitHub:
 - `VERCEL_ORG_ID`: Found in `.vercel/project.json`
 - `VERCEL_PROJECT_ID`: Found in `.vercel/project.json`
 
-### 2. Set up Google Cloud
+### 2. Set up Coolify
 
-#### Create Service Account
-```bash
-# Create service account
-gcloud iam service-accounts create github-actions \
-  --display-name="GitHub Actions"
+The API deploys as a Docker image, so there is no cloud SDK to install and nothing to run locally.
 
-# Grant necessary permissions
-gcloud projects add-iam-policy-binding PROJECT_ID \
-  --member="serviceAccount:github-actions@PROJECT_ID.iam.gserviceaccount.com" \
-  --role="roles/run.admin"
+1. In Coolify, create an application from the image
+   `ghcr.io/codewreaker/credopass-core:latest`.
+2. Add a registry credential (a GitHub PAT with `read:packages`) if the package is private.
+3. Set the runtime environment: `DATABASE_URL`, `SUPABASE_URL`, `PASS_SIGNING_KEY`, `PORT=8080`,
+   `NODE_ENV=production`. Use a **different** `PASS_SIGNING_KEY` per environment — a staging leak
+   must not be able to mint production passes.
+4. Copy the deploy webhook URL and an API token into the GitHub secrets above.
 
-gcloud projects add-iam-policy-binding PROJECT_ID \
-  --member="serviceAccount:github-actions@PROJECT_ID.iam.gserviceaccount.com" \
-  --role="roles/storage.admin"
+Full checklist: [`DEPLOYMENT_SETUP.md`](DEPLOYMENT_SETUP.md).
 
-gcloud projects add-iam-policy-binding PROJECT_ID \
-  --member="serviceAccount:github-actions@PROJECT_ID.iam.gserviceaccount.com" \
-  --role="roles/artifactregistry.admin"
-
-# Create and download key
-gcloud iam service-accounts keys create key.json \
-  --iam-account=github-actions@PROJECT_ID.iam.gserviceaccount.com
-```
-
-#### Create Artifact Registry
-```bash
-gcloud artifacts repositories create credopass \
-  --repository-format=docker \
-  --location=us-central1 \
-  --description="CredoPass Docker images"
-```
-
-#### Set Secrets
-```bash
-# Create secrets in Secret Manager
-gcloud secrets create DATABASE_URL \
-  --data-file=- <<< "postgresql://user:pass@host:5432/db"
-```
-
-Add to GitHub:
-- `GCP_SERVICE_ACCOUNT_KEY`: Contents of `key.json`
-- `GCP_PROJECT_ID`: Your GCP project ID
-- `GCP_REGION`: e.g., `us-central1`
 
 ### 3. Configure GitHub Environments
 
@@ -199,7 +171,7 @@ bun nx show projects --affected
 1. Modify code in `services/api/`
 2. Go to Actions → CI/CD - API Service
 3. Manually trigger deployment
-4. `ci-api.yml` runs: quality checks → build → deploy to Cloud Run
+4. `ci-api.yml` runs: quality checks → adversarial tenancy suite → build → push to ghcr.io → Coolify webhook
 
 **Scenario 3: Documentation/Config Changes**
 1. Modify README, workflows, etc.
@@ -276,10 +248,10 @@ gh workflow run manual-deploy.yml -f target=both -f environment=production
 - Check build command in vercel.json
 - Ensure token has correct permissions
 
-### Cloud Run Deployment Issues
+### API Deployment Issues
 - Check service account permissions
 - Verify Artifact Registry access
-- Check Cloud Run service logs: `gcloud run services logs read credopass-api`
+- Check the application logs in the Coolify dashboard
 
 ### Secrets Issues
 - Verify all required secrets are set
@@ -292,13 +264,12 @@ gh workflow run manual-deploy.yml -f target=both -f environment=production
 - Dashboard: https://vercel.com/dashboard
 - Logs: Click deployment → View Logs
 
-### Cloud Run
+### API (Coolify)
 ```bash
-# View logs
-gcloud run services logs read credopass-api --region us-central1
+# View logs: use the Coolify dashboard for the API application
 
 # Check service status
-gcloud run services describe credopass-api --region us-central1
+# Service details: Coolify dashboard → the API application
 ```
 
 ## Cost Optimization
@@ -309,7 +280,7 @@ Enable Nx Cloud for distributed caching to speed up CI:
 bun nx connect
 ```
 
-### Cloud Run
+### API (Coolify)
 - Minimum instances set to 0 (scales to zero)
 - Maximum instances capped at 10
 - 512Mi memory allocation

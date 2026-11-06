@@ -71,7 +71,7 @@ postgresql://postgres:Ax!rtrysoph123@localhost:5432/credopass_db
 
 ## Production Testing
 
-Before deploying to Cloud Run, test your production build locally:
+Before deploying via Coolify, test your production build locally:
 
 ```bash
 # 1. Create production environment file
