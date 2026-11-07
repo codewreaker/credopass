@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
-import { AlertTriangle, ImagePlus, Link2, Trash2, X } from 'lucide-react';
+import { useUploadImage, type UploadProgress } from '@credopass/api-client';
+import { AlertTriangle, ImagePlus, Link2, Loader2, Trash2, X } from 'lucide-react';
 import { Button } from '@credopass/ui/components/button';
 import { Input } from '@credopass/ui/components/input';
 import { cn } from '@credopass/ui/lib/utils';
@@ -8,22 +9,13 @@ import { cn } from '@credopass/ui/lib/utils';
 export const DEFAULT_EVENT_IMAGE = '/calendar-bro.svg';
 
 interface EventImageProps {
-  /** Current image: an https URL, an object URL, or undefined for the default. */
+  /** Current image: a stored URL, a pasted https URL, or undefined for the default. */
   src?: string;
   /**
-   * When provided the image is editable. Reports back an image to show, or
+   * When provided the image is editable. Reports back the URL to save, or
    * `null` to go back to the default. Omit for read-only.
    */
   onPick?: (url: string | null) => void;
-  /**
-   * Does the current `src` actually survive a save?
-   *
-   * A pasted https link does. A file still does not — there is nowhere to put
-   * the bytes until object storage lands (ROADMAP stage 4) — and the component
-   * says so rather than letting someone pick a photo, press Save and quietly
-   * get the illustration back.
-   */
-  willPersist?: boolean;
   className?: string;
 }
 
@@ -52,13 +44,18 @@ const isUsableImageUrl = (value: string): boolean => {
  * compression and derivatives — and the point of shipping the paste path first
  * is that the slot stops being decorative a week earlier.
  */
-export function EventImage({ src, onPick, willPersist = true, className }: EventImageProps) {
+export function EventImage({ src, onPick, className }: EventImageProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [linkOpen, setLinkOpen] = useState(false);
   const [linkDraft, setLinkDraft] = useState('');
+  const [progress, setProgress] = useState<UploadProgress | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const upload = useUploadImage();
 
-  const isDefault = !src;
-  const shown = src || DEFAULT_EVENT_IMAGE;
+  const [localPreview, setLocalPreview] = useState<string | null>(null);
+  const isDefault = !src && !localPreview;
+  const shown = localPreview || src || DEFAULT_EVENT_IMAGE;
+  const busy = upload.isPending;
 
   // A remote poster can 404, or be a link to something that is not an image at
   // all. Fall back to the illustration rather than leaving a broken-image icon
@@ -70,25 +67,54 @@ export function EventImage({ src, onPick, willPersist = true, className }: Event
   const [failedSrc, setFailedSrc] = useState<string | null>(null);
   const broken = !!src && failedSrc === src;
 
-  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+  /**
+   * Upload on pick, and only report a URL once the bytes are really stored.
+   *
+   * This used to hand back `URL.createObjectURL(file)` — a blob URL that was
+   * thrown away on submit, so every photo anyone picked was silently lost
+   * (F15, reported the day the slot shipped). Now the file is compressed,
+   * PUT to storage, and the stored URL is what the form saves.
+   *
+   * A local preview is shown while that happens, so the image appears
+   * immediately rather than after the round trip; it is replaced by the
+   * stored URL on success and discarded on failure.
+   */
+  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
-    if (src?.startsWith('blob:')) URL.revokeObjectURL(src);
-    onPick?.(URL.createObjectURL(file));
     e.target.value = '';
+    if (!file) return;
+
+    setUploadError(null);
+    const preview = URL.createObjectURL(file);
+    setLocalPreview(preview);
+
+    try {
+      const asset = await upload.mutateAsync({ file, onProgress: setProgress });
+      onPick?.(asset.url);
+    } catch (error) {
+      setUploadError(
+        error instanceof Error ? error.message : 'That image could not be uploaded.'
+      );
+    } finally {
+      // The preview has done its job either way: on success the stored URL
+      // takes over, on failure there is nothing to show.
+      URL.revokeObjectURL(preview);
+      setLocalPreview(null);
+      setProgress(null);
+    }
   };
 
   const applyLink = () => {
     const trimmed = linkDraft.trim();
     if (!isUsableImageUrl(trimmed)) return;
-    if (src?.startsWith('blob:')) URL.revokeObjectURL(src);
+    setUploadError(null);
     onPick?.(trimmed);
     setLinkDraft('');
     setLinkOpen(false);
   };
 
   const clear = () => {
-    if (src?.startsWith('blob:')) URL.revokeObjectURL(src);
+    setUploadError(null);
     onPick?.(null);
   };
 
@@ -109,23 +135,20 @@ export function EventImage({ src, onPick, willPersist = true, className }: Event
         />
 
         {/*
-          F15. The first person to use this slot picked a file, saved, and the
-          image was gone — because an upload has nowhere to be stored until
-          object storage lands (ROADMAP stage 4). That was already "said", in
-          muted 11px text underneath, and it was read straight past.
-
-          So the warning now sits ON the image, in warning colour, at the
-          moment the preview appears. Nobody should be able to pick a file and
-          be surprised later.
+          F15 is fixed: a picked file is compressed, uploaded and saved. What
+          replaces the "this will not be saved" warning is honest progress —
+          the upload takes a moment on a phone, and a still image with no
+          indication of work is how someone taps Create before it finishes.
         */}
-        {onPick && !willPersist && !broken && (
-          <div className="absolute inset-x-3 top-3 flex items-start gap-2 rounded-xl bg-warning/15 px-3 py-2 text-left ring-1 ring-warning/40 backdrop-blur-sm">
-            <AlertTriangle size={14} className="mt-px shrink-0 text-warning" />
-            <p className="text-[11px] font-semibold leading-tight text-warning">
-              Preview only — this photo will not be saved yet.
-              <span className="block font-normal opacity-90">
-                Use Paste link to set a poster that sticks.
-              </span>
+        {busy && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-background/70 backdrop-blur-sm">
+            <Loader2 size={20} className="animate-spin text-primary" />
+            <p className="text-xs font-semibold">
+              {progress?.stage === 'compressing'
+                ? 'Shrinking the image…'
+                : progress?.stage === 'finishing'
+                  ? 'Almost there…'
+                  : 'Uploading…'}
             </p>
           </div>
         )}
@@ -154,8 +177,9 @@ export function EventImage({ src, onPick, willPersist = true, className }: Event
               </button>
               <button
                 type="button"
+                disabled={busy}
                 onClick={() => inputRef.current?.click()}
-                className="inline-flex items-center gap-1.5 rounded-full bg-background/85 px-3 py-1.5 text-xs font-semibold shadow-sm ring-1 ring-border backdrop-blur-sm transition-colors hover:bg-background"
+                className="inline-flex items-center gap-1.5 rounded-full bg-background/85 px-3 py-1.5 text-xs font-semibold shadow-sm ring-1 ring-border backdrop-blur-sm transition-colors hover:bg-background disabled:opacity-50"
               >
                 <ImagePlus size={13} />
                 {isDefault ? 'Add photo' : 'Change'}
@@ -210,15 +234,18 @@ export function EventImage({ src, onPick, willPersist = true, className }: Event
         </div>
       )}
 
-      {/* Say which of the two paths actually sticks. Letting someone pick a
-          photo and silently discarding it is the defect this replaces. */}
-      {onPick && (
+      {onPick && uploadError && (
+        <p className="flex items-start gap-1.5 px-1 text-[11px] text-destructive">
+          <AlertTriangle size={12} className="mt-px shrink-0" />
+          {uploadError}
+        </p>
+      )}
+
+      {onPick && !uploadError && (
         <p className="px-1 text-[11px] text-muted-foreground">
           {broken
             ? 'That link did not load an image — check it, or paste another.'
-            : willPersist
-              ? 'Paste an image link to set a poster. Uploads arrive with poster storage.'
-              : 'Uploads arrive with poster storage.'}
+            : 'Add a photo or paste an image link. Large photos are shrunk before upload.'}
         </p>
       )}
     </div>

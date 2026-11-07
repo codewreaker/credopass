@@ -128,7 +128,6 @@ export function EventComposer({ mode, eventId, initialValues }: EventComposerPro
           {(field) => (
             <EventImage
               src={field.state.value || undefined}
-              willPersist={!field.state.value.startsWith('blob:')}
               onPick={(url) => field.handleChange(url ?? '')}
             />
           )}

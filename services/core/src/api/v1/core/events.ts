@@ -240,48 +240,12 @@ const EventBody = z.object({
   /**
    * The poster, as an absolute URL, or null to clear it (F14).
    *
-   * **`https` only, and that is a security boundary, not a style rule.** This
-   * URL is rendered as an `<img src>` on the public event page and on the
-   * pass — pages served to people who are not signed in and did not choose the
-   * image. Three things are refused here:
-   *
-   * - `http:` — it would make a padlocked page serve mixed content, and the
-   *   browser would block it anyway.
-   * - `data:` and `blob:` — a data URI is unbounded bytes in a text column,
-   *   and `blob:` is meaningless outside the tab that made it.
-   * - `javascript:` and every other scheme — `z.string().url()` alone accepts
-   *   `javascript:alert(1)`, which is why the protocol is checked explicitly
-   *   rather than trusting the URL validator.
-   *
-   * Until stage 4 this points at somebody else's host, so it is also a quiet
-   * referrer leak and an availability risk. Both are acceptable for a link the
-   * organiser pasted themselves; neither would be once WE host the bytes.
+   * Shape only here; the POLICY is in `Event.assertCoverImageAllowed`,
+   * because deciding whether a URL is acceptable now needs a database read —
+   * one of our own uploaded assets is allowed, and that is a tenant-scoped
+   * question. Routes never query (golden rule 7).
    */
-  /*
-   * `recurrence` lived here. Recurring events are PAUSED — the API cannot
-   * create a series, and the composer's Repeat control says so.
-   *
-   * docs/RECURRING-EVENTS.md has the full edge-case list (DST, clocks going
-   * back, the fifth Sunday, the horizon, series-wide edits) and the library
-   * recommendations. Do not reintroduce this field without working through
-   * §2 of that document first.
-   */
-  coverImageUrl: z
-    .union([
-      z
-        .string()
-        .url()
-        .max(2048)
-        .refine((value) => {
-          try {
-            return new URL(value).protocol === 'https:';
-          } catch {
-            return false;
-          }
-        }, 'The poster link must be an https:// URL'),
-      z.null(),
-    ])
-    .optional(),
+  coverImageUrl: z.union([z.string().url().max(2048), z.null()]).optional(),
 });
 
 const toInput = (b: z.infer<typeof EventBody>) => ({

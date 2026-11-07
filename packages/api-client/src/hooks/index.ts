@@ -6,3 +6,4 @@ export * from './use-attendance';
 export * from './use-public';
 export * from './use-analytics';
 export * from './use-billing';
+export * from './use-media';

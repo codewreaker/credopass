@@ -17,6 +17,7 @@
 
 import { relations } from 'drizzle-orm';
 import { accounts } from './accounts';
+import { assets } from './assets';
 import { attendance } from './attendance';
 import { eventSeries } from './event-series';
 import { events } from './events';
@@ -29,6 +30,7 @@ import { passes } from './passes';
 import { people } from './people';
 
 export { accounts } from './accounts';
+export { assets } from './assets';
 export { attendance } from './attendance';
 export { eventSeries } from './event-series';
 export { events } from './events';
@@ -115,6 +117,13 @@ export const eventsRelations = relations(events, ({ one, many }) => ({
   passes: many(passes),
 }));
 
+export const assetsRelations = relations(assets, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [assets.organizationId],
+    references: [organizations.id],
+  }),
+}));
+
 export const eventSeriesRelations = relations(eventSeries, ({ one, many }) => ({
   organization: one(organizations, {
     fields: [eventSeries.organizationId],
@@ -172,6 +181,7 @@ export const schema = {
   orgDomains,
   invitations,
   people,
+  assets,
   eventSeries,
   events,
   attendance,
@@ -183,6 +193,7 @@ export const schema = {
   peopleRelations,
   eventsRelations,
   eventSeriesRelations,
+  assetsRelations,
   attendanceRelations,
   passesRelations,
   invitationsRelations,

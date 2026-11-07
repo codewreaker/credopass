@@ -45,6 +45,7 @@ export type ApiQuery<P extends keyof paths, M extends keyof paths[P]> = paths[P]
 export type Account = components['schemas']['Account'];
 export type MeContext = components['schemas']['MeContext'];
 export type OrgSummary = components['schemas']['OrgSummary'];
+export type Asset = components['schemas']['Asset'];
 
 /**
  * The permission strings `/me/context` ships in `membership.permissions`.

@@ -20,6 +20,7 @@ import type { Database } from '../db/client';
 import type { TenantContext } from '../tenancy/context';
 import { ProblemCode, problem } from '../http/problem';
 import { deriveStatus, type EventStatus } from './event-status';
+import * as Storage from './storage';
 
 export interface EventSummary {
   id: string;
@@ -444,6 +445,60 @@ const resolveEndAt = (startAt: Date, endAt?: Date | null): Date => {
   return end;
 };
 
+/**
+ * May this URL be an event's poster?
+ *
+ * Two kinds are allowed, and they are checked differently:
+ *
+ *   · **One of our own uploads.** Must be an asset belonging to THIS
+ *     organisation and already `ready`. That rules out pointing an event at
+ *     a half-finished upload, and at another tenant's poster — object keys
+ *     are UUIDs, but "unguessable" is not an access-control model.
+ *   · **An external link the organiser pasted.** Must be `https:`.
+ *
+ * The https rule exists because the URL is rendered as an `<img src>` on the
+ * public event page and on the pass — pages served to people who are not
+ * signed in and did not choose the image. `http:` is mixed content, `data:`
+ * is unbounded bytes in a text column, and `z.string().url()` on its own
+ * happily accepts `javascript:alert(1)`, which is why the protocol is
+ * checked explicitly rather than inferred from the URL parsing.
+ *
+ * **Our own bucket is exempt from the https rule, not from scrutiny.** Local
+ * MinIO is plain http on :9000, so an https-only rule would reject exactly
+ * the uploads this feature exists to support. The exemption is safe because
+ * the alternative check is strictly stronger: the row must exist, be ours,
+ * and be ready.
+ */
+async function assertCoverImageAllowed(
+  db: Database,
+  ctx: TenantContext,
+  url: string | null | undefined
+): Promise<void> {
+  if (!url) return;
+
+  if (Storage.looksLikeOwnStorage(url)) {
+    if (await Storage.isOwnReadyAssetUrl(db, ctx, url)) return;
+    throw problem.badRequest(
+      ProblemCode.VALIDATION_FAILED,
+      'That image upload is not finished, or does not belong to this organisation.'
+    );
+  }
+
+  let protocol: string;
+  try {
+    protocol = new URL(url).protocol;
+  } catch {
+    throw problem.badRequest(ProblemCode.VALIDATION_FAILED, 'The poster link is not a valid URL.');
+  }
+
+  if (protocol !== 'https:') {
+    throw problem.badRequest(
+      ProblemCode.VALIDATION_FAILED,
+      'The poster link must be an https:// URL.'
+    );
+  }
+}
+
 export async function createEvent(
   db: Database,
   ctx: TenantContext,
@@ -451,6 +506,7 @@ export async function createEvent(
   now: Date = new Date()
 ): Promise<EventSummary> {
   const endAt = resolveEndAt(input.startAt, input.endAt);
+  await assertCoverImageAllowed(db, ctx, input.coverImageUrl);
 
   const [row] = await db
     .insert(events)
@@ -512,6 +568,7 @@ export async function updateEvent(
   // Reuses the scoped lookup, so another tenant's event is a 404 before
   // anything is written.
   const existing = await getEvent(db, ctx, eventId, now);
+  await assertCoverImageAllowed(db, ctx, patch.coverImageUrl);
 
   const startAt = patch.startAt ?? new Date(existing.startAt);
   const endAt =

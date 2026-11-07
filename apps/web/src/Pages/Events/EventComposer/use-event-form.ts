@@ -142,10 +142,10 @@ export function useEventForm({ mode, eventId, initialValues, onSaved }: UseEvent
         locationText: value.location,
         capacity: value.capacity ? parseInt(value.capacity, 10) : null,
         allowSelfCheckIn: value.allowSelfCheckIn,
-        // A `blob:` preview is a local object URL — meaningless to anyone else
-        // and rejected by the API — so it is dropped rather than sent. The
-        // picker already tells the user that an upload will not stick yet.
-        coverImageUrl: value.coverImageUrl.startsWith('https://') ? value.coverImageUrl : null,
+        // Whatever the picker produced: a stored asset URL, or a pasted
+        // https link. It never holds a `blob:` preview any more — the upload
+        // completes before the form sees a value (F15).
+        coverImageUrl: value.coverImageUrl || null,
       };
 
       try {

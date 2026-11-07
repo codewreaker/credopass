@@ -65,6 +65,10 @@ Verified against the code on 2026-11-07, not copied from a plan.
 | ⬜ | **R2** — the same defect everywhere: the app renders the zero value instead of "I don't know yet" (`Good afternoon, there`, `0 events`, the stale attendee sheet) | `UI-REDESIGN.md` §2 R2 | S–M |
 | ⬜ | **R5** — only the geocoder fails honestly; copy that sentence to the other three failure states | `UI-REDESIGN.md` §2 R5 | S |
 | ✅ | **U4** — `PATCH /me` exists; the Profile tab edits the display name | shipped 2026-11-07 | S |
+| ✅ | **F11/F15** — posters upload to object storage and persist. Presigned PUT, `assets` table, tenant-scoped | shipped 2026-11-07 | — |
+| ✅ | **F12** — images are downscaled to 2048px and re-encoded in the browser before upload (805KB → 248KB measured) | shipped 2026-11-07 | — |
+| ⬜ | **F12b** — server-side derivatives (AVIF/WebP at card and thumbnail widths, via `sharp`) | stage 4.2 | M |
+| ⬜ | **F13** — the curated set and AI generation | stage 4.3 | M–L |
 | 🟡 | **U2** — "QR scan check-in is broken", never reproduced. The likely cause (the kiosk opened on a code its own scanner refuses) is **fixed**; still wants confirming with a real camera | shipped 2026-11-07 | M |
 | ⬜ | **U1** — `/analytics` draws a full dashboard from fabricated numbers; the warning is only at the top, `Arrivals by hour` is off-palette blue, `Export` is offered on made-up data | `UI-REDESIGN.md` §3.16 | S |
 | ⬜ | **B3** — online events and optional location (`events.location_text` is `NOT NULL`; the UI copy already promises "Offline location or virtual link") | `NEXT-PHASE-PLAN.md` §5.3 | M |
@@ -343,14 +347,14 @@ attendance product that loses an event is worse than one that never offered to r
 F11, F12, F13 and the visual half of F9. The biggest piece of work on this list, and the one that
 most changes how the product looks.
 
-**4.1 Storage (F11).** An `assets` table — id, organization_id, bucket key, content type, width,
+**4.1 Storage (F11).** ✅ **SHIPPED 2026-11-07.** An `assets` table — id, organization_id, bucket key, content type, width,
 height, byte size, checksum — and a real FK from `events.cover_asset_id`, which is currently a
 dangling uuid. MinIO locally (already in `docker-compose.dev.yml`), S3-compatible in production.
 Upload is a **presigned PUT** straight from the browser to the bucket; the API issues the
 signature, validates the content type and the declared size, and records the row on completion.
 Postgres holds the key and the metadata, never bytes.
 
-**4.2 Compression (F12).** Two layers, and both are needed:
+**4.2 Compression (F12).** 🟡 **Browser half shipped 2026-11-07**; server derivatives still open. Two layers, and both are needed:
 
 - **In the browser, before upload** — downscale to a maximum edge (2048px) and re-encode. This is
   what stops a 12MB phone photo ever crossing the network.

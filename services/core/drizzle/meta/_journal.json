@@ -43,6 +43,13 @@
       "when": 1794056585982,
       "tag": "0005_milky_stick",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1794068548335,
+      "tag": "0006_wet_rafael_vega",
+      "breakpoints": true
     }
   ]
 }
