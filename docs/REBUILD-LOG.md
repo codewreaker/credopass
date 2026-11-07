@@ -1258,6 +1258,81 @@ U2 still needs.
 
 ---
 
+## 2026-11-07 — Stage 3: recurring events
+
+**F5, D40.** `event_series` + `events.series_id` / `series_index`, migration `0005`.
+
+### The decision the feature turns on: materialise, don't compute
+
+The tempting design stores an RRULE and expands it on read — one row, no horizon. It does not
+work here, because everything this product does hangs off `events.id`: `attendance` is unique on
+`(event_id, person_id)`, `passes` on `(event_id, person_id) WHERE revoked_at IS NULL`, plus
+capacity, the short code and check-in state. A computed occurrence has no id, so the first time
+anyone checks in to "the third Sunday" there is nothing to write the row against — and an id
+invented at check-in time would differ between two doors. Luma, Eventbrite and Google Calendar all
+materialise for the same reason.
+
+So creating a recurring event writes the series **and** every occurrence in one transaction. The
+stored RRULE is the record of what was asked for, never read back to decide what exists.
+
+### DST is why `recurrence.ts` exists
+
+"Every Sunday at 10am" means 10am **local**. Across a DST boundary that is a different UTC
+instant — 10:00 Europe/London is 10:00Z in January and 09:00Z in July — so expansion cannot be
+`startAt + n * 7 * 86400000`. Fixed-millisecond arithmetic moves a service by an hour twice a
+year, in opposite directions, and nobody notices until a congregation turns up at the wrong time.
+
+The expander breaks the start into local wall-clock parts, advances the **calendar**, and converts
+each occurrence back to UTC at its own offset — two passes, because the offset you need is the one
+in force at the result. 97 unit tests, and the DST cases are the point of the file.
+
+Monthly is by **weekday**, not day-of-month: "the second Sunday", not "the 9th". A month with no
+5th Sunday is **skipped, not nudged** — rolling onto the 4th would invent an event nobody asked
+for in a month they expected free.
+
+### The UI is Apple Calendar's, after a false start
+
+The first version was a pill grid with a count (4 / 8 / 12 / 26 / 52). It was rejected on sight,
+rightly: it made the organiser do arithmetic. The second is Apple's — a plain checkmark list
+(Never · Every Day · Every Week · Every 2 Weeks · Every Month · Every Year) and an **End repeat**
+date.
+
+**An end date, not a count.** "Until the end of term" is a question an organiser can answer; "how
+many Sundays is that" is not. The backend took `until` with it, and the RRULE stores `UNTIL=`
+rather than `COUNT=` so the rule records their intent rather than our arithmetic.
+
+Still capped at **104 occurrences** — each one is a real row with its own short code, so "every
+day until 2099" has to stop somewhere. The sheet says so when the cap bites rather than silently
+generating fewer events than asked for.
+
+### Smaller things that mattered
+
+- **Short codes are reserved across the batch.** `allocateShortCode` only checked the table, so
+  two of 104 could match each other and fail the whole insert on `uq_events_short_code`.
+- **`ON DELETE SET NULL`, never CASCADE.** Deleting a programme must not take the occurrences —
+  they carry the attendance, which is the one thing this product exists to keep. An orphaned
+  occurrence is a one-off event again. There is an integration test for exactly this.
+- **RLS on the new table, hand-written.** drizzle-kit does not emit it. The policies look inert
+  today (the API connects as `postgres`, which is BYPASSRLS) but a tenant table added without one
+  is how the eventual cutover acquires a hole.
+- **A crash found by running it.** `RepeatField` called `until.getTime()` on a value that had been
+  through the form's zod validator and come back not-a-Date, which took the composer down via the
+  error boundary. Normalised on read.
+
+### Verified
+
+97 unit, 124 integration (11 new, against real Postgres), 51 adversarial, lint, build. Created a
+14-week programme through the UI and confirmed in the database: 14 rows, contiguous indices,
+distinct short codes, `FREQ=WEEKLY;BYDAY=SA;UNTIL=…`.
+
+**Still open:** editing a whole programme. The Repeat control is **create-only** — editing one
+occurrence already works, because it is an ordinary event row, but "this event or all future
+ones" needs deciding first, since some occurrences will already have people registered.
+
+**Not deployable until `nx run coreservice:migrate` has run against the remote.**
+
+---
+
 ## Conventions worth knowing
 
 1. Every route is created with `defineRoute` and declares `scope` (+ `permission` if org-scoped).

@@ -31,6 +31,13 @@ export interface EventFormValues {
    * not, or '' for the default illustration.
    */
   coverImageUrl: string;
+  /**
+   * Recurrence (F5). `null` is a one-off, which is almost every event.
+   *
+   * Create-only — `eventToFormValues` always returns null, because editing an
+   * existing programme's pattern is a different question (see RepeatField).
+   */
+  repeat: { frequency: 'daily' | 'weekly' | 'fortnightly' | 'monthly' | 'yearly'; until: Date } | null;
 }
 
 export const eventFormSchema = z
@@ -55,6 +62,15 @@ export const eventFormSchema = z
     // vetted https URL or a blob preview, and the API re-checks the protocol
     // because a client-side rule is not a boundary.
     coverImageUrl: z.string().max(2048).default(''),
+    repeat: z
+      .union([
+        z.object({
+          frequency: z.enum(['daily', 'weekly', 'fortnightly', 'monthly', 'yearly']),
+          until: z.date(),
+        }),
+        z.null(),
+      ])
+      .default(null),
   })
   .superRefine((data, ctx) => {
     if (data.start && data.end && data.end.getTime() <= data.start.getTime()) {
@@ -89,6 +105,9 @@ export const eventToFormValues = (event: Event): EventFormValues => ({
   capacity: event.capacity != null ? String(event.capacity) : '',
   allowSelfCheckIn: event.allowSelfCheckIn,
   coverImageUrl: event.coverImageUrl ?? '',
+  // Never seeded from an existing event: the composer's Repeat control is
+  // create-only, and an edit must not silently re-expand a programme.
+  repeat: null,
 });
 
 interface UseEventFormArgs {
@@ -120,6 +139,7 @@ export function useEventForm({ mode, eventId, initialValues, onSaved }: UseEvent
       capacity: initialValues?.capacity ?? '',
       allowSelfCheckIn: initialValues?.allowSelfCheckIn ?? true,
       coverImageUrl: initialValues?.coverImageUrl ?? '',
+      repeat: initialValues?.repeat ?? null,
     } as EventFormValues,
     validators: {
       // @ts-expect-error — zod schema output is narrower than the form values type
@@ -159,9 +179,25 @@ export function useEventForm({ mode, eventId, initialValues, onSaved }: UseEvent
         }
 
         // The id we mint is honoured (D11), which makes create idempotent under
-        // a retry rather than producing two events.
-        const created = await createEvent.mutateAsync({ id: crypto.randomUUID(), ...body });
-        toast.success('Event created');
+        // a retry rather than producing two events. For a series it belongs to
+        // the first occurrence only — the server does the rest.
+        const created = await createEvent.mutateAsync({
+          id: crypto.randomUUID(),
+          ...body,
+          ...(value.repeat
+            ? {
+                recurrence: {
+                  frequency: value.repeat.frequency,
+                  until: value.repeat.until.toISOString(),
+                },
+              }
+            : {}),
+        });
+        // Deliberately vague about the number: the server caps the horizon and
+        // monthly patterns skip months, so the composer does not actually know
+        // how many rows were written. Claiming a figure it guessed would be
+        // the "renders a value it does not have" defect all over again.
+        toast.success(value.repeat ? 'Repeating event created' : 'Event created');
         onSaved?.(created.id);
       } catch (error) {
         toast.error(errorMessage(error, `Could not ${isEditing ? 'update' : 'create'} the event`));

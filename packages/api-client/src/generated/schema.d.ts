@@ -977,6 +977,12 @@ export interface paths {
                         checkInMethods?: ("qr" | "manual" | "self" | "pass")[];
                         requireCheckOut?: boolean;
                         allowSelfCheckIn?: boolean;
+                        recurrence?: {
+                            /** @enum {string} */
+                            frequency: "daily" | "weekly" | "fortnightly" | "monthly" | "yearly";
+                            /** Format: date-time */
+                            until: string;
+                        };
                         coverImageUrl?: string | null;
                     };
                 };
@@ -1259,6 +1265,12 @@ export interface paths {
                         checkInMethods?: ("qr" | "manual" | "self" | "pass")[];
                         requireCheckOut?: boolean;
                         allowSelfCheckIn?: boolean;
+                        recurrence?: {
+                            /** @enum {string} */
+                            frequency: "daily" | "weekly" | "fortnightly" | "monthly" | "yearly";
+                            /** Format: date-time */
+                            until: string;
+                        };
                         coverImageUrl?: string | null;
                     };
                 };
@@ -2821,6 +2833,8 @@ export interface components {
             allowSelfCheckIn: boolean;
             requireCheckOut: boolean;
             coverImageUrl: string | null;
+            seriesId: string | null;
+            seriesIndex: number | null;
         };
         PersonRow: {
             /** Format: uuid */

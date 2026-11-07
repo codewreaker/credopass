@@ -46,6 +46,13 @@ const EventSummarySchema = z
     requireCheckOut: z.boolean(),
     /** The poster (F14). `z.union([…, z.null()])`, never `.nullable()` on a Ref. */
     coverImageUrl: z.union([z.string(), z.null()]),
+    /**
+     * Which recurring programme this occurrence belongs to, or null for a
+     * one-off (F5, D40). `seriesIndex` is 0-based, so the UI can say
+     * "3 of 12" without a second request.
+     */
+    seriesId: z.union([z.string().uuid(), z.null()]),
+    seriesIndex: z.union([z.number().int(), z.null()]),
   })
   .openapi('EventSummary');
 
@@ -257,6 +264,28 @@ const EventBody = z.object({
    * referrer leak and an availability risk. Both are acceptable for a link the
    * organiser pasted themselves; neither would be once WE host the bytes.
    */
+  /**
+   * Make this the first of a recurring programme (F5, D40).
+   *
+   * Omitting it creates a single event, which is what almost every create
+   * does. Supplying it writes the series and every occurrence in one
+   * transaction and returns the FIRST — the response shape does not change,
+   * so a client that does not care about recurrence needs no special case.
+   *
+   * `until` is an end DATE, not a count — the question an organiser can
+   * actually answer ("until the end of term"), and the one Apple Calendar
+   * asks. It is inclusive of that day in the event's timezone.
+   *
+   * The result is still capped server-side at `MAX_OCCURRENCES` (104). The
+   * cap is not negotiable from the request: every occurrence is a real row
+   * with its own short code, so "every day until 2099" has to stop somewhere.
+   */
+  recurrence: z
+    .object({
+      frequency: z.enum(['daily', 'weekly', 'fortnightly', 'monthly', 'yearly']),
+      until: z.string().datetime(),
+    })
+    .optional(),
   coverImageUrl: z
     .union([
       z
@@ -275,10 +304,16 @@ const EventBody = z.object({
     .optional(),
 });
 
-const toInput = (b: z.infer<typeof EventBody>) => ({
+const toInput = ({ recurrence, ...b }: z.infer<typeof EventBody>) => ({
   ...b,
   startAt: new Date(b.startAt),
   endAt: b.endAt ? new Date(b.endAt) : null,
+  // Destructured out of the spread rather than overwritten on top of it:
+  // spreading first leaves `recurrence` typed as the string-dated wire shape
+  // unioned with the parsed one, which is not what the service accepts.
+  ...(recurrence
+    ? { recurrence: { frequency: recurrence.frequency, until: new Date(recurrence.until) } }
+    : {}),
 });
 
 eventRoutes.openapi(

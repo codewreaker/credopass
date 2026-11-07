@@ -448,6 +448,27 @@
                 "type": "null"
               }
             ]
+          },
+          "seriesId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "seriesIndex": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -465,7 +486,9 @@
           "counts",
           "allowSelfCheckIn",
           "requireCheckOut",
-          "coverImageUrl"
+          "coverImageUrl",
+          "seriesId",
+          "seriesIndex"
         ]
       },
       "PersonRow": {
@@ -2534,6 +2557,29 @@
                   "allowSelfCheckIn": {
                     "type": "boolean"
                   },
+                  "recurrence": {
+                    "type": "object",
+                    "properties": {
+                      "frequency": {
+                        "type": "string",
+                        "enum": [
+                          "daily",
+                          "weekly",
+                          "fortnightly",
+                          "monthly",
+                          "yearly"
+                        ]
+                      },
+                      "until": {
+                        "type": "string",
+                        "format": "date-time"
+                      }
+                    },
+                    "required": [
+                      "frequency",
+                      "until"
+                    ]
+                  },
                   "coverImageUrl": {
                     "anyOf": [
                       {
@@ -2895,6 +2941,29 @@
                   },
                   "allowSelfCheckIn": {
                     "type": "boolean"
+                  },
+                  "recurrence": {
+                    "type": "object",
+                    "properties": {
+                      "frequency": {
+                        "type": "string",
+                        "enum": [
+                          "daily",
+                          "weekly",
+                          "fortnightly",
+                          "monthly",
+                          "yearly"
+                        ]
+                      },
+                      "until": {
+                        "type": "string",
+                        "format": "date-time"
+                      }
+                    },
+                    "required": [
+                      "frequency",
+                      "until"
+                    ]
                   },
                   "coverImageUrl": {
                     "anyOf": [

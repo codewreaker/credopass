@@ -18,6 +18,7 @@
 import { relations } from 'drizzle-orm';
 import { accounts } from './accounts';
 import { attendance } from './attendance';
+import { eventSeries } from './event-series';
 import { events } from './events';
 import { identities } from './identities';
 import { invitations } from './invitations';
@@ -29,6 +30,7 @@ import { people } from './people';
 
 export { accounts } from './accounts';
 export { attendance } from './attendance';
+export { eventSeries } from './event-series';
 export { events } from './events';
 export { identities } from './identities';
 export { invitations } from './invitations';
@@ -103,8 +105,22 @@ export const eventsRelations = relations(events, ({ one, many }) => ({
     fields: [events.organizationId],
     references: [organizations.id],
   }),
+  // Null for a one-off, and null again if the programme is ever deleted — the
+  // occurrence outlives it, because it carries the attendance records.
+  series: one(eventSeries, {
+    fields: [events.seriesId],
+    references: [eventSeries.id],
+  }),
   attendance: many(attendance),
   passes: many(passes),
+}));
+
+export const eventSeriesRelations = relations(eventSeries, ({ one, many }) => ({
+  organization: one(organizations, {
+    fields: [eventSeries.organizationId],
+    references: [organizations.id],
+  }),
+  events: many(events),
 }));
 
 export const attendanceRelations = relations(attendance, ({ one }) => ({
@@ -156,6 +172,7 @@ export const schema = {
   orgDomains,
   invitations,
   people,
+  eventSeries,
   events,
   attendance,
   passes,
@@ -165,6 +182,7 @@ export const schema = {
   orgMembershipsRelations,
   peopleRelations,
   eventsRelations,
+  eventSeriesRelations,
   attendanceRelations,
   passesRelations,
   invitationsRelations,

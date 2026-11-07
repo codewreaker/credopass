@@ -216,7 +216,7 @@ closed with the explanation, and the kiosk's counter is a route to the attendanc
 
 ---
 
-### Stage 3 — Recurring events · **M, 2–3 days, schema change**
+### Stage 3 — Recurring events · ✅ **SHIPPED 2026-11-07** (create; series-wide edit still open)
 
 **F5 — what it means on the backend.** The honest answer, and the one the schema was already
 designed for:
@@ -341,10 +341,13 @@ delivery, then test mode. `pii_mode` when a named customer asks. **B7**, the cha
 
 **Open — answer before the stage that needs them**
 
-1. **Recurrence horizon** (stage 3): 12 months, or 52 occurrences, or both? A Sunday service wants
-   a year; a six-week course wants six.
-2. **"This event or all future ones"** (stage 3): which is the default when the organiser edits an
-   occurrence? Calendars differ; pick one and keep it.
+1. ~~**Recurrence horizon**~~ — **answered by building it.** The organiser picks an end DATE
+   (Apple's model: "until the end of term" is answerable, "how many Sundays is that" is not), and
+   the server caps the result at 104 occurrences and says so in the sheet when the cap bites.
+2. **"This event or all future ones"** (stage 3, still open): the Repeat control is **create-only**
+   today. Editing one occurrence already works — it is an ordinary event row. Changing a whole
+   programme needs this question answered first, because some occurrences will already have people
+   registered against them.
 3. **Which image model** (stage 4.3.3), at what cost per generation, and on which plans?
 4. **Does the curated set need to be per-organisation?** A church and a conference want different
    twelve images. Assume one global set for v1 unless told otherwise.

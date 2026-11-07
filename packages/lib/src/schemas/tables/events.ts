@@ -8,6 +8,7 @@ import {
 } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 import { organizations } from './organizations';
+import { eventSeries } from './event-series';
 
 /**
  * An event.
@@ -24,6 +25,20 @@ import { organizations } from './organizations';
 export const events = pgTable('events', {
   id: uuid('id').primaryKey().defaultRandom(),
   organizationId: uuid('organization_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+
+  /**
+   * The recurring programme this is one occurrence of, or null for a one-off
+   * (ROADMAP stage 3, D40).
+   *
+   * `ON DELETE SET NULL`, deliberately. Deleting the series must never cascade
+   * into the events: those rows carry `attendance` — the durable record that
+   * somebody actually turned up — and losing attendance because a programme
+   * was tidied away would destroy the one thing this product exists to keep.
+   * An orphaned occurrence is simply a one-off event again.
+   */
+  seriesId: uuid('series_id').references(() => eventSeries.id, { onDelete: 'set null' }),
+  /** 0-based position within the series, for "the 3rd of 12" and stable ordering. */
+  seriesIndex: integer('series_index'),
 
   name: text('name').notNull(),
   description: text('description'),
@@ -87,6 +102,8 @@ export const events = pgTable('events', {
   updatedAt: timestamp('updated_at', { mode: 'date', withTimezone: true }).notNull().defaultNow(),
 }, (table) => [
   index('idx_events_org_start').on(table.organizationId, table.startAt.desc()),
+  // "Show me the rest of this programme" — and the edit-all-future path.
+  index('idx_events_series').on(table.seriesId, table.startAt),
   uniqueIndex('uq_events_short_code').on(table.shortCode),
   index('idx_events_org_active').on(table.organizationId).where(sql`${table.deletedAt} IS NULL`),
   // The scheduler's sweep: events past their window that nobody has closed.

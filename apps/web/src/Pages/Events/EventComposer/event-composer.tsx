@@ -9,7 +9,7 @@ import { EventImage } from './fields/event-image';
 import { DateTimeField } from './fields/date-time-field';
 import { LocationField } from './fields/location-field';
 import { DescriptionField } from './fields/description-field';
-import { CapacityField, SelfCheckInField } from './fields/option-fields';
+import { CapacityField, RepeatField, SelfCheckInField } from './fields/option-fields';
 import { DEFAULT_DURATION_MS, useEventForm, type EventFormValues } from './use-event-form';
 import { Building2 } from 'lucide-react';
 import { useActiveOrganizationName, useSession } from '../../../contexts/session';
@@ -269,6 +269,25 @@ export function EventComposer({ mode, eventId, initialValues }: EventComposerPro
             Event Options
           </span>
           <div className="divide-y divide-border overflow-hidden rounded-2xl border border-border bg-card">
+            {/* Create only. Changing the pattern of a programme whose
+                occurrences already exist — some with people registered — is a
+                different question, and offering the control without an answer
+                to it would be a lie (F5). */}
+            {!isEditing && (
+              <form.Subscribe selector={(state) => state.values.start}>
+                {(start) => (
+                  <form.Field name="repeat">
+                    {(field) => (
+                      <RepeatField
+                        value={field.state.value}
+                        onChange={field.handleChange}
+                        startAt={start}
+                      />
+                    )}
+                  </form.Field>
+                )}
+              </form.Subscribe>
+            )}
             <form.Field name="capacity">
               {(field) => (
                 <CapacityField
