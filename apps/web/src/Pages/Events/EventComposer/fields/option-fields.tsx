@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import type { LucideIcon } from 'lucide-react';
-import { CheckIcon, PencilIcon, UsersIcon, ScanLineIcon, RepeatIcon } from 'lucide-react';
+import { AlertTriangle, CheckIcon, PencilIcon, UsersIcon, ScanLineIcon, RepeatIcon } from 'lucide-react';
 import { Button } from '@credopass/ui/components/button';
 import { Input } from '@credopass/ui/components/input';
 import { SheetDialog } from '@credopass/ui/components/sheet-dialog';
 import { cn } from '@credopass/ui/lib/utils';
+import { MAX_OCCURRENCES, expand } from '@credopass/lib/utils';
 
 /** One row of the "Event Options" list — icon, label, current value, edit affordance. */
 function OptionRow({
@@ -172,10 +173,6 @@ const FREQUENCIES = [
   { value: 'yearly' as const, label: 'Every Year' },
 ];
 
-/** Server-side horizon. Mirrored here only to warn before submitting. */
-const MAX_OCCURRENCES = 104;
-
-const DAY_MS = 24 * 60 * 60 * 1000;
 
 /** A sensible first end date per frequency — roughly a season of each. */
 const defaultUntil = (frequency: NonNullable<RepeatValue>['frequency'], from: Date): Date => {
@@ -207,16 +204,42 @@ const asDate = (value: unknown, fallback: Date): Date => {
   return d && !Number.isNaN(d.getTime()) ? d : fallback;
 };
 
-/** How many events this will actually create — the same arithmetic the server does. */
-const estimate = (frequency: NonNullable<RepeatValue>['frequency'], start: Date, until: Date): number => {
-  const span = Math.max(0, until.getTime() - start.getTime());
-  const step =
-    frequency === 'daily' ? DAY_MS
-    : frequency === 'weekly' ? 7 * DAY_MS
-    : frequency === 'fortnightly' ? 14 * DAY_MS
-    : frequency === 'monthly' ? 30.44 * DAY_MS
-    : 365.25 * DAY_MS;
-  return Math.min(MAX_OCCURRENCES, Math.floor(span / step) + 1);
+/**
+ * Exactly how many events this will create — by running the server's own
+ * expander, not by approximating it.
+ *
+ * This was `span / averageMonthLength`, and it lied. A monthly series landing
+ * on a 5th weekday skips every month that has no 5th weekday, so the sheet
+ * promised ~22 events and the server wrote 8. Someone who reads "22", gets 8
+ * and then finds dates missing from their calendar has every reason to think
+ * the product lost their events.
+ *
+ * `expand` is pure and lives in `@credopass/lib`, so this is the same code
+ * path the API runs — including the 104 cap and the monthly skipping.
+ */
+
+
+const browserTimezone = () => {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+  } catch {
+    return 'UTC';
+  }
+};
+
+/** Which occurrence of its weekday a date is within its month: 1 = first. */
+const weekdayOrdinalOf = (d: Date) => Math.floor((d.getDate() - 1) / 7) + 1;
+
+const ORDINALS = ['', 'first', 'second', 'third', 'fourth', 'fifth'];
+const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+/** "the second Sunday", for the monthly explanation. */
+const ordinalLabel = (d: Date) =>
+  `the ${ORDINALS[weekdayOrdinalOf(d)]} ${WEEKDAYS[d.getDay()]}`;
+
+const nthSuffix = (n: number) => {
+  if (n % 100 >= 11 && n % 100 <= 13) return 'th';
+  return ['th', 'st', 'nd', 'rd'][n % 10] ?? 'th';
 };
 
 const asDateInput = (d: Date) =>
@@ -244,7 +267,25 @@ export function RepeatField({
   const summary = value ? FREQUENCIES.find((f) => f.value === value.frequency)?.label ?? 'Never' : 'Never';
   // Normalised here, once, so every read below is a real Date.
   const draftUntil = draft ? asDate(draft.until, defaultUntil(draft.frequency, from)) : null;
-  const count = draft && draftUntil ? estimate(draft.frequency, from, draftUntil) : 0;
+  // The real occurrences, from the server's own expander — so the count, the
+  // cap warning and the final date all agree with what will be written.
+  const occurrences =
+    draft && draftUntil
+      ? expand({
+          frequency: draft.frequency,
+          startAt: from,
+          durationMs: 0,
+          timezone: browserTimezone(),
+          until: draftUntil,
+        })
+      : [];
+  const count = occurrences.length;
+  const capped = count >= MAX_OCCURRENCES;
+  const lastDate = occurrences.at(-1)?.startAt.toLocaleDateString(undefined, {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
 
   return (
     <>
@@ -319,20 +360,41 @@ export function RepeatField({
             {/* Say what the button is about to do. Each occurrence is a real
                 event with its own check-in code, not a rule expanded later,
                 so the number is a number of rows. */}
+            {/* An exact number, not "about": it comes from the same expander
+                the server runs. */}
             <p className="mt-3 px-1 text-xs text-muted-foreground">
-              Creates about {count} event{count === 1 ? '' : 's'}, starting with this one. Each has
-              its own check-in code and attendance list, and you can edit or cancel any of them on
-              its own.
+              Creates {count} event{count === 1 ? '' : 's'}, starting with this one. Each has its
+              own check-in code and attendance list, and you can edit or cancel any of them on its
+              own.
             </p>
-            {count >= MAX_OCCURRENCES && (
-              <p className="mt-2 px-1 text-xs text-warning">
-                That is the most we create at once ({MAX_OCCURRENCES}). Pick an earlier end date,
-                or make another programme when this one runs out.
+            {/*
+              R-1 in the roadmap's recurrence risk register, surfaced where it
+              can actually be acted on.
+
+              A capped series stops at the 104th occurrence and NOTHING in the
+              product mentions it again — there is no top-up job yet. A church
+              that set up "every Sunday until 2030" would find the calendar
+              simply empty one week, which is the worst thing an attendance
+              product can do. Until the horizon is managed automatically, the
+              date it runs out has to be said out loud, here, with the word
+              "stop" in it.
+            */}
+            {capped && lastDate && (
+              <p className="mt-2 flex items-start gap-1.5 px-1 text-xs text-warning">
+                <AlertTriangle size={13} className="mt-px shrink-0" />
+                <span>
+                  We create at most {MAX_OCCURRENCES} at a time, so this programme will{' '}
+                  <strong>stop after {lastDate}</strong> — it does not continue on its own. Pick an
+                  earlier end date, or set up the next stretch when this one runs out.
+                </span>
               </p>
             )}
             {draft.frequency === 'monthly' && (
               <p className="mt-2 px-1 text-xs text-muted-foreground">
-                Monthly keeps the same weekday — the second Sunday, not the 8th.
+                Monthly keeps the same weekday — {ordinalLabel(from)}, not the {from.getDate()}
+                {nthSuffix(from.getDate())}.
+                {weekdayOrdinalOf(from) === 5 &&
+                  ' Most months have no fifth week, so those are skipped — which is why the count above is lower than you might expect.'}
               </p>
             )}
           </div>

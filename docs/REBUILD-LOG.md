@@ -1325,9 +1325,38 @@ generating fewer events than asked for.
 14-week programme through the UI and confirmed in the database: 14 rows, contiguous indices,
 distinct short codes, `FREQ=WEEKLY;BYDAY=SA;UNTIL=…`.
 
-**Still open:** editing a whole programme. The Repeat control is **create-only** — editing one
-occurrence already works, because it is an ordinary event row, but "this event or all future
-ones" needs deciding first, since some occurrences will already have people registered.
+### An edge-case audit, because the failure mode here is somebody missing an event
+
+Probed rather than assumed, and the probe found two real defects — both now fixed:
+
+- **The count shown before committing was wrong by 3x.** The composer approximated it as
+  `span / averageMonthLength`; a monthly series on a fifth weekday skips most months, so the
+  sheet promised ~22 events and the server wrote 8. `recurrence.ts` moved to `packages/lib` and
+  both sides now run the same expander, so the number is exact.
+- **A long sparse monthly series truncated silently.** The step loop stopped at
+  `MAX_OCCURRENCES + 24`, which is not enough for a fifth-weekday pattern (about five a year), so
+  a long programme simply ended early with nothing saying it had. Now `MAX_OCCURRENCES * 12`.
+
+Confirmed-correct behaviours, each now locked by a test: a wall time that does not exist rolls
+forward (01:30 → 02:30 on a spring-forward night) rather than the occurrence being dropped; an
+ambiguous wall time yields exactly one occurrence; an event spanning a boundary keeps its
+wall-clock length; short codes cannot collide within a batch; deleting a series leaves the
+attendance standing.
+
+**R-1 is now visible in the product**, not only in a doc: choosing an end date beyond the cap says
+"this programme will **stop after 28 October 2028** — it does not continue on its own".
+
+**Still open, and recurrence should not be promoted beyond the maintainer until they are done —
+see the risk register in [`ROADMAP.md`](ROADMAP.md):**
+
+- **R-1** a capped series stops dead and there is no top-up job. Warned at creation; nothing
+  mentions it afterwards.
+- **R-2** no way to change or cancel a whole programme. One tap creates 104 rows; undoing it is
+  104 actions, and delete 409s once anyone has registered.
+- **R-3** the series is reckoned in the *browser's* timezone, not the organisation's — which
+  exists (`organizations.timezone`, "Recurrence needs it (D3)") and is simply not read.
+- **R-4** "Every Month" on a 29th–31st is a fifth-weekday pattern and produces a sparse series.
+  Correct, now stated exactly, still surprising — and "last Sunday of the month" is not offered.
 
 **Not deployable until `nx run coreservice:migrate` has run against the remote.**
 

@@ -12,7 +12,7 @@
  */
 
 import { describe, expect, it } from 'bun:test';
-import { MAX_OCCURRENCES, expand, toRRule, type RecurrenceFrequency } from '../services/recurrence';
+import { MAX_OCCURRENCES, expand, toRRule, type RecurrenceFrequency } from '@credopass/lib/utils';
 
 const HOUR = 60 * 60 * 1000;
 
@@ -178,5 +178,68 @@ describe('toRRule', () => {
     const lateSunday = new Date('2026-02-08T23:00:00Z');
     expect(toRRule('weekly', lateSunday, 'UTC', until)).toContain('BYDAY=SU');
     expect(toRRule('weekly', lateSunday, 'Pacific/Auckland', until)).toContain('BYDAY=MO');
+  });
+});
+
+/**
+ * The edge cases that would make somebody miss an event.
+ *
+ * Written after probing the real behaviour rather than assuming it. Each of
+ * these is a case where a plausible implementation does something quietly
+ * wrong, and the assertion is what stops it regressing there.
+ */
+describe('expand — the dangerous edges', () => {
+  const wallFull = (d: Date, timeZone: string) =>
+    new Intl.DateTimeFormat('en-GB', {
+      timeZone,
+      dateStyle: 'short',
+      timeStyle: 'short',
+      hour12: false,
+    }).format(d);
+
+  it('rolls a NON-EXISTENT wall time forward rather than dropping the occurrence', () => {
+    // 01:30 does not exist in London on 29 March 2026 — the clocks go
+    // 01:00 → 02:00. The occurrence must still happen; it lands at 02:30.
+    // What matters is that it EXISTS: silently skipping a week is how a
+    // congregation finds nothing in the calendar.
+    const occurrences = run('weekly', '2026-03-22T01:30:00Z', '2026-04-06T00:00:00Z', 'Europe/London');
+    expect(occurrences).toHaveLength(3);
+    expect(wallFull(occurrences[1].startAt, 'Europe/London')).toBe('29/03/2026, 02:30');
+    // And the week after is back to the asked-for time.
+    expect(wallFull(occurrences[2].startAt, 'Europe/London')).toBe('05/04/2026, 01:30');
+  });
+
+  it('resolves an AMBIGUOUS wall time consistently', () => {
+    // 01:30 happens twice in London on 25 October 2026. Either answer is
+    // defensible; the requirement is that there is exactly one occurrence and
+    // it reads as 01:30.
+    const occurrences = run('weekly', '2026-10-18T00:30:00Z', '2026-11-02T00:00:00Z', 'Europe/London');
+    expect(occurrences).toHaveLength(3);
+    expect(wallFull(occurrences[1].startAt, 'Europe/London')).toBe('25/10/2026, 01:30');
+  });
+
+  it('keeps an event that spans a DST boundary the same length on the clock', () => {
+    // 23:00 → 01:00 across the spring-forward night. The duration is
+    // preserved in milliseconds, so the wall-clock end is unchanged.
+    const occurrences = run('weekly', '2026-03-22T23:00:00Z', '2026-04-01T00:00:00Z', 'Europe/London', 2 * HOUR);
+    for (const o of occurrences) {
+      expect(wallFull(o.startAt, 'Europe/London')).toContain('23:00');
+      expect(wallFull(o.endAt, 'Europe/London')).toContain('01:00');
+    }
+  });
+
+  it('runs a sparse monthly series all the way to its end date', () => {
+    // A "fifth Sunday" pattern occurs in roughly five months a year. The
+    // step loop has to run far past the occurrence cap or the series stops
+    // early — silently, which is the failure mode that loses events.
+    const occurrences = run('monthly', '2026-03-29T10:00:00Z', '2036-01-01T00:00:00Z');
+    expect(occurrences.length).toBeGreaterThan(40);
+    // It really did reach the end of the requested span.
+    expect(occurrences[occurrences.length - 1].startAt.getUTCFullYear()).toBe(2035);
+  });
+
+  it('reaches the full cap even for a sparse monthly pattern', () => {
+    const occurrences = run('monthly', '2026-03-29T10:00:00Z', '2099-01-01T00:00:00Z');
+    expect(occurrences).toHaveLength(MAX_OCCURRENCES);
   });
 });

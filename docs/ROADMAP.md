@@ -256,6 +256,83 @@ every database must be migrated before the code ships.
 
 ---
 
+---
+
+## ⚠️ Recurring events — what is NOT safe yet
+
+> **Read this before anyone runs a real programme through it.** Recurrence shipped on 2026-11-07
+> and the expansion arithmetic is well covered (102 unit tests, DST included). What follows is the
+> honest list of what is *not* handled — written because the failure mode here is somebody turning
+> up to a church hall on a Sunday when the event is not in the system.
+>
+> Ranked by how likely they are to cost someone an event.
+
+### 🔴 R-1 · A series stops dead at the horizon, and nothing says so
+
+A programme materialises at most **104 occurrences**. "Every Sunday until 2030" silently becomes
+"every Sunday for two years". The sheet warns at creation — and then nothing ever mentions it
+again. There is no top-up job (that is the Phase 4 scheduler), no reminder, and no banner on the
+last occurrence.
+
+**So a church that set this up in good faith finds the calendar simply empty one week.** This is
+the single most dangerous thing on the list.
+
+*What to build:* `event_series.materialised_through` already exists for exactly this. Either a
+scheduled top-up, or — cheaper and honest — a visible "this programme ends on 12 April" line on
+every occurrence, and a nudge when fewer than N remain.
+
+### 🔴 R-2 · There is no way to change or cancel a whole programme
+
+Repeat is **create-only**. 104 events created by mistake must be removed one at a time, and
+`DELETE /events/{id}` refuses with 409 the moment anyone has registered, so the fallback is
+cancelling each occurrence by hand.
+
+**The asymmetry is the problem: one tap creates 104 rows, and undoing it is 104 actions.**
+
+*What to build:* this is the "this event, or all future ones?" question already open in §4. It
+needs answering before recurrence is offered to anyone who is not the maintainer.
+
+### 🟡 R-3 · The series is reckoned in the BROWSER's timezone
+
+`EventComposer` sends `timezone: Intl.DateTimeFormat().resolvedOptions().timeZone`. An organiser
+who creates a London programme while travelling gets a series pinned to the timezone they happened
+to be standing in, and every occurrence after the next DST change is an hour out for the
+congregation.
+
+`organizations.timezone` exists and is documented as "the org's default event timezone.
+Recurrence needs it (D3)" — it is simply not read. *Fix:* default to the organisation's zone,
+let the composer override, and show which zone is in force.
+
+### 🟡 R-4 · "Every Month" on a 29th/30th/31st produces a sparse series
+
+Monthly is by **weekday** — "the second Sunday". An event on the 29th is usually the *fifth*
+Sunday, and most months have no fifth week, so those months are skipped. A year of "Every Month"
+can be five events, not twelve.
+
+This is defensible (nudging to the 4th would invent events nobody asked for) and the sheet now
+shows the **exact** count and says so in words. But it will still surprise people, and "last
+Sunday of the month" — which is what most of them actually mean — is not offered.
+
+### 🟢 R-5 · Resolved, but worth knowing
+
+| | Behaviour | Status |
+|---|---|---|
+| A wall time that does not exist (01:30 on a spring-forward night) | Rolls forward to 02:30. The occurrence always exists — it is never dropped. | ✅ tested |
+| A wall time that happens twice (01:30 on a fall-back night) | One occurrence, reading 01:30. | ✅ tested |
+| An event spanning a DST boundary | Duration preserved exactly, so 23:00–01:00 stays 23:00–01:00. | ✅ tested |
+| A long sparse monthly series | Reaches its end date or the cap. **Was truncating silently** at ~128 steps; fixed 2026-11-07. | ✅ tested |
+| Short-code collision within one batch | Codes are reserved across the batch, not just checked against the table. | ✅ tested |
+| Deleting the series | `ON DELETE SET NULL` — occurrences and their attendance survive. | ✅ tested |
+| The count shown before you commit | Runs the server's own expander (`@credopass/lib`). **Was an average-month approximation** that said ~22 for a series of 8; fixed 2026-11-07. | ✅ |
+
+### The rule for this feature
+
+**Do not promote recurrence beyond the maintainer's own use until R-1 and R-2 are done.** Both are
+about a programme that has already been created going wrong quietly, and quiet is the problem: an
+attendance product that loses an event is worse than one that never offered to repeat it.
+
+---
+
 ### Stage 4 — Posters, storage and images · **L, a week+, schema change**
 
 F11, F12, F13 and the visual half of F9. The biggest piece of work on this list, and the one that

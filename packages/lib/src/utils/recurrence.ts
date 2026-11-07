@@ -5,6 +5,13 @@
  * here is testable without a container, which matters because the only way to
  * be sure about DST is to assert it.
  *
+ * **It lives in `packages/lib` so the composer and the API share it.**
+ * It started in `services/core` and the web app re-implemented the count as
+ * an average-month approximation, which was wrong by 3x for a monthly series
+ * on a 5th weekday: the sheet promised ~22 events and the server wrote 8.
+ * A number the UI guesses about work the server does is the same defect as
+ * rendering a value you do not have. One implementation, both callers.
+ *
  * **Why this is hand-written and not `rrule`.** The UI offers four patterns:
  * weekly, fortnightly, monthly-by-weekday and none. That is a small enough
  * surface that a dependency buys less than it costs — and the one thing that
@@ -249,11 +256,17 @@ export function expand(input: RecurrenceInput): Occurrence[] {
     }
   };
 
-  // `i` runs past the cap so that monthly patterns can skip months with no
-  // nth weekday without ending the series early; `walls.length` is what stops
-  // it. The `+ 24` is two years of skipped months, which is more than a
-  // Gregorian calendar can actually produce in a row.
-  for (let i = 0; walls.length < MAX_OCCURRENCES && i < MAX_OCCURRENCES + 24; i += 1) {
+  // `i` runs well past the cap so a monthly pattern can skip months with no
+  // nth weekday without ending the series early; `walls.length` and the end
+  // date are what stop it.
+  //
+  // The bound is `MAX_OCCURRENCES * 12` because a 5th weekday occurs in only
+  // about five months a year, so reaching 104 of them takes roughly 250
+  // steps. An earlier version used `MAX_OCCURRENCES + 24`, which silently
+  // truncated a long "fifth Sunday" series — the series simply stopped, with
+  // nothing saying it had, which is exactly how somebody misses an event.
+  const maxSteps = MAX_OCCURRENCES * 12;
+  for (let i = 0; walls.length < MAX_OCCURRENCES && i < maxSteps; i += 1) {
     const candidate = nth(i);
     if (!candidate) continue;
     // The first occurrence is always included, even if the end date is the

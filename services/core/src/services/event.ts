@@ -20,7 +20,7 @@ import type { Database } from '../db/client';
 import type { TenantContext } from '../tenancy/context';
 import { ProblemCode, problem } from '../http/problem';
 import { deriveStatus, type EventStatus } from './event-status';
-import { expand, toRRule, type RecurrenceFrequency } from './recurrence';
+import { expand, toRRule, type RecurrenceFrequency } from '@credopass/lib/utils';
 
 export interface EventSummary {
   id: string;
