@@ -39,12 +39,12 @@ Nothing is "in progress" unless someone is actually working on it today.
 | | Work | Where it is specified | Size |
 |---|---|---|---|
 | 🔴 | The composer shows "No organization" as a loading state | [`NEXT-PHASE-PLAN.md`](NEXT-PHASE-PLAN.md) §5.2 | S |
-| ⬜ | RLS is inert on the API path — the API connects as `postgres` and bypasses it | [`DATABASE-MIGRATION.md`](DATABASE-MIGRATION.md) §6 | M |
-| ⬜ | No data migration from the pre-rewrite `users` table | [`DATABASE-MIGRATION.md`](DATABASE-MIGRATION.md) §5.4 | M |
-| ⬜ | `/analytics` draws the full dashboard from placeholder numbers, under a "these are made up" banner | [`NEXT-UI-LIST.md`](NEXT-UI-LIST.md) U1 | S |
-| ⬜ | QR scan check-in is reported broken, never reproduced | [`NEXT-UI-LIST.md`](NEXT-UI-LIST.md) U2 | M |
+| ⬜ | RLS is inert on the API path — the API connects as `postgres` and bypasses it | [`DATABASE-MIGRATION.md`](DATABASE-MIGRATION.md) §6 · [`ROADMAP.md`](ROADMAP.md) stage 5g | M |
+| ⬜ | No data migration from the pre-rewrite `users` table | [`DATABASE-MIGRATION.md`](DATABASE-MIGRATION.md) §5.4 · [`ROADMAP.md`](ROADMAP.md) stage 5g | M |
+| ⬜ | `/analytics` draws the full dashboard from placeholder numbers, under a "these are made up" banner | [`ROADMAP.md`](ROADMAP.md) stage 5c (was U1) | S |
+| ⬜ | QR scan check-in is reported broken, never reproduced | [`ROADMAP.md`](ROADMAP.md) stage 2 (was U2) | M |
 | ⬜ | A check-in does not reach other screens — polling, then SSE | [`LIVE-UPDATES.md`](LIVE-UPDATES.md) | M→L |
-| ⬜ | No email exists. Pass and invitation links must be shown on screen | [`API-FIRST-REBUILD.md`](API-FIRST-REBUILD.md) D18 | M |
+| ⬜ | No email exists. Pass and invitation links must be shown on screen | [`archive/API-FIRST-REBUILD.md`](archive/API-FIRST-REBUILD.md) D18 | M |
 | ⬜ | Account linking: two provider identities for one email get two accounts | [`../CLAUDE.md`](../CLAUDE.md) gotchas | — decision first |
 
 ### Planned, not started
@@ -53,7 +53,7 @@ Nothing is "in progress" unless someone is actually working on it today.
 |---|---|---|
 | ⬜ | Online events, optional location, offline handling, posters, first-run, chat panel | [`NEXT-PHASE-PLAN.md`](NEXT-PHASE-PLAN.md) §5 |
 | ⬜ | The paid public API, webhooks, test mode, `pii_mode` | [`NEXT-PHASE-PLAN.md`](NEXT-PHASE-PLAN.md) Parts A |
-| ⬜ | Phases 4–7: domain events, recurrence, media, real analytics, enterprise SSO | [`API-FIRST-REBUILD.md`](API-FIRST-REBUILD.md) phase map |
+| ⬜ | Phases 4–7: domain events, recurrence, media, real analytics, enterprise SSO | [`ROADMAP.md`](ROADMAP.md) stages 3–4 · [`archive/API-FIRST-REBUILD.md`](archive/API-FIRST-REBUILD.md) phase map |
 | ⬜ | The AI chat panel — `services/ai-chat` (pydantic-ai) + an AG-UI client in the web app | [`NEXT-PHASE-PLAN.md`](NEXT-PHASE-PLAN.md) §5.7 |
 
 Legend: 🔴 confirmed bug · 🟡 in progress · ⬜ not started · S ≤ ½ day · M 1–3 days · L a week+
@@ -72,19 +72,13 @@ Legend: 🔴 confirmed bug · 🟡 in progress · ⬜ not started · S ≤ ½ da
 | [`ROADMAP.md`](ROADMAP.md) | **The ordered plan** — six stages, the 2026-11-07 feedback as F1–F13, D39–D42 | **Plan — start here** |
 | [`NEXT-PHASE-PLAN.md`](NEXT-PHASE-PLAN.md) | Public API, data ownership, product backlog. D31–D38 | Plan; B1 shipped, rest not built |
 | [`UI-REDESIGN.md`](UI-REDESIGN.md) | The measured 375×812 walk of all 20 routes. R1–R7 | Evidence; R1 and R4 shipped |
-| [`NEXT-UI-LIST.md`](NEXT-UI-LIST.md) | The open UI backlog | Plan |
 | [`LIVE-UPDATES.md`](LIVE-UPDATES.md) | Why a check-in doesn't reach other screens. D27–D30 | Plan |
 
-### Partly historical — read with the header
-
-| File | Why it is still here |
-|---|---|
-| [`API-FIRST-REBUILD.md`](API-FIRST-REBUILD.md) | Phases −1 to 3.5 shipped; **4–7 have not**, and D1–D26 are referenced everywhere. Its own header says which links are dead. Do not plan the finished phases from it. |
-
-### Archived — shipped, kept only for the decision record
+### Archived — kept for the decision record
 
 | File | Shipped |
 |---|---|
+| [`archive/API-FIRST-REBUILD.md`](archive/API-FIRST-REBUILD.md) | Phases −1 to 3.5. **4–7 have not shipped** — they are in [`ROADMAP.md`](ROADMAP.md). **D1–D26 live here** and ~40 source files cite it by section |
 | [`archive/API-SECOND-REBUILD.md`](archive/API-SECOND-REBUILD.md) | Moving the web app onto `/api/v1/core` |
 | [`archive/API-THIRD-REBUILD.md`](archive/API-THIRD-REBUILD.md) | The sign-up funnel; guest tier and device tokens deleted. **D20–D26 live here** |
 
@@ -96,6 +90,7 @@ Legend: 🔴 confirmed bug · 🟡 in progress · ⬜ not started · S ≤ ½ da
 | `MULTI-TENANCY.md` | A patch plan for the pre-rewrite system. Every phase done; it described deleted files. |
 | `MVP-READINESS.md` | Its sole P0 was the tenancy work above. |
 | `.claude/commands/rebuild-api.md` | The brief that produced `API-FIRST-REBUILD.md`. Running it again would plan a rebuild that has happened. Deleted 2026-11-06. |
+| `NEXT-UI-LIST.md` | U5, U6, U7 and U8 shipped; U1–U4 and the platform table were absorbed into [`ROADMAP.md`](ROADMAP.md) §1 and stages 1, 2 and 5. Deleted 2026-11-07. |
 | `PYTHON-LEARNING-PLAN.md`, `LEARNING-WORKFLOW.md`, `learning/` | The eight-week Python curriculum, and the `/api/v2/core` port it was built around. Scope cut: the AI feature is being built as `services/ai-chat` on its own terms, not as a teaching vehicle. `services/core-v2`, `credopass_v2_dev` and `docker/initdb/` went with them. Deleted 2026-11-06. |
 
 All of them are in git history if the reasoning is ever wanted.
