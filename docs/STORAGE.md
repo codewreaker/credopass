@@ -349,6 +349,29 @@ A `pending` row older than 24h is an upload that was signed for and never comple
 `idx_assets_pending` exists so the sweep is cheap, and `countAbandonedUploads()` is
 written — but **nothing runs it yet**, because there is no scheduler (Phase 4).
 
+### 6.6 `S3_PUBLIC_URL` is baked into the database — pick it once
+
+`finaliseUpload` stores `publicUrlFor(storageKey)` and the event stores *that string*
+in `events.cover_image_url`. `isOwnReadyAssetUrl` then validates a cover by checking it
+starts with the **current** `publicBaseUrl`.
+
+So changing `S3_PUBLIC_URL` after posters exist orphans every URL written under the old
+one. The images keep loading — they are plain stored text — but the validator stops
+recognising them, so re-saving one of those events can have its cover rejected.
+
+The practical rule: **connect the custom domain before the first production upload.**
+Do not start on the `r2.dev` URL intending to move later. If it ever does have to
+change, the fix is a one-off UPDATE rewriting the prefix on `events.cover_image_url`,
+not a code change.
+
+### 6.7 Presigned URLs only work against the S3 API endpoint
+
+Uploads must be signed and PUT to `<ACCOUNT_ID>.r2.cloudflarestorage.com`, never to
+`media.credopass.com`. The code already splits these — `presign()` uses the client built
+from `S3_ENDPOINT`, `publicUrlFor()` uses `S3_PUBLIC_URL` — but it is worth knowing that
+pointing the upload at the custom domain fails, because the instinct is that one domain
+should do both.
+
 ---
 
 ## 7. What is not built yet
