@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { ImagePlus, Link2, Trash2, X } from 'lucide-react';
+import { AlertTriangle, ImagePlus, Link2, Trash2, X } from 'lucide-react';
 import { Button } from '@credopass/ui/components/button';
 import { Input } from '@credopass/ui/components/input';
 import { cn } from '@credopass/ui/lib/utils';
@@ -108,6 +108,28 @@ export function EventImage({ src, onPick, willPersist = true, className }: Event
           )}
         />
 
+        {/*
+          F15. The first person to use this slot picked a file, saved, and the
+          image was gone — because an upload has nowhere to be stored until
+          object storage lands (ROADMAP stage 4). That was already "said", in
+          muted 11px text underneath, and it was read straight past.
+
+          So the warning now sits ON the image, in warning colour, at the
+          moment the preview appears. Nobody should be able to pick a file and
+          be surprised later.
+        */}
+        {onPick && !willPersist && !broken && (
+          <div className="absolute inset-x-3 top-3 flex items-start gap-2 rounded-xl bg-warning/15 px-3 py-2 text-left ring-1 ring-warning/40 backdrop-blur-sm">
+            <AlertTriangle size={14} className="mt-px shrink-0 text-warning" />
+            <p className="text-[11px] font-semibold leading-tight text-warning">
+              Preview only — this photo will not be saved yet.
+              <span className="block font-normal opacity-90">
+                Use Paste link to set a poster that sticks.
+              </span>
+            </p>
+          </div>
+        )}
+
         {onPick && (
           <>
             <div className="absolute bottom-3 right-3 flex items-center gap-1.5">
@@ -194,9 +216,9 @@ export function EventImage({ src, onPick, willPersist = true, className }: Event
         <p className="px-1 text-[11px] text-muted-foreground">
           {broken
             ? 'That link did not load an image — check it, or paste another.'
-            : !willPersist
-              ? 'This photo is a preview and will not be saved yet. Paste an image link to set a poster that sticks.'
-              : 'Paste an image link to set a poster. Uploads arrive with poster storage.'}
+            : willPersist
+              ? 'Paste an image link to set a poster. Uploads arrive with poster storage.'
+              : 'Uploads arrive with poster storage.'}
         </p>
       )}
     </div>

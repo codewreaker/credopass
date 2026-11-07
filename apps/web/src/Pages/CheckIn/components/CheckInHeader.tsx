@@ -10,6 +10,8 @@ interface CheckInHeaderProps {
   eventCapacity?: number | null;
   checkInCount: number;
   onBack: () => void;
+  /** Open the "who is in" sheet. Omit and the counter stays a plain chip. */
+  onShowCheckedIn?: () => void;
 }
 
 const statusColors: Record<string, string> = {
@@ -28,6 +30,7 @@ const CheckInHeader: React.FC<CheckInHeaderProps> = ({
   eventCapacity,
   checkInCount,
   onBack,
+  onShowCheckedIn,
 }) => {
   return (
     <div className="flex min-w-0 items-center gap-2 md:gap-3" data-testid="check-in-header">
@@ -68,12 +71,33 @@ const CheckInHeader: React.FC<CheckInHeaderProps> = ({
         </div>
       </div>
 
-      {/* Live counter — compact on mobile so it never overflows a 390px viewport (B7) */}
-      <div className="shrink-0 flex items-center gap-1.5 md:gap-2 px-2.5 md:px-3.5 py-1 md:py-1.5 rounded-full border border-primary/25 bg-primary/10">
-        <Users size={13} className="text-primary" />
-        <span className="text-base md:text-lg font-bold tabular-nums text-primary">{checkInCount}</span>
-        <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">in</span>
-      </div>
+      {/*
+        Live counter — compact on mobile so it never overflows a 390px viewport.
+
+        It is a BUTTON now (F10). The number going up is the moment you want to
+        know who it was, and this was a plain `div`: the one piece of live
+        information on the screen, and nothing to tap. It opens a sheet rather
+        than navigating, so the camera underneath is not torn down and
+        restarted on the way back.
+      */}
+      {onShowCheckedIn ? (
+        <button
+          type="button"
+          onClick={onShowCheckedIn}
+          aria-label={`${checkInCount} checked in — see who`}
+          className="shrink-0 flex items-center gap-1.5 md:gap-2 px-2.5 md:px-3.5 py-1 md:py-1.5 rounded-full border border-primary/25 bg-primary/10 cursor-pointer transition-colors hover:bg-primary/20 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        >
+          <Users size={13} className="text-primary" />
+          <span className="text-base md:text-lg font-bold tabular-nums text-primary">{checkInCount}</span>
+          <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">in</span>
+        </button>
+      ) : (
+        <div className="shrink-0 flex items-center gap-1.5 md:gap-2 px-2.5 md:px-3.5 py-1 md:py-1.5 rounded-full border border-primary/25 bg-primary/10">
+          <Users size={13} className="text-primary" />
+          <span className="text-base md:text-lg font-bold tabular-nums text-primary">{checkInCount}</span>
+          <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">in</span>
+        </div>
+      )}
     </div>
   );
 };

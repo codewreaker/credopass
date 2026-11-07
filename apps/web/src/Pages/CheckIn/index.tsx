@@ -40,6 +40,7 @@ import { cn } from '@credopass/ui/lib/utils';
 
 import './style.css';
 import CheckInHeader from './components/CheckInHeader';
+import { CheckedInSheet } from './CheckedInSheet';
 import { QRScanner } from './components/QRScanner';
 import ManualSignInForm, { type AttendeeDetails } from './ManualSignInForm';
 import SuccessCheckInScreen from './SuccessCheckInScreen';
@@ -89,7 +90,22 @@ const CheckInPage: React.FC = () => {
     search: { enabled: false, placeholder: '' },
   });
 
-  const [mode, setMode] = useState<KioskMode>('display');
+  /**
+   * The kiosk opens on the SCANNER (U2 / F8).
+   *
+   * It used to open on `display` — the event's share QR — and that is the most
+   * likely explanation of the long-standing "QR scan check-in is broken"
+   * report, which was never reproduced. The first thing the screen did was
+   * show a code, and the natural thing to do with a code on a door screen is
+   * scan it. Its own other tab then refuses that exact string ("that's the
+   * event link"), correctly, and the whole thing reads as a broken scanner.
+   *
+   * Scanning passes is what a door does. The event QR is setup — putting a
+   * sign on the wall — so it is still here, one tap away and behind Maximise,
+   * but it is no longer what the kiosk greets you with.
+   */
+  const [mode, setMode] = useState<KioskMode>('scan');
+  const [checkedInOpen, setCheckedInOpen] = useState(false);
   const [manualOpen, setManualOpen] = useState(false);
   // Only mounted when the event requires it — a door that does not track exits
   // should not offer a button that records one.
@@ -278,7 +294,16 @@ const CheckInPage: React.FC = () => {
         eventStatus={ev.status}
         eventCapacity={ev.capacity}
         checkInCount={checkedIn}
+        onShowCheckedIn={() => setCheckedInOpen(true)}
         onBack={() => navigate({ to: '/events/$eventId', params: { eventId } })}
+      />
+
+      <CheckedInSheet
+        open={checkedInOpen}
+        onOpenChange={setCheckedInOpen}
+        eventId={eventId}
+        eventName={ev.name}
+        checkedIn={checkedIn}
       />
 
       {/* Remaining capacity, when there is a cap. The server's number — a
@@ -291,15 +316,17 @@ const CheckInPage: React.FC = () => {
         </p>
       )}
 
-      {/* Mode slider: show the event QR (walk-ins scan) vs scan attendee passes */}
+      {/* Scanning first, because scanning is the job. The event QR is setup —
+          a sign for the wall — and labelling it "Invite QR" rather than
+          "Event QR" says which of the two codes it is (F6). */}
       <div className="mx-auto flex w-full max-w-md">
         <div className="relative grid w-full grid-cols-2 rounded-full border border-border bg-card p-1">
           <span
             aria-hidden
             className="absolute inset-y-1 left-1 w-[calc(50%-0.25rem)] rounded-full bg-primary transition-transform duration-200 ease-out"
-            style={{ transform: mode === 'scan' ? 'translateX(100%)' : 'translateX(0)' }}
+            style={{ transform: mode === 'display' ? 'translateX(100%)' : 'translateX(0)' }}
           />
-          {(['display', 'scan'] as const).map((m) => (
+          {(['scan', 'display'] as const).map((m) => (
             <button
               key={m}
               type="button"
@@ -310,7 +337,7 @@ const CheckInPage: React.FC = () => {
               )}
             >
               {m === 'display' ? <QrCodeIcon size={14} /> : <ScanLine size={14} />}
-              {m === 'display' ? 'Event QR' : 'Scan passes'}
+              {m === 'display' ? 'Invite QR' : 'Scan passes'}
             </button>
           ))}
         </div>
@@ -319,11 +346,23 @@ const CheckInPage: React.FC = () => {
       <div className="mx-auto w-full max-w-md">
         {mode === 'display' ? (
           <div className="flex flex-col items-center gap-4 rounded-3xl border border-border bg-card p-6 text-center">
-            <GlowingQRCode value={shareUrl} size={isMobile ? 220 : 280} ariaLabel="Event check-in QR" />
+            {/* The event's share link. Its own "Scan passes" tab refuses this
+                exact code, by design — so it must not look like a pass (F8). */}
+            <GlowingQRCode
+              value={shareUrl}
+              size={isMobile ? 220 : 280}
+              kind="invitation"
+              caption="Scan to register"
+              ariaLabel="Event registration QR"
+            />
             <div>
-              <p className="text-sm font-semibold">Scan to open this event</p>
+              <p className="text-sm font-semibold">Put this on the door</p>
+              {/* Say plainly what it is NOT. This screen's other tab rejects
+                  this code, and a staff member who tries it deserves to have
+                  been told why beforehand. */}
               <p className="mt-1 text-xs text-muted-foreground">
-                Attendees scan with their phone to view the event and check in.
+                Guests scan it with their own phone to register and get their pass.
+                It is not a pass itself — don't scan it with the scanner.
               </p>
             </div>
             <Button variant="outline" size="sm" className="gap-1.5 rounded-full" onClick={enterMaximised}>
@@ -470,7 +509,7 @@ const CheckInPage: React.FC = () => {
                   value={shareUrl}
                   size={maxQrSize}
                   showGlow={false}
-                  ariaLabel="Event check-in QR"
+                  ariaLabel="Event registration QR"
                   className="rounded-[1.35rem] bg-primary-foreground"
                 />
               </div>

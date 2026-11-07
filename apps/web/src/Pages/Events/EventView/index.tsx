@@ -262,9 +262,15 @@ function EventView({ event }: { event: Event }) {
         <div className="pointer-events-none absolute -right-3 top-1/2 size-6 -translate-y-1/2 rounded-full bg-background" />
 
         <div className="relative flex items-center gap-4 p-5">
+          {/* This is the EVENT link, not anybody's pass (F6). An organiser
+              looking at their own event screen was shown a code identical to
+              the one an attendee holds at the door; the ring and the caption
+              are what tell the two apart. */}
           <GlowingQRCode
             value={shareUrl}
             size={92}
+            kind="invitation"
+            caption="Invite"
             onClick={openCheckinKiosk}
             ariaLabel="Open the check-in kiosk"
           />

@@ -65,7 +65,7 @@ Verified against the code on 2026-11-07, not copied from a plan.
 | ⬜ | **R2** — the same defect everywhere: the app renders the zero value instead of "I don't know yet" (`Good afternoon, there`, `0 events`, the stale attendee sheet) | `UI-REDESIGN.md` §2 R2 | S–M |
 | ⬜ | **R5** — only the geocoder fails honestly; copy that sentence to the other three failure states | `UI-REDESIGN.md` §2 R5 | S |
 | ✅ | **U4** — `PATCH /me` exists; the Profile tab edits the display name | shipped 2026-11-07 | S |
-| ⬜ | **U2** — "QR scan check-in is broken", never reproduced | `UI-REDESIGN.md` §3.11 names the likely cause | M |
+| 🟡 | **U2** — "QR scan check-in is broken", never reproduced. The likely cause (the kiosk opened on a code its own scanner refuses) is **fixed**; still wants confirming with a real camera | shipped 2026-11-07 | M |
 | ⬜ | **U1** — `/analytics` draws a full dashboard from fabricated numbers; the warning is only at the top, `Arrivals by hour` is off-palette blue, `Export` is offered on made-up data | `UI-REDESIGN.md` §3.16 | S |
 | ⬜ | **B3** — online events and optional location (`events.location_text` is `NOT NULL`; the UI copy already promises "Offline location or virtual link") | `NEXT-PHASE-PLAN.md` §5.3 | M |
 | ⬜ | **B4** — no app-level notion of "browser offline" / "API unreachable" | `NEXT-PHASE-PLAN.md` §5.4 | M |
@@ -119,6 +119,8 @@ the reference** — use them in commits.
 | **F12** | Uploads must be compressed before storage — there will be many, and tickets must load fast. | **Agreed, non-negotiable.** Design in stage 4. |
 | **F13** | Auto AI-generated image options when creating an event, the way Luma offers them — plus a set of predefined images, plus your own upload. | **This supersedes D38.** `NEXT-PHASE-PLAN.md` §5.5 decided "typographic templates, no image model". The decision stands for *posters with text on them* — diffusion models still cannot set type — but it was answering a different question. What is asked for here is a **background image**, chosen at creation, with the title rendered by us on top. That is both achievable and the right split. Recorded as **D39** in §4. |
 | **F14** | Keep the poster area on the composer. Even with no model, make it a placeholder showing the illustration we have now, with a mechanism to paste an arbitrary poster image that can be swapped out. | **The slot exists and persists nothing.** `EventImage` renders a blob URL held in React state (`event-composer.tsx:112`); it is discarded on submit. This is the smallest honest slice of F11 and it does not wait for storage: one `text` column holding a URL, and the picker gains a "paste a link" path. Scheduled as **stage 1b** so it ships this week rather than with the bucket. |
+| **F15** | Uploaded an image from a file and could not see it afterwards. | **Known and deliberate for now, but the message is not doing its job.** Stage 1b persists a pasted *link*; an uploaded *file* has nowhere to go until there is a bucket, so it previews and is dropped on save. The picker says so in a line of muted 11px text under the image — clearly not enough, since it was read right past. **Two changes, not one:** make the not-saved state unmissable at the moment of picking (a warning on the image itself, not a footnote), and bring **stage 4.1 forward** so the answer stops being a caveat. Until then nobody should be able to pick a file and be surprised. |
+| **F16** | An event cannot be created with the address left blank. | **Confirmed, and already on the list as B3.** `events.location_text` is `NOT NULL` (`packages/lib/src/schemas/tables/events.ts:38`) and the API enforces `z.string().min(1).max(300)` (`events.ts:234`), while the composer's own copy already offers "Offline location or virtual link". The UI has been promising optional/virtual locations for weeks and the schema refuses them. Scheduled at **stage 5b**; it needs a migration (drop the NOT NULL, add `format` + `meeting_url`, CHECK the combinations), which is why it is not a one-line fix. |
 
 ---
 
@@ -188,7 +190,7 @@ migration and unblocks the whole visual half of this roadmap today.
 
 ---
 
-### Stage 2 — Tell a pass apart from an invitation · **M, 2–3 days**
+### Stage 2 — Tell a pass apart from an invitation · ✅ **SHIPPED 2026-11-07**
 
 F6, F8, F9 and F10 are one piece of work, and it closes U2.
 
@@ -296,6 +298,11 @@ square. `GlowingQRCode` and the Poster QR sheet already exist to build on.
 **Sequence within the stage:** 4.3.1 (curated) → 4.1 → 4.2 → 4.4 → 4.3.3 (generation last; it is
 the only part with a running cost and an external dependency).
 
+**F15 moved 4.1 up the queue.** The first person to use the poster slot picked a file, not a link,
+and lost it. Pasting a URL is the unusual path — picking a photo is what people reach for — so the
+gap between "the slot exists" and "the slot takes an upload" should be days, not the end of a
+week-long stage.
+
 ---
 
 ### Stage 5 — The rest of the product backlog · **M each**
@@ -305,7 +312,7 @@ Already specified, unchanged by this feedback, ordered by cost of leaving them:
 | | Work | Spec |
 |---|---|---|
 | 5a | **B4** offline / API-unreachable handling, modelled on the geocoder's one honest failure message (R5) | §5.4 |
-| 5b | **B3** online events and optional location — the UI copy has promised this for weeks | §5.3 |
+| 5b | **B3 + F16** online events and optional location — a blank address is refused today, while the composer's own copy offers "Offline location or virtual link" | §5.3 |
 | 5c | **U1** analytics: repeat the "made up" disclosure down the page, make `Arrivals by hour` lime, hide `Export` | `UI-REDESIGN.md` §3.16 |
 | 5d | **R6 / R7** wrap instead of truncate; a `Copy link` button on the pass | `UI-REDESIGN.md` §5 |
 | 5e | Live updates — polling, then SSE | `LIVE-UPDATES.md` |

@@ -1155,6 +1155,82 @@ files touched here.
 
 ---
 
+## 2026-11-07 — Stage 2: a pass and an invitation stop looking alike
+
+### F6/F8/F9 · One component, two meanings
+
+CredoPass draws two completely different things as a QR square and drew them
+identically: a **pass** (`/p/$token`, one person's ticket, scanned at the door) and an
+**invitation** (`/e/{id}`, the share link, one code on a poster for everybody).
+
+They cannot be merged — a code everyone shares cannot identify one person — so the fix is visual.
+`GlowingQRCode` takes a `kind`: `invitation` wraps the code in a **dashed** ring with a caption,
+`pass` is unchanged. Dashed rather than solid on purpose: a solid ring reads as decoration, a
+dashed one reads as a cut line, which is the poster/flyer mental model we want. The ring wraps the
+code rather than restyling it, so what a camera reads is byte-for-byte what it was.
+
+Applied to the event detail card and the kiosk's invite tab. The pass page passes no `kind` and
+renders exactly as before.
+
+### U2 · The kiosk opened on a code its own scanner refuses
+
+This is almost certainly the never-reproduced "QR scan check-in is broken" report.
+`/checkin/$eventId` opened on `display` — the event's share QR — and the natural thing to do with
+a code on a door screen is scan it. The scanner tab then rejects that exact string ("that's the
+event link"), correctly, and the whole screen reads as a broken scanner.
+
+The kiosk now opens on **Scan passes**. The invite code is still one tap away, relabelled
+**Invite QR** (not "Event QR"), and now says what it is *not*: "It is not a pass itself — don't
+scan it with the scanner." **Still wants confirming with a real camera** before U2 is closed.
+
+### F10 · The counter is a way in
+
+`checkInCount` was a `<div>` — the one piece of live information on the screen, and nothing to
+tap. It is a button now, and it opens a sheet rather than navigating: leaving the route unmounts
+the scanner, and coming back re-requests the camera and re-initialises `html5-qrcode`, which is
+seconds of black rectangle with a queue at the door. A sheet leaves the kiosk mounted, so "Back to
+scanning" is a dismiss, not a cold start. "Full list" still goes to `/attendees?eventId=`.
+
+**No new endpoint.** `GET /people?eventId=&standing=attended` already answers exactly this —
+scoping to an event changes `standing` from lifetime to that event.
+
+### F7 · An auto-generated name was publishing a personal one
+
+`defaultOrganizationName` built `"Israel's organization"` from the account's first name. That name
+is **published**: it is on `PublicEvent.organizationName`, so it appears on the public event page
+and on every attendee's pass. A default nobody chose put the organiser's personal name in front of
+strangers.
+
+It returns `'My organization'` and **takes no arguments at all** — the strongest form of the
+guarantee, since nothing about the account *can* reach a published field. Only affects
+organisations created from now on; existing rows keep their name, and renaming is the owner's call
+(Settings tab), not a migration's.
+
+### F15 · The upload warning was a footnote
+
+Reported from the field the same day stage 1b shipped: picked a file, saved, image gone. It *was*
+disclosed — in muted 11px text under the image — and read straight past. The warning now sits on
+the image, in warning colour, the moment the preview appears. The real answer is stage 4.1, which
+F15 has moved up the queue.
+
+### F16 · Blank address is refused — filed, not fixed
+
+Confirmed: `events.location_text` is `NOT NULL` and the API enforces `min(1)`, while the
+composer's own copy offers "Offline location or virtual link". Already on the list as **B3** and
+scheduled at **stage 5b** — it needs a migration (drop the NOT NULL, add `format` + `meeting_url`,
+CHECK the combinations), so it is not a one-line fix and was not smuggled into this stage.
+
+### Verified
+
+78 unit, 114 integration, 51 adversarial, `coreservice:lint`, `web:lint`, `web:build`. Walked at
+375×812 against the **deployed** API: the kiosk opens on the scanner, the counter opens the sheet
+with real check-in times, the invite code carries its ring and caption, no console errors.
+
+**Not verified:** the scanner with a real camera (blocked in the automation pane), which is what
+U2 still needs.
+
+---
+
 ## Conventions worth knowing
 
 1. Every route is created with `defineRoute` and declares `scope` (+ `permission` if org-scoped).

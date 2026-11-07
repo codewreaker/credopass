@@ -61,3 +61,41 @@
     transform: translate(-50%, -50%) rotate(1turn);
   }
 }
+
+/* ================================================================
+   Invitation framing (F6/F9)
+
+   An invitation QR is the event's share link on a poster — one code for
+   everyone. A pass QR is one person's ticket. They used to be drawn
+   identically, which is the most likely cause of the long-standing
+   "QR scan is broken" report: the kiosk opened on a code that its own
+   scanner tab correctly refuses.
+
+   The ring is DASHED on purpose. A solid ring would read as decoration;
+   a dashed one reads as a cut line — a poster, a flyer, something you
+   put on a wall — which is exactly the mental model we want. The pass
+   keeps no ring at all, so the two are distinguishable in a photograph,
+   at a glance, and in grayscale.
+   ================================================================ */
+
+.glowing-qr-invitation {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.glowing-qr-invitation-ring {
+  padding: 0.625rem;
+  border-radius: 1.5rem;
+  border: 2px dashed color-mix(in oklab, var(--primary) 55%, transparent);
+  background: color-mix(in oklab, var(--primary) 7%, transparent);
+}
+
+.glowing-qr-invitation-caption {
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}

@@ -47,18 +47,17 @@ afterAll(async () => {
 });
 
 describe('defaultOrganizationName', () => {
-  it("uses the person's first name", () => {
-    expect(defaultOrganizationName('Israel Agyeman-Prempeh', null)).toBe("Israel's organization");
-  });
-
-  it('falls back to the email local part when no name was asserted', () => {
-    // Anonymous-adjacent providers assert no `name`; the whole address as an
-    // organisation name would be worse than a first name guess.
-    expect(defaultOrganizationName(null, 'ada.lovelace@example.com')).toBe("Ada's organization");
-  });
-
-  it('still produces something usable with neither', () => {
-    expect(defaultOrganizationName(null, null)).toBe('My organization');
+  /**
+   * These used to assert "Israel's organization" and "Ada's organization".
+   * The name is PUBLISHED — it is on the public event page and on every
+   * attendee's pass — so a default nobody chose was putting the organiser's
+   * personal first name in front of strangers (F7).
+   */
+  it('never names the organisation after the person', () => {
+    // It takes no arguments at all now, which is the strongest form of this
+    // guarantee: nothing about the account CAN reach a published field.
+    expect(defaultOrganizationName()).toBe('My organization');
+    expect(defaultOrganizationName.length).toBe(0);
   });
 });
 
@@ -67,7 +66,7 @@ describe('ensureDefaultOrganization', () => {
     const account = await newAccount('Israel Agyeman-Prempeh', 'israel@example.test');
 
     const org = await ensureDefaultOrganization(db, account);
-    expect(org?.name).toBe("Israel's organization");
+    expect(org?.name).toBe('My organization');
     expect(org?.role).toBe('owner');
     expect(org?.plan).toBe('free');
 

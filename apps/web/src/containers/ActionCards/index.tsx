@@ -24,14 +24,14 @@ const ACTION_CARDS = [
     {
         key: 'calendar',
         icon: CalendarsIcon,
-        label: 'Calendar View',
+        label: 'Cal',
         description: 'View your events in calendar view',
         action: 'show-calendar' as const,
     },
     {
         key: 'organization',
         icon: Building2,
-        label: 'View Organisations',
+        label: 'View Orgs',
         description: 'View and Manage Organisations',
         action: 'manage-org' as const,
     }

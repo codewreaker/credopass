@@ -155,20 +155,31 @@ async function assertCanOwnAnother(db: Database, accountId: string): Promise<voi
   }
 }
 
-/** `Israel's organization`, from whatever the identity provider told us. */
-export function defaultOrganizationName(
-  displayName: string | null,
-  email: string | null
-): string {
-  const fromName = displayName?.trim().split(/\s+/)[0];
-  // Local-part fallback: `ada.lovelace@x.com` reads better as "Ada" than as the
-  // whole address, and an account with neither name nor email is possible.
-  const fromEmail = email?.split('@')[0]?.split(/[._-]/)[0];
-  const raw = fromName || fromEmail;
-  if (!raw) return 'My organization';
-
-  const who = raw.charAt(0).toUpperCase() + raw.slice(1);
-  return `${who}'s organization`;
+/**
+ * The name a brand-new account's organisation gets.
+ *
+ * **It used to be `Israel's organization` — built from the account's first
+ * name — and that is published.** The organisation name appears on the public
+ * event page and on every attendee's pass (`PublicEvent.organizationName`), so
+ * a default nobody chose put the organiser's personal first name in front of
+ * strangers, on the one screen attendees actually see. It also looked like a
+ * placeholder, because it was one (F7).
+ *
+ * `My organization` says the same thing to the only person who sees it before
+ * it is renamed — the owner, in their own console — and discloses nothing to
+ * anybody else. The Settings tab renames it, and the composer's pill shows it,
+ * so the prompt to change it is already where it needs to be.
+ *
+ * **Only affects organisations created after this change.** Existing rows keep
+ * the name they have; renaming them is the owner's call, not a migration's.
+ *
+ * It takes no arguments any more, deliberately: nothing about the account may
+ * reach a published field by default. If a better suggestion is ever wanted,
+ * it has to be a deliberate decision about what is safe to publish, not a
+ * parameter that is quietly still there.
+ */
+export function defaultOrganizationName(): string {
+  return 'My organization';
 }
 
 /**
@@ -221,7 +232,7 @@ export async function ensureDefaultOrganization(
 
     if (existing.length > 0) return null;
 
-    const name = defaultOrganizationName(account.displayName, account.email);
+    const name = defaultOrganizationName();
     const base = slugify(name);
 
     let slug = base;
