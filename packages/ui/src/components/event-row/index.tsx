@@ -10,6 +10,7 @@ import {
     AvatarImage,
 } from "@credopass/ui/components/avatar"
 import { Badge } from '@credopass/ui/components/badge';
+import { useState } from 'react';
 
 /**
  * What a row needs to render.
@@ -25,10 +26,17 @@ export interface EventRowModel {
     status: 'scheduled' | 'ongoing' | 'completed' | 'cancelled';
     startAt: string;
     endAt: string;
-    location: string;
+    /** NULL for an online event, or one with no venue decided yet (B3/F16). */
+    location: string | null;
     capacity: number | null;
     organizationName?: string;
     counts?: { registered: number; attended: number };
+    /**
+     * The poster (F14). When present the row shows a thumbnail of it INSTEAD of
+     * the date block — the date is still on the row, in the meta line, so
+     * nothing is lost. An absent or broken poster falls back to the date.
+     */
+    coverImageUrl?: string | null;
 }
 
 /** @deprecated Kept as an alias while call sites migrate. Use `EventRowModel`. */
@@ -72,11 +80,29 @@ const timeZoneLabel = (at: Date) =>
         .formatToParts(at)
         .find((part) => part.type === 'timeZoneName')?.value ?? '';
 
-/** Luma-style date icon: month abbreviation on top, day number below */
+/**
+ * The leading square on a row: the event's poster when it has one, otherwise a
+ * Luma-style date block (month abbreviation over day number).
+ *
+ * The poster wins because it is the thing the organiser chose and the only part
+ * of a row that is recognisable at a glance. The date is not lost — it stays in
+ * the row's meta line either way.
+ *
+ * A broken image falls back to the date block rather than leaving a hole:
+ * remembering WHICH url failed, rather than a boolean, means a new `url` starts
+ * clean with no effect to reset it.
+ */
 const DateIcon: React.FC<Partial<{ date: Date, url: string, hour12: boolean, compact: boolean }>> = ({ date, url, hour12 = true, compact = false }) => {
-    if (url || !date) {
-        return (<div className="event-date-icon w-16 h-16 group-data-[compact]:w-14 group-data-[compact]:h-12"><img src={url} /></div>)
+    const [failedSrc, setFailedSrc] = useState<string | null>(null);
+
+    if (url && failedSrc !== url) {
+        return (
+            <div className="event-date-icon event-date-icon-poster w-16 h-16 group-data-compact:w-10 group-data-compact:h-10">
+                <img src={url} alt="" loading="lazy" onError={() => setFailedSrc(url)} />
+            </div>
+        );
     }
+    if (!date) return null;
     const month = date.toLocaleDateString('en-US', { month: 'short' }).toUpperCase();
     const day = date.getDate();
     const time = date.toLocaleTimeString('en-US', { hour: 'numeric', hour12, minute: '2-digit' });
@@ -146,7 +172,7 @@ export const EventRow: React.FC<{
 
     const rowContent = (
         <>
-            {startDate && <DateIcon date={startDate} compact={compact} />}
+            <DateIcon date={startDate ?? undefined} url={event.coverImageUrl ?? undefined} compact={compact} />
 
             <div className="event-row-details group-data-compact:gap-0.2">
                 {<div className='event-row-top group-data-compact:absolute group-data-compact:right-5'>

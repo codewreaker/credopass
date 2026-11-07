@@ -18,6 +18,7 @@ import {
 } from '../../../middleware/caller';
 import { getDatabase } from '../../../db/client';
 import { EVENT_STATUSES } from '../../../services/event-status';
+import { EVENT_FORMATS } from '../../../services/event-format';
 import * as Events from '../../../services/event';
 
 export const eventRoutes = new OpenAPIHono<{ Variables: CallerVars }>();
@@ -34,7 +35,11 @@ const EventSummarySchema = z
     status: z.enum(EVENT_STATUSES),
     startAt: z.string(),
     endAt: z.string(),
-    location: z.string(),
+    /** NULL for an online event, or one whose venue is not decided yet (B3/F16). */
+    location: z.union([z.string(), z.null()]),
+    meetingUrl: z.union([z.string(), z.null()]),
+    /** Derived from `location` + `meetingUrl` on read, never stored. */
+    format: z.enum(EVENT_FORMATS),
     capacity: z.number().int().nullable(),
     organizationId: z.string().uuid(),
     organizationName: z.string(),
@@ -231,7 +236,13 @@ const EventBody = z.object({
   /** Omit and it becomes start + 1h at WRITE time, so no reader has to guess. */
   endAt: z.string().datetime().nullish(),
   timezone: z.string().max(64).optional(),
-  locationText: z.string().min(1).max(300),
+  /**
+   * Optional since B3/F16. A blank string is accepted and stored as NULL, so a
+   * form that posts an untouched input does not have to strip the field first.
+   */
+  locationText: z.union([z.string().max(300), z.null()]).optional(),
+  /** Absolute http(s) URL, or null to clear it. The join link for an online event. */
+  meetingUrl: z.union([z.string().url().max(2048), z.literal(''), z.null()]).optional(),
   capacity: z.number().int().positive().nullish(),
   enforceCapacity: z.boolean().optional(),
   checkInMethods: z.array(z.enum(['qr', 'manual', 'self', 'pass'])).optional(),

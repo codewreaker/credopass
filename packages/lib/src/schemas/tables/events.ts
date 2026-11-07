@@ -53,7 +53,27 @@ export const events = pgTable('events', {
   // IANA zone. Needed for correct display, valid ICS, and DST.
   timezone: text('timezone').notNull().default('UTC'),
 
-  locationText: text('location_text').notNull(),
+  /**
+   * Where it happens, in words. NULLABLE since B3/F16: an online event has no
+   * address, and the composer has advertised "Offline location or virtual
+   * link" since long before the schema allowed it.
+   *
+   * NULL means "not given", which is not the same as `''`. Nothing writes the
+   * empty string — the API coerces a blank field to NULL on the way in, so
+   * there is exactly one representation of "no location" to read back.
+   */
+  locationText: text('location_text'),
+  /**
+   * The join link for an online or hybrid event (B3/F16). Validated as an
+   * absolute http(s) URL at the API boundary, not here.
+   *
+   * There is deliberately no `format` column. It would have to be kept in
+   * step with these two fields on every write, and a stored copy of something
+   * derivable is how `status` used to go stale — the same reasoning as D2,
+   * which derives event status from the timestamps instead of storing it. The
+   * API derives `format` on read; see `deriveEventFormat`.
+   */
+  meetingUrl: text('meeting_url'),
   // Geocoded on WRITE, never on read — the client-side geocoder was returning
   // 403 on every page load and shipping a Mapbox token to the browser (§10.3).
   locationLat: text('location_lat'),

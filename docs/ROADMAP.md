@@ -71,7 +71,7 @@ Verified against the code on 2026-11-07, not copied from a plan.
 | ⬜ | **F13** — the curated set and AI generation | stage 4.3 | M–L |
 | 🟡 | **U2** — "QR scan check-in is broken", never reproduced. The likely cause (the kiosk opened on a code its own scanner refuses) is **fixed**; still wants confirming with a real camera | shipped 2026-11-07 | M |
 | ⬜ | **U1** — `/analytics` draws a full dashboard from fabricated numbers; the warning is only at the top, `Arrivals by hour` is off-palette blue, `Export` is offered on made-up data | `UI-REDESIGN.md` §3.16 | S |
-| ⬜ | **B3** — online events and optional location (`events.location_text` is `NOT NULL`; the UI copy already promises "Offline location or virtual link") | `NEXT-PHASE-PLAN.md` §5.3 | M |
+| ✅ | **B3 + F16** — online events and optional location. `location_text` is nullable, `meeting_url` added, `format` derived on read | shipped 2026-11-07 | M |
 | ⬜ | **B4** — no app-level notion of "browser offline" / "API unreachable" | `NEXT-PHASE-PLAN.md` §5.4 | M |
 | ⬜ | **B6** — first-run narrative; **R3** — the GET STARTED billboard is permanent | §5.6 / R3 | M |
 | ⬜ | **B7** — the AG-UI chat panel (`services/ai-chat`, no backend yet) | §5.7 | L |
@@ -124,7 +124,7 @@ the reference** — use them in commits.
 | **F13** | Auto AI-generated image options when creating an event, the way Luma offers them — plus a set of predefined images, plus your own upload. | **This supersedes D38.** `NEXT-PHASE-PLAN.md` §5.5 decided "typographic templates, no image model". The decision stands for *posters with text on them* — diffusion models still cannot set type — but it was answering a different question. What is asked for here is a **background image**, chosen at creation, with the title rendered by us on top. That is both achievable and the right split. Recorded as **D39** in §4. |
 | **F14** | Keep the poster area on the composer. Even with no model, make it a placeholder showing the illustration we have now, with a mechanism to paste an arbitrary poster image that can be swapped out. | **The slot exists and persists nothing.** `EventImage` renders a blob URL held in React state (`event-composer.tsx:112`); it is discarded on submit. This is the smallest honest slice of F11 and it does not wait for storage: one `text` column holding a URL, and the picker gains a "paste a link" path. Scheduled as **stage 1b** so it ships this week rather than with the bucket. |
 | **F15** | Uploaded an image from a file and could not see it afterwards. | **Known and deliberate for now, but the message is not doing its job.** Stage 1b persists a pasted *link*; an uploaded *file* has nowhere to go until there is a bucket, so it previews and is dropped on save. The picker says so in a line of muted 11px text under the image — clearly not enough, since it was read right past. **Two changes, not one:** make the not-saved state unmissable at the moment of picking (a warning on the image itself, not a footnote), and bring **stage 4.1 forward** so the answer stops being a caveat. Until then nobody should be able to pick a file and be surprised. |
-| **F16** | An event cannot be created with the address left blank. | **Confirmed, and already on the list as B3.** `events.location_text` is `NOT NULL` (`packages/lib/src/schemas/tables/events.ts:38`) and the API enforces `z.string().min(1).max(300)` (`events.ts:234`), while the composer's own copy already offers "Offline location or virtual link". The UI has been promising optional/virtual locations for weeks and the schema refuses them. Scheduled at **stage 5b**; it needs a migration (drop the NOT NULL, add `format` + `meeting_url`, CHECK the combinations), which is why it is not a one-line fix. |
+| **F16** | An event cannot be created with the address left blank. | **Shipped 2026-11-07, together with B3.** Migration `0007` drops `NOT NULL` from `events.location_text` and adds `meeting_url`. The composer now accepts an address, a virtual link, both, or neither, and the API coerces a blank string to NULL so there is one representation of "no location". There is **no `format` column** — see the rebuild log entry for why it is derived instead. |
 
 ---
 
@@ -404,7 +404,7 @@ Already specified, unchanged by this feedback, ordered by cost of leaving them:
 | | Work | Spec |
 |---|---|---|
 | 5a | **B4** offline / API-unreachable handling, modelled on the geocoder's one honest failure message (R5) | §5.4 |
-| 5b | **B3 + F16** online events and optional location — a blank address is refused today, while the composer's own copy offers "Offline location or virtual link" | §5.3 |
+| 5b | ~~**B3 + F16** online events and optional location~~ — **done 2026-11-07**, ahead of its stage | §5.3 |
 | 5c | **U1** analytics: repeat the "made up" disclosure down the page, make `Arrivals by hour` lime, hide `Export` | `UI-REDESIGN.md` §3.16 |
 | 5d | **R6 / R7** wrap instead of truncate; a `Copy link` button on the pass | `UI-REDESIGN.md` §5 |
 | 5e | Live updates — polling, then SSE | `LIVE-UPDATES.md` |

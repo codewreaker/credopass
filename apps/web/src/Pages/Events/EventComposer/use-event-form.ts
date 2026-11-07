@@ -24,6 +24,8 @@ export interface EventFormValues {
   start: Date | undefined;
   end: Date | undefined;
   location: string;
+  /** Join link for an online or hybrid event (B3/F16). '' when there is none. */
+  meetingUrl: string;
   capacity: string;
   allowSelfCheckIn: boolean;
   /**
@@ -42,10 +44,25 @@ export const eventFormSchema = z
     description: z.string().max(500, 'Description must be at most 500 characters.').default(''),
     start: z.date({ message: 'Start date/time is required.' }),
     end: z.date().optional(),
-    location: z
+    /**
+     * Optional since B3/F16. It was `.min(3)`, which refused online events and
+     * events whose venue is not settled yet — while the field's own helper text
+     * offered "Offline location or virtual link".
+     */
+    location: z.string().max(200, 'Location must be at most 200 characters.').default(''),
+    meetingUrl: z
       .string()
-      .min(3, 'Location must be at least 3 characters.')
-      .max(200, 'Location must be at most 200 characters.'),
+      .max(2048)
+      .refine((v) => {
+        if (v.trim() === '') return true;
+        try {
+          const { protocol } = new URL(v.trim());
+          return protocol === 'http:' || protocol === 'https:';
+        } catch {
+          return false;
+        }
+      }, 'Enter a full link starting with http:// or https://')
+      .default(''),
     capacity: z
       .string()
       .refine((val) => !val || (!isNaN(Number(val)) && Number(val) > 0), 'Capacity must be a positive number.')
@@ -86,6 +103,7 @@ export const eventToFormValues = (event: Event): EventFormValues => ({
   start: event.startAt ? new Date(event.startAt) : undefined,
   end: event.endAt ? new Date(event.endAt) : undefined,
   location: event.location ?? '',
+  meetingUrl: event.meetingUrl ?? '',
   capacity: event.capacity != null ? String(event.capacity) : '',
   allowSelfCheckIn: event.allowSelfCheckIn,
   coverImageUrl: event.coverImageUrl ?? '',
@@ -117,6 +135,7 @@ export function useEventForm({ mode, eventId, initialValues, onSaved }: UseEvent
       start,
       end,
       location: initialValues?.location ?? '',
+      meetingUrl: initialValues?.meetingUrl ?? '',
       capacity: initialValues?.capacity ?? '',
       allowSelfCheckIn: initialValues?.allowSelfCheckIn ?? true,
       coverImageUrl: initialValues?.coverImageUrl ?? '',
@@ -139,7 +158,10 @@ export function useEventForm({ mode, eventId, initialValues, onSaved }: UseEvent
         startAt: value.start.toISOString(),
         endAt: value.end ? value.end.toISOString() : null,
         timezone: browserTimezone(),
-        locationText: value.location,
+        // Blank means absent. The API coerces '' to NULL so there is one
+        // representation of "no location" in the database (B3/F16).
+        locationText: value.location.trim() || null,
+        meetingUrl: value.meetingUrl.trim() || null,
         capacity: value.capacity ? parseInt(value.capacity, 10) : null,
         allowSelfCheckIn: value.allowSelfCheckIn,
         // Whatever the picker produced: a stored asset URL, or a pasted

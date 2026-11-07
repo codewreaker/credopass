@@ -243,18 +243,34 @@ export function EventComposer({ mode, eventId, initialValues }: EventComposerPro
         </div>
 
         {/* Where & what */}
+        {/* One control, two fields: an event may have an address, a join link,
+            both, or neither (B3/F16). */}
         <form.Field name="location">
-          {(field) => (
-            <div className="flex flex-col gap-1.5">
-              <LocationField
-                value={field.state.value}
-                onChange={field.handleChange}
-                invalid={field.state.meta.isTouched && !field.state.meta.isValid}
-              />
-              {field.state.meta.isTouched && !field.state.meta.isValid && (
-                <FieldError errors={field.state.meta.errors} />
+          {(locationField) => (
+            <form.Field name="meetingUrl">
+              {(linkField) => (
+                <div className="flex flex-col gap-1.5">
+                  <LocationField
+                    value={locationField.state.value}
+                    meetingUrl={linkField.state.value}
+                    onChange={({ location, meetingUrl }) => {
+                      locationField.handleChange(location);
+                      linkField.handleChange(meetingUrl);
+                    }}
+                    invalid={
+                      (locationField.state.meta.isTouched && !locationField.state.meta.isValid) ||
+                      (linkField.state.meta.isTouched && !linkField.state.meta.isValid)
+                    }
+                  />
+                  {locationField.state.meta.isTouched && !locationField.state.meta.isValid && (
+                    <FieldError errors={locationField.state.meta.errors} />
+                  )}
+                  {linkField.state.meta.isTouched && !linkField.state.meta.isValid && (
+                    <FieldError errors={linkField.state.meta.errors} />
+                  )}
+                </div>
               )}
-            </div>
+            </form.Field>
           )}
         </form.Field>
 

@@ -971,7 +971,8 @@ export interface paths {
                         /** Format: date-time */
                         endAt?: string | null;
                         timezone?: string;
-                        locationText: string;
+                        locationText?: string | null;
+                        meetingUrl?: string | "" | null;
                         capacity?: number | null;
                         enforceCapacity?: boolean;
                         checkInMethods?: ("qr" | "manual" | "self" | "pass")[];
@@ -1253,7 +1254,8 @@ export interface paths {
                         /** Format: date-time */
                         endAt?: string | null;
                         timezone?: string;
-                        locationText?: string;
+                        locationText?: string | null;
+                        meetingUrl?: string | "" | null;
                         capacity?: number | null;
                         enforceCapacity?: boolean;
                         checkInMethods?: ("qr" | "manual" | "self" | "pass")[];
@@ -2930,7 +2932,10 @@ export interface components {
             status: "scheduled" | "ongoing" | "completed" | "cancelled";
             startAt: string;
             endAt: string;
-            location: string;
+            location: string | null;
+            meetingUrl: string | null;
+            /** @enum {string} */
+            format: "in_person" | "online" | "hybrid" | "unspecified";
             capacity: number | null;
             /** Format: uuid */
             organizationId: string;
@@ -3032,7 +3037,10 @@ export interface components {
             startAt: string;
             endAt: string;
             timezone: string;
-            location: string;
+            location: string | null;
+            meetingUrl: string | null;
+            /** @enum {string} */
+            format: "in_person" | "online" | "hybrid" | "unspecified";
             organizationName: string;
             coverImageUrl: string | null;
             allowSelfCheckIn: boolean;

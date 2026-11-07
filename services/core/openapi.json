@@ -16,7 +16,7 @@
         "type": "http",
         "scheme": "bearer",
         "bearerFormat": "JWT",
-        "description": "Supabase-issued JWT. Get one with: nx run coreservice:token"
+        "description": "Supabase-issued JWT. See: nx run coreservice:token"
       }
     },
     "schemas": {
@@ -394,7 +394,33 @@
             "type": "string"
           },
           "location": {
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "meetingUrl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "in_person",
+              "online",
+              "hybrid",
+              "unspecified"
+            ]
           },
           "capacity": {
             "type": [
@@ -458,6 +484,8 @@
           "startAt",
           "endAt",
           "location",
+          "meetingUrl",
+          "format",
           "capacity",
           "organizationId",
           "organizationName",
@@ -812,7 +840,33 @@
             "type": "string"
           },
           "location": {
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "meetingUrl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "in_person",
+              "online",
+              "hybrid",
+              "unspecified"
+            ]
           },
           "organizationName": {
             "type": "string"
@@ -852,6 +906,8 @@
           "endAt",
           "timezone",
           "location",
+          "meetingUrl",
+          "format",
           "organizationName",
           "coverImageUrl",
           "allowSelfCheckIn",
@@ -2577,9 +2633,33 @@
                     "maxLength": 64
                   },
                   "locationText": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 300
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 300
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "meetingUrl": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 2048,
+                        "format": "uri"
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          ""
+                        ]
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   },
                   "capacity": {
                     "type": [
@@ -2624,8 +2704,7 @@
                 },
                 "required": [
                   "name",
-                  "startAt",
-                  "locationText"
+                  "startAt"
                 ]
               }
             }
@@ -2939,9 +3018,33 @@
                     "maxLength": 64
                   },
                   "locationText": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 300
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 300
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "meetingUrl": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 2048,
+                        "format": "uri"
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          ""
+                        ]
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   },
                   "capacity": {
                     "type": [

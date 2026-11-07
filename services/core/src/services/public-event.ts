@@ -11,6 +11,7 @@
  */
 
 import { and, eq, isNull, sql } from 'drizzle-orm';
+import { deriveEventFormat, type EventFormat } from './event-format';
 import { attendance, events, organizations, people } from '@credopass/lib/schemas/tables';
 import type { Database } from '../db/client';
 import { ProblemCode, problem } from '../http/problem';
@@ -24,7 +25,9 @@ export interface PublicEvent {
   startAt: string;
   endAt: string;
   timezone: string;
-  location: string;
+  location: string | null;
+  meetingUrl: string | null;
+  format: EventFormat;
   organizationName: string;
   /** The poster. Shown on the public page and the pass (F14). */
   coverImageUrl: string | null;
@@ -53,6 +56,7 @@ export async function loadPublicEvent(
       endAt: events.endAt,
       timezone: events.timezone,
       location: events.locationText,
+      meetingUrl: events.meetingUrl,
       capacity: events.capacity,
       enforceCapacity: events.enforceCapacity,
       allowSelfCheckIn: events.allowSelfCheckIn,
@@ -90,6 +94,8 @@ export async function loadPublicEvent(
     endAt: row.endAt.toISOString(),
     timezone: row.timezone,
     location: row.location,
+    meetingUrl: row.meetingUrl,
+    format: deriveEventFormat({ locationText: row.location, meetingUrl: row.meetingUrl }),
     organizationName: row.organizationName,
     coverImageUrl: row.coverImageUrl,
     allowSelfCheckIn: row.allowSelfCheckIn,

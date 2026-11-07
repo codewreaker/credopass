@@ -24,6 +24,7 @@ import { getDatabase } from '../../../db/client';
 import { publicAppUrl } from '../../../config/public-url';
 import { ProblemCode, problem } from '../../../http/problem';
 import { EVENT_STATUSES } from '../../../services/event-status';
+import { EVENT_FORMATS } from '../../../services/event-format';
 import * as Attendance from '../../../services/attendance';
 import * as Pass from '../../../services/pass';
 import { findRegistration, loadPublicEvent, passView } from '../../../services/public-event';
@@ -39,7 +40,9 @@ const PublicEventSchema = z
     startAt: z.string(),
     endAt: z.string(),
     timezone: z.string(),
-    location: z.string(),
+    location: z.union([z.string(), z.null()]),
+    meetingUrl: z.union([z.string(), z.null()]),
+    format: z.enum(EVENT_FORMATS),
     organizationName: z.string(),
     coverImageUrl: z.union([z.string(), z.null()]),
     allowSelfCheckIn: z.boolean(),

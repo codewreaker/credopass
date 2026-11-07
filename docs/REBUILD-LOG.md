@@ -1360,6 +1360,65 @@ see the risk register in [`ROADMAP.md`](ROADMAP.md):**
 
 **Not deployable until `nx run coreservice:migrate` has run against the remote.**
 
+## 2026-11-07 — the poster becomes the poster, and a location becomes optional
+
+**Posters are shown, not hinted at.** `event-poster-backdrop.tsx` is now
+`event-poster.tsx`: the image is its own card above the lime billboard instead of
+a texture behind it. The old treatment — `opacity-30` + `mix-blend-luminosity`
+under a gradient that was fully opaque where the title sat — was the right call
+while the bytes were arbitrary pasted URLs, because an organiser's dark
+photograph behind near-black `text-primary-foreground` makes the title vanish.
+Two things changed: we host the bytes now, and no text sits on the image any
+more, so nothing has to stay legible over it. The component's own comment had
+said this was "stage 4's job, once we host the bytes".
+
+It is `object-contain`, never cropped. Event posters are usually portrait and
+usually carry type at the very top, which is the first thing a `cover` crop
+eats — the Luma reference the design came from crops its own poster's first word
+off. The card carries a lit edge at the top-left and bottom-right, painted as
+**two** masked-gradient borders: a dark one that defines the card against pale
+artwork and a white one that reads as shine against dark artwork. A poster can
+be either, so a single layer would be invisible half the time.
+
+**Rows show the poster where the date was.** `DateIcon` already took a `url` and
+nobody ever passed one. `EventRowModel` gained `coverImageUrl`, and a broken
+image falls back to the date block rather than leaving a hole. The date is not
+lost — it is in the row's meta line either way.
+
+**The api-client contract was stale.** `coverImageUrl` had been on
+`EventSummary` since F14 but was missing from `generated/schema.d.ts`, so the
+field arrived at runtime with no type to describe it. `api-client:generate` was
+not run when F14 shipped. It has been now.
+
+### B3 + F16 — optional location and online events
+
+Migration `0007_white_retro_girl.sql`, two statements: `location_text` drops
+`NOT NULL`, and `meeting_url` is added. The composer has advertised "Offline
+location or virtual link" for weeks while the schema refused both halves of
+that promise.
+
+**D44 — `format` is derived, not stored.** The roadmap sketch called for a
+`format` column plus a CHECK keeping it coherent with the other two. There is
+no such column. A stored copy of something derivable must be rewritten on every
+write that touches its inputs, and the first write that forgets leaves a row
+claiming to be online with no link on it — which is precisely the argument D2
+makes for deriving event *status* from the timestamps. `deriveEventFormat` in
+`services/event-format.ts` maps the two columns onto
+`in_person | online | hybrid | unspecified`. `unspecified` is a real answer: an
+event may be created before anyone has decided where it happens, which is the
+whole of F16.
+
+**Blank is NULL, decided at the boundary.** `blankToNull` runs on the write
+path, so `''` never reaches the column and every reader has exactly one thing
+to check. A form that posts an untouched input is the common case, not an edge
+one.
+
+**Deploying this needs the remote migrated FIRST.** Drizzle builds an explicit
+column list from the schema, so every query now asks for `meeting_url`. Code
+shipped ahead of migration `0007` makes every event query fail on production.
+
+---
+
 ## 2026-11-07 — the production bucket is live, on R2
 
 **Stage 4.1/4.2 is no longer theoretical.** Bucket `credopass-media` on Cloudflare R2,

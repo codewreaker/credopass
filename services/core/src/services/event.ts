@@ -20,6 +20,7 @@ import type { Database } from '../db/client';
 import type { TenantContext } from '../tenancy/context';
 import { ProblemCode, problem } from '../http/problem';
 import { deriveStatus, type EventStatus } from './event-status';
+import { deriveEventFormat, blankToNull, type EventFormat } from './event-format';
 import * as Storage from './storage';
 
 export interface EventSummary {
@@ -29,7 +30,12 @@ export interface EventSummary {
   status: EventStatus;
   startAt: string;
   endAt: string;
-  location: string;
+  /** NULL when the event has no address — an online event, or one not yet decided (B3/F16). */
+  location: string | null;
+  /** Join link for an online or hybrid event. */
+  meetingUrl: string | null;
+  /** Derived from the two fields above, never stored. See `event-format.ts`. */
+  format: EventFormat;
   capacity: number | null;
   organizationId: string;
   organizationName: string;
@@ -130,6 +136,8 @@ const toSummary = (
     startAt: e.startAt.toISOString(),
     endAt: e.endAt.toISOString(),
     location: e.locationText,
+    meetingUrl: e.meetingUrl,
+    format: deriveEventFormat({ locationText: e.locationText, meetingUrl: e.meetingUrl }),
     capacity: e.capacity,
     organizationId: e.organizationId,
     // The client currently joins this against a full org cache (§10.1). It is
@@ -392,7 +400,9 @@ export interface CreateEventInput {
   /** Optional — defaults to start + 1h, so no READER ever has to guess (D2). */
   endAt?: Date | null;
   timezone?: string;
-  locationText: string;
+  /** Optional since B3/F16. Blank or omitted is stored as NULL. */
+  locationText?: string | null;
+  meetingUrl?: string | null;
   capacity?: number | null;
   enforceCapacity?: boolean;
   checkInMethods?: string[];
@@ -520,7 +530,8 @@ export async function createEvent(
       startAt: input.startAt,
       endAt,
       timezone: input.timezone ?? 'UTC',
-      locationText: input.locationText,
+      locationText: blankToNull(input.locationText),
+      meetingUrl: blankToNull(input.meetingUrl),
       capacity: input.capacity ?? null,
       enforceCapacity: input.enforceCapacity ?? false,
       shortCode: await allocateShortCode(db),
@@ -584,7 +595,8 @@ export async function updateEvent(
       ...(patch.startAt !== undefined ? { startAt } : {}),
       ...(endAt ? { endAt } : {}),
       ...(patch.timezone !== undefined ? { timezone: patch.timezone } : {}),
-      ...(patch.locationText !== undefined ? { locationText: patch.locationText } : {}),
+      ...(patch.locationText !== undefined ? { locationText: blankToNull(patch.locationText) } : {}),
+      ...(patch.meetingUrl !== undefined ? { meetingUrl: blankToNull(patch.meetingUrl) } : {}),
       ...(patch.capacity !== undefined ? { capacity: patch.capacity } : {}),
       ...(patch.enforceCapacity !== undefined ? { enforceCapacity: patch.enforceCapacity } : {}),
       ...(patch.checkInMethods !== undefined ? { checkInMethods: patch.checkInMethods } : {}),

@@ -14,20 +14,7 @@
 
 import { useMemo, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import {
-  ArrowLeft,
-  CalendarCheck,
-  CheckCircle2,
-  Copy,
-  Edit2,
-  Globe,
-  MapPin,
-  ScanLine,
-  Share2,
-  Users,
-  UserPlus,
-  XCircle,
-} from 'lucide-react';
+import { ArrowLeft, CalendarCheck, CheckCircle2, Copy, Edit2, Globe, MapPin, ScanLine, Share2, UserPlus, Users, Video, XCircle } from 'lucide-react';
 import { format } from 'date-fns/format';
 import {
   useCancelEvent,
@@ -44,7 +31,7 @@ import { GlowingQRCode } from '@credopass/ui/components/glowing-qr-code';
 import { toast } from '@credopass/ui/components/sonner';
 import { cn } from '@credopass/ui/lib/utils';
 import { EventQrPoster, EventQrPosterButton, useEventQrPoster } from './event-qr-poster';
-import { EventPosterBackdrop } from '../event-poster-backdrop';
+import { EventPoster } from '../event-poster';
 import { useCan } from '../../../contexts/session';
 import { errorMessage, isNotFound } from '../../../lib/errors';
 
@@ -204,9 +191,10 @@ function EventView({ event }: { event: Event }) {
         )}
       </div>
 
+      <EventPoster src={event.coverImageUrl} eventName={event.name} />
+
       {/* Lime billboard — mirrors the composer header */}
       <div className="relative overflow-hidden rounded-3xl bg-primary p-5 text-primary-foreground">
-        <EventPosterBackdrop src={event.coverImageUrl} />
         <div aria-hidden className="pointer-events-none absolute -right-16 -top-20 size-64 rounded-full border border-primary-foreground/10" />
         <div aria-hidden className="pointer-events-none absolute -right-6 -top-32 size-64 rounded-full border border-primary-foreground/10" />
 
@@ -335,16 +323,39 @@ function EventView({ event }: { event: Event }) {
       </div>
 
       {/* Where. No map: geocoding moved server-side and the coordinates are not
-          populated yet, so a map here would be a guess (§2.4). */}
+          populated yet, so a map here would be a guess (§2.4).
+
+          One row when there is an address, a second when there is a
+          join link. An event with neither shows the placeholder — since
+          B3/F16 that is a legitimate state, not a half-filled form. */}
       <div className="flex items-start gap-3 rounded-xl border border-border bg-card px-3.5 py-3">
         <MapPin size={16} className="mt-0.5 shrink-0 text-muted-foreground" />
         <span className="min-w-0 flex flex-col gap-0.5">
-          <span className={cn('truncate text-sm font-medium', !event.location && 'text-muted-foreground')}>
-            {event.location || 'No location set'}
+          <span className={cn('text-sm font-medium', !event.location && 'text-muted-foreground')}>
+            {event.location || (event.meetingUrl ? 'Online event' : 'No location set')}
           </span>
-          <span className="text-xs text-muted-foreground">Offline location or virtual link</span>
+          <span className="text-xs text-muted-foreground">
+            {event.location ? 'In person' : event.meetingUrl ? 'Happens online' : 'Offline location or virtual link'}
+          </span>
         </span>
       </div>
+
+      {event.meetingUrl && (
+        <a
+          href={event.meetingUrl}
+          target="_blank"
+          // `noreferrer` as well as `noopener`: the link is organiser-supplied
+          // and we do not hand a third party our URL as a referrer.
+          rel="noopener noreferrer"
+          className="flex items-start gap-3 rounded-xl border border-border bg-card px-3.5 py-3 transition-colors hover:border-primary/40 hover:bg-primary/5"
+        >
+          <Video size={16} className="mt-0.5 shrink-0 text-muted-foreground" />
+          <span className="min-w-0 flex flex-col gap-0.5">
+            <span className="truncate text-sm font-medium text-primary">Join online</span>
+            <span className="truncate text-xs text-muted-foreground">{event.meetingUrl}</span>
+          </span>
+        </a>
+      )}
 
       {/* Description */}
       {event.description && (
