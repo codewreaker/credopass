@@ -19,9 +19,9 @@ import './glowing-qr-code.css';
  *
  * They cannot be merged: a code everybody shares cannot identify one person.
  * So the requirement is that they are never mistaken for one another — which
- * is a visual problem, and this prop is the fix. An `invitation` gets a dashed
- * outer ring and a caption; a `pass` stays the plain high-contrast square it
- * has always been.
+ * is a visual problem, and this prop is the fix. An `invitation` gets the
+ * rotating lime ring on a dark pane that the maximised door screen already
+ * used; a `pass` stays the plain high-contrast square it has always been.
  */
 export type QRCodeKind = 'pass' | 'invitation';
 
@@ -69,7 +69,7 @@ export interface GlowingQRCodeProps {
   /**
    * Pass or invitation (default: `pass`, the historical look).
    *
-   * `invitation` wraps the code in a dashed ring and labels it, so an
+   * `invitation` wraps the code in the glowing lime ring and labels it, so an
    * organiser looking at their own screen can tell at a glance that they are
    * holding the thing that gets people IN the door, not the thing that gets
    * one person THROUGH it.
@@ -174,7 +174,9 @@ export const GlowingQRCode: FC<GlowingQRCodeProps> = ({
   // chrome around it and cannot affect scannability.
   const framed = isInvitation ? (
     <div className="glowing-qr-invitation">
-      <div className="glowing-qr-invitation-ring">{content}</div>
+      <div className="glowing-qr-invitation-ring">
+        <div className="glowing-qr-invitation-pane">{content}</div>
+      </div>
       <span className="glowing-qr-invitation-caption">{caption ?? 'Scan to register'}</span>
     </div>
   ) : (

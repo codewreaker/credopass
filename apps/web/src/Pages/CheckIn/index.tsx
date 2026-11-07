@@ -504,15 +504,16 @@ const CheckInPage: React.FC = () => {
                 aria-hidden
                 className="pointer-events-none absolute inset-0 rounded-[2rem] bg-linear-to-br from-primary-foreground/10 to-transparent"
               />
-              <div className="maximised-qr-glow relative">
-                <GlowingQRCode
-                  value={shareUrl}
-                  size={maxQrSize}
-                  showGlow={false}
-                  ariaLabel="Event registration QR"
-                  className="rounded-[1.35rem] bg-primary-foreground"
-                />
-              </div>
+              {/* Same `kind="invitation"` as every other invite code — this
+                  screen's bespoke ring became the shared one (F6). */}
+              <GlowingQRCode
+                value={shareUrl}
+                size={maxQrSize}
+                kind="invitation"
+                caption="Scan to register"
+                showGlow={false}
+                ariaLabel="Event registration QR"
+              />
             </div>
 
             {/* Event details. No cover photo: there are no media endpoints yet,

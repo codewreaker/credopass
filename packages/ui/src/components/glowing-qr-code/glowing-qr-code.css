@@ -71,31 +71,90 @@
    "QR scan is broken" report: the kiosk opened on a code that its own
    scanner tab correctly refuses.
 
-   The ring is DASHED on purpose. A solid ring would read as decoration;
-   a dashed one reads as a cut line — a poster, a flyer, something you
-   put on a wall — which is exactly the mental model we want. The pass
-   keeps no ring at all, so the two are distinguishable in a photograph,
-   at a glance, and in grayscale.
+   The treatment is the one the maximised door screen already used, lifted
+   out of `apps/web/src/Pages/CheckIn/style.css` so both share it. That file
+   had to draw its own ring because of a real limitation, and the note is
+   worth keeping:
+
+     The component's built-in `.glowing-qr-border` sits INSIDE the code's
+     own footprint, where the QR's white quiet zone covers it at display
+     size. You cannot see it. Drawing the ring around the outside is the
+     only way the glow is actually visible.
+
+   The angle is animated, not the element: rotating a rounded rectangle
+   swings its corners around, whereas spinning the gradient inside a static
+   box is the effect we want.
+
+   A pass gets none of this. That is the point — the two must be
+   distinguishable at a glance, in a photograph, and in grayscale (where the
+   lime reads as a bright ring and the pass reads as a plain square).
    ================================================================ */
+
+@property --credo-glow-angle {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
 
 .glowing-qr-invitation {
   display: inline-flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.625rem;
 }
 
 .glowing-qr-invitation-ring {
-  padding: 0.625rem;
+  position: relative;
   border-radius: 1.5rem;
-  border: 2px dashed color-mix(in oklab, var(--primary) 55%, transparent);
-  background: color-mix(in oklab, var(--primary) 7%, transparent);
+  padding: 3px;
+  background:
+    conic-gradient(
+      from var(--credo-glow-angle),
+      transparent,
+      var(--primary),
+      transparent 25%
+    ),
+    /* Floor under the gradient so the ring never fully disappears. */
+    linear-gradient(var(--primary-foreground), var(--primary-foreground));
+  animation: credo-glow-spin 8s linear infinite;
 }
 
+/* The dark pane the lime glows against. Without it the ring sits on whatever
+   the surrounding card happens to be and the gradient has nothing to read
+   against — which is why the maximised screen put it on glass. */
+.glowing-qr-invitation-pane {
+  border-radius: calc(1.5rem - 3px);
+  background: var(--primary-foreground);
+  padding: 0.5rem;
+}
+
+/*
+ * `currentColor`, not `--muted-foreground`.
+ *
+ * This caption appears on two very different backgrounds: a dark card in the
+ * kiosk and on the event screen, and the full-bleed LIME billboard when the
+ * door screen is maximised. A fixed muted grey is legible on the first and
+ * nearly invisible on the second. Inheriting means it is dark on lime and
+ * light on dark, because each of those contexts has already set a text colour
+ * that contrasts with itself.
+ */
 .glowing-qr-invitation-caption {
   font-size: 0.625rem;
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--muted-foreground);
+  color: currentColor;
+  opacity: 0.6;
+}
+
+@keyframes credo-glow-spin {
+  to {
+    --credo-glow-angle: 360deg;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glowing-qr-invitation-ring {
+    animation: none;
+  }
 }

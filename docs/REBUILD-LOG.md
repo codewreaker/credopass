@@ -1169,8 +1169,19 @@ They cannot be merged — a code everyone shares cannot identify one person — 
 dashed one reads as a cut line, which is the poster/flyer mental model we want. The ring wraps the
 code rather than restyling it, so what a camera reads is byte-for-byte what it was.
 
-Applied to the event detail card and the kiosk's invite tab. The pass page passes no `kind` and
-renders exactly as before.
+**The treatment is the maximised door screen's, not a new one.** The first version used a dashed
+ring; the glow the maximised view already had was better, so it moved out of
+`apps/web/src/Pages/CheckIn/style.css` into the shared component and that screen now uses
+`kind="invitation"` like everywhere else. One ring, one definition. The note explaining why the
+component's built-in `.glowing-qr-border` could not be used went with it: that ring is drawn
+*inside* the code's own footprint, where the QR's white quiet zone covers it at display size.
+
+The caption inherits `currentColor` rather than taking `--muted-foreground`, because it appears
+both on a dark card and on the full-bleed lime billboard — a fixed muted grey is legible on the
+first and nearly invisible on the second.
+
+Applied to the event detail card, the kiosk's invite tab and the maximised screen. The pass page
+passes no `kind` and renders exactly as before.
 
 ### U2 · The kiosk opened on a code its own scanner refuses
 
