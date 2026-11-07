@@ -120,7 +120,7 @@ nx run coreservice:db status          # does the DB match the code? START HERE w
 nx run coreservice:db reset           # drop + replay migrations (localhost only, by design)
 nx run coreservice:migrate            # apply pending migrations to whatever DATABASE_URL points at
 nx run coreservice:docs               # Scalar at /api/v1/core/docs
-nx run coreservice:token              # mint a JWT for the Scalar auth box
+nx run coreservice:token              # how to get a JWT for the Scalar auth box
 nx run coreservice:openapi:export     # write openapi.json for desktop clients
 nx run coreservice:build              # bundle with Bun
 # Deploys are CI-only: push to main touching services/core/** → ghcr.io image → Coolify.

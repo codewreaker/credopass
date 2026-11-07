@@ -98,7 +98,7 @@ bun start                      # web :5000 (or :5001) + API :8080
 To make your own signed-in account an owner of the seeded organisation:
 
 ```bash
-nx run coreservice:token                     # mint a JWT
+nx run coreservice:token                     # how to get a JWT
 # paste it into Scalar at http://localhost:8080/api/v1/core/docs, call GET /me,
 # copy the account id, then:
 nx run coreservice:db join <account-id>

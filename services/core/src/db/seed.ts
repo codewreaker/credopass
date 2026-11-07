@@ -174,7 +174,7 @@ console.log(`
 
    You are not a member of either yet — so GET /events will be empty. To join:
 
-     nx run coreservice:token                    mint a JWT (creates your account)
+     nx run coreservice:token                    how to get a JWT from your session
      GET /api/v1/core/me                         copy your account id
      nx run coreservice:db join <account-id>     become an owner of Kharis Church
 `);

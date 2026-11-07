@@ -182,7 +182,7 @@ async function join(accountId?: string, slug = 'kharis-church'): Promise<void> {
 Usage: nx run coreservice:db join <account-id> [org-slug]
 
 Get your account id by calling GET /me:
-  nx run coreservice:token     → mint a JWT
+  nx run coreservice:token     → how to get a JWT
   then GET /api/v1/core/me in the docs at /api/v1/core/docs
 `);
     process.exit(1);

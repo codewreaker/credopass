@@ -1394,7 +1394,7 @@ every `bun start` from that tab talk to production. `coreservice:start` compound
 `db status` is the only command that flags `⚠️ REMOTE`. The above verification ran against
 production because of this; the test rows were removed. **`EADDRINUSE` on :8080 is not noise** —
 it means a stale process is still serving and the new config never took effect. A guard making
-`start` refuse a non-localhost `DATABASE_URL` is proposed and unbuilt.
+`start` refuse a non-localhost `DATABASE_URL` was built on 2026-11-07 — see the entry below.
 
 **`coreservice:token` registers real users in production.** `SUPABASE_URL` is the live project
 and there is no local Supabase, so `signInAnonymously()` in `scripts/dev-token.ts` creates an

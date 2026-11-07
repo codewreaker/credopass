@@ -119,6 +119,12 @@ These are enforced by code, not by convention. Breaking one fails the build, the
 
 Two corollaries worth knowing:
 
+- **`coreservice:start` refuses a non-localhost `DATABASE_URL`.** `scripts/guard-db-host.ts` runs
+  before the server and exits 1 if the host is not in the allow-list, because an exported
+  `DATABASE_URL` silently beats `.env` (Bun will not override a set variable). To do it on purpose:
+  `nx run coreservice:start:allow-remote`. The guard lives in the nx target, **not** in
+  `src/index.ts` — that file is the production entrypoint and a localhost check there would stop
+  Coolify booting. The boot log now prints the real host and no password.
 - **Never hand-roll `bun src/index.ts` for the API.** `NODE_ENV` would be unset, so `isDevelopment`
   (`std-env`) is false and `services/core/src/index.ts` takes the *production* CORS branch, which
   allow-lists only `app.credopass.com` / `credopass.com`. The browser then blocks `localhost:5000` with
@@ -135,7 +141,7 @@ Two corollaries worth knowing:
 ```bash
 bun start                     # web + API together — the default way to run the app
 nx run web:serve              # web  → :5000
-nx run coreservice:start      # API  → :8080 (bun --watch)
+nx run coreservice:start      # API  → :8080 (bun --watch; refuses a remote DATABASE_URL)
 nx run website:serve          # site → :4200
 nx run coreservice:migrate    # apply pending migrations to whatever DATABASE_URL points at
 nx run coreservice:seed
@@ -162,7 +168,7 @@ nx run coreservice:dev:down          # stop everything
 nx run coreservice:dev:logs
 
 nx run coreservice:docs              # open Scalar (docs + API client)
-nx run coreservice:token             # mint a JWT for the Scalar auth box
+nx run coreservice:token             # how to get a JWT for the Scalar auth box
 nx run coreservice:openapi:export    # write openapi.json for desktop clients
 
 nx run coreservice:verify:public-access   # is the DB publicly readable? exits 1 if yes

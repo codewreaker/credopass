@@ -139,7 +139,7 @@ ${failed ? '⚠️  Setup finished with problems — see above.' : '✅ Setup co
 Next:
   bun start                              web + API (API on :8080)
   nx run coreservice:docs                Scalar docs + API client
-  nx run coreservice:token               mint a JWT to paste into Scalar
+  nx run coreservice:token               how to get a JWT for Scalar
   nx run coreservice:verify              lint + typecheck + unit tests
   nx run coreservice:test:integration     services against real Postgres
   nx run coreservice:test:adversarial    tenancy suite (red until the endpoints land)

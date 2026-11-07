@@ -239,7 +239,7 @@ The API is the product, so there's a full client built into the docs page:
 
 ```bash
 nx run coreservice:docs     # opens Scalar — browse endpoints and send real requests
-nx run coreservice:token    # mint a JWT, paste it into Scalar's auth box
+nx run coreservice:token    # how to get a JWT for Scalar's auth box (mints nothing)
 ```
 
 Prefer a desktop app? Export the spec and import it into [Scalar](https://scalar.com/download), Postman, or Insomnia:

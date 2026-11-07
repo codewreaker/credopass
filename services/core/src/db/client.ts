@@ -17,6 +17,34 @@ export type Database = ReturnType<typeof createPostgresClient>;
 let client: Pool | null = null;
 let db: Database | null = null;
 
+const LOCAL_HOSTS = ['localhost', '127.0.0.1', 'host.docker.internal', '::1'];
+
+/**
+ * `host:port/database (local|⚠️  REMOTE)`, with the password stripped.
+ *
+ * The label is derived from the URL that this process actually holds, not from
+ * `isDevelopment`. It used to read `(local)` whenever the platform was not a
+ * hosted one, which is a statement about where the CODE runs, not where the
+ * DATA is — so a dev server pointed at production announced itself as local.
+ * That cost a day on 2026-11-07. `scripts/guard-db-host.ts` now refuses that
+ * combination outright for `coreservice:start`; this keeps the log honest
+ * everywhere else, including in production, where it prints the real host.
+ *
+ * The full URL is never logged: it carries the password, and this line goes to
+ * the deployed log stream.
+ */
+function describeTarget(): string {
+  const url = process.env.DATABASE_URL;
+  if (!url) return 'no DATABASE_URL';
+  try {
+    const { hostname, port, pathname } = new URL(url);
+    const where = LOCAL_HOSTS.includes(hostname) ? 'local' : '⚠️  REMOTE';
+    return `${hostname}${port ? `:${port}` : ''}${pathname} (${where})`;
+  } catch {
+    return 'unparseable DATABASE_URL';
+  }
+}
+
 /**
  * Create a database client for Postgres (hosted environments)
  */
@@ -42,10 +70,10 @@ export async function getDatabase(): Promise<Database> {
     if (isHosted) {
       console.log(`✓ Connecting to Postgres instance (hosted: ${platform})`);
       //@TODO: connect to external postgres and verify connection
-      console.log(`✓ PostgreSQL connected (${platform})`);
+      console.log(`✓ PostgreSQL connected (${platform}): ${describeTarget()}`);
     }
     else {
-      console.log(`✓ PostgreSQL connected (local): ${process.env.DATABASE_URL}`);
+      console.log(`✓ PostgreSQL connected: ${describeTarget()}`);
     }
     console.log("✓ Database initialized");
   }

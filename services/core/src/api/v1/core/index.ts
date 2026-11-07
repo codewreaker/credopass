@@ -172,7 +172,7 @@ v1.openAPIRegistry.registerComponent('securitySchemes', 'bearerAuth', {
   scheme: 'bearer',
   bearerFormat: 'JWT',
   description:
-    'Supabase-issued JWT. Get one with: nx run coreservice:token',
+    'Supabase-issued JWT. See: nx run coreservice:token',
 });
 
 v1.doc31('/openapi.json', (c) => ({

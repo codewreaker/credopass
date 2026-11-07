@@ -20,8 +20,13 @@
     "start": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "NODE_ENV=development PORT=8080 bun --watch --no-clear-screen src/index.ts",
+        "command": "bun run scripts/guard-db-host.ts && NODE_ENV=development PORT=8080 bun --watch --no-clear-screen src/index.ts",
         "cwd": "{projectRoot}"
+      },
+      "configurations": {
+        "allow-remote": {
+          "command": "bun run scripts/guard-db-host.ts --allow-remote && NODE_ENV=development PORT=8080 bun --watch --no-clear-screen src/index.ts"
+        }
       }
     },
     "db": {
