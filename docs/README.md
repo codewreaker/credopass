@@ -8,7 +8,7 @@ Three questions, three files. Everything else is reference.
 |---|---|
 | **What is true right now?** | [`../CLAUDE.md`](../CLAUDE.md) — the system as it stands, and the rules that break the build if you ignore them. |
 | **What has been done?** | [`REBUILD-LOG.md`](REBUILD-LOG.md) — the record, newest entry last. **It wins over every plan.** |
-| **What is left?** | §2 below. |
+| **What is left, and in what order?** | [`ROADMAP.md`](ROADMAP.md) — the one ordered plan. §2 below is the same list, unordered. |
 
 ---
 
@@ -29,6 +29,10 @@ So: if a file in `docs/` is not in the table below, it should not be there.
 ## 2. What is left — the whole of it, one line each
 
 Nothing is "in progress" unless someone is actually working on it today.
+
+> **Sequenced in [`ROADMAP.md`](ROADMAP.md)** (2026-11-07), which also carries the maintainer's
+> testing feedback as items F1–F13 and decisions D39–D42. Read that for the order; read this for
+> the inventory.
 
 ### Open now
 
@@ -65,7 +69,9 @@ Legend: 🔴 confirmed bug · 🟡 in progress · ⬜ not started · S ≤ ½ da
 | [`../CLAUDE.md`](../CLAUDE.md) | The system now, and the golden rules | **Authoritative** |
 | [`REBUILD-LOG.md`](REBUILD-LOG.md) | What happened, in order | **Authoritative — wins over any plan** |
 | [`DATABASE-MIGRATION.md`](DATABASE-MIGRATION.md) | How to change the schema; local, test and remote | Reference, current |
-| [`NEXT-PHASE-PLAN.md`](NEXT-PHASE-PLAN.md) | Public API, data ownership, product backlog. D31–D38 | Plan, nothing built |
+| [`ROADMAP.md`](ROADMAP.md) | **The ordered plan** — six stages, the 2026-11-07 feedback as F1–F13, D39–D42 | **Plan — start here** |
+| [`NEXT-PHASE-PLAN.md`](NEXT-PHASE-PLAN.md) | Public API, data ownership, product backlog. D31–D38 | Plan; B1 shipped, rest not built |
+| [`UI-REDESIGN.md`](UI-REDESIGN.md) | The measured 375×812 walk of all 20 routes. R1–R7 | Evidence; R1 and R4 shipped |
 | [`NEXT-UI-LIST.md`](NEXT-UI-LIST.md) | The open UI backlog | Plan |
 | [`LIVE-UPDATES.md`](LIVE-UPDATES.md) | Why a check-in doesn't reach other screens. D27–D30 | Plan |
 

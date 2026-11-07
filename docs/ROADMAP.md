@@ -1,0 +1,334 @@
+# ROADMAP — the one ordered plan
+
+> **Written 2026-11-07**, from the maintainer's testing feedback of the same day, checked line by
+> line against the code and against the 18 screenshots in
+> [`apps/website/public/how-to/`](../apps/website/public/how-to/).
+>
+> **This file answers "what is done and what is next, in what order".** It does not replace the
+> two documents it draws on — it sequences them:
+>
+> - [`NEXT-PHASE-PLAN.md`](NEXT-PHASE-PLAN.md) — the *why* and the design for the public API
+>   (Part A) and the product backlog B1–B8. Decisions D31–D38 live there.
+> - [`UI-REDESIGN.md`](UI-REDESIGN.md) — the *evidence*: a measured walk of all 20 routes at
+>   375×812. Findings R1–R7 and per-screen notes §3.1–§3.21.
+>
+> Neither is stale, and neither is the plan. **This is the plan.** When an item here ships, tick it
+> here, write the outcome in [`REBUILD-LOG.md`](REBUILD-LOG.md), and leave the design doc alone.
+
+---
+
+## 0. Before anything else — three docs are deleted in the working tree
+
+`git status` shows, uncommitted:
+
+```
+ D docs/API-FIRST-REBUILD.md
+ D docs/DATABASE-MIGRATION.md
+ D docs/NEXT-UI-LIST.md
+```
+
+`CLAUDE.md`, `docs/README.md` and both plan documents link into all three. `DATABASE-MIGRATION.md`
+is the procedure for every schema change in stages 3 and 4 below, and `NEXT-UI-LIST.md` holds
+U1–U8. **Nothing in this roadmap assumes they are gone**; their live content is folded into §1 and
+§3 so this file stands alone either way. If the deletion was not deliberate:
+
+```bash
+git restore docs/API-FIRST-REBUILD.md docs/DATABASE-MIGRATION.md docs/NEXT-UI-LIST.md
+```
+
+If it *was* deliberate, the rows pointing at them in `docs/README.md` §2 and §3 need rewriting, and
+`CLAUDE.md`'s links need to come out.
+
+---
+
+## 1. The ledger — what is actually done
+
+Verified against the code on 2026-11-07, not copied from a plan.
+
+### Shipped
+
+| | Work | Evidence |
+|---|---|---|
+| ✅ | Phase 0 + most of Phase 1: accounts / identities / people / invitations / SSO tables, RLS policies, issuer registry, auth + tenant middleware, `/me`, `/me/context`, organizations, members, invitations | `services/core/src/api/v1/core/` |
+| ✅ | The web app reads `/api/v1/core` through `@credopass/api-client` only. `/api/core` is gone | `docs/archive/API-SECOND-REBUILD.md` |
+| ✅ | Sign-up funnel; Google is the only sign-in; no guest tier, no onboarding screen, no device tokens | `docs/archive/API-THIRD-REBUILD.md`, D20–D26 |
+| ✅ | **B1** — keyboard shortcuts no longer hijack ⌘V/⌘A/⌘N/⌘T/⌘P; one registry, `g` chords, cheat sheet in ⌘K | `apps/web/src/hooks/shortcuts.ts` |
+| ✅ | **U5** — every pass link was dead in production (wrong host, wrong scheme). Fixed with a configured app origin | `services/core/src/config/public-url.ts` |
+| ✅ | **U6** — a pending invitation's link can be recovered; `inviteMember` rotates instead of inserting | members tab shows `New link` |
+| ✅ | **U8** — re-registering silently killed a live pass. Rotation is a schema invariant, so the fix was to say so in all three places a pass is issued | commit `77b6cce` |
+| ✅ | **R1** — the document scrolls, not an inner box | commit `0bccc7c`, verified on screen |
+| ✅ | **R4** — the bottom tab bar no longer hides on scroll; glass tab bar + glass sidebar | commit `bb62ef7` |
+| ✅ | Adversarial tenancy suite green (51 tests) and gating the deploy | `nx run coreservice:test:adversarial` |
+
+### Open, and already specified somewhere
+
+| | Work | Spec | Size |
+|---|---|---|---|
+| 🔴 | **B2** — the composer renders "No organization" while `useOrganizations()` is in flight | `NEXT-PHASE-PLAN.md` §5.2 | S |
+| ⬜ | **R2** — the same defect everywhere: the app renders the zero value instead of "I don't know yet" (`Good afternoon, there`, `0 events`, the stale attendee sheet) | `UI-REDESIGN.md` §2 R2 | S–M |
+| ⬜ | **U4** — `PATCH /me` does not exist, so the Profile tab is read-only | — | S |
+| ⬜ | **U2** — "QR scan check-in is broken", never reproduced | `UI-REDESIGN.md` §3.11 names the likely cause | M |
+| ⬜ | **U1** — `/analytics` draws a full dashboard from fabricated numbers; the warning is only at the top, `Arrivals by hour` is off-palette blue, `Export` is offered on made-up data | `UI-REDESIGN.md` §3.16 | S |
+| ⬜ | **B3** — online events and optional location (`events.location_text` is `NOT NULL`; the UI copy already promises "Offline location or virtual link") | `NEXT-PHASE-PLAN.md` §5.3 | M |
+| ⬜ | **B4** — no app-level notion of "browser offline" / "API unreachable" | `NEXT-PHASE-PLAN.md` §5.4 | M |
+| ⬜ | **B6** — first-run narrative; **R3** — the GET STARTED billboard is permanent | §5.6 / R3 | M |
+| ⬜ | **B7** — the AG-UI chat panel (`services/ai-chat`, no backend yet) | §5.7 | L |
+| ⬜ | Live updates: a check-in does not reach other screens — polling, then SSE | `LIVE-UPDATES.md` | M→L |
+| ⬜ | No email. Every pass URL and invitation link must be shown on screen | D18 | M |
+| ⬜ | RLS is inert on the API path — the API connects as `postgres` | `CLAUDE.md` | M |
+| ⬜ | No data migration from the pre-rewrite `users` table | `CLAUDE.md` | M |
+| ⬜ | Account linking: two provider identities for one address get two accounts | — | decision first |
+| ⬜ | **R6** text is truncated where it should wrap · **R7** the pass page's load-bearing sentence has no copy button | `UI-REDESIGN.md` §5 | S |
+| ⬜ | Part A: the paid public API, webhooks, test mode, `pii_mode` | `NEXT-PHASE-PLAN.md` §1–§4 | L |
+
+---
+
+## 2. The feedback of 2026-11-07, itemised
+
+Every point from the testing pass, kept whole, each with a verdict from the code. **F-numbers are
+the reference** — use them in commits.
+
+### The events screen
+
+| | Feedback | Verdict |
+|---|---|---|
+| **F1** | The welcome reads "Good Morning, israel.agyeman.prempeh". Extract the first name from what Google gives us — `user_metadata` reliably has `full_name` / `name`, not always `given_name`, so check and fall back to splitting the full name. | **Confirmed, and the root cause is server-side.** `services/core/src/services/identity.ts:163` sets `displayName: asString(input.claims.name)` — the **top-level** `name` claim. Supabase does not send one; the name lives in `user_metadata`. So `accounts.display_name` is `NULL`, and `useDisplayName()` (`apps/web/src/contexts/session.tsx:121`) falls back to the email local part. Two bugs, not one: it is read from the wrong place, **and** it is only written when the account is *created* — never refreshed on later sign-ins, so existing accounts stay `NULL` after a fix. |
+| **F2** | A very small edit button next to the name, which opens the profile. | **Not built.** `apps/web/src/Pages/Events/index.tsx:398` renders a bare `<h1>`. Worth pairing with **U4** — today `/account?tab=profile` says "Read-only for now", so the button would lead to a dead end. |
+| **F3** | Drop the "2 events · 1 upcoming · 0 live now" line. Put the Upcoming/Past toggle directly under the welcome instead — but keep the numbers *and* the live count visible. | **Confirmed as described.** The line is `index.tsx:401`; the toggle is `StatusFilterSwitch` in `events-header-right`. The counts come from `useEventsSummary()`, so folding them into the toggle is a prop change, not a new request. |
+| **F4** | Timezone is permanent now — it is not a filter. Remove the timezone toggle and put **Calendar View** and **View Organisations** in the space it frees. | **Confirmed.** `enableTimezone` defaults to `false` in `packages/lib/src/hooks/use-status-filter.ts:122` and is threaded through four call sites; the button is `StatusFilterSwitch.tsx:71`. The two actions are in `apps/web/src/containers/ActionCards/index.tsx`, currently a horizontal scroller whose second button clips at the right edge (`UI-REDESIGN.md` §3.1). |
+
+### Event creation
+
+| | Feedback | Verdict |
+|---|---|---|
+| **F5** | Recurring event dates — and what that means on the backend. | **Nothing exists.** `series:manage` is in `services/core/src/authz/permissions.ts` and `organizations.ts:14` names `event_series` as the intended shape, but there is no table, no column, no route. Design is in §3, stage 3. |
+
+### QR codes
+
+| | Feedback | Verdict |
+|---|---|---|
+| **F6** | As the organiser it should be obvious the QR you are looking at is the *event invite*, not your ticket — a ring around it, say. Attendee tickets stay as they are. | **Confirmed.** Every QR in the product renders through the same `GlowingQRCode` (`packages/ui/src/components/glowing-qr-code/`) with no variant. The event-detail QR, the kiosk's "Event QR" and the pass QR are visually identical. |
+| **F7** | The shared QR carries the creator's **organisation**. An invited person does not need that — why is it there at all? Is it a backend issue? | **Partly.** `organizationName` is in `PublicEventSchema` (`services/core/src/api/v1/core/public.ts:43`) on purpose: a public event page naming its host is normal and is not a tenancy leak. **The real problem is what the name is.** `defaultOrganizationName` (`services/core/src/services/membership.ts:160`) builds it from the account's first name, so the public page and the pass both read *"Israel's organization"* — a personal name published to strangers. Fix the default name and the privacy concern goes away without removing a legitimate field. |
+| **F8** | Scanning a QR in order to be given *another* QR is counter-intuitive. When I present a QR, that QR should be the pass. | **Correct observation, and the two cannot be collapsed.** A poster QR is one code shared by everyone; a pass is one code per person. The poster code therefore cannot *be* a pass. What can be fixed is that the two look the same — see F6/F9 and stage 2. |
+| **F9** | The confusion is between *event-information* QRs and *passes*. Putting a poster image on the event flyer might make it read as a flyer rather than a check-in code. Analyse. | **Agreed, and that is the fix.** Three surfaces show an event-link QR (`/e/{id}`): the event detail card, the kiosk's "Event QR" tab, the Poster QR sheet. One shows a pass (the raw token): `/p/$token`. Make *invitation* QRs always appear inside a poster-shaped card — cover image, title, date, "scan to register" — and *pass* QRs stay the bare high-contrast square on full-bleed lime with the holder's name. Then the two are never mistaken, and the poster work in stage 4 is what delivers it. This is also the most likely explanation of **U2** ("QR scan broken"): the kiosk opens on a code that its own other tab rejects. |
+| **F10** | On the kiosk, when the scan counter goes up, tapping it should jump to the attendance list — and back to scanning. | **Not built.** The counter is a non-interactive `<div>` in `apps/web/src/Pages/CheckIn/components/CheckInHeader.tsx`. |
+
+### Posters
+
+| | Feedback | Verdict |
+|---|---|---|
+| **F11** | S3 storage so users can generate or add posters. | **Greenfield.** `events.cover_asset_id` exists as a bare `uuid` with no `assets` table and no FK (`packages/lib/src/schemas/tables/events.ts:58`). MinIO is already in `docker/docker-compose.dev.yml` and nothing uses it. The composer holds a blob URL and nothing more — `TODO(event-image)` at `event-composer.tsx:103` lists the four steps. |
+| **F12** | Uploads must be compressed before storage — there will be many, and tickets must load fast. | **Agreed, non-negotiable.** Design in stage 4. |
+| **F13** | Auto AI-generated image options when creating an event, the way Luma offers them — plus a set of predefined images, plus your own upload. | **This supersedes D38.** `NEXT-PHASE-PLAN.md` §5.5 decided "typographic templates, no image model". The decision stands for *posters with text on them* — diffusion models still cannot set type — but it was answering a different question. What is asked for here is a **background image**, chosen at creation, with the title rendered by us on top. That is both achievable and the right split. Recorded as **D39** in §4. |
+
+---
+
+## 3. The plan, in order
+
+Each stage is shippable on its own and leaves the product better than it found it. Do them in this
+order.
+
+### Stage 1 — Who you are, and the first screen · **S, ~1 day**
+
+Everything on `/events` above the fold, plus the one confirmed bug that shares its cause.
+
+1. **F1a — read the name from the right claim.** In `services/core/src/services/identity.ts`, take
+   `displayName` from `user_metadata.full_name` → `user_metadata.name` → top-level `name`, and
+   derive the first name by splitting on whitespace only when `given_name` is absent.
+   **Do not trust `user_metadata` for anything but display** — it is user-writable
+   (`auth.updateUser({ data })`), which is exactly why `identities.email_verified` is never trusted
+   from it. A display name is cosmetic; an identity decision is not.
+2. **F1b — refresh it on every sign-in.** The `existing.length > 0` branch already updates the
+   identity row; update `accounts.display_name` there too when it is `NULL` or has changed. Without
+   this, every account created before the fix keeps the email local part forever.
+3. **F2 — the edit affordance.** A small pencil beside the greeting → `/account?tab=profile`.
+4. **U4 — make that destination real.** `PATCH /me` with `displayName`, and wire the Profile tab.
+   Four lines of route, and it is what makes F2 worth tapping. `nx run api-client:generate` after.
+5. **F3 — one control, not two.** Delete the summary paragraph. Move `StatusFilterSwitch` directly
+   under the greeting and carry the counts on it: `Upcoming 1` / `Past 1`, with the live count as a
+   separate pulsing chip when `summary.ongoing > 0` (it is the only number that is urgent).
+6. **F4 — timezone always on.** Remove the toggle from `StatusFilterSwitch`, remove
+   `enableTimezone` / `toggleTimezone` from `use-status-filter.ts` and its four call sites, and
+   pass `timezone` as a constant `true`. Move **Calendar View** and **View Organisations** into the
+   row the toggle vacated, and fix the right-edge clip (`UI-REDESIGN.md` §3.1) while you are there.
+7. **B2 + R2 — stop rendering zeroes as facts.** Add `name` to `OrgSummarySchema` in
+   `/me/context` so the org pill needs no second request, and give the greeting, the counts and the
+   pill a shared skeleton. `Good afternoon, there` and `0 events` must never appear.
+
+**Done when:** a fresh Google sign-in greets you by your first name, the header is
+greeting → toggle-with-counts → the two action buttons, no timezone toggle exists anywhere, and
+nothing on the screen states a number before it has one.
+
+---
+
+### Stage 2 — Tell a pass apart from an invitation · **M, 2–3 days**
+
+F6, F8, F9 and F10 are one piece of work, and it closes U2.
+
+1. **Give `GlowingQRCode` a `variant`.** `pass` is today's treatment. `invitation` adds the ring
+   the feedback asks for — a distinct outer frame, a label, and a different corner radius — so the
+   difference survives a glance and a photograph.
+2. **Apply it everywhere an event link is shown**: the event detail card, the kiosk's Event QR tab,
+   the Poster QR sheet. The pass page is the only `pass` variant, and it does not change.
+3. **Demote the kiosk's Event QR.** `UI-REDESIGN.md` §3.11 is right: "how do people get a pass" and
+   "I am taking passes now" are not peers. The kiosk opens on **Scan passes**; the event QR moves
+   behind the Maximise/share affordance. This alone probably resolves **U2** — confirm with a real
+   camera before closing it, using the debug drawer.
+4. **F10 — make the counter a button.** Tapping it opens the attendance list for this event, and
+   that view has an unmissable way back to scanning. Treat it as an overlay over the kiosk rather
+   than a navigation away from it, so "back to scanning" is one tap and the camera does not
+   re-initialise.
+5. **F7 — stop publishing a person's name as an organisation.** Change
+   `defaultOrganizationName` so a new account's org is not *"Israel's organization"*. Existing rows
+   are not renamed automatically; the Settings tab already allows a rename, so prompt once instead.
+
+**Done when:** an organiser cannot confuse the two codes, U2 is either reproduced-and-fixed or
+closed with the explanation, and the kiosk's counter is a route to the attendance list.
+
+---
+
+### Stage 3 — Recurring events · **M, 2–3 days, schema change**
+
+**F5 — what it means on the backend.** The honest answer, and the one the schema was already
+designed for:
+
+> **Materialise occurrences. Do not store a rule and compute dates at read time.**
+
+Attendance, passes, capacity and analytics all hang off `events.id`. A recurrence rule that is
+expanded on the fly has no stable id to hang them from, so the first time someone checks in to
+"the third Sunday" there is nothing to write the row against. Luma, Eventbrite and Google Calendar
+all materialise for the same reason.
+
+```
+event_series
+  id, organization_id, name, timezone,
+  rrule text            -- RFC 5545, the record of what was asked for
+  until / count         -- the horizon
+events
+  series_id uuid null references event_series(id)
+  series_index int null -- which occurrence this is
+```
+
+- The composer gains a **Repeat** control (never / weekly / fortnightly / monthly-by-weekday) and
+  an end condition. Creating a recurring event creates the series **and** its occurrences in one
+  transaction, capped at a horizon (12 months or 52 occurrences — whichever the first customer
+  needs, decided in §4).
+- Editing one occurrence edits that row. Editing the series asks **"this event, or all future
+  ones?"** — the question every calendar app asks because there is no good default.
+- Cancelling an occurrence cancels that event; everyone's pass for it still resolves, per D18 and
+  the existing cancel path.
+- A far-horizon series needs a top-up job eventually. Not in this stage — a 12-month horizon buys
+  a year, and the Phase 4 scheduler is where it belongs.
+
+Follow `DATABASE-MIGRATION.md` end to end: edit the tables in `packages/lib/src/schemas/tables/`,
+`bunx drizzle-kit generate`, read the SQL, `nx run coreservice:migrate`,
+`nx run api-client:generate`. Remember the gotcha — a new column makes *every* query ask for it, so
+every database must be migrated before the code ships.
+
+---
+
+### Stage 4 — Posters, storage and images · **L, a week+, schema change**
+
+F11, F12, F13 and the visual half of F9. The biggest piece of work on this list, and the one that
+most changes how the product looks.
+
+**4.1 Storage (F11).** An `assets` table — id, organization_id, bucket key, content type, width,
+height, byte size, checksum — and a real FK from `events.cover_asset_id`, which is currently a
+dangling uuid. MinIO locally (already in `docker-compose.dev.yml`), S3-compatible in production.
+Upload is a **presigned PUT** straight from the browser to the bucket; the API issues the
+signature, validates the content type and the declared size, and records the row on completion.
+Postgres holds the key and the metadata, never bytes.
+
+**4.2 Compression (F12).** Two layers, and both are needed:
+
+- **In the browser, before upload** — downscale to a maximum edge (2048px) and re-encode. This is
+  what stops a 12MB phone photo ever crossing the network.
+- **Server-side derivatives with `sharp`** — AVIF and WebP at poster, card and thumbnail widths,
+  generated once on upload, served with far-future cache headers. The pass and the public event
+  page load a thumbnail, never the original.
+
+A hard ceiling on the accepted upload size, enforced in the presign — not only in the UI.
+
+**4.3 The three ways to get an image (F13).** Offered side by side at creation, exactly as asked:
+
+1. **A curated set.** A dozen on-brand backgrounds shipped as static assets. Zero cost, instant,
+   always available, and the fallback when the other two fail. **Build this first** — it is a day's
+   work and it makes the composer stop looking empty.
+2. **Upload your own.** 4.1 + 4.2.
+3. **Generate one.** A hosted image model, server-side, called at creation with a prompt derived
+   from the event name, time of day and format. Generates **backgrounds, not posters** — the title,
+   date and QR are composited by us in the template layer, which is the half of D38 that was right.
+   Needs: a queue (generation takes seconds, the composer must not block), moderation on the
+   output, a per-organisation rate limit, and a plan gate. Falls back to the curated set on any
+   failure.
+
+**4.4 The poster itself.** Compose cover image + title + date + location + the invitation QR into a
+downloadable PNG. This is what makes F9 true: an invitation QR is never again shown as a naked
+square. `GlowingQRCode` and the Poster QR sheet already exist to build on.
+
+**Sequence within the stage:** 4.3.1 (curated) → 4.1 → 4.2 → 4.4 → 4.3.3 (generation last; it is
+the only part with a running cost and an external dependency).
+
+---
+
+### Stage 5 — The rest of the product backlog · **M each**
+
+Already specified, unchanged by this feedback, ordered by cost of leaving them:
+
+| | Work | Spec |
+|---|---|---|
+| 5a | **B4** offline / API-unreachable handling, modelled on the geocoder's one honest failure message (R5) | §5.4 |
+| 5b | **B3** online events and optional location — the UI copy has promised this for weeks | §5.3 |
+| 5c | **U1** analytics: repeat the "made up" disclosure down the page, make `Arrivals by hour` lime, hide `Export` | `UI-REDESIGN.md` §3.16 |
+| 5d | **R6 / R7** wrap instead of truncate; a `Copy link` button on the pass | `UI-REDESIGN.md` §5 |
+| 5e | Live updates — polling, then SSE | `LIVE-UPDATES.md` |
+| 5f | **R3 / B6** retire the permanent GET STARTED billboard; make it the first-run narrative | §5.6 |
+| 5g | Platform: RLS cutover, `users` → `accounts` + `people` migration | `CLAUDE.md` |
+
+---
+
+### Stage 6 — Part A, the public API · **L**
+
+Unchanged from [`NEXT-PHASE-PLAN.md`](NEXT-PHASE-PLAN.md) §1–§4 and its sequencing table: the
+outbox first (it also unblocks SSE), then keys + rate limiting + read endpoints, then webhook
+delivery, then test mode. `pii_mode` when a named customer asks. **B7**, the chat panel, tracks
+`services/ai-chat` and lands whenever its backend does.
+
+---
+
+## 4. Decisions and open questions from this round
+
+| | Decision |
+|---|---|
+| **D39** | **Image generation is for backgrounds, not posters.** D38's "no model" stands for anything that must render legible type — we composite the title, date and QR ourselves. A hosted model may produce the background behind them, server-side, moderated, rate-limited and plan-gated, with a curated set as the always-available fallback. |
+| **D40** | **Recurring events materialise their occurrences.** A series stores the rule for the record; the rows are real `events`. Nothing may hang attendance off a computed date. |
+| **D41** | **An invitation QR and a pass QR must never look alike.** One variant each, enforced in `GlowingQRCode`, and an invitation code is always shown inside a poster, never as a naked square. |
+| **D42** | **Timezone is always displayed.** It is not a filter and never was one. |
+
+**Open — answer before the stage that needs them**
+
+1. **Recurrence horizon** (stage 3): 12 months, or 52 occurrences, or both? A Sunday service wants
+   a year; a six-week course wants six.
+2. **"This event or all future ones"** (stage 3): which is the default when the organiser edits an
+   occurrence? Calendars differ; pick one and keep it.
+3. **Which image model** (stage 4.3.3), at what cost per generation, and on which plans?
+4. **Does the curated set need to be per-organisation?** A church and a conference want different
+   twelve images. Assume one global set for v1 unless told otherwise.
+5. **Renaming existing organisations** (stage 2.5): prompt the owner once, or leave every existing
+   *"X's organization"* alone?
+6. **Profile editing scope** (stage 1.4): is `PATCH /me` display-name-only, or does it take an
+   avatar too — which would make it depend on stage 4's storage?
+
+---
+
+## 5. Housekeeping when a stage ships
+
+Per [`docs/README.md`](README.md) §5, every time:
+
+1. Write the outcome in [`REBUILD-LOG.md`](REBUILD-LOG.md) — what was built, what was decided
+   differently, what broke.
+2. Tick the stage here and the matching row in §1.
+3. `nx run coreservice:lint && nx run coreservice:typecheck && nx run coreservice:test`, plus
+   `nx run web:build`. Say plainly what you could not verify.
+4. When `NEXT-PHASE-PLAN.md` Part B and `UI-REDESIGN.md` are fully absorbed by shipped stages,
+   `git mv` them to [`archive/`](archive/) — not before.

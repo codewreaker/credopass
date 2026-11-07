@@ -220,6 +220,7 @@ the single list of what is still open. Start there rather than guessing from fil
 | Doc | For |
 |---|---|
 | [`docs/README.md`](docs/README.md) | **The index, and the one list of what is left.** |
+| [`docs/ROADMAP.md`](docs/ROADMAP.md) | **The ordered plan (2026-11-07).** Six stages, what is already done, the maintainer's testing feedback as F1–F13, decisions D39–D42. Start here before picking up work. |
 | [`docs/API-FIRST-REBUILD.md`](docs/API-FIRST-REBUILD.md) | The plan — decisions, target schema, full endpoint list, phases. Historical; some links in it are dead and the header says which. |
 | [`docs/REBUILD-LOG.md`](docs/REBUILD-LOG.md) | What actually happened. **Wins wherever it disagrees with the plan.** |
 | [`docs/DATABASE-MIGRATION.md`](docs/DATABASE-MIGRATION.md) | Getting the schema onto a database — local, test, and the remote Supabase cutover. |
