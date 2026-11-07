@@ -1176,9 +1176,25 @@ ring; the glow the maximised view already had was better, so it moved out of
 component's built-in `.glowing-qr-border` could not be used went with it: that ring is drawn
 *inside* the code's own footprint, where the QR's white quiet zone covers it at display size.
 
+**The ring is `--info` (blue), not lime.** Lime on a lime-branded product reads as "ours", not as
+"different", and telling the two codes apart is the entire job. Blue sits at hue 240 against
+lime's 121 — about as far apart as this palette goes — and holds up photographed and on the lime
+billboard alike. The component's own `.glowing-qr-border` is suppressed for an invitation: leaving
+it on gave two arcs spinning at once, and its 20px of breathing room became dead padding.
+
 The caption inherits `currentColor` rather than taking `--muted-foreground`, because it appears
 both on a dark card and on the full-bleed lime billboard — a fixed muted grey is legible on the
 first and nearly invisible on the second.
+
+**`InviteBillboard` — one component, two variants.** The kiosk's inline invite panel and the
+maximised door screen were separate blocks of JSX showing the same code: one on a dark card, one
+on lime, each with its own framing and copy. They drifted and they looked like two different
+things because they were. `variant="panel" | "fullscreen"` is now the only difference —
+fullscreen adds the brand lockup, Minimise, a second decorative ring and the footer, because
+there it is the whole screen. The panel took the lime treatment: an invite is not a component of
+the console, it is a thing you point a stranger's phone at, and **Maximise is now a change of
+scale rather than a change of design.** The event detail card keeps the dark treatment, which is
+what distinguishes a glance at your own event from a sign on a wall.
 
 Applied to the event detail card, the kiosk's invite tab and the maximised screen. The pass page
 passes no `kind` and renders exactly as before.

@@ -29,9 +29,8 @@ import {
   type Event,
 } from '@credopass/api-client';
 import { useIsMobile } from '@credopass/ui/hooks/use-mobile';
-import { QrCodeIcon, ArrowLeft, ScanLine, UserRoundPlus, Bug, Trash2, CalendarCheck, Users, Maximize2, Minimize2, MapPin, LogOut } from 'lucide-react';
+import { QrCodeIcon, ArrowLeft, ScanLine, UserRoundPlus, Bug, Trash2, CalendarCheck, Users, Maximize2, LogOut } from 'lucide-react';
 import { Button } from '@credopass/ui/components/button';
-import { GlowingQRCode } from '@credopass/ui/components/glowing-qr-code';
 import { SheetDialog } from '@credopass/ui/components/sheet-dialog';
 import { EmptyState } from '@credopass/ui/components/empty-state';
 import { Skeleton } from '@credopass/ui/components/skeleton';
@@ -41,10 +40,10 @@ import { cn } from '@credopass/ui/lib/utils';
 import './style.css';
 import CheckInHeader from './components/CheckInHeader';
 import { CheckedInSheet } from './CheckedInSheet';
+import { InviteBillboard } from './InviteBillboard';
 import { QRScanner } from './components/QRScanner';
 import ManualSignInForm, { type AttendeeDetails } from './ManualSignInForm';
 import SuccessCheckInScreen from './SuccessCheckInScreen';
-import CredoPassLogoIcon from '../../containers/LeftSidebar/brand-icon';
 import { errorMessage } from '../../lib/errors';
 
 type KioskMode = 'display' | 'scan';
@@ -345,30 +344,29 @@ const CheckInPage: React.FC = () => {
 
       <div className="mx-auto w-full max-w-md">
         {mode === 'display' ? (
-          <div className="flex flex-col items-center gap-4 rounded-3xl border border-border bg-card p-6 text-center">
-            {/* The event's share link. Its own "Scan passes" tab refuses this
-                exact code, by design — so it must not look like a pass (F8). */}
-            <GlowingQRCode
-              value={shareUrl}
-              size={isMobile ? 220 : 280}
-              kind="invitation"
-              caption="Scan to register"
-              ariaLabel="Event registration QR"
-            />
-            <div>
-              <p className="text-sm font-semibold">Put this on the door</p>
-              {/* Say plainly what it is NOT. This screen's other tab rejects
-                  this code, and a staff member who tries it deserves to have
-                  been told why beforehand. */}
-              <p className="mt-1 text-xs text-muted-foreground">
-                Guests scan it with their own phone to register and get their pass.
-                It is not a pass itself — don't scan it with the scanner.
-              </p>
-            </div>
-            <Button variant="outline" size="sm" className="gap-1.5 rounded-full" onClick={enterMaximised}>
-              <Maximize2 size={14} /> Maximise
-            </Button>
-          </div>
+          /* The invite is a lime billboard at both sizes now — Maximise is a
+             change of scale, not a change of design. One component, one
+             `variant` prop (see InviteBillboard). */
+          <InviteBillboard
+            variant="panel"
+            shareUrl={shareUrl}
+            eventName={ev.name}
+            eventStatus={ev.status}
+            eventLocation={ev.location}
+            startAt={startDate}
+            checkedIn={checkedIn}
+            qrSize={isMobile ? 200 : 240}
+            action={
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5 rounded-full border-primary-foreground/25 bg-primary-foreground/10 text-primary-foreground hover:bg-primary-foreground/20 hover:text-primary-foreground"
+                onClick={enterMaximised}
+              >
+                <Maximize2 size={14} /> Maximise
+              </Button>
+            }
+          />
         ) : (
           <QRScanner
             onResult={handleScan}
@@ -463,98 +461,22 @@ const CheckInPage: React.FC = () => {
         )}
       </SheetDialog>
 
-      {/* Door-tablet mode — a CredoPass billboard, not a bare QR. Same lime panel,
-          logo lockup and decorative rings as the auth screen, so anyone walking up
-          to the tablet can tell what they're scanning and who it belongs to. */}
+      {/* Door-tablet mode. The SAME component as the inline panel above, with
+          `variant="fullscreen"` — it adds the brand lockup, Minimise, the
+          second decorative ring and the footer, because here it is the whole
+          screen and nothing else on it says what it is. */}
       {maximised && (
-        <div
-          className="fixed inset-0 z-50 flex flex-col bg-primary text-primary-foreground p-6 md:p-10"
-          role="dialog"
-          aria-modal="true"
-          aria-label={`${ev.name} check-in QR`}
-        >
-          <div aria-hidden className="pointer-events-none absolute -right-24 -top-24 size-72 rounded-full border-28 border-primary-foreground/8" />
-          <div aria-hidden className="pointer-events-none absolute -left-20 -bottom-16 size-64 rounded-full border-22 border-primary-foreground/6" />
-
-          {/* Brand lockup + exit */}
-          <div className="relative z-10 flex shrink-0 items-center gap-2.5">
-            <div className="flex size-9 items-center justify-center rounded-xl bg-primary-foreground text-primary">
-              <CredoPassLogoIcon className="size-8 bg-transparent! text-primary!" />
-            </div>
-            <span className="text-[15px] font-semibold tracking-tight">CredoPass</span>
-            <div className="flex-1" />
-            <Button
-              variant="ghost"
-              size="sm"
-              className="gap-1.5 rounded-full text-primary-foreground/80 hover:bg-primary-foreground/10 hover:text-primary-foreground"
-              onClick={exitMaximised}
-            >
-              <Minimize2 size={15} /> Minimise
-            </Button>
-          </div>
-
-          <div className="relative z-10 flex min-h-0 flex-1 flex-col items-center justify-center gap-6 lg:flex-row lg:gap-14">
-            {/* Glass panel, then the rotating lime ring, then the code. The glass
-                is what makes the glow legible: a lime ring straight onto the lime
-                billboard would be invisible, but against a dark translucent panel
-                it reads clearly. The QR keeps its own white quiet zone so
-                scanning is unaffected by any of it. */}
-            <div className="relative shrink-0 rounded-[2rem] bg-primary-foreground/25 p-5 shadow-2xl ring-1 ring-primary-foreground/15 backdrop-blur-xl md:p-7">
-              <div
-                aria-hidden
-                className="pointer-events-none absolute inset-0 rounded-[2rem] bg-linear-to-br from-primary-foreground/10 to-transparent"
-              />
-              {/* Same `kind="invitation"` as every other invite code — this
-                  screen's bespoke ring became the shared one (F6). */}
-              <GlowingQRCode
-                value={shareUrl}
-                size={maxQrSize}
-                kind="invitation"
-                caption="Scan to register"
-                showGlow={false}
-                ariaLabel="Event registration QR"
-              />
-            </div>
-
-            {/* Event details. No cover photo: there are no media endpoints yet,
-                so there is nothing to render (§1.6). */}
-            <div className="min-w-0 max-w-lg text-center lg:text-left">
-              <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-primary-foreground/60">
-                {ev.status === 'ongoing' ? 'Checking in now' : 'Check in here'}
-              </p>
-              <h2 className="mt-2 text-3xl font-semibold leading-[1.08] tracking-tight md:text-4xl lg:text-5xl">
-                {ev.name}
-              </h2>
-
-              <div className="mt-5 flex flex-wrap items-center justify-center gap-2 lg:justify-start">
-                <span className="inline-flex items-center gap-2 rounded-full bg-primary-foreground/10 px-3.5 py-1.5 text-[13px] font-medium">
-                  <CalendarCheck size={14} />
-                  {startDate.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' })}
-                  {' · '}
-                  {startDate.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}
-                </span>
-                {ev.location && (
-                  <span className="inline-flex min-w-0 items-center gap-2 rounded-full bg-primary-foreground/10 px-3.5 py-1.5 text-[13px] font-medium">
-                    <MapPin size={14} className="shrink-0" />
-                    <span className="truncate">{ev.location}</span>
-                  </span>
-                )}
-                <span className="inline-flex items-center gap-2 rounded-full bg-primary-foreground px-3.5 py-1.5 text-[13px] font-bold text-primary">
-                  <Users size={14} />
-                  <span className="tabular-nums">{checkedIn}</span> checked in
-                </span>
-              </div>
-
-              <p className="mt-6 text-base font-medium text-primary-foreground/70 md:text-lg">
-                Scan this code with your phone camera to register and get your pass.
-              </p>
-            </div>
-          </div>
-
-          <p className="relative z-10 shrink-0 pt-4 text-center text-[11px] text-primary-foreground/45">
-            Press Esc to minimise · credopass.com
-          </p>
-        </div>
+        <InviteBillboard
+          variant="fullscreen"
+          shareUrl={shareUrl}
+          eventName={ev.name}
+          eventStatus={ev.status}
+          eventLocation={ev.location}
+          startAt={startDate}
+          checkedIn={checkedIn}
+          qrSize={maxQrSize}
+          onMinimise={exitMaximised}
+        />
       )}
     </div>
   );

@@ -72,8 +72,17 @@
    scanner tab correctly refuses.
 
    The treatment is the one the maximised door screen already used, lifted
-   out of `apps/web/src/Pages/CheckIn/style.css` so both share it. That file
-   had to draw its own ring because of a real limitation, and the note is
+   out of `apps/web/src/Pages/CheckIn/style.css` so both share it — but in
+   `--info` rather than `--primary`. A LIME ring on a lime-branded product
+   reads as "ours", not as "different", and telling the two codes apart is
+   the entire job. Blue sits at hue 240 against lime's 121, about as far
+   apart as this palette goes, and it holds up in a photograph and on the
+   lime billboard alike.
+
+   The component's own `.glowing-qr-border` is suppressed for an invitation
+   (`showInnerGlow` in index.tsx). Leaving it on gave two arcs spinning at
+   once, and its 20px of breathing room became dead padding. That file had to
+   draw its own ring because of a real limitation, and the note is
    worth keeping:
 
      The component's built-in `.glowing-qr-border` sits INSIDE the code's
@@ -111,7 +120,7 @@
     conic-gradient(
       from var(--credo-glow-angle),
       transparent,
-      var(--primary),
+      var(--info),
       transparent 25%
     ),
     /* Floor under the gradient so the ring never fully disappears. */
@@ -122,10 +131,12 @@
 /* The dark pane the lime glows against. Without it the ring sits on whatever
    the surrounding card happens to be and the gradient has nothing to read
    against — which is why the maximised screen put it on glass. */
+/* Tight. The ring is the frame; the QR brings its own white quiet zone, so
+   anything more than this is padding around padding. */
 .glowing-qr-invitation-pane {
   border-radius: calc(1.5rem - 3px);
   background: var(--primary-foreground);
-  padding: 0.5rem;
+  padding: 0.375rem;
 }
 
 /*
