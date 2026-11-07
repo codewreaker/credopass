@@ -42,6 +42,14 @@ export interface EventSummary {
    */
   allowSelfCheckIn: boolean;
   requireCheckOut: boolean;
+  /**
+   * The poster, as an absolute URL, or null (F14).
+   *
+   * On the summary rather than only the detail payload because every surface
+   * that shows an event wants it: the list row, the billboard, the public page
+   * and the pass. A second request per row to fetch a picture would be absurd.
+   */
+  coverImageUrl: string | null;
 }
 
 export interface ListEventsInput {
@@ -131,6 +139,7 @@ const toSummary = (
     cancellationReason: e.cancellationReason,
     allowSelfCheckIn: e.allowSelfCheckIn,
     requireCheckOut: e.requireCheckOut,
+    coverImageUrl: e.coverImageUrl,
   };
 };
 
@@ -197,10 +206,7 @@ export async function listEvents(
 
   if (input.group) {
     const past = input.group === 'past';
-    summaries = summaries.filter((s) => {
-      const isFinished = s.status === 'completed' || s.status === 'cancelled';
-      return past ? isFinished : !isFinished;
-    });
+    summaries = summaries.filter((s) => (past ? isFinished(s.status) : !isFinished(s.status)));
   }
 
   if (input.status?.length) {
@@ -252,14 +258,32 @@ export async function getEvent(
 
 export interface EventsSummary {
   total: number;
+  /** Status `scheduled` only — what the hero means by "up next". */
   upcoming: number;
   ongoing: number;
+  /**
+   * The two numbers on the Upcoming ⇄ Past switch (F3).
+   *
+   * These are NOT `upcoming` and `total - upcoming`. The switch filters on
+   * *finished or not* — `past` is `completed | cancelled`, and its other side
+   * therefore includes ongoing and draft events as well as scheduled ones. The
+   * rule is duplicated from `list()` above on purpose: a count that disagrees
+   * with the list it labels is worse than no count.
+   */
+  groups: { upcoming: number; past: number };
   next: EventSummary | null;
 }
 
+/** The Upcoming ⇄ Past split, as `list()` applies it. One rule, one place. */
+const isFinished = (status: EventStatus): boolean =>
+  status === 'completed' || status === 'cancelled';
+
 /**
- * Backs the hero spotlight and the "2 events · 1 upcoming · 0 live now"
- * subtitle — currently `filter().length` over a full-table cache (§10.1).
+ * Backs the hero spotlight and the counts on the Upcoming ⇄ Past switch.
+ *
+ * It used to back a "2 events · 1 upcoming · 0 live now" subtitle too. That
+ * line said the same thing as the switch directly beneath it and was removed
+ * (F3); the numbers moved onto the switch itself.
  */
 export async function summary(
   db: Database,
@@ -283,6 +307,10 @@ export async function summary(
     total: all.length,
     upcoming: upcoming.length,
     ongoing: ongoing.length,
+    groups: {
+      upcoming: all.filter((e) => !isFinished(e.status)).length,
+      past: all.filter((e) => isFinished(e.status)).length,
+    },
     // "Live now" beats "up next" in the hero: something happening right now is
     // more urgent than something later.
     next: ongoing[0] ?? upcoming[0] ?? null,
@@ -369,6 +397,8 @@ export interface CreateEventInput {
   checkInMethods?: string[];
   requireCheckOut?: boolean;
   allowSelfCheckIn?: boolean;
+  /** Absolute URL, or null to clear it. Validated at the route (F14). */
+  coverImageUrl?: string | null;
 }
 
 const HOUR_MS = 60 * 60 * 1000;
@@ -441,6 +471,7 @@ export async function createEvent(
       ...(input.checkInMethods ? { checkInMethods: input.checkInMethods } : {}),
       ...(input.requireCheckOut !== undefined ? { requireCheckOut: input.requireCheckOut } : {}),
       ...(input.allowSelfCheckIn !== undefined ? { allowSelfCheckIn: input.allowSelfCheckIn } : {}),
+      ...(input.coverImageUrl !== undefined ? { coverImageUrl: input.coverImageUrl } : {}),
     })
     .returning({ id: events.id });
 
@@ -480,6 +511,7 @@ export async function updateEvent(
       ...(patch.checkInMethods !== undefined ? { checkInMethods: patch.checkInMethods } : {}),
       ...(patch.requireCheckOut !== undefined ? { requireCheckOut: patch.requireCheckOut } : {}),
       ...(patch.allowSelfCheckIn !== undefined ? { allowSelfCheckIn: patch.allowSelfCheckIn } : {}),
+      ...(patch.coverImageUrl !== undefined ? { coverImageUrl: patch.coverImageUrl } : {}),
       updatedAt: now,
     })
     .where(and(eq(events.id, eventId), eq(events.organizationId, ctx.organizationId)));

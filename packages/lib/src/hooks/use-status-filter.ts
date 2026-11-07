@@ -11,8 +11,6 @@ export type DerivedEventStatus = 'scheduled' | 'ongoing' | 'completed' | 'cancel
 
 export const EVENTS_FILTER_GROUP_COOKIE_NAME = 'events_filter_group';
 export const EVENTS_FILTER_ENABLED_COOKIE_NAME = 'events_filter_enabled';
-export const EVENTS_ACTIONS_ENABLED_COOKIE_NAME = 'events_actions_enabled';
-export const EVENTS_TIMEZONE_ENABLED_COOKIE_NAME = 'events_timezone_enabled';
 
 /**
  * The list shows one of two groups at a time — a plain Upcoming ⇄ Past switch.
@@ -115,27 +113,26 @@ export function useStatusFilter() {
     const [filterEnabled, setFilterEnabledState] = useState<boolean>(true);
     // The list shows exactly one group at a time — a binary Upcoming ⇄ Past switch.
     const [activeGroup, setActiveGroupState] = useState<EventStatusGroup>(DEFAULT_GROUP);
-    // Showing the shortcut cards has nothing to do with which events are listed,
-    // so it owns its own persisted boolean.
-    const [actionsEnabled, setActionsEnabledState] = useState<boolean>(true);
-    // Timezone annotation on rows — an independent toggle, not a status filter.
-    const [enableTimezone, setEnableTimezoneState] = useState<boolean>(false);
+    // `actionsEnabled` and `enableTimezone` used to live here.
+    //
+    // The shortcut cards are no longer hideable — they sit in the events header
+    // beside the switch and are two of the three things on it (F4). The
+    // timezone annotation is permanent: it is information, not a filter, and a
+    // toggle defaulting to OFF meant most people never saw a timezone at all
+    // (D42). Both persisted booleans are gone with them; the stale IndexedDB
+    // keys are harmless and are simply never read again.
     const [isInitialized, setIsInitialized] = useState(false);
 
     // Load from IndexedDB on mount
     useEffect(() => {
         const loadFromDB = async () => {
-            const [storedEnabled, storedGroup, storedActions, storedTimezone] = await Promise.all([
+            const [storedEnabled, storedGroup] = await Promise.all([
                 getFromDB<boolean>(EVENTS_FILTER_ENABLED_COOKIE_NAME),
                 getFromDB<unknown>(EVENTS_FILTER_GROUP_COOKIE_NAME),
-                getFromDB<boolean>(EVENTS_ACTIONS_ENABLED_COOKIE_NAME),
-                getFromDB<boolean>(EVENTS_TIMEZONE_ENABLED_COOKIE_NAME),
             ]);
 
             if (storedEnabled !== undefined) setFilterEnabledState(storedEnabled);
             if (storedGroup !== undefined) setActiveGroupState(migrateStoredGroup(storedGroup));
-            if (storedActions !== undefined) setActionsEnabledState(storedActions);
-            if (storedTimezone !== undefined) setEnableTimezoneState(storedTimezone);
             setIsInitialized(true);
         };
 
@@ -150,30 +147,10 @@ export function useStatusFilter() {
         });
     }, []);
 
-    const setActionsEnabled = useCallback((value: boolean | ((prev: boolean) => boolean)) => {
-        setActionsEnabledState((prev) => {
-            const next = typeof value === 'function' ? value(prev) : value;
-            setToDB(EVENTS_ACTIONS_ENABLED_COOKIE_NAME, next);
-            return next;
-        });
-    }, []);
-
-    const toggleActions = useCallback(() => setActionsEnabled((prev) => !prev), [setActionsEnabled]);
-
     const setActiveGroup = useCallback((group: EventStatusGroup) => {
         setActiveGroupState(group);
         setToDB(EVENTS_FILTER_GROUP_COOKIE_NAME, group);
     }, []);
-
-    const setEnableTimezone = useCallback((value: boolean | ((prev: boolean) => boolean)) => {
-        setEnableTimezoneState((prev) => {
-            const next = typeof value === 'function' ? value(prev) : value;
-            setToDB(EVENTS_TIMEZONE_ENABLED_COOKIE_NAME, next);
-            return next;
-        });
-    }, []);
-
-    const toggleTimezone = useCallback(() => setEnableTimezone((prev) => !prev), [setEnableTimezone]);
 
     /** The raw statuses the list should render, expanded from the active group. */
     const selectedStatuses = useMemo<DerivedEventStatus[]>(
@@ -187,12 +164,6 @@ export function useStatusFilter() {
         activeGroup,
         setActiveGroup,
         selectedStatuses,
-        actionsEnabled,
-        setActionsEnabled,
-        toggleActions,
-        enableTimezone,
-        setEnableTimezone,
-        toggleTimezone,
         isInitialized,
     };
 }

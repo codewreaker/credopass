@@ -8,7 +8,18 @@ import { useSidebarTrigger } from '../../../../../packages/lib/src/hooks/use-sid
 import { useIsMobile } from '@credopass/ui/hooks/use-mobile';
 import { useNavigate } from '@tanstack/react-router';
 
-/** Luma-style action cards (like Invite Guests / Send a Blast / Share Event) */
+/**
+ * Calendar View and View Organisations.
+ *
+ * These sit in the events header now, on the same row as the Upcoming ⇄ Past
+ * switch, in the space the timezone toggle used to occupy (F4). They used to be
+ * a full-width card row below the header, hidden behind a toolbar toggle that
+ * most people never found — and the row clipped its second button at the right
+ * edge on a 375px screen (UI-REDESIGN §3.1).
+ *
+ * So they are pills now, not cards: the description line was the only thing
+ * making them tall, and it said no more than the label did.
+ */
 const ACTION_CARDS = [
     {
         key: 'calendar',
@@ -53,9 +64,8 @@ export default function ActionCards() {
 
     const actionCards = useMemo(() => (isMobile ? ACTION_CARDS : ACTION_CARDS.filter(({ key }) => (key !== 'calendar'))), [isMobile])
 
-    {/* Luma-style action cards row */ }
     return (
-        <div className="flex gap-2.5 overflow-x-auto pb-1 -mx-1 px-1 md:grid md:gap-3 md:grid-cols-[repeat(auto-fit,minmax(170px,1fr))] md:overflow-visible md:pb-0 md:mx-0 md:px-0">
+        <div className="flex items-center gap-2">
             {
                 actionCards.map((card) => {
                     const Icon = card.icon;
@@ -63,16 +73,12 @@ export default function ActionCards() {
                         <button
                             key={card.key}
                             type="button"
-                            className="group flex items-center gap-3 py-2 px-2.5 min-w-[44%] shrink-0 md:min-w-0 md:shrink border border-border rounded-xl bg-card cursor-pointer text-left transition-all duration-200 text-foreground hover:border-primary/40 hover:bg-primary/5 hover:-translate-y-0.5 hover:shadow-elevation-2 active:scale-[0.98] active:translate-y-0"
+                            title={card.description}
+                            className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border border-border bg-card px-3 text-[11px] font-semibold text-muted-foreground transition-colors duration-150 cursor-pointer hover:border-primary/40 hover:text-foreground active:scale-[0.98]"
                             onClick={() => handleAction(card.action)}
                         >
-                            <div className="flex items-center justify-center size-8 md:size-9 rounded-lg bg-primary text-primary-foreground shrink-0 transition-transform duration-200 group-hover:scale-105">
-                                {Icon && <Icon size={16} />}
-                            </div>
-                            <div className="flex flex-col gap-0.5 min-w-0">
-                                <span className="text-[0.8125rem] font-semibold text-foreground truncate">{card.label}</span>
-                                <span className="text-[0.6875rem] text-muted-foreground truncate hidden sm:block">{card.description}</span>
-                            </div>
+                            {Icon && <Icon size={13} className="shrink-0" />}
+                            <span className="whitespace-nowrap">{card.label}</span>
                         </button>
                     );
                 })

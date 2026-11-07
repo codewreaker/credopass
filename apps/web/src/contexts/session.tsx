@@ -118,11 +118,67 @@ export function useCan(permission: Permission): boolean {
   return context?.membership?.permissions.includes(permission) ?? false;
 }
 
-/** The caller's display name, for greetings. `GET /me` is the only source. */
+/** The caller's display name. `GET /me/context` is the only source. */
 export function useDisplayName(): string {
   const { context } = useSession();
   const name = context?.account.displayName?.trim();
   if (name) return name;
   const email = context?.account.email;
   return email ? email.split('@')[0] : 'there';
+}
+
+/**
+ * The name to greet someone by, and whether we actually know it yet.
+ *
+ * Two things were wrong with greeting from `useDisplayName()` alone (F1, R2):
+ *
+ * 1. **It rendered before it knew.** `Good afternoon, there` sat on screen for
+ *    the length of the bootstrap request — a greeting addressed to no one,
+ *    indistinguishable from a real answer. `isKnown` is false until
+ *    `/me/context` resolves, so the caller can render a skeleton instead of a
+ *    confident wrong value. **Never greet when `isKnown` is false.**
+ * 2. **It was the email local part.** That was a server bug — the name was read
+ *    from a top-level `name` claim Supabase does not send — and it is fixed in
+ *    `services/core/src/services/identity.ts`. The email fallback stays for the
+ *    genuine case of a provider that asserts no name at all, but it is now the
+ *    exception rather than what everybody saw.
+ *
+ * The first name is the display name split on whitespace: Google reliably sends
+ * `full_name`/`name` and only sometimes `given_name`, so splitting is the
+ * dependable half. An email fallback is never split — `israel.agyeman.prempeh`
+ * would become `israel.agyeman.prempeh` anyway, and a local part with a dot in
+ * it is not a first name.
+ */
+export function useGreetingName(): { firstName: string; isKnown: boolean } {
+  const { context, isContextLoading, session } = useSession();
+
+  const name = context?.account.displayName?.trim();
+  if (name) return { firstName: name.split(/\s+/)[0], isKnown: true };
+
+  const email = context?.account.email?.trim();
+  if (email) return { firstName: email.split('@')[0], isKnown: true };
+
+  // No context yet. Signed out is a settled answer ('there'); still loading is
+  // not, and must not be rendered as one.
+  return { firstName: 'there', isKnown: !session ? true : !isContextLoading };
+}
+
+/**
+ * The active organization's name, straight off the bootstrap context.
+ *
+ * This is the B2 fix. The composer used to find it in `useOrganizations()` — a
+ * SECOND request — and render `'No organization'` for however long that took,
+ * which is a loading state wearing an error message. `/me/context` has shipped
+ * the name since 2026-11-07, so there is nothing to race.
+ *
+ * `null` means "not known yet"; an empty-string name is impossible (the column
+ * is NOT NULL and the API trims). A caller with genuinely no organization is
+ * near-impossible too — `ensureDefaultOrganization` commissions one on the
+ * first authenticated request (D22) — so treat `null` as "wait", not "none".
+ */
+export function useActiveOrganizationName(): string | null {
+  const { context, organizationId } = useSession();
+  if (!context) return null;
+  const match = context.organizations.find((o) => o.id === organizationId);
+  return match?.name ?? context.activeOrganization?.name ?? null;
 }

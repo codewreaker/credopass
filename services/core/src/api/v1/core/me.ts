@@ -12,6 +12,8 @@ import { OpenAPIHono, z } from '@hono/zod-openapi';
 import { defineRoute, problemResponse } from '../../../http/define-route';
 import { requireCaller, type CallerVars } from '../../../middleware/caller';
 import { PERMISSIONS, ROLE_PERMISSIONS } from '../../../authz/permissions';
+import { getDatabase } from '../../../db/client';
+import { updateAccountDisplayName } from '../../../services/identity';
 
 export const me = new OpenAPIHono<{ Variables: CallerVars }>();
 
@@ -34,6 +36,10 @@ const AccountSchema = z
 const OrgSummarySchema = z
   .object({
     id: z.string().uuid(),
+    // The name ships with the bootstrap context so no screen has to fetch
+    // /organizations a second time just to label the active org. The composer's
+    // "No organization" was that second request losing a race (B2).
+    name: z.string(),
     role: z.string(),
   })
   .openapi('OrgSummary');
@@ -116,6 +122,7 @@ me.openapi(
     const caller = c.get('caller');
     const organizations = caller.memberships.map((m) => ({
       id: m.organizationId,
+      name: m.organizationName,
       role: m.role,
     }));
 
@@ -140,5 +147,74 @@ me.openapi(
       activeOrganization: active,
       membership: active ? { role: active.role, permissions } : null,
     }, 200);
+  }
+);
+
+/**
+ * Edit your own account.
+ *
+ * The Profile tab said "Read-only for now — editing your profile isn't built
+ * yet" because this did not exist (U4). It is `scope: 'account'` and declares
+ * no permission for the same reason `GET /me` does not: the row is the
+ * caller's, and no organisation role could grant or withhold it.
+ *
+ * `displayName` is the whole of it on purpose. Email is NOT editable here and
+ * must not become so: an account is `(issuer, subject)` and `accounts.email` is
+ * a MIRROR of what the provider asserted (D1). Letting someone type a different
+ * address into it would make the mirror lie, and `uq_accounts_email` would then
+ * reject or steal addresses depending on who got there first.
+ *
+ * Sending `null` clears the name, which puts the greeting back on the email
+ * local part — a legitimate thing to want, and the reason the field is
+ * nullable rather than required.
+ */
+me.openapi(
+  defineRoute({
+    method: 'patch',
+    path: '/me',
+    scope: 'account',
+    summary: 'Update your own account',
+    tags: ['Identity'],
+    security: [{ bearerAuth: [] }],
+    request: {
+      body: {
+        content: {
+          'application/json': {
+            schema: z
+              .object({
+                displayName: z.union([z.string().trim().min(1).max(120), z.null()]),
+              })
+              .partial()
+              .openapi('UpdateMeBody'),
+          },
+        },
+      },
+    },
+    responses: {
+      200: { description: 'The updated account', content: { 'application/json': { schema: AccountSchema } } },
+      400: problemResponse('Validation failed'),
+      401: problemResponse('No valid token'),
+    },
+  }),
+  async (c) => {
+    const caller = c.get('caller');
+    const body = c.req.valid('json');
+
+    // An empty PATCH is a no-op, not an error: it is what a form submits when
+    // nothing changed.
+    if (body.displayName === undefined) {
+      return c.json(
+        { id: caller.accountId, email: caller.email, displayName: caller.displayName },
+        200
+      );
+    }
+
+    const db = await getDatabase();
+    const updated = await updateAccountDisplayName(db, caller.accountId, body.displayName);
+
+    return c.json(
+      { id: updated.id, email: updated.email, displayName: updated.displayName },
+      200
+    );
   }
 );

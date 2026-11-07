@@ -44,6 +44,8 @@ const EventSummarySchema = z
     /** Door configuration the kiosk and the composer both need. */
     allowSelfCheckIn: z.boolean(),
     requireCheckOut: z.boolean(),
+    /** The poster (F14). `z.union([…, z.null()])`, never `.nullable()` on a Ref. */
+    coverImageUrl: z.union([z.string(), z.null()]),
   })
   .openapi('EventSummary');
 
@@ -132,6 +134,10 @@ eventRoutes.openapi(
               total: z.number().int(),
               upcoming: z.number().int(),
               ongoing: z.number().int(),
+              // The counts on the Upcoming ⇄ Past switch. Not derivable from
+              // the three above: `past` is completed|cancelled, so its
+              // complement includes ongoing and draft too.
+              groups: z.object({ upcoming: z.number().int(), past: z.number().int() }),
               next: z.union([EventSummarySchema, z.null()]),
             }),
           },
@@ -231,6 +237,42 @@ const EventBody = z.object({
   checkInMethods: z.array(z.enum(['qr', 'manual', 'self', 'pass'])).optional(),
   requireCheckOut: z.boolean().optional(),
   allowSelfCheckIn: z.boolean().optional(),
+  /**
+   * The poster, as an absolute URL, or null to clear it (F14).
+   *
+   * **`https` only, and that is a security boundary, not a style rule.** This
+   * URL is rendered as an `<img src>` on the public event page and on the
+   * pass — pages served to people who are not signed in and did not choose the
+   * image. Three things are refused here:
+   *
+   * - `http:` — it would make a padlocked page serve mixed content, and the
+   *   browser would block it anyway.
+   * - `data:` and `blob:` — a data URI is unbounded bytes in a text column,
+   *   and `blob:` is meaningless outside the tab that made it.
+   * - `javascript:` and every other scheme — `z.string().url()` alone accepts
+   *   `javascript:alert(1)`, which is why the protocol is checked explicitly
+   *   rather than trusting the URL validator.
+   *
+   * Until stage 4 this points at somebody else's host, so it is also a quiet
+   * referrer leak and an availability risk. Both are acceptable for a link the
+   * organiser pasted themselves; neither would be once WE host the bytes.
+   */
+  coverImageUrl: z
+    .union([
+      z
+        .string()
+        .url()
+        .max(2048)
+        .refine((value) => {
+          try {
+            return new URL(value).protocol === 'https:';
+          } catch {
+            return false;
+          }
+        }, 'The poster link must be an https:// URL'),
+      z.null(),
+    ])
+    .optional(),
 });
 
 const toInput = (b: z.infer<typeof EventBody>) => ({

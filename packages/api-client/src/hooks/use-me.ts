@@ -2,11 +2,17 @@
  * Identity — `/me` and `/me/context`.
  */
 
-import { useQuery, type UseQueryResult } from '@tanstack/react-query';
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+  type UseMutationResult,
+  type UseQueryResult,
+} from '@tanstack/react-query';
 import { api } from '../client';
 import { queryKeys } from '../query-keys';
 import { useActiveOrganizationId } from '../active-organization';
-import type { Account, MeContext, Permission } from '../types';
+import type { Account, ApiBody, MeContext, Permission } from '../types';
 import { unwrap } from './internal';
 
 /** The signed-in account. */
@@ -49,4 +55,22 @@ export function hasPermission(
   permission: Permission
 ): boolean {
   return context?.membership?.permissions.includes(permission) ?? false;
+}
+
+/**
+ * Edit your own account — today, the display name (U4).
+ *
+ * Invalidates both `/me` and every `/me/context` key, because the greeting on
+ * `/events` reads the name out of the context and would otherwise keep showing
+ * the old one until its 60s staleTime expired.
+ */
+export function useUpdateMe(): UseMutationResult<Account, Error, ApiBody<'/me', 'patch'>> {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (body) => unwrap(api.PATCH('/me', { body })),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.me() });
+      queryClient.invalidateQueries({ queryKey: ['me'] });
+    },
+  });
 }

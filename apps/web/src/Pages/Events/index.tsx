@@ -13,7 +13,7 @@ import {
 } from '@credopass/api-client';
 import EventListView from './EventListView';
 import EventCalendar from '@credopass/ui/components/event-calendar';
-import { CalendarPlus, CalendarsIcon, FastForward, MapPin, Users, Clock, ScanLine, ArrowUpRight, Plus, ChevronUp, ChevronDown, Sparkles } from 'lucide-react';
+import { CalendarPlus, CalendarsIcon, MapPin, Users, Clock, ScanLine, ArrowUpRight, Plus, ChevronUp, ChevronDown, Sparkles, Pencil } from 'lucide-react';
 import { useStatusFilter, useToolbarContext } from '@credopass/lib/hooks';
 export { EVENTS_FILTER_GROUP_COOKIE_NAME, EVENTS_FILTER_ENABLED_COOKIE_NAME } from '@credopass/lib/hooks';
 import { ButtonGroup } from '@credopass/ui/components/button-group';
@@ -28,7 +28,7 @@ import { StatusFilterSwitch } from './StatusFilterSwitch';
 import { Separator } from '@credopass/ui/components/separator';
 import { useIsMobile } from '@credopass/ui/hooks/use-mobile';
 import { Button } from '@credopass/ui/components/button';
-import { useCan, useDisplayName, useSession } from '../../contexts/session';
+import { useCan, useGreetingName, useSession } from '../../contexts/session';
 import { errorMessage } from '../../lib/errors';
 
 /** Lime spotlight hero — surfaces the next ongoing/scheduled event with quick actions. */
@@ -294,13 +294,9 @@ const EventsPage = () => {
     const canDelete = useCan('event:delete');
     const canCancel = useCan('event:cancel');
 
-    const {
-        activeGroup, setActiveGroup,
-        selectedStatuses, enableTimezone, toggleTimezone,
-        actionsEnabled, toggleActions,
-    } = useStatusFilter();
+    const { activeGroup, setActiveGroup, selectedStatuses } = useStatusFilter();
 
-    const firstName = useDisplayName().split(' ')[0];
+    const { firstName, isKnown: isNameKnown } = useGreetingName();
     const greeting = useMemo(() => getGreeting(), []);
 
     const { data: summary } = useEventsSummary();
@@ -326,6 +322,10 @@ const EventsPage = () => {
         upcoming: summary?.upcoming ?? 0,
         ongoing: summary?.ongoing ?? 0,
     };
+
+    // `null` until the summary lands, so the switch shows a dash rather than a
+    // zero it has not earned (UI-REDESIGN R2).
+    const groupCounts = summary?.groups ?? null;
 
     const cancelEvent = useCancelEvent();
     const deleteEvent = useDeleteEvent();
@@ -391,45 +391,61 @@ const EventsPage = () => {
 
     return (
         <div className="events-page">
+            {/* Greeting, then the one filter, then the two shortcuts.
+                Three rows, each saying something the others do not (F2–F4). */}
             <div className="events-header">
-                {/* Greeting — the name is the account's, from GET /me/context */}
                 <div className="events-header-left">
                     <h1 className="events-header-title">
-                        {greeting}, {firstName}
+                        {greeting},{' '}
+                        {isNameKnown ? (
+                            firstName
+                        ) : (
+                            // Never greet someone before we know who they are.
+                            // `Good afternoon, there` used to sit here for the
+                            // length of the bootstrap request (R2).
+                            <span
+                                aria-label="loading your name"
+                                className="inline-block h-5 w-28 translate-y-0.5 animate-pulse rounded-md bg-muted align-middle"
+                            />
+                        )}
+                        {/* Small on purpose: an affordance beside the name, not
+                            a button competing with it. */}
+                        <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            aria-label="Edit your profile"
+                            title="Edit your profile"
+                            className="ml-1.5 size-6 translate-y-[-1px] rounded-full text-muted-foreground hover:text-foreground"
+                            onClick={() => navigate({ to: '/account', search: { tab: 'profile' } })}
+                        >
+                            <Pencil size={12} />
+                        </Button>
                     </h1>
-                    <p className="events-header-subtitle">
-                        {`${heroStats.total} event${heroStats.total === 1 ? '' : 's'} · ${heroStats.upcoming} upcoming · ${heroStats.ongoing} live now`}
-                    </p>
                 </div>
 
-                {/* The Upcoming/Past switch is always visible now — it lives where
-                    the action group used to sit; the group portals into the top bar. */}
+                {/* The counts live on the switch now. The summary line that used
+                    to sit above it said the same thing twice (F3). */}
                 <div className="events-header-right">
                     <StatusFilterSwitch
                         activeGroup={activeGroup}
                         onGroupChange={setActiveGroup}
-                        enableTimezone={enableTimezone}
-                        onToggleTimezone={toggleTimezone}
+                        counts={groupCounts}
+                        ongoing={heroStats.ongoing}
                     />
+                    {/* Calendar View / View Organisations, in the space the
+                        timezone toggle used to take (F4). Always shown — they
+                        were behind a toolbar toggle that hid them by default. */}
+                    <ActionCards />
                 </div>
 
-                {/* Action group — rendered up in the top bar next to Create Event.
-                    The filter show/hide toggle is gone: filters are always shown. */}
                 <ToolbarActionsSlot>
                     <ButtonGroup className="rounded-full border border-border bg-card p-1 gap-0.5">
-                        {/* Independent toggle — shows/hides the shortcut cards and
-                            has no bearing on which events are listed. */}
-                        <Button variant='ghost' aria-pressed={actionsEnabled} title="Toggle shortcuts" className={`relative rounded-full ${actionsEnabled ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`} size={'icon-sm'} onClick={toggleActions}>
-                            {actionsEnabled && <span className="absolute top-1 right-1 size-1.5 rounded-full bg-primary" />}
-                            <FastForward />
-                        </Button>
                         <RightSidebarTrigger icon={<CalendarsIcon />} />
                     </ButtonGroup>
                 </ToolbarActionsSlot>
             </div>
 
             <div className="events-content">
-                {actionsEnabled && <ActionCards />}
                 <Separator className={'my-4 bg-linear-to-r from-transparent via-muted to-transparent'} />
                 {/* No fixed height and no inner scroller (UI-REDESIGN R1).
                     This was `h-[calc(100vh-350px)]` — three hardcoded offsets
@@ -454,7 +470,7 @@ const EventsPage = () => {
                                 onDeleteEvent={handleDeleteEvent}
                                 onViewAttendees={handleViewAttendees}
                                 selectedStatus={selectedStatuses}
-                                timezone={enableTimezone}
+                                timezone
                                 activeGroup={activeGroup}
                                 onShowPast={() => setActiveGroup('past')}
                                 canCreate={canCreate}

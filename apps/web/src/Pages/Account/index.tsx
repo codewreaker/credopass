@@ -42,6 +42,7 @@ import {
   useCreateOrganization,
   useRemoveMember,
   useRevokeInvitation,
+  useUpdateMe,
   useUpdateMemberRole,
   useUpdateOrganization,
   type Member,
@@ -170,6 +171,28 @@ function ProfileTab() {
   const { data: organizations = [] } = useOrganizations();
   const organization = organizations.find((o) => o.id === organizationId) ?? null;
 
+  // `undefined` means "not edited" — the field falls back to the account's
+  // current name. An empty string is a real edit (clear the name), which is
+  // why this is not just `useState(account?.displayName ?? '')`: that would
+  // seed from an account that has not loaded yet and then never update.
+  const [draftName, setDraftName] = useState<string | undefined>(undefined);
+  const updateMe = useUpdateMe();
+
+  const storedName = account?.displayName ?? '';
+  const nameValue = draftName ?? storedName;
+  const nameDirty = draftName !== undefined && draftName.trim() !== storedName.trim();
+
+  const saveName = async () => {
+    const trimmed = nameValue.trim();
+    try {
+      await updateMe.mutateAsync({ displayName: trimmed.length > 0 ? trimmed : null });
+      setDraftName(undefined);
+      toast.success(trimmed ? 'Name updated' : 'Name cleared');
+    } catch (error) {
+      toast.error(errorMessage(error, 'Could not update your name'));
+    }
+  };
+
   const initials = (account?.displayName || account?.email || 'CP')
     .split(/[\s._@-]+/)
     .filter(Boolean)
@@ -181,9 +204,7 @@ function ProfileTab() {
     <div className="flex flex-col gap-4">
       <Section
         title="Profile"
-        // PATCH /me does not exist yet (§1.6). Saying so beats a disabled field
-        // with no explanation.
-        description="Read-only for now — editing your profile isn't built yet."
+        description="Your name is what the console greets you by. Your email comes from Google and cannot be changed here."
       >
         <div className="flex items-center gap-3">
           <Avatar className="size-12">
@@ -196,11 +217,36 @@ function ProfileTab() {
             <p className="truncate text-xs text-muted-foreground">{account?.email ?? '—'}</p>
           </div>
         </div>
+
         {/*
-          The guest banner is gone with anonymous sign-in. It offered to "create
-          a real account to keep your organizations" — an action that was never
-          built, so it promised a rescue that did not exist.
+          U4. This said "Read-only for now — editing your profile isn't built
+          yet" because `PATCH /me` did not exist. It does now, and it takes the
+          display name and nothing else: `accounts.email` is a MIRROR of what
+          Google asserted (D1), so an editable email field here would make the
+          mirror lie.
         */}
+        <label className="flex flex-col gap-1.5">
+          <span className="px-1 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+            Display name
+          </span>
+          <Input
+            value={nameValue}
+            placeholder={account?.email?.split('@')[0] ?? 'Your name'}
+            maxLength={120}
+            className="h-10 rounded-xl"
+            onChange={(e) => setDraftName(e.target.value)}
+          />
+        </label>
+        <p className="px-1 text-[11px] text-muted-foreground">
+          Leave it empty and we will fall back to your email address.
+        </p>
+        <Button
+          className="w-fit rounded-full"
+          disabled={!nameDirty || updateMe.isPending}
+          onClick={saveName}
+        >
+          {updateMe.isPending ? 'Saving…' : 'Save changes'}
+        </Button>
       </Section>
 
       {/*

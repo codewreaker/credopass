@@ -11,37 +11,71 @@
 }
 
 /* ---- Header ---- */
+/*
+ * Greeting, then controls. A column, not a space-between row (F3/F4).
+ *
+ * It used to be `justify-content: space-between` with `flex-wrap`, which put
+ * the switch to the RIGHT of the greeting on a wide screen and dropped it onto
+ * its own line on a narrow one — so the layout the feedback asked for (toggle
+ * directly under the welcome) happened only by accident, at phone width. Now
+ * it is the layout at every width.
+ */
 .events-header {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  flex-wrap: wrap;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.75rem;
 }
 
 .events-header-left {
   display: flex;
   align-items: start;
   flex-direction: column;
-
-  .events-header-subtitle {
-    font-size: 0.8125rem;
-    color: var(--muted-foreground);
-  }
 }
 
 .events-header-title {
+  display: flex;
+  align-items: center;
   font-size: 1.5rem;
   font-weight: 600;
   letter-spacing: -0.02em;
   color: var(--foreground);
 }
 
-
+/*
+ * The one control row: Upcoming ⇄ Past (with its counts and the live chip),
+ * then Calendar View and View Organisations.
+ *
+ * It scrolls horizontally rather than wrapping, because wrapping put a single
+ * pill on a line of its own and cost 44px of a 812px screen. `scrollbar-width:
+ * none` because the row is short enough to reach by swiping and a visible bar
+ * under a row of pills reads as a rendering fault.
+ */
 .events-header-right {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 0.125rem;
+}
+
+.events-header-right::-webkit-scrollbar {
+  display: none;
+}
+
+/*
+ * Fade the right edge, so a row that runs past the viewport looks like it runs
+ * past the viewport. The audit's complaint about the old shortcut row was not
+ * that it scrolled — it was that a button sat half-clipped at the edge with
+ * nothing to say more was there, which reads as a rendering fault. The mask is
+ * removed once everything fits.
+ */
+@media (max-width: 40rem) {
+  .events-header-right {
+    -webkit-mask-image: linear-gradient(to right, black calc(100% - 1.5rem), transparent);
+    mask-image: linear-gradient(to right, black calc(100% - 1.5rem), transparent);
+  }
 }
 
 

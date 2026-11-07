@@ -38,6 +38,15 @@ export interface Caller {
 
 export interface CallerMembership {
   organizationId: string;
+  /**
+   * The organisation's name, carried here so `/me/context` can ship it.
+   *
+   * Without it the client had to fetch `/organizations` a second time just to
+   * label the active org, and the composer rendered "No organization" for the
+   * length of that race (B2). The join onto `organizations` below was already
+   * happening for the soft-delete filter, so this costs one more column.
+   */
+  organizationName: string;
   role: OrgRole;
   status: string;
 }
@@ -49,6 +58,10 @@ export interface ResolveInput {
     email?: unknown;
     email_verified?: unknown;
     name?: unknown;
+    given_name?: unknown;
+    family_name?: unknown;
+    /** Supabase puts the provider's profile claims here. Display only. */
+    user_metadata?: unknown;
     [k: string]: unknown;
   };
   providerKind: 'supabase' | 'oidc' | 'saml';
@@ -56,7 +69,48 @@ export interface ResolveInput {
 }
 
 const asString = (v: unknown): string | null =>
-  typeof v === 'string' && v.length > 0 ? v : null;
+  typeof v === 'string' && v.trim().length > 0 ? v.trim() : null;
+
+/**
+ * The caller's display name, from wherever the provider actually put it.
+ *
+ * This used to read `claims.name` alone, which is why every account created
+ * before 2026-11-07 has `display_name = NULL` and the console greeted people
+ * by their email local part. **Supabase sends no top-level `name` claim** —
+ * Google's profile claims land inside `user_metadata`, as `full_name` and
+ * `name`, exactly like the `email_verified` case already documented in
+ * CLAUDE.md.
+ *
+ * `user_metadata` is writable by the user (`auth.updateUser({ data })`), so
+ * this must stay the ONLY thing read from it: a display name is cosmetic and
+ * costs nothing if someone lies about it. An identity decision is not, and
+ * must never come from here — see the `emailVerified` handling below, which
+ * deliberately reads the top-level claim and nothing else.
+ *
+ * `given_name` is preferred when present because it is the one the greeting
+ * wants; it is frequently absent, which is why the full name is kept as the
+ * stored value and the first name is derived by splitting it.
+ */
+export const displayNameFromClaims = (claims: ResolveInput['claims']): string | null => {
+  const metadata =
+    typeof claims.user_metadata === 'object' && claims.user_metadata !== null
+      ? (claims.user_metadata as Record<string, unknown>)
+      : {};
+
+  return (
+    asString(metadata.full_name) ??
+    asString(metadata.name) ??
+    asString(claims.name) ??
+    // Last resort: assemble it. Some OIDC providers send the parts and not the
+    // whole, and half a name beats an email address.
+    asString(
+      [asString(metadata.given_name) ?? asString(claims.given_name),
+       asString(metadata.family_name) ?? asString(claims.family_name)]
+        .filter(Boolean)
+        .join(' ')
+    )
+  );
+};
 
 /**
  * Thrown inside the account-creation transaction when another request inserted
@@ -110,6 +164,7 @@ async function emailIsUnclaimed(db: Database, email: string | null): Promise<boo
 export async function resolveCaller(db: Database, input: ResolveInput): Promise<Caller> {
   const email = asString(input.claims.email);
   const emailVerified = input.claims.email_verified === true;
+  const displayName = displayNameFromClaims(input.claims);
 
   const existing = await db
     .select({ id: identities.id, accountId: identities.accountId })
@@ -127,6 +182,24 @@ export async function resolveCaller(db: Database, input: ResolveInput): Promise<
       .update(identities)
       .set({ email, emailVerified, lastLoginAt: new Date() })
       .where(eq(identities.id, existing[0].id));
+
+    // Backfill the account's display name, but only when we have none.
+    //
+    // Without this, the name is written at account CREATION and never again —
+    // so every account that existed before the claim-reading fix above would
+    // keep its NULL forever and keep being greeted by its email local part.
+    //
+    // **Fill, never overwrite.** `PATCH /me` lets someone set their own name
+    // (U4), and following the provider on every sign-in would silently undo
+    // that the next time they signed in. A token that omits the claim must not
+    // wipe the row either. So: NULL gets filled, anything else is left alone,
+    // and the user's own edit always wins over what Google asserts.
+    if (displayName) {
+      await db
+        .update(accounts)
+        .set({ displayName })
+        .where(and(eq(accounts.id, accountId), isNull(accounts.displayName)));
+    }
   } else {
     // A new (issuer, subject).
     //
@@ -160,7 +233,7 @@ export async function resolveCaller(db: Database, input: ResolveInput): Promise<
           .insert(accounts)
           .values({
             email: mirroredEmail,
-            displayName: asString(input.claims.name),
+            displayName,
             lastSeenAt: new Date(),
           })
           .returning({ id: accounts.id });
@@ -265,6 +338,7 @@ export async function loadMemberships(
       organizationId: orgMemberships.organizationId,
       role: orgMemberships.role,
       status: orgMemberships.status,
+      organizationName: organizations.name,
     })
     .from(orgMemberships)
     .innerJoin(organizations, eq(organizations.id, orgMemberships.organizationId))
@@ -282,6 +356,7 @@ export async function loadMemberships(
   // defaulting to something permissive.
   return rows.map((r) => ({
     organizationId: r.organizationId,
+    organizationName: r.organizationName,
     role: normaliseRole(r.role),
     status: r.status,
   }));
@@ -344,4 +419,36 @@ export async function claimByVerifiedEmail(
     claimed: claimed.length,
     organizations: new Set(claimed.map((c) => c.organizationId)).size,
   };
+}
+
+/**
+ * Set (or clear) an account's display name. Backs `PATCH /me` (U4).
+ *
+ * Pre-tenant by nature, like everything else in this file: an account is not
+ * scoped to an organisation, and `accountId` comes from a verified token, never
+ * from the request body.
+ *
+ * Only the name. `accounts.email` is a mirror of a provider assertion and is
+ * not user-editable — see the route for why.
+ */
+export async function updateAccountDisplayName(
+  db: Database,
+  accountId: string,
+  displayName: string | null
+): Promise<{ id: string; email: string | null; displayName: string | null }> {
+  const [row] = await db
+    .update(accounts)
+    .set({ displayName: displayName === null ? null : displayName.trim() })
+    .where(eq(accounts.id, accountId))
+    .returning({
+      id: accounts.id,
+      email: accounts.email,
+      displayName: accounts.displayName,
+    });
+
+  // The row is the caller's own and the token verified, so its absence is a
+  // real fault — an account deleted mid-request — not a 404 to hand back.
+  if (!row) throw new Error(`account ${accountId} vanished during update`);
+
+  return row;
 }
