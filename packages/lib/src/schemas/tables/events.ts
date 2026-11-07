@@ -57,6 +57,25 @@ export const events = pgTable('events', {
 
   coverAssetId: uuid('cover_asset_id'),
 
+  /**
+   * The event's poster, as an absolute URL.
+   *
+   * Deliberately a URL and not the `cover_asset_id` FK above. That column has
+   * existed, unused and pointing at no table, since the first schema; giving it
+   * an `assets` table means object storage, presigned uploads, derivatives and
+   * compression — a week of work (ROADMAP stage 4).
+   *
+   * Meanwhile the composer has had a poster slot the whole time that threw the
+   * pick away on submit, so no event in the product has ever had an image. One
+   * nullable column fixes that today (F14): paste a link, it is stored and
+   * rendered everywhere an event appears.
+   *
+   * Stage 4 replaces what WRITES this column, not the column. An uploaded file
+   * gets an `assets` row and this field holds the URL derived from it, so
+   * nothing that reads an event has to change twice.
+   */
+  coverImageUrl: text('cover_image_url'),
+
   // The recorded facts that ARE the status (D2).
   openedAt: timestamp('opened_at', { mode: 'date', withTimezone: true }),
   closedAt: timestamp('closed_at', { mode: 'date', withTimezone: true }),

@@ -1062,6 +1062,99 @@ no way to tell the attendee it happened. Both wait on `NotificationService` (D18
 
 ---
 
+## 2026-11-07 — Stage 1: who you are, the first screen, and a poster that sticks
+
+The first slice of [`ROADMAP.md`](ROADMAP.md), from the testing feedback of the same day. Items are
+**F**-numbered there.
+
+### F1 · The greeting was your email address, and the cause was on the server
+
+`identity.ts` set `displayName` from `claims.name` — a **top-level** `name` claim. Supabase does not
+send one: Google's profile claims arrive inside `user_metadata`. So `accounts.display_name` was
+`NULL` for every account ever created and the console fell back to the email local part.
+
+`displayNameFromClaims` now reads `user_metadata.full_name` → `user_metadata.name` → top-level
+`name` → `given_name + family_name`, and is covered by a ten-case table test.
+
+Two things worth keeping in mind:
+
+- **`user_metadata` is user-writable** (`auth.updateUser({ data })`). It is read for the display
+  name and nothing else, for the same reason `identities.email_verified` is never trusted from it.
+  A cosmetic name costs nothing if someone lies about it; an identity decision does.
+- **The name is backfilled on sign-in, never overwritten.** Writing it only at account creation
+  would have left every pre-existing account `NULL` forever. Following the provider on *every*
+  sign-in would silently undo `PATCH /me` the next time someone signed in. So: `NULL` gets filled,
+  anything else is left alone, and the user's own edit always wins.
+
+### F2 + U4 · The pencil, and somewhere for it to go
+
+A small pencil beside the greeting opens `/account?tab=profile`, which no longer says "editing your
+profile isn't built yet". **`PATCH /me` exists** — `scope: 'account'`, no permission, display name
+only. Email stays read-only deliberately: `accounts.email` is a mirror of a provider assertion
+(D1), and an editable field would make the mirror lie and set `uq_accounts_email` fighting over
+addresses.
+
+### F3 + F4 · One control row instead of three
+
+- The `"2 events · 1 upcoming · 0 live now"` line is **gone**. Its numbers moved onto the
+  Upcoming ⇄ Past switch, which is what they were labelling. `GET /events/summary` gained
+  `groups: {upcoming, past}` — **not** derivable from the three counts it already had, because the
+  switch splits on *finished or not*, so the upcoming side includes ongoing and draft events too.
+  The rule now lives in one `isFinished` helper that `list()` and `summary()` share; a count that
+  disagrees with the list it labels is worse than no count.
+- **The timezone toggle is gone (D42).** It defaulted to OFF, so most people never saw a timezone
+  at all. It is information, not a filter.
+- **Calendar View / View Organisations** moved into the space it freed, as pills, always visible.
+  They used to be cards below the header behind a toolbar toggle most people never found.
+- The header is a **column** now. It was `justify-content: space-between` with `flex-wrap`, so the
+  layout the feedback asked for only happened by accident, at phone width.
+
+### B2 · "No organization" was a loading state
+
+Not fixed before today, despite looking fixed — the race usually resolves fast. `/me/context` now
+ships `organizations[].name`, so the composer's org pill needs no second request and cannot race.
+`null` renders as a skeleton. This is the R2 pattern (*the app renders the zero value instead of "I
+do not know yet"*) closed in two of its three places; the greeting is the third.
+
+### F14 · The poster slot finally persists something
+
+The composer has had a cover-image well since it was written and it **threw the pick away on
+submit** — a blob URL in `useState` that `onSubmit` never read. No event in the product has ever
+had an image.
+
+`events.cover_image_url` (migration `0004`) holds an absolute URL. Pasting a link works end to end
+and renders on the event billboard, the list, the public page and the pass. Uploading a file is
+still a preview, and the picker now *says so* rather than discarding it silently.
+
+**`https:` only, and that is a boundary, not a style rule.** The URL becomes an `<img src>` on pages
+served to people who are not signed in. `http:` is mixed content, `data:` is unbounded bytes in a
+text column, and `z.string().url()` on its own happily accepts `javascript:alert(1)` — so the
+protocol is checked explicitly. Verified: both are refused with a 400.
+
+**Why a URL column and not the `assets` FK.** `cover_asset_id` has existed, unused and pointing at
+no table, since the first schema. Giving it one means object storage, presigned uploads,
+derivatives and compression — ROADMAP stage 4. Stage 4 replaces what *writes* this column, not the
+column, so nothing that reads an event changes twice.
+
+**On the billboard the poster is a backdrop, not a banner.** The title is near-black on lime at
+`text-3xl`; an arbitrary photograph behind it at full strength makes contrast a function of
+whatever the organiser pasted. The lime stays the base layer, the image sits at 30% under a
+gradient that is opaque where the text is, and a broken link renders nothing.
+
+### Verified
+
+`coreservice:verify` (78 unit + structural), 114 integration, 51 adversarial, `web:lint`,
+`web:build` — all green. Walked on screen at 375×812 against the local API: signed in by real
+Google name, created an event with a pasted poster, saw it on the detail screen and the public
+page, renamed the account and watched the greeting follow.
+
+**Not verified:** the remote database has not had `0004` applied, so this must not be deployed
+before `nx run coreservice:migrate` runs against it. The web app's standalone `tsc` still reports
+three pre-existing errors in `Command/index.tsx`, `QRScanner.tsx` and `Upgrade/index.tsx` — none in
+files touched here.
+
+---
+
 ## Conventions worth knowing
 
 1. Every route is created with `defineRoute` and declares `scope` (+ `permission` if org-scoped).

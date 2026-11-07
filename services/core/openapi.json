@@ -226,14 +226,35 @@
             "type": "string",
             "format": "uuid"
           },
+          "name": {
+            "type": "string"
+          },
           "role": {
             "type": "string"
           }
         },
         "required": [
           "id",
+          "name",
           "role"
         ]
+      },
+      "UpdateMeBody": {
+        "type": "object",
+        "properties": {
+          "displayName": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 120
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
       },
       "Organization": {
         "type": "object",
@@ -417,6 +438,16 @@
           },
           "requireCheckOut": {
             "type": "boolean"
+          },
+          "coverImageUrl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -433,7 +464,8 @@
           "shortCode",
           "counts",
           "allowSelfCheckIn",
-          "requireCheckOut"
+          "requireCheckOut",
+          "coverImageUrl"
         ]
       },
       "PersonRow": {
@@ -710,6 +742,16 @@
           "organizationName": {
             "type": "string"
           },
+          "coverImageUrl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "allowSelfCheckIn": {
             "type": "boolean"
           },
@@ -736,6 +778,7 @@
           "timezone",
           "location",
           "organizationName",
+          "coverImageUrl",
           "allowSelfCheckIn",
           "capacityRemaining",
           "cancellationReason"
@@ -1306,6 +1349,58 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Account"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid token",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update your own account",
+        "tags": [
+          "Identity"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMeBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The updated account",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Account"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
@@ -2438,6 +2533,18 @@
                   },
                   "allowSelfCheckIn": {
                     "type": "boolean"
+                  },
+                  "coverImageUrl": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 2048,
+                        "format": "uri"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   }
                 },
                 "required": [
@@ -2511,6 +2618,21 @@
                     "ongoing": {
                       "type": "integer"
                     },
+                    "groups": {
+                      "type": "object",
+                      "properties": {
+                        "upcoming": {
+                          "type": "integer"
+                        },
+                        "past": {
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "upcoming",
+                        "past"
+                      ]
+                    },
                     "next": {
                       "anyOf": [
                         {
@@ -2526,6 +2648,7 @@
                     "total",
                     "upcoming",
                     "ongoing",
+                    "groups",
                     "next"
                   ]
                 }
@@ -2772,6 +2895,18 @@
                   },
                   "allowSelfCheckIn": {
                     "type": "boolean"
+                  },
+                  "coverImageUrl": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 2048,
+                        "format": "uri"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   }
                 }
               }

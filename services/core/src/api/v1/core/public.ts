@@ -41,6 +41,7 @@ const PublicEventSchema = z
     timezone: z.string(),
     location: z.string(),
     organizationName: z.string(),
+    coverImageUrl: z.union([z.string(), z.null()]),
     allowSelfCheckIn: z.boolean(),
     capacityRemaining: z.number().int().nullable(),
     cancellationReason: z.string().nullable(),

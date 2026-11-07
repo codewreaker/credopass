@@ -29,6 +29,13 @@
       "when": 1785153121662,
       "tag": "0003_drop_device_tokens_and_guest_tier",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1794053688577,
+      "tag": "0004_rapid_mathemanic",
+      "breakpoints": true
     }
   ]
 }

@@ -26,6 +26,8 @@ export interface PublicEvent {
   timezone: string;
   location: string;
   organizationName: string;
+  /** The poster. Shown on the public page and the pass (F14). */
+  coverImageUrl: string | null;
   allowSelfCheckIn: boolean;
   capacityRemaining: number | null;
   cancellationReason: string | null;
@@ -54,6 +56,7 @@ export async function loadPublicEvent(
       capacity: events.capacity,
       enforceCapacity: events.enforceCapacity,
       allowSelfCheckIn: events.allowSelfCheckIn,
+      coverImageUrl: events.coverImageUrl,
       closedAt: events.closedAt,
       cancelledAt: events.cancelledAt,
       cancellationReason: events.cancellationReason,
@@ -88,6 +91,7 @@ export async function loadPublicEvent(
     timezone: row.timezone,
     location: row.location,
     organizationName: row.organizationName,
+    coverImageUrl: row.coverImageUrl,
     allowSelfCheckIn: row.allowSelfCheckIn,
     capacityRemaining,
     // Shown on the public page: a printed poster keeps resolving, and now says

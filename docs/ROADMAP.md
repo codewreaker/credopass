@@ -17,29 +17,26 @@
 
 ---
 
-## 0. Before anything else — three docs are deleted in the working tree
+## 0. The document shuffle, settled (2026-11-07)
 
-`git status` shows, uncommitted:
+Three files were deleted and the deletion was swept up by whatever auto-commits this repo
+(`ab3e9cd`, "Refactor code structure…" — not written by a human or an agent in that session).
+Resolved as follows, so nothing load-bearing was lost:
 
-```
- D docs/API-FIRST-REBUILD.md
- D docs/DATABASE-MIGRATION.md
- D docs/NEXT-UI-LIST.md
-```
+| File | What happened |
+|---|---|
+| `NEXT-UI-LIST.md` | **Stays deleted.** U5–U8 shipped; U1–U4 and its platform table are absorbed into §1 and stages 1, 2 and 5 below. |
+| `API-FIRST-REBUILD.md` | **Restored to [`archive/`](archive/API-FIRST-REBUILD.md).** Phases 4–7 never shipped, **D1–D26 live in it**, and ~40 source files cite it by section number. Deleting it would orphan every one of those comments. |
+| `DATABASE-MIGRATION.md` | **Restored to `docs/`.** It is not a plan — it is the procedure for every schema change, which stages 3 and 4 both need, and `CLAUDE.md` tells agents to follow it. |
 
-`CLAUDE.md`, `docs/README.md` and both plan documents link into all three. `DATABASE-MIGRATION.md`
-is the procedure for every schema change in stages 3 and 4 below, and `NEXT-UI-LIST.md` holds
-U1–U8. **Nothing in this roadmap assumes they are gone**; their live content is folded into §1 and
-§3 so this file stands alone either way. If the deletion was not deliberate:
+**Also corrected here, because the first draft of this file got them wrong:**
 
-```bash
-git restore docs/API-FIRST-REBUILD.md docs/DATABASE-MIGRATION.md docs/NEXT-UI-LIST.md
-```
-
-If it *was* deliberate, the rows pointing at them in `docs/README.md` §2 and §3 need rewriting, and
-`CLAUDE.md`'s links need to come out.
-
----
+- **`UI-REDESIGN.md` is not complete.** The *audit* is — all 20 routes walked. The *findings* mostly
+  are not: only **R1** (`0bccc7c`) and **R4** (`bb62ef7`) have commits. R2, R3, R5, R6, R7 and most
+  per-screen notes are still open and are scheduled in stages 1, 2 and 5.
+- **B2 ("No organization") is not fixed.** `apps/web/src/Pages/Events/EventComposer/event-composer.tsx:34`
+  still reads `active?.name ?? 'No organization'` against a second request. It *looks* fixed because
+  the race usually resolves fast. It is in stage 1.
 
 ## 1. The ledger — what is actually done
 
@@ -64,9 +61,10 @@ Verified against the code on 2026-11-07, not copied from a plan.
 
 | | Work | Spec | Size |
 |---|---|---|---|
-| 🔴 | **B2** — the composer renders "No organization" while `useOrganizations()` is in flight | `NEXT-PHASE-PLAN.md` §5.2 | S |
+| ✅ | **B2** — the composer rendered "No organization" while `useOrganizations()` was in flight. `/me/context` ships the name now | shipped 2026-11-07 | S |
 | ⬜ | **R2** — the same defect everywhere: the app renders the zero value instead of "I don't know yet" (`Good afternoon, there`, `0 events`, the stale attendee sheet) | `UI-REDESIGN.md` §2 R2 | S–M |
-| ⬜ | **U4** — `PATCH /me` does not exist, so the Profile tab is read-only | — | S |
+| ⬜ | **R5** — only the geocoder fails honestly; copy that sentence to the other three failure states | `UI-REDESIGN.md` §2 R5 | S |
+| ✅ | **U4** — `PATCH /me` exists; the Profile tab edits the display name | shipped 2026-11-07 | S |
 | ⬜ | **U2** — "QR scan check-in is broken", never reproduced | `UI-REDESIGN.md` §3.11 names the likely cause | M |
 | ⬜ | **U1** — `/analytics` draws a full dashboard from fabricated numbers; the warning is only at the top, `Arrivals by hour` is off-palette blue, `Export` is offered on made-up data | `UI-REDESIGN.md` §3.16 | S |
 | ⬜ | **B3** — online events and optional location (`events.location_text` is `NOT NULL`; the UI copy already promises "Offline location or virtual link") | `NEXT-PHASE-PLAN.md` §5.3 | M |
@@ -120,6 +118,7 @@ the reference** — use them in commits.
 | **F11** | S3 storage so users can generate or add posters. | **Greenfield.** `events.cover_asset_id` exists as a bare `uuid` with no `assets` table and no FK (`packages/lib/src/schemas/tables/events.ts:58`). MinIO is already in `docker/docker-compose.dev.yml` and nothing uses it. The composer holds a blob URL and nothing more — `TODO(event-image)` at `event-composer.tsx:103` lists the four steps. |
 | **F12** | Uploads must be compressed before storage — there will be many, and tickets must load fast. | **Agreed, non-negotiable.** Design in stage 4. |
 | **F13** | Auto AI-generated image options when creating an event, the way Luma offers them — plus a set of predefined images, plus your own upload. | **This supersedes D38.** `NEXT-PHASE-PLAN.md` §5.5 decided "typographic templates, no image model". The decision stands for *posters with text on them* — diffusion models still cannot set type — but it was answering a different question. What is asked for here is a **background image**, chosen at creation, with the title rendered by us on top. That is both achievable and the right split. Recorded as **D39** in §4. |
+| **F14** | Keep the poster area on the composer. Even with no model, make it a placeholder showing the illustration we have now, with a mechanism to paste an arbitrary poster image that can be swapped out. | **The slot exists and persists nothing.** `EventImage` renders a blob URL held in React state (`event-composer.tsx:112`); it is discarded on submit. This is the smallest honest slice of F11 and it does not wait for storage: one `text` column holding a URL, and the picker gains a "paste a link" path. Scheduled as **stage 1b** so it ships this week rather than with the bucket. |
 
 ---
 
@@ -128,7 +127,7 @@ the reference** — use them in commits.
 Each stage is shippable on its own and leaves the product better than it found it. Do them in this
 order.
 
-### Stage 1 — Who you are, and the first screen · **S, ~1 day**
+### Stage 1 — Who you are, and the first screen · ✅ **SHIPPED 2026-11-07**
 
 Everything on `/events` above the fold, plus the one confirmed bug that shares its cause.
 
@@ -158,6 +157,34 @@ Everything on `/events` above the fold, plus the one confirmed bug that shares i
 **Done when:** a fresh Google sign-in greets you by your first name, the header is
 greeting → toggle-with-counts → the two action buttons, no timezone toggle exists anywhere, and
 nothing on the screen states a number before it has one.
+
+---
+
+### Stage 1b — The poster slot, persisted · ✅ **SHIPPED 2026-11-07**
+
+**F14.** The composer already has the right *shape* — an image well above the billboard, with the
+calendar illustration as its empty state. What it lacks is anywhere to put the answer. Do the
+minimum that makes it real, and leave the bucket to stage 4:
+
+```
+events.cover_image_url text null   -- an absolute https URL, nothing more
+```
+
+- `EventImage` keeps the illustration as its default and gains **"Paste an image link"** beside the
+  existing file/camera pick. A pasted `https://` URL is validated, previewed, and saved with the
+  event; **Remove** puts the illustration back.
+- A picked *file* still previews as a blob and still does not persist — say so in the UI rather
+  than silently dropping it, until stage 4.1 gives it somewhere to go. One sentence: *"Pasted links
+  are saved. Uploads arrive with poster storage."*
+- `cover_image_url` is carried on `EventSummary`, the event detail payload **and the public event
+  payload**, and rendered on the EventView billboard, the event row's date-icon slot, `/e/{id}` and
+  the pass. That is what makes an invitation QR read as a flyer (F9).
+- Render it behind the lime billboard at low opacity rather than as a separate band, so a bad image
+  cannot wreck the screen.
+
+**Why a URL column and not the `assets` FK now:** stage 4 replaces the *source* of the URL, not the
+column. `cover_asset_id` already exists for when the bucket does; a nullable URL beside it costs one
+migration and unblocks the whole visual half of this roadmap today.
 
 ---
 

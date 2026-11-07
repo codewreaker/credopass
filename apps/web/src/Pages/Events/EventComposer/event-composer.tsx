@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { ArrowLeft, CheckIcon, Globe, PencilIcon } from 'lucide-react';
 import { Button } from '@credopass/ui/components/button';
@@ -11,9 +11,8 @@ import { LocationField } from './fields/location-field';
 import { DescriptionField } from './fields/description-field';
 import { CapacityField, SelfCheckInField } from './fields/option-fields';
 import { DEFAULT_DURATION_MS, useEventForm, type EventFormValues } from './use-event-form';
-import { useOrganizations } from '@credopass/api-client';
 import { Building2 } from 'lucide-react';
-import { useSession } from '../../../contexts/session';
+import { useActiveOrganizationName, useSession } from '../../../contexts/session';
 
 /**
  * Which organization this event will belong to.
@@ -24,14 +23,23 @@ import { useSession } from '../../../contexts/session';
  * switch organization in the sidebar.
  */
 function OrganizationPill() {
-  const { organizationId } = useSession();
-  const { data: organizations = [] } = useOrganizations();
-  const active = organizations.find((org) => org.id === organizationId);
+  // B2: this used to read `useOrganizations()` — a second request — and render
+  // 'No organization' while it was in flight, which is a loading state wearing
+  // an error message. The name now arrives with the bootstrap context, so there
+  // is no race left to lose; `null` means not-yet and renders as a skeleton.
+  const name = useActiveOrganizationName();
 
   return (
     <span className="inline-flex items-center gap-1.5 rounded-full bg-primary-foreground/10 px-3 py-1.5 text-xs font-semibold">
       <Building2 size={13} />
-      <span className="max-w-40 truncate">{active?.name ?? 'No organization'}</span>
+      {name === null ? (
+        <span
+          aria-hidden
+          className="h-3 w-24 animate-pulse rounded-full bg-primary-foreground/25"
+        />
+      ) : (
+        <span className="max-w-40 truncate">{name}</span>
+      )}
     </span>
   );
 }
@@ -98,17 +106,13 @@ export function EventComposer({ mode, eventId, initialValues }: EventComposerPro
     if (!isEditing) nameInputRef.current?.focus();
   }, [isEditing]);
 
-  // Cover image — preview only for now (no cover column yet); defaults to the
-  // calendar illustration and can be replaced from a file or the camera.
-  // TODO(event-image): persist the pick instead of holding a blob URL. Needs, in
-  // order: (1) schema — `events.imageUrl text` plus optional `imageKey` /
-  // `imageWidth` / `imageHeight` metadata; (2) storage — a signed upload to an
-  // S3 or Supabase Storage bucket, with Postgres holding only the URL and
-  // metadata, never bytes; (3) API — an upload endpoint (or direct Supabase
-  // Storage upload) and `imageUrl` carried on every event payload, public one
-  // included; (4) UI — upload on pick, save the returned URL with the event, and
-  // render it on the EventView billboard and the event row's date-icon slot.
-  const [coverImage, setCoverImage] = useState<string | undefined>(undefined);
+  // The poster lives on the form now, not in a throwaway `useState` (F14).
+  //
+  // It used to be local state holding a blob URL that `onSubmit` never read,
+  // so every photo anyone picked was discarded on save. A pasted https link
+  // now round-trips through `events.cover_image_url`; an uploaded file is
+  // still a preview, and `willPersist` is what tells the user which is which.
+  // Object storage is ROADMAP stage 4.
 
   return (
     <div className="mx-auto w-full max-w-140 pb-4 md:max-w-160 lg:max-w-lg">
@@ -120,7 +124,15 @@ export function EventComposer({ mode, eventId, initialValues }: EventComposerPro
         }}
         className="flex flex-col gap-4"
       >
-        <EventImage src={coverImage} onPick={setCoverImage} />
+        <form.Field name="coverImageUrl">
+          {(field) => (
+            <EventImage
+              src={field.state.value || undefined}
+              willPersist={!field.state.value.startsWith('blob:')}
+              onPick={(url) => field.handleChange(url ?? '')}
+            />
+          )}
+        </form.Field>
 
         {/* Lime billboard header — org pill, mode label and the event name */}
         <div className="relative overflow-hidden rounded-3xl bg-primary p-5 text-primary-foreground">

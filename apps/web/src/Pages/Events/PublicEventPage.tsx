@@ -42,6 +42,7 @@ import { toast } from '@credopass/ui/components/sonner';
 import { cn } from '@credopass/ui/lib/utils';
 import { supabase } from '../../supabase';
 import { errorMessage, isNotFound } from '../../lib/errors';
+import { EventPosterBackdrop } from './event-poster-backdrop';
 
 const STATUS_STYLE: Record<PublicEvent['status'], string> = {
   scheduled: 'bg-primary-foreground/10',
@@ -123,6 +124,7 @@ function PublicEventView({ event }: { event: PublicEvent }) {
 
       {/* Lime billboard */}
       <div className="relative overflow-hidden rounded-3xl bg-primary p-5 text-primary-foreground">
+        <EventPosterBackdrop src={event.coverImageUrl} />
         <div aria-hidden className="pointer-events-none absolute -right-16 -top-20 size-64 rounded-full border border-primary-foreground/10" />
         <div aria-hidden className="pointer-events-none absolute -right-6 -top-32 size-64 rounded-full border border-primary-foreground/10" />
 

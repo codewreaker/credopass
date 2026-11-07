@@ -44,6 +44,7 @@ import { GlowingQRCode } from '@credopass/ui/components/glowing-qr-code';
 import { toast } from '@credopass/ui/components/sonner';
 import { cn } from '@credopass/ui/lib/utils';
 import { EventQrPoster, EventQrPosterButton, useEventQrPoster } from './event-qr-poster';
+import { EventPosterBackdrop } from '../event-poster-backdrop';
 import { useCan } from '../../../contexts/session';
 import { errorMessage, isNotFound } from '../../../lib/errors';
 
@@ -205,6 +206,7 @@ function EventView({ event }: { event: Event }) {
 
       {/* Lime billboard — mirrors the composer header */}
       <div className="relative overflow-hidden rounded-3xl bg-primary p-5 text-primary-foreground">
+        <EventPosterBackdrop src={event.coverImageUrl} />
         <div aria-hidden className="pointer-events-none absolute -right-16 -top-20 size-64 rounded-full border border-primary-foreground/10" />
         <div aria-hidden className="pointer-events-none absolute -right-6 -top-32 size-64 rounded-full border border-primary-foreground/10" />
 

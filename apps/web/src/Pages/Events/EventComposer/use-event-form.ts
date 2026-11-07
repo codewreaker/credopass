@@ -26,6 +26,11 @@ export interface EventFormValues {
   location: string;
   capacity: string;
   allowSelfCheckIn: boolean;
+  /**
+   * The poster (F14). An https URL that is saved, a `blob:` preview that is
+   * not, or '' for the default illustration.
+   */
+  coverImageUrl: string;
 }
 
 export const eventFormSchema = z
@@ -46,6 +51,10 @@ export const eventFormSchema = z
       .refine((val) => !val || (!isNaN(Number(val)) && Number(val) > 0), 'Capacity must be a positive number.')
       .default(''),
     allowSelfCheckIn: z.boolean().default(true),
+    // Not validated beyond a length cap here: the picker only ever sets a
+    // vetted https URL or a blob preview, and the API re-checks the protocol
+    // because a client-side rule is not a boundary.
+    coverImageUrl: z.string().max(2048).default(''),
   })
   .superRefine((data, ctx) => {
     if (data.start && data.end && data.end.getTime() <= data.start.getTime()) {
@@ -79,6 +88,7 @@ export const eventToFormValues = (event: Event): EventFormValues => ({
   location: event.location ?? '',
   capacity: event.capacity != null ? String(event.capacity) : '',
   allowSelfCheckIn: event.allowSelfCheckIn,
+  coverImageUrl: event.coverImageUrl ?? '',
 });
 
 interface UseEventFormArgs {
@@ -109,6 +119,7 @@ export function useEventForm({ mode, eventId, initialValues, onSaved }: UseEvent
       location: initialValues?.location ?? '',
       capacity: initialValues?.capacity ?? '',
       allowSelfCheckIn: initialValues?.allowSelfCheckIn ?? true,
+      coverImageUrl: initialValues?.coverImageUrl ?? '',
     } as EventFormValues,
     validators: {
       // @ts-expect-error — zod schema output is narrower than the form values type
@@ -131,6 +142,10 @@ export function useEventForm({ mode, eventId, initialValues, onSaved }: UseEvent
         locationText: value.location,
         capacity: value.capacity ? parseInt(value.capacity, 10) : null,
         allowSelfCheckIn: value.allowSelfCheckIn,
+        // A `blob:` preview is a local object URL — meaningless to anyone else
+        // and rejected by the API — so it is dropped rather than sent. The
+        // picker already tells the user that an upload will not stick yet.
+        coverImageUrl: value.coverImageUrl.startsWith('https://') ? value.coverImageUrl : null,
       };
 
       try {

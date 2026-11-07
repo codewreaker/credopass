@@ -127,7 +127,49 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
-        patch?: never;
+        /** Update your own account */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["UpdateMeBody"];
+                };
+            };
+            responses: {
+                /** @description The updated account */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Account"];
+                    };
+                };
+                /** @description Validation failed */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["Problem"];
+                    };
+                };
+                /** @description No valid token */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["Problem"];
+                    };
+                };
+            };
+        };
         trace?: never;
     };
     "/me/context": {
@@ -935,6 +977,7 @@ export interface paths {
                         checkInMethods?: ("qr" | "manual" | "self" | "pass")[];
                         requireCheckOut?: boolean;
                         allowSelfCheckIn?: boolean;
+                        coverImageUrl?: string | null;
                     };
                 };
             };
@@ -1001,6 +1044,10 @@ export interface paths {
                             total: number;
                             upcoming: number;
                             ongoing: number;
+                            groups: {
+                                upcoming: number;
+                                past: number;
+                            };
                             next: components["schemas"]["EventSummary"] | null;
                         };
                     };
@@ -1212,6 +1259,7 @@ export interface paths {
                         checkInMethods?: ("qr" | "manual" | "self" | "pass")[];
                         requireCheckOut?: boolean;
                         allowSelfCheckIn?: boolean;
+                        coverImageUrl?: string | null;
                     };
                 };
             };
@@ -2718,7 +2766,11 @@ export interface components {
         OrgSummary: {
             /** Format: uuid */
             id: string;
+            name: string;
             role: string;
+        };
+        UpdateMeBody: {
+            displayName?: string | null;
         };
         Organization: {
             /** Format: uuid */
@@ -2768,6 +2820,7 @@ export interface components {
             cancellationReason?: string | null;
             allowSelfCheckIn: boolean;
             requireCheckOut: boolean;
+            coverImageUrl: string | null;
         };
         PersonRow: {
             /** Format: uuid */
@@ -2837,6 +2890,7 @@ export interface components {
             timezone: string;
             location: string;
             organizationName: string;
+            coverImageUrl: string | null;
             allowSelfCheckIn: boolean;
             capacityRemaining: number | null;
             cancellationReason: string | null;
