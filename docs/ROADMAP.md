@@ -354,6 +354,12 @@ Upload is a **presigned PUT** straight from the browser to the bucket; the API i
 signature, validates the content type and the declared size, and records the row on completion.
 Postgres holds the key and the metadata, never bytes.
 
+**Production bucket: not provisioned yet** — the service boots without one and only poster
+*uploads* fail, with a clear `Storage is not configured` 500. The decision is **Cloudflare R2 on
+the `r2.dev` public URL** (D43); the walkthrough is [`STORAGE.md`](STORAGE.md) §5 and the CORS
+policy is committed at `services/core/r2-cors.json`. A custom domain is deliberately **not** part
+of this stage — see the Stage 6 prerequisite.
+
 **4.2 Compression (F12).** 🟡 **Browser half shipped 2026-11-07**; server derivatives still open. Two layers, and both are needed:
 
 - **In the browser, before upload** — downscale to a maximum edge (2048px) and re-encode. This is
@@ -414,6 +420,53 @@ outbox first (it also unblocks SSE), then keys + rate limiting + read endpoints,
 delivery, then test mode. `pii_mode` when a named customer asks. **B7**, the chat panel, tracks
 `services/ai-chat` and lands whenever its backend does.
 
+
+#### Stage 6 prerequisite — move `credopass.com` DNS to Cloudflare
+
+**Not needed before this stage. Do not do it for the posters.** Recorded 2026-11-07 so the
+reasoning does not have to be rebuilt.
+
+**Why it belongs here and not earlier.** `api.credopass.com` resolves straight to the Hetzner
+box (`62.238.37.104`). Namecheap's DNS publishes that address, so the origin is directly
+reachable and scannable by anyone who resolves the name. Proxied through Cloudflare the record
+returns a Cloudflare address instead, which gives DDoS absorption and — the part that matters
+for this stage — **rate limiting and firewall rules at the edge, before a request reaches Bun**.
+Stage 6 otherwise means writing rate limiting in application code for a paid public API.
+
+**Where DNS is today.** Registrar Namecheap, nameservers `DNS1/DNS2.REGISTRAR-SERVERS.COM`
+(Namecheap BasicDNS). Vercel and Hetzner are only *records* in that zone, not nameservers.
+
+| Record | Value | After the move |
+|---|---|---|
+| `credopass.com` A | `216.198.79.1` | Vercel — **DNS-only (grey cloud)** |
+| `www` CNAME | `…vercel-dns-017.com` | Vercel — **DNS-only** |
+| `app` CNAME | `…vercel-dns-017.com` | Vercel — **DNS-only** |
+| `api` A | `62.238.37.104` | Hetzner — **proxied (orange)**, the point of the exercise |
+| MX ×5 | `eforward1–5.registrar-servers.com` | Replaced by Cloudflare Email Routing |
+| TXT | `v=spf1 include:spf.efwd.registrar-servers.com ~all` | Replaced to match Email Routing |
+
+**The order, and the traps.**
+
+1. Add `credopass.com` to Cloudflare (free plan); let it scan, then verify all six records by
+   hand — the scan misses things.
+2. Set up **Cloudflare Email Routing** before cutting over. Namecheap's free forwarding only
+   works on Namecheap nameservers, so mail stops the moment the nameservers change. Email
+   Routing is free and better (catch-all, per-address rules, Gmail send-as).
+3. Switch the nameservers at Namecheap.
+4. Proxying Vercel breaks it — certificate and redirect-loop problems. Those records stay
+   DNS-only, permanently.
+5. Proxying `api` needs SSL mode **Full (strict)**, because Coolify terminates TLS itself.
+6. Cloudflare's [proxy read timeout is 125s](https://developers.cloudflare.com/fundamentals/reference/connection-limits/).
+   Harmless for request/response, but the SSE half of [`LIVE-UPDATES.md`](LIVE-UPDATES.md)
+   needs a heartbeat comfortably inside it. Third-party reports put the practical ceiling nearer
+   100s; unconfirmed by Cloudflare's own docs. The polling phase is unaffected.
+
+**The bonus, not the reason.** It is also what `media.credopass.com` would need, since R2 serves
+a custom domain through Cloudflare and so requires the zone to live in the same Cloudflare
+account. A partial (CNAME) setup would avoid moving the nameservers but is
+[Business-plan only](https://developers.cloudflare.com/dns/zone-setups/partial-setup/), and
+CNAMEing your own domain at an `r2.dev` subdomain is an explicitly unsupported access path.
+
 ---
 
 ## 4. Decisions and open questions from this round
@@ -424,6 +477,7 @@ delivery, then test mode. `pii_mode` when a named customer asks. **B7**, the cha
 | **D40** | **Recurring events materialise their occurrences.** A series stores the rule for the record; the rows are real `events`. Nothing may hang attendance off a computed date. |
 | **D41** | **An invitation QR and a pass QR must never look alike.** One variant each, enforced in `GlowingQRCode`, and an invitation code is always shown inside a poster, never as a naked square. |
 | **D42** | **Timezone is always displayed.** It is not a filter and never was one. |
+| **D43** | **Posters are served from the `r2.dev` URL for now, and a custom domain is a Stage 6 concern.** Cloudflare rate-limits `r2.dev` at hundreds of requests/second and calls it non-production, which is three orders of magnitude above one church on a Sunday. Switching `S3_PUBLIC_URL` later is cheap — `assertCoverImageAllowed` sends a URL on an unrecognised host to its plain-https branch, where it passes, so old posters keep loading and old events keep saving ([`STORAGE.md`](STORAGE.md) §6.6). What a switch leaves is objects on the old hostname, fixed by one UPDATE. The custom domain rides along with the DNS move under Stage 6. |
 
 **Open — answer before the stage that needs them**
 
