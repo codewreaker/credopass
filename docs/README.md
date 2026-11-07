@@ -69,6 +69,7 @@ Legend: 🔴 confirmed bug · 🟡 in progress · ⬜ not started · S ≤ ½ da
 | [`../CLAUDE.md`](../CLAUDE.md) | The system now, and the golden rules | **Authoritative** |
 | [`REBUILD-LOG.md`](REBUILD-LOG.md) | What happened, in order | **Authoritative — wins over any plan** |
 | [`DATABASE-MIGRATION.md`](DATABASE-MIGRATION.md) | How to change the schema; local, test and remote | Reference, current |
+| [`RECURRING-EVENTS.md`](RECURRING-EVENTS.md) | **Recurring events: paused.** Why, every edge case (DST, clocks going back, the fifth Sunday, the horizon), and which libraries to use | **Read before rebuilding it** |
 | [`ROADMAP.md`](ROADMAP.md) | **The ordered plan** — six stages, the 2026-11-07 feedback as F1–F13, D39–D42 | **Plan — start here** |
 | [`NEXT-PHASE-PLAN.md`](NEXT-PHASE-PLAN.md) | Public API, data ownership, product backlog. D31–D38 | Plan; B1 shipped, rest not built |
 | [`UI-REDESIGN.md`](UI-REDESIGN.md) | The measured 375×812 walk of all 20 routes. R1–R7 | Evidence; R1 and R4 shipped |

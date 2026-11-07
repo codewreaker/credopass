@@ -9,6 +9,26 @@ import { organizations } from './organizations';
 /**
  * A recurring programme — "every Sunday", "the Tuesday course, six weeks".
  *
+ * ┌──────────────────────────────────────────────────────────────────────┐
+ * │ RESERVED, NOT ACTIVE. Recurring events are PAUSED (2026-11-07).      │
+ * │                                                                      │
+ * │ Nothing writes this table. The expander and the series-creation      │
+ * │ path were deleted; the composer's Repeat control says the feature    │
+ * │ is in development.                                                   │
+ * │                                                                      │
+ * │ The table is kept on purpose: migration 0005 is already applied      │
+ * │ locally and to the remote, it is additive and nullable so it is      │
+ * │ inert, and dropping tables from production to un-ship a feature is   │
+ * │ a worse risk than leaving them. The next attempt starts with the     │
+ * │ schema in place.                                                     │
+ * │                                                                      │
+ * │ ⚠️  READ docs/RECURRING-EVENTS.md BEFORE BUILDING ON THIS.            │
+ * │    It holds every edge case — DST, clocks going back, non-existent   │
+ * │    wall times, the fifth Sunday, the horizon, series-wide edits —    │
+ * │    and the library recommendations. The last attempt was paused      │
+ * │    because of what is in §1 of it, not because the maths was hard.   │
+ * └──────────────────────────────────────────────────────────────────────┘
+ *
  * **The rule is a record, not the source of truth. The occurrences are real
  * `events` rows.** (D40.)
  *

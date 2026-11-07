@@ -15,12 +15,11 @@
  */
 
 import { and, asc, count, desc, eq, gte, inArray, isNull, lte, or, sql, type SQL } from 'drizzle-orm';
-import { attendance, eventSeries, events, organizations } from '@credopass/lib/schemas/tables';
+import { attendance, events, organizations } from '@credopass/lib/schemas/tables';
 import type { Database } from '../db/client';
 import type { TenantContext } from '../tenancy/context';
 import { ProblemCode, problem } from '../http/problem';
 import { deriveStatus, type EventStatus } from './event-status';
-import { expand, toRRule, type RecurrenceFrequency } from '@credopass/lib/utils';
 
 export interface EventSummary {
   id: string;
@@ -43,9 +42,6 @@ export interface EventSummary {
    */
   allowSelfCheckIn: boolean;
   requireCheckOut: boolean;
-  /** The recurring programme this is an occurrence of, or null (F5, D40). */
-  seriesId: string | null;
-  seriesIndex: number | null;
   /**
    * The poster, as an absolute URL, or null (F14).
    *
@@ -144,8 +140,6 @@ const toSummary = (
     allowSelfCheckIn: e.allowSelfCheckIn,
     requireCheckOut: e.requireCheckOut,
     coverImageUrl: e.coverImageUrl,
-    seriesId: e.seriesId,
-    seriesIndex: e.seriesIndex,
   };
 };
 
@@ -405,15 +399,6 @@ export interface CreateEventInput {
   allowSelfCheckIn?: boolean;
   /** Absolute URL, or null to clear it. Validated at the route (F14). */
   coverImageUrl?: string | null;
-  /**
-   * Make this the first of a recurring programme (F5, D40).
-   *
-   * Omit for a one-off, which is the overwhelming majority. When present the
-   * create writes an `event_series` row and every occurrence in one
-   * transaction, and returns the first — so a caller that does not care about
-   * recurrence sees no difference in the response.
-   */
-  recurrence?: { frequency: RecurrenceFrequency; until: Date };
 }
 
 const HOUR_MS = 60 * 60 * 1000;
@@ -427,18 +412,12 @@ const HOUR_MS = 60 * 60 * 1000;
  */
 const CODE_ALPHABET = '234679ACDEFGHJKMNPQRTUVWXYZ';
 
-async function allocateShortCode(db: Database, reserved: string[] = []): Promise<string> {
+async function allocateShortCode(db: Database): Promise<string> {
   for (let attempt = 0; attempt < 5; attempt++) {
     const code = Array.from(
       { length: 8 },
       () => CODE_ALPHABET[Math.floor(Math.random() * CODE_ALPHABET.length)]
     ).join('');
-    // `reserved` holds codes minted for the SAME batch but not yet inserted —
-    // a recurring series allocates up to 104 at once, and checking only the
-    // table would let two of them match and fail the whole insert on
-    // `uq_events_short_code`. Unlikely at 27^8, but "unlikely" is not the
-    // guarantee a unique index asks for.
-    if (reserved.includes(code)) continue;
     const [clash] = await db
       .select({ id: events.id })
       .from(events)
@@ -471,8 +450,6 @@ export async function createEvent(
   input: CreateEventInput,
   now: Date = new Date()
 ): Promise<EventSummary> {
-  if (input.recurrence) return createSeries(db, ctx, input, input.recurrence, now);
-
   const endAt = resolveEndAt(input.startAt, input.endAt);
 
   const [row] = await db
@@ -501,99 +478,29 @@ export async function createEvent(
   return getEvent(db, ctx, row.id, now);
 }
 
-/**
- * Create a recurring programme: the series row AND every occurrence, in one
- * transaction (D40).
+/*
+ * createSeries() lived here. Recurring events are PAUSED — see
+ * docs/RECURRING-EVENTS.md, which carries the full edge-case list and the
+ * library recommendations for the next attempt.
  *
- * **Why materialise.** `attendance` is unique on `(event_id, person_id)` and
- * `passes` on `(event_id, person_id) WHERE revoked_at IS NULL`. A computed
- * occurrence has no id, so there is nothing to hang a check-in on — and an id
- * invented at check-in time would differ between two doors. The long form of
- * this argument is on the `event_series` table.
+ * The two decisions worth keeping when it comes back:
  *
- * **One transaction**, so a failure half way through cannot leave a programme
- * with three of its twelve weeks. Short codes are allocated per occurrence
- * because each is a real event somebody reads a code off at a door.
+ *   · MATERIALISE, DON'T COMPUTE (D40). Everything here hangs off events.id —
+ *     attendance is unique on (event_id, person_id), passes on
+ *     (event_id, person_id) WHERE revoked_at IS NULL — so a computed
+ *     occurrence has nothing to write a check-in against. A library should
+ *     generate the dates; it must not own the rows.
  *
- * Returns the FIRST occurrence, so `POST /events` answers with an event
- * exactly as it does for a one-off and the client needs no special case.
+ *   · A recurrence is WALL-CLOCK, not an interval. "Every Sunday at 10am"
+ *     means 10am local, and across a DST boundary that is a different UTC
+ *     instant. `startAt + n * 7 * 86400000` moves a service by an hour twice
+ *     a year, in opposite directions.
+ *
+ * The schema (`event_series`, `events.series_id`, `events.series_index`,
+ * migration 0005) is deliberately still in place and inert.
  */
-async function createSeries(
-  db: Database,
-  ctx: TenantContext,
-  input: CreateEventInput,
-  recurrence: NonNullable<CreateEventInput['recurrence']>,
-  now: Date
-): Promise<EventSummary> {
-  const endAt = resolveEndAt(input.startAt, input.endAt);
-  const timezone = input.timezone ?? 'UTC';
-  const durationMs = endAt.getTime() - input.startAt.getTime();
 
-  const occurrences = expand({
-    frequency: recurrence.frequency,
-    startAt: input.startAt,
-    durationMs,
-    timezone,
-    until: recurrence.until,
-  });
-
-  // Allocated before the transaction: `allocateShortCode` retries on collision
-  // by reading the table, and doing that inside the transaction would read its
-  // own uncommitted siblings inconsistently.
-  const shortCodes: string[] = [];
-  for (let i = 0; i < occurrences.length; i += 1) {
-    shortCodes.push(await allocateShortCode(db, shortCodes));
-  }
-
-  const firstId = await db.transaction(async (tx) => {
-    const [series] = await tx
-      .insert(eventSeries)
-      .values({
-        organizationId: ctx.organizationId,
-        name: input.name,
-        timezone,
-        rrule: toRRule(recurrence.frequency, input.startAt, timezone, recurrence.until),
-        startsAt: occurrences[0].startAt,
-        materialisedThrough: occurrences[occurrences.length - 1].startAt,
-        occurrenceCount: occurrences.length,
-      })
-      .returning({ id: eventSeries.id });
-
-    const rows = await tx
-      .insert(events)
-      .values(
-        occurrences.map((occurrence, i) => ({
-          // The client-supplied id (D11) belongs to the FIRST occurrence only —
-          // it was minted for one event, and reusing it for twelve would make
-          // the retry-idempotency it exists for meaningless.
-          ...(input.id && i === 0 ? { id: input.id } : {}),
-          organizationId: ctx.organizationId,
-          seriesId: series.id,
-          seriesIndex: occurrence.index,
-          name: input.name,
-          description: input.description ?? null,
-          startAt: occurrence.startAt,
-          endAt: occurrence.endAt,
-          timezone,
-          locationText: input.locationText,
-          capacity: input.capacity ?? null,
-          enforceCapacity: input.enforceCapacity ?? false,
-          shortCode: shortCodes[i],
-          ...(input.checkInMethods ? { checkInMethods: input.checkInMethods } : {}),
-          ...(input.requireCheckOut !== undefined ? { requireCheckOut: input.requireCheckOut } : {}),
-          ...(input.allowSelfCheckIn !== undefined ? { allowSelfCheckIn: input.allowSelfCheckIn } : {}),
-          ...(input.coverImageUrl !== undefined ? { coverImageUrl: input.coverImageUrl } : {}),
-        }))
-      )
-      .returning({ id: events.id, seriesIndex: events.seriesIndex });
-
-    return rows.find((r) => r.seriesIndex === 0)!.id;
-  });
-
-  return getEvent(db, ctx, firstId, now);
-}
-
-export type UpdateEventInput = Partial<Omit<CreateEventInput, 'id' | 'recurrence'>>;
+export type UpdateEventInput = Partial<Omit<CreateEventInput, 'id'>>;
 
 export async function updateEvent(
   db: Database,

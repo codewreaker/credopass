@@ -27,8 +27,11 @@ export const events = pgTable('events', {
   organizationId: uuid('organization_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
 
   /**
-   * The recurring programme this is one occurrence of, or null for a one-off
-   * (ROADMAP stage 3, D40).
+   * The recurring programme this is one occurrence of, or null for a one-off.
+   *
+   * **Always null today — recurring events are PAUSED (2026-11-07).** Kept
+   * because the migration is already applied and the column is inert. See
+   * `event-series.ts` and docs/RECURRING-EVENTS.md.
    *
    * `ON DELETE SET NULL`, deliberately. Deleting the series must never cascade
    * into the events: those rows carry `attendance` — the durable record that

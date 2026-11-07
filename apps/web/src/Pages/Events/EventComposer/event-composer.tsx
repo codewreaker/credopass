@@ -269,25 +269,9 @@ export function EventComposer({ mode, eventId, initialValues }: EventComposerPro
             Event Options
           </span>
           <div className="divide-y divide-border overflow-hidden rounded-2xl border border-border bg-card">
-            {/* Create only. Changing the pattern of a programme whose
-                occurrences already exist — some with people registered — is a
-                different question, and offering the control without an answer
-                to it would be a lie (F5). */}
-            {!isEditing && (
-              <form.Subscribe selector={(state) => state.values.start}>
-                {(start) => (
-                  <form.Field name="repeat">
-                    {(field) => (
-                      <RepeatField
-                        value={field.state.value}
-                        onChange={field.handleChange}
-                        startAt={start}
-                      />
-                    )}
-                  </form.Field>
-                )}
-              </form.Subscribe>
-            )}
+            {/* Visible but inert — recurring events are paused, and the sheet
+                says why. See docs/RECURRING-EVENTS.md. */}
+            {!isEditing && <RepeatField />}
             <form.Field name="capacity">
               {(field) => (
                 <CapacityField

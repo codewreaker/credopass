@@ -216,7 +216,7 @@ closed with the explanation, and the kiosk's counter is a route to the attendanc
 
 ---
 
-### Stage 3 — Recurring events · ✅ **SHIPPED 2026-11-07** (create; series-wide edit still open)
+### Stage 3 — Recurring events · ⏸️ **PAUSED 2026-11-07** — see [`RECURRING-EVENTS.md`](RECURRING-EVENTS.md)
 
 **F5 — what it means on the backend.** The honest answer, and the one the schema was already
 designed for:
@@ -258,7 +258,12 @@ every database must be migrated before the code ships.
 
 ---
 
-## ⚠️ Recurring events — what is NOT safe yet
+## ⏸️ Recurring events — PAUSED. Full brief in [`RECURRING-EVENTS.md`](RECURRING-EVENTS.md)
+
+> The implementation was removed the same day it was built. The UI stays, showing an
+> "in development" notice. **[`RECURRING-EVENTS.md`](RECURRING-EVENTS.md) is the file to read
+> before restarting it** — every edge case, and the library recommendations. The risks below are
+> why it was paused.
 
 > **Read this before anyone runs a real programme through it.** Recurrence shipped on 2026-11-07
 > and the expansion arithmetic is well covered (102 unit tests, DST included). What follows is the
