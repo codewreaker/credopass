@@ -6,6 +6,15 @@
 
 ---
 
+> **Signing in to the local MinIO console.** `http://localhost:9001`, username
+> `credopass`, password `credopass`. They are the defaults in
+> [`docker/docker-compose.dev.yml`](../docker/docker-compose.dev.yml)
+> (`MINIO_ROOT_USER` / `MINIO_ROOT_PASSWORD`) and are repeated in
+> `services/core/.env`. Local only — nothing on the internet uses them, so they are
+> deliberately not secret.
+
+---
+
 ## 1. What S3 actually is
 
 **It is not a filesystem.** That is the single most useful thing to internalise, because
@@ -186,7 +195,7 @@ S3_PUBLIC_URL=https://…          # where browsers FETCH files from (see §6.1)
 
 ### The three options worth considering
 
-**Cloudflare R2 — my recommendation.** Storage is $0.015/GB-month, writes $4.50/million,
+**Cloudflare R2 — chosen.** Storage is $0.015/GB-month, writes $4.50/million,
 reads $0.36/million, and **egress is free** — which is the number that matters here,
 because every attendee loading a pass is egress. The free tier covers 10GB of storage,
 1M writes and 10M reads a month, which this product will not exceed for a long time. It is
@@ -220,6 +229,73 @@ Hetzner if co-location turns out to matter.
 4. Set the CORS rule in §6.2.
 5. Put the six variables above into Coolify and redeploy.
 6. Check it: create an event, add a photo, confirm the poster renders on `/e/{id}`.
+
+### Cloudflare R2, step by step
+
+Chosen 2026-11-07. The point of R2 here is **free egress**: every attendee opening a
+pass downloads the poster, and that is the only number in object-storage pricing that
+grows with how well the product does.
+
+**1 — Create the bucket.** Cloudflare dashboard → *Storage & databases* → *R2*. Create
+`credopass-media`. Location hint: *Europe*, to sit near the Hetzner box.
+
+**2 — Create the credentials.** *R2* → *Overview* → *Manage* in **API Tokens** →
+*Create Account API token*. Permission **Object Read & Write**, and
+*Apply to specific buckets only* → `credopass-media`. The Secret Access Key is shown
+**once** — copy it before leaving the page. The same confirmation page prints the
+S3 endpoint:
+
+```
+https://<ACCOUNT_ID>.r2.cloudflarestorage.com
+```
+
+That is `S3_ENDPOINT`. Note it has **no bucket in it** — the bucket is a separate
+variable, and this URL is not where browsers fetch files from (§6.1).
+
+**3 — Make finished objects publicly readable.** Two ways, and the choice matters:
+
+- **A custom domain** — `media.credopass.com`, in the bucket's *Settings → Public
+  access → Custom domains*. Use this. `credopass.com` is already a Cloudflare zone, so
+  it is a couple of clicks, and the public URL then belongs to you rather than to
+  Cloudflare.
+- **The `r2.dev` dev URL** — one toggle, but Cloudflare rate-limits it and
+  [says plainly it is not for production](https://developers.cloudflare.com/r2/buckets/public-buckets/).
+  Fine for a first smoke test; do not ship on it.
+
+**4 — Set CORS.** The browser PUTs straight to R2, so without this nothing uploads
+(§6.2). The policy is committed at [`services/core/r2-cors.json`](../services/core/r2-cors.json)
+— it allows the production app plus `localhost:5000/5001`, because `nx run web:serve:remote`
+runs the local web app against the production API:
+
+```sh
+npx wrangler r2 bucket cors set credopass-media --file services/core/r2-cors.json
+```
+
+(Or paste the same JSON into *Settings → CORS policy* in the dashboard.)
+
+**5 — Set the variables in Coolify**, on the `coreservice` application, then redeploy:
+
+```bash
+S3_ENDPOINT=https://<ACCOUNT_ID>.r2.cloudflarestorage.com
+S3_BUCKET=credopass-media
+S3_ACCESS_KEY_ID=<from step 2>
+S3_SECRET_ACCESS_KEY=<from step 2>
+S3_REGION=auto
+S3_PUBLIC_URL=https://media.credopass.com
+```
+
+`S3_REGION=auto` is what R2 wants; it is required by the signature and then ignored.
+**`S3_FORCE_PATH_STYLE` is not read by anything** — it is in `.env.example` from an
+earlier draft and can be left out.
+
+**6 — Check it.** Create an event on `app.credopass.com`, attach a photo, and open the
+public page `/e/{id}`. If the upload fails, open the browser console: a CORS message
+means step 4, a 403 on the image means step 3, and a 500 from our API saying
+`Storage is not configured` means step 5 did not reach the running container.
+
+**Nothing in the app changes.** Local development keeps pointing at MinIO; only the six
+variables differ. That is the whole return on using the S3 protocol rather than a
+vendor SDK.
 
 ---
 
