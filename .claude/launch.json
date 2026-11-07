@@ -4,14 +4,32 @@
     {
       "name": "web",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["nx", "run", "web:serve"],
+      "runtimeArgs": [
+        "nx",
+        "run",
+        "web:serve"
+      ],
       "port": 5000
     },
     {
       "name": "api",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["nx", "run", "coreservice:start"],
+      "runtimeArgs": [
+        "nx",
+        "run",
+        "coreservice:start"
+      ],
       "port": 8080
+    },
+    {
+      "name": "web-remote",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "nx",
+        "run",
+        "web:serve:remote"
+      ],
+      "port": 5000
     }
   ]
 }
