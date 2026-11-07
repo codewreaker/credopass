@@ -1360,6 +1360,55 @@ see the risk register in [`ROADMAP.md`](ROADMAP.md):**
 
 **Not deployable until `nx run coreservice:migrate` has run against the remote.**
 
+## 2026-11-07 — the production bucket is live, on R2
+
+**Stage 4.1/4.2 is no longer theoretical.** Bucket `credopass-media` on Cloudflare R2,
+served from the public development URL `https://pub-d8a53bb93c1a4b08a30d0d4f28cbea29.r2.dev`.
+`S3_REGION=auto`. The CORS policy is committed at `services/core/r2-cors.json` rather than
+retyped into a dashboard, and covers `localhost:5000–5003` because AirPlay pushes the web dev
+server around.
+
+Verified end to end against the real API: presign → PUT straight to R2 → `done` (which HEADs
+the object) → anonymous GET of the poster → `POST /events` with that cover URL passing
+`assertCoverImageAllowed` → the public event page serving it with no auth. All green.
+
+**D43 — the `r2.dev` URL, not a custom domain.** `media.credopass.com` needs the zone inside
+the Cloudflare account; `credopass.com` is on Namecheap nameservers and the partial/CNAME setup
+that avoids moving them is Business-plan only. The r2.dev limit is hundreds of requests per
+second, which one church on a Sunday is three orders of magnitude below. The nameserver move is
+parked as a Stage 6 prerequisite, where it is justified by shielding `api.credopass.com` behind
+Cloudflare rather than by posters.
+
+**A correction worth keeping.** `STORAGE.md` §6.6 first claimed that changing `S3_PUBLIC_URL`
+would orphan existing poster URLs. It does not: `assertCoverImageAllowed` sends a URL on an
+unrecognised host to its plain-https branch, where it passes. The host check exists so local
+MinIO can serve over `http`, not to pin a hostname. A switch leaves objects on the old
+hostname — one UPDATE, not a migration.
+
+### Two footguns found the hard way
+
+**An exported `DATABASE_URL` silently beats `.env`.** Bun will not override a variable already
+in the environment, so `export DATABASE_URL=<remote>` left over from a remote migration makes
+every `bun start` from that tab talk to production. `coreservice:start` compounds it by printing
+`✓ PostgreSQL connected (local)` from the string it was handed without ever checking the host —
+`db status` is the only command that flags `⚠️ REMOTE`. The above verification ran against
+production because of this; the test rows were removed. **`EADDRINUSE` on :8080 is not noise** —
+it means a stale process is still serving and the new config never took effect. A guard making
+`start` refuse a non-localhost `DATABASE_URL` is proposed and unbuilt.
+
+**`coreservice:token` registers real users in production.** `SUPABASE_URL` is the live project
+and there is no local Supabase, so `signInAnonymously()` in `scripts/dev-token.ts` creates an
+anonymous auth user there on every call — nine on this day alone. Do not fix this by disabling
+anonymous sign-ins on prod: that breaks the only way to mint a JWT for Scalar or curl, and
+`AUTH_DISABLED` is gone by design. The fix is `supabase init` + `supabase start` with
+`SUPABASE_URL=http://localhost:54321` locally.
+
+**Still open:** server-side derivatives (`sharp`), `assets.width`/`height` always null, no poster
+delete path, no abandoned-upload sweep, and the Coolify variables are not set — production still
+has no bucket configured.
+
+---
+
 ---
 
 ## Conventions worth knowing
