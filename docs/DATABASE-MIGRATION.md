@@ -166,8 +166,8 @@ That database is `tmpfs` and the adversarial suite `TRUNCATE`s every table betwe
 
 ## 5. Migrating the remote Supabase instance
 
-**Done — the remote instance was migrated, and `status` reports 4 applied / 4 on disk
-(verified 2026-11-06).** What follows is kept as the record of what the cutover involved and what
+**Done — the remote instance is migrated, and `status` reports 8 applied / 8 on disk
+(verified 2026-11-07, after `0007` added `events.meeting_url` and made `location_text` nullable).** What follows is kept as the record of what the cutover involved and what
 to do if you ever point the code at another pre-rewrite database.
 
 The rewrite did not rename tables — it replaced the model:
@@ -218,7 +218,7 @@ export DATABASE_URL='postgresql://postgres:<password>@db.<project>.supabase.co:5
 
 nx run coreservice:db status     # expect: ⚠️ REMOTE, and a migration count
 nx run coreservice:migrate
-nx run coreservice:db status     # expect: 4 applied / 4 on disk
+nx run coreservice:db status     # expect: every migration applied
 unset DATABASE_URL
 ```
 
