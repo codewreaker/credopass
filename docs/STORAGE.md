@@ -252,15 +252,26 @@ https://<ACCOUNT_ID>.r2.cloudflarestorage.com
 That is `S3_ENDPOINT`. Note it has **no bucket in it** — the bucket is a separate
 variable, and this URL is not where browsers fetch files from (§6.1).
 
-**3 — Make finished objects publicly readable.** Two ways, and the choice matters:
+**3 — Make finished objects publicly readable.** Posters have to be fetchable by an
+attendee with no account, so the bucket needs a public URL. Two ways, and **the dev URL
+is a perfectly reasonable place to start** — see §6.6 for why switching later is cheap.
 
-- **A custom domain** — `media.credopass.com`, in the bucket's *Settings → Public
-  access → Custom domains*. Use this. `credopass.com` is already a Cloudflare zone, so
-  it is a couple of clicks, and the public URL then belongs to you rather than to
-  Cloudflare.
-- **The `r2.dev` dev URL** — one toggle, but Cloudflare rate-limits it and
-  [says plainly it is not for production](https://developers.cloudflare.com/r2/buckets/public-buckets/).
-  Fine for a first smoke test; do not ship on it.
+- **The `r2.dev` dev URL** — one toggle in *Settings → Public access*. Cloudflare
+  [rate-limits it](https://developers.cloudflare.com/r2/platform/limits/) and says it is
+  not for production, but the published threshold is **hundreds of requests per second**
+  before a 429, and it may throttle bandwidth. One church on a Sunday morning is three
+  orders of magnitude below that. What you give up is caching, WAF rules, bot management
+  and per-URL analytics — none of which this product uses yet.
+- **A custom domain** — `media.credopass.com`. The right end state, and required before
+  this serves real traffic at scale. It needs the domain to be a zone in your Cloudflare
+  account, which for `credopass.com` means moving the nameservers off Namecheap (a
+  partial/CNAME setup is Business-plan only). Note that Namecheap's free email
+  forwarding stops working on another provider's nameservers; Cloudflare Email Routing
+  is the free replacement. Do **not** CNAME your own domain at an `r2.dev` subdomain —
+  Cloudflare calls that an unsupported access path.
+
+Both can be enabled independently, so turning on a custom domain later does not require
+turning the dev URL off.
 
 **4 — Set CORS.** The browser PUTs straight to R2, so without this nothing uploads
 (§6.2). The policy is committed at [`services/core/r2-cors.json`](../services/core/r2-cors.json)
@@ -281,8 +292,11 @@ S3_BUCKET=credopass-media
 S3_ACCESS_KEY_ID=<from step 2>
 S3_SECRET_ACCESS_KEY=<from step 2>
 S3_REGION=auto
-S3_PUBLIC_URL=https://media.credopass.com
+S3_PUBLIC_URL=https://pub-<HASH>.r2.dev        # or https://media.credopass.com
 ```
+
+`S3_PUBLIC_URL` is whichever public address you enabled in step 3. The dev URL is printed
+in *Settings → Public access* once the toggle is on.
 
 `S3_REGION=auto` is what R2 wants; it is required by the signature and then ignored.
 **`S3_FORCE_PATH_STYLE` is not read by anything** — it is in `.env.example` from an
@@ -349,20 +363,35 @@ A `pending` row older than 24h is an upload that was signed for and never comple
 `idx_assets_pending` exists so the sweep is cheap, and `countAbandonedUploads()` is
 written — but **nothing runs it yet**, because there is no scheduler (Phase 4).
 
-### 6.6 `S3_PUBLIC_URL` is baked into the database — pick it once
+### 6.6 `S3_PUBLIC_URL` can be changed later, and it is cheaper than it looks
 
-`finaliseUpload` stores `publicUrlFor(storageKey)` and the event stores *that string*
-in `events.cover_image_url`. `isOwnReadyAssetUrl` then validates a cover by checking it
-starts with the **current** `publicBaseUrl`.
+An earlier version of this section said changing `S3_PUBLIC_URL` would orphan every
+poster URL written under the old one. **That was wrong**, and the reason is worth
+following, because it is the only place the rule is written down.
 
-So changing `S3_PUBLIC_URL` after posters exist orphans every URL written under the old
-one. The images keep loading — they are plain stored text — but the validator stops
-recognising them, so re-saving one of those events can have its cover rejected.
+`assertCoverImageAllowed` has two branches:
 
-The practical rule: **connect the custom domain before the first production upload.**
-Do not start on the `r2.dev` URL intending to move later. If it ever does have to
-change, the fix is a one-off UPDATE rewriting the prefix on `events.cover_image_url`,
-not a code change.
+1. `looksLikeOwnStorage(url)` — the URL starts with the **current** `publicBaseUrl`.
+   Then it must be a `ready` asset belonging to this organisation.
+2. Anything else only has to be `https`.
+
+So after `S3_PUBLIC_URL` changes, an old URL on the previous host stops matching branch
+1 and falls through to branch 2 — where it passes, because it is https. The images keep
+loading and the events keep saving. Branch 1 exists to let local MinIO serve over plain
+`http`, not to pin a hostname.
+
+What a switch does leave behind is **old objects still served from the old hostname**.
+That is a performance and tidiness matter, not a correctness one, and the fix is one
+statement:
+
+```sql
+UPDATE events
+   SET cover_image_url = replace(cover_image_url, '<old-base>', '<new-base>')
+ WHERE cover_image_url LIKE '<old-base>%';
+```
+
+The practical consequence: **starting on the `r2.dev` URL is a reasonable decision**, not
+debt with a due date. See §5.
 
 ### 6.7 Presigned URLs only work against the S3 API endpoint
 
