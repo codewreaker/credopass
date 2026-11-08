@@ -5,13 +5,13 @@ import {
     ProblemCode,
     useCancelEvent,
     useDeleteEvent,
-    useEvents,
     useEventsCalendar,
     useEventsSummary,
     useOrganizations,
     type Event,
 } from '@credopass/api-client';
 import EventListView from './EventListView';
+import { useMergedEvents, type ListEvent } from './use-merged-events';
 import EventCalendar from '@credopass/ui/components/event-calendar';
 import { CalendarPlus, CalendarsIcon, MapPin, Users, Clock, ScanLine, ArrowUpRight, Plus, ChevronUp, ChevronDown, Sparkles, Pencil } from 'lucide-react';
 import { useStatusFilter, useToolbarContext } from '@credopass/lib/hooks';
@@ -300,15 +300,27 @@ const EventsPage = () => {
     const greeting = useMemo(() => getGreeting(), []);
 
     const { data: summary } = useEventsSummary();
-    const { data: page, isLoading } = useEvents({
+
+    /**
+     * One list: what this org hosts, and what this account is going to.
+     *
+     * Two scopes, joined here rather than server-side — `/events` is
+     * organisation-scoped and `/me/tickets` is account-scoped, and the whole
+     * tenancy model rests on those staying separate queries. See
+     * `use-merged-events.ts` for why the two lists became one.
+     */
+    const {
+        events,
+        counts: mergedCounts,
+        hasMore,
+        isLoading,
+    } = useMergedEvents({
         group: activeGroup,
         q: searchQuery.trim() || undefined,
     });
     const { data: calendar } = useEventsCalendar(monthKey(calendarMonth));
     const { data: organizations = [] } = useOrganizations();
     const activeOrganization = organizations.find((o) => o.id === organizationId);
-
-    const events = page?.data ?? [];
 
     // The calendar rail shows the whole month, independent of the Upcoming/Past
     // switch — a month is a month.
@@ -323,9 +335,9 @@ const EventsPage = () => {
         ongoing: summary?.ongoing ?? 0,
     };
 
-    // `null` until the summary lands, so the switch shows a dash rather than a
-    // zero it has not earned (UI-REDESIGN R2).
-    const groupCounts = summary?.groups ?? null;
+    // `null` until BOTH halves have landed, so the switch shows a dash rather
+    // than a number that is about to change under the reader (UI-REDESIGN R2).
+    const groupCounts = mergedCounts;
 
     const cancelEvent = useCancelEvent();
     const deleteEvent = useDeleteEvent();
@@ -334,7 +346,7 @@ const EventsPage = () => {
         navigate({ to: '/events/new' });
     }, [navigate]);
 
-    const handleEditEvent = useCallback((event: Event) => {
+    const handleEditEvent = useCallback((event: ListEvent) => {
         navigate({ to: '/events/$eventId/edit', params: { eventId: event.id } });
     }, [navigate]);
 
@@ -350,8 +362,12 @@ const EventsPage = () => {
      * is right to: those people hold pass URLs. Cancelling keeps the rows, the
      * URL and the history, and is what the organiser actually wants.
      */
-    const handleDeleteEvent = useCallback(async (event: Event) => {
-        if (!canDelete) return;
+    const handleDeleteEvent = useCallback(async (event: ListEvent) => {
+        // A guest row offers no delete control, so reaching here with one
+        // would be a bug rather than a permission question — but the list is
+        // merged now, and "the UI does not render it" is not the same as
+        // "the handler cannot be called".
+        if (!canDelete || event.relationship !== 'host') return;
         try {
             await deleteEvent.mutateAsync(event.id);
             toast.success(`${event.name} deleted`);
@@ -476,7 +492,7 @@ const EventsPage = () => {
                                 canCreate={canCreate}
                                 isLoading={isLoading}
                             />
-                            {page?.page.hasMore && (
+                            {hasMore && (
                                 <p className="shrink-0 pb-2 text-center text-xs text-muted-foreground">
                                     Showing the first {events.length}. Narrow the search to find more.
                                 </p>

@@ -201,15 +201,15 @@ function SignUpNudge() {
       {signedIn ? (
         <>
           <p className="text-xs leading-relaxed text-primary-foreground/70">
-            This pass is in your CredoPass account, with everything else you are going to.
+            This pass is in your CredoPass account, with everything else you have on.
           </p>
           <Button
             variant="ghost"
             size="sm"
             className="mt-2 rounded-full text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground"
-            render={(props) => <Link {...props} to="/tickets" />}
+            render={(props) => <Link {...props} to="/events" />}
           >
-            See all my passes <ArrowRight size={14} />
+            See all my events <ArrowRight size={14} />
           </Button>
         </>
       ) : (

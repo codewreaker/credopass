@@ -126,11 +126,24 @@ export function EventImage({ src, onPick, className }: EventImageProps) {
     setPickerOpen(false);
   };
 
+  /**
+   * Picking a poster does NOT close the tray.
+   *
+   * It used to, and that made comparing them impossible: you would tap one,
+   * the tray would shut, you would reopen it to see the next, and so on
+   * through eight. Choosing artwork is a browsing act — you want to see them
+   * all against the real preview before committing.
+   *
+   * So selection applies immediately (the preview above updates live, which is
+   * the whole point of leaving the tray open) and the tray closes only when
+   * the person says they are done. Upload is the opposite and still closes on
+   * its own: there is exactly one file, they already chose it in the system
+   * dialog, and there is nothing left to compare it against.
+   */
   const applyTemplate = (path: string) => {
     setUploadError(null);
     setFailedSrc(null);
     onPick?.(path);
-    setPickerOpen(false);
   };
 
   const clear = () => {
@@ -278,7 +291,7 @@ export function EventImage({ src, onPick, className }: EventImageProps) {
             <span className="h-px flex-1 bg-border" />
           </div>
 
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Button
               type="button"
               size="sm"
@@ -297,6 +310,17 @@ export function EventImage({ src, onPick, className }: EventImageProps) {
               onClick={() => setLinkOpen((open) => !open)}
             >
               <Link2 size={13} /> Paste a link
+            </Button>
+            {/* The only thing that dismisses the tray after browsing. Pushed
+                to the end so it reads as "done", not as "confirm" — the
+                choice is already applied above. */}
+            <Button
+              type="button"
+              size="sm"
+              className="ml-auto rounded-full px-4"
+              onClick={() => setPickerOpen(false)}
+            >
+              <Check size={13} /> Done
             </Button>
           </div>
         </div>

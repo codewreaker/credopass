@@ -2,8 +2,8 @@ import React, { useCallback, useMemo } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { Badge } from '@credopass/ui/components/badge';
 
-import type { Event } from '@credopass/api-client';
 import type { DerivedEventStatus } from '@credopass/lib/hooks';
+import type { ListEvent } from './use-merged-events';
 import { EmptyState } from '@credopass/ui/components/empty-state';
 import { useIsMobile } from '@credopass/ui/hooks/use-mobile';
 import { EventRow, STATUS_MAPPING } from '@credopass/ui/components/event-row';
@@ -19,12 +19,18 @@ const randomizeImage = () => {
 }
 
 interface EventListViewProps {
-    events: Event[];
+    /**
+     * Host rows and guest rows together — see `use-merged-events.ts`. Each
+     * carries a `relationship`, which the row renders as the pill on its
+     * poster and uses to decide whether the organiser's actions exist at all.
+     */
+    events: ListEvent[];
     /** Which statuses this group renders, and in what order. */
     selectedStatus: DerivedEventStatus[];
     onCreateEvent: () => void;
-    onEditEvent: (event: Event) => void;
-    onDeleteEvent: (event: Event) => void;
+    /** Host rows only. A guest row renders no control that calls these. */
+    onEditEvent: (event: ListEvent) => void;
+    onDeleteEvent: (event: ListEvent) => void;
     onViewAttendees?: (eventId: string) => void;
     timezone?: boolean
     /** Which group the switch is on — lets the empty state nudge to the other one. */
@@ -64,8 +70,8 @@ const EventListView: React.FC<EventListViewProps> = ({
     const navigate = useNavigate();
     const isMobile = useIsMobile();
 
-    const grouped = useMemo<Array<[DerivedEventStatus, Event[]]>>(() => {
-        const sections: Array<[DerivedEventStatus, Event[]]> = [];
+    const grouped = useMemo<Array<[DerivedEventStatus, ListEvent[]]>>(() => {
+        const sections: Array<[DerivedEventStatus, ListEvent[]]> = [];
         for (const status of selectedStatus) {
             const inSection = events.filter((event) => event.status === status);
             if (inSection.length > 0) sections.push([status, inSection]);
@@ -80,19 +86,33 @@ const EventListView: React.FC<EventListViewProps> = ({
     const hasAnyEvents = events.length > 0;
     const canGuideToPast = nothingInGroup && hasAnyEvents && activeGroup === 'upcoming' && !!onShowPast;
 
-    const handleNavigateToEvent = useCallback((eventId: string) => {
-        navigate({ to: '/events/$eventId', params: { eventId } });
-    }, [navigate]);
-
     const eventsById = useMemo(() => new Map(events.map((e) => [e.id, e])), [events]);
+
+    /**
+     * Where a row goes depends on whose event it is.
+     *
+     * `/events/$eventId` is the organiser's screen and the endpoint behind it
+     * is organisation-scoped, so opening it for an event another organisation
+     * runs answers 404 — correctly (rule 6), but as a dead end. A guest goes
+     * to the shared page instead, which is the one they were sent in the first
+     * place and the only one that works across tenants.
+     */
+    const handleNavigateToEvent = useCallback((eventId: string) => {
+        const row = eventsById.get(eventId);
+        if (row && row.relationship !== 'host') {
+            navigate({ to: '/e/$eventId', params: { eventId } });
+            return;
+        }
+        navigate({ to: '/events/$eventId', params: { eventId } });
+    }, [navigate, eventsById]);
 
     return (
         <div className="event-list">
             {!isLoading && nothingInGroup && !hasAnyEvents && (<div className="flex items-center justify-center py-0">
                 <EmptyState
                     iconUrl={randomizeImage()}
-                    title="You have no events yet"
-                    description="Create your first event and start checking people in within minutes."
+                    title="Nothing on yet"
+                    description="Events you host and events you are going to both land here. Create one, or open an event link someone sent you."
                     action={canCreate ? { label: 'Create Event', onClick: onCreateEvent } : undefined}
                 />
             </div>)}
@@ -100,7 +120,7 @@ const EventListView: React.FC<EventListViewProps> = ({
                 <EmptyState
                     iconUrl={randomizeImage()}
                     title="Nothing coming up"
-                    description="You don’t have any upcoming events — but your past events are all here. Review who showed up, or plan the next one."
+                    description="You don’t have anything coming up — but everything you have hosted or been to is still here."
                     action={{ label: 'View past events', onClick: onShowPast! }}
                     secondaryAction={canCreate ? { label: 'Create event', onClick: onCreateEvent } : undefined}
                 />

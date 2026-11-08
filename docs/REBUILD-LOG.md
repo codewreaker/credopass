@@ -1490,8 +1490,8 @@ precisely for this, `claimByVerifiedEmail` was written and left unrouted, and T3
 | `POST /me/tickets/{eventId}/pass` | Reissues the caller's own pass. |
 | `POST /me/claim` | Links guest registrations made before the account existed. |
 | `services/core/src/services/tickets.ts` | The personal scope. |
-| `apps/web` `/tickets` → `Pages/Tickets` | Going ⇄ Went, the same two-position switch the hosting list uses. |
-| `NAV_ITEMS` | A second entry, "Passes". `Events` is what you host; `Passes` is what you attend. |
+| `apps/web` `/tickets` → `Pages/Tickets` | **Superseded the same day** — see the next entry. It is one merged list on `/events` now, and `/tickets` redirects. |
+| `NAV_ITEMS` | A second entry, "Passes". **Also superseded** — there is no Passes tab. |
 
 **Three things about the scoping, since this is the first non-org read in the service.**
 
@@ -1646,6 +1646,72 @@ button sitting low — so the first screenful of CredoPass was a logo and a gap.
   nothing holding them.
 - **The question-mark illustration is gone** from the form column. `/empty-state-one.svg` is a
   figure under a large question mark, which on a sign-in page reads as "something has gone wrong".
+
+---
+
+## 2026-11-08 (later) — one list, and the tab lasted a day
+
+**The finding, same afternoon the tab shipped.** *"Instead of a separate tab for passes, it should
+all be on the event page. The main event page should tell me all the events I am registered to
+attend as well as the ones I am hosting."*
+
+Right, and the previous entry was wrong about it. Someone opening CredoPass is asking "what have I
+got on?", and splitting that answer across two tabs made it depend on remembering which tab you were
+in — an event you are speaking at and an event you are attending are the same kind of thing on the
+same evening.
+
+**`/events` is now one list.** `use-merged-events.ts` joins the two queries in the client. They are
+NOT merged server-side and must not be: `/events` is organisation-scoped and `/me/tickets` is
+account-scoped, the tenancy model rests on those being separate queries with separate
+authorization, and one endpoint returning both would have to be neither. Joining them is a
+presentation question, so it happens where presentation happens.
+
+| | |
+|---|---|
+| The difference | A pill on the poster, Luma-style: `Host`, `Going`, `Registered`, `Went`, `Missed`. |
+| Collisions | Hosting wins. Registering for your own event is ordinary and must not produce two rows. |
+| Guest rows | No edit, delete or attendee list — those are 403s (§2.9) — and they open `/e/{id}`, not `/events/{id}`, which is org-scoped and would 404 across tenants. |
+| Counts | `null` until BOTH halves land, so the switch shows a dash rather than a number about to change. |
+| Search | Narrows to events you host. `/me/tickets` takes no `q`, and silently returning unfiltered tickets would be worse than not returning them. |
+| `/tickets` | Redirects to `/events`. Pass screens in the wild link to it. |
+
+**`Registered` is the label worth defending.** It is a past event whose attendance row still says
+`registered` — nobody recorded the person arriving. Not `Went`, which would invent a fact; not
+`Missed`, which would accuse them of one, since the job that writes `no_show` on close may simply
+not have run. For a product whose whole claim is that attendance is a recorded fact rather than a
+sign-up, the label has to be the thing that is actually known.
+
+The pill is the translucent treatment the status badges already use — tinted text in a tinted
+hairline — over `bg-card/85` with a blur. The backing is not decoration: these sit ON artwork, and a
+10%-alpha fill is invisible against an arbitrary poster.
+
+**Also in this pass:**
+
+- **The poster picker stopped closing on every pick.** Choosing artwork is a browsing act; you want
+  to see all eight against the real preview. Selection applies live, a `Done` button dismisses the
+  tray. Upload still closes on its own — there is one file and nothing to compare it against.
+- **`sunrise.svg` was redrawn.** The list crops posters to a 64px centre square, and its centre was
+  all pale sun, so the thumbnail read as a blank white tile. Smaller sun, raised foreground.
+- **A poster row showed no date.** The leading square is either the poster or the Luma-style date
+  block, never both, and the meta line carried only the time — so a row with a poster said
+  "1:18 PM" and never which day. Harmless while almost no event had a poster; every new event
+  starts with one now, so it was about to be every row. The meta line prints the date when, and
+  only when, the poster took the date block's place, and the "did it load" state moved up to the
+  row so a broken poster flips both halves back together.
+- **Blank squares in the list.** Reported as "why do some of the event list show blank?", and it
+  was two things wearing one symptom. The DATA: two rows pointed at uploads that do not resolve —
+  one R2 object that 404s, one MinIO object that answers 200 with a 22-byte body — both left over
+  from storage testing, neither a template. The BUG: the leading square was either the poster or
+  the date block, decided up front, so a poster that is slow or dead left a bordered empty box for
+  the length of the request and the fallback only fired on `onError`. The date block is now always
+  rendered and the poster is layered over it, transparent until the bytes arrive — so the square
+  can never be empty, and a dead poster degrades to the date without ever having shown a hole.
+  (First attempt at this made it worse: the overlay reused `.event-date-icon`, which carries an
+  opaque `var(--card)` fill, and hid the date block permanently.)
+- **"Why did my registration not appear?"** It had not shipped yet. Confirmed by planting an
+  unclaimed `people` row in another organisation the way a pre-launch registration exists: the
+  bootstrap `/me/claim` adopted it on the next page load and it appeared under Past. Nothing to fix —
+  existing registrations backfill themselves once this is deployed.
 
 ---
 

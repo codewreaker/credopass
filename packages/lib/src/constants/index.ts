@@ -2,30 +2,24 @@ import {
   Users,
   ChartNoAxesCombined,
   QrCode,
-  Ticket,
   UserRound
 } from "lucide-react";
 
 /**
- * `Events` is what you HOST. `My Passes` is what you ATTEND.
+ * There is NO separate "Passes" tab, and adding one back would be a regression.
  *
- * They are two different lists over two different scopes — `/events` is
- * organisation-scoped and `/tickets` is account-scoped — and the product
- * shipped for a long time with only the first, so someone who attends events
- * and hosts none opened CredoPass to an empty screen. Keeping them adjacent in
- * the nav is what makes the distinction legible.
+ * It existed for about a day. `Events` is one list of everything you have on —
+ * what you host and what you are going to — because that is the question
+ * someone opening the app is asking, and splitting the answer across two tabs
+ * made it depend on remembering which tab you were in. The difference between
+ * the two is carried on the row instead, as a pill on the poster: `Host` on
+ * the ones you run, `Going` / `Went` on the ones you are a guest at.
  *
- * Order matters on a phone: the bottom bar shows the first four and folds the
- * rest under More, so anything demoted past the fourth position needs another
- * way in. `Account` has one (the user menu in the top bar); the first four do
- * not.
+ * `/tickets` still resolves — it redirects — because pass links in the wild
+ * point at it.
  */
 export const NAV_ITEMS = [
   { id: 'events', url: "/events", icon: QrCode, label: "Events", isActive: true },
-  // "Passes", not "My Passes": the bottom bar gives each item 56pt and a
-  // two-word label wraps onto two lines there, which makes the one new item
-  // in the nav look like a mistake.
-  { id: 'tickets', url: "/tickets", icon: Ticket, label: "Passes" },
   { id: 'attendees', url: "/attendees", icon: Users, label: "Attendees" },
   { id: 'analytics', url: "/analytics", icon: ChartNoAxesCombined, label: "Analytics" },
   { id: 'account', url: "/account", icon: UserRound, label: "Account" }

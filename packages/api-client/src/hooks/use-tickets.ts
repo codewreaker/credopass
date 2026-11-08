@@ -29,10 +29,14 @@ import { unwrap } from './internal';
  * label the side you are not on without a second request. Rendering a `0` you
  * have not fetched is the most repeated defect in this product.
  */
-export function useMyTickets(group: TicketGroup): UseQueryResult<TicketsResponse> {
+export function useMyTickets(
+  group: TicketGroup,
+  options?: { enabled?: boolean }
+): UseQueryResult<TicketsResponse> {
   return useQuery({
     queryKey: queryKeys.tickets(group),
     queryFn: () => unwrap(api.GET('/me/tickets', { params: { query: { group } } })),
+    enabled: options?.enabled ?? true,
     staleTime: 30_000,
   });
 }
