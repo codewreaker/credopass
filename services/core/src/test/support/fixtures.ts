@@ -80,7 +80,11 @@ export async function newTenant(label: string): Promise<Actor> {
  */
 export async function joinAs(
   owner: Actor,
-  role: 'admin' | 'organizer' | 'checkin' | 'viewer',
+  // The ASSIGNABLE roles only. `viewer` is no longer one of them — the invite
+  // body uses `AssignableRoleSchema`, so asking for it here would 400 at the
+  // invite step rather than granting a membership. A legacy viewer row can
+  // still exist in the database; it just cannot be created through the API.
+  role: 'admin' | 'organizer' | 'checkin',
   // Annotated, not inferred. `label = role` alone infers the ROLE union, so a
   // test naming an actor after what it is proving ('ambiguous') fails to
   // compile — a label is free text and always was.

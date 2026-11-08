@@ -22,7 +22,7 @@ import {
   type CallerVars,
 } from '../../../middleware/caller';
 import { getDatabase } from '../../../db/client';
-import { ORG_ROLES } from '../../../authz/permissions';
+import { ASSIGNABLE_ORG_ROLES, ORG_ROLES } from '../../../authz/permissions';
 import * as Membership from '../../../services/membership';
 
 export const organizations = new OpenAPIHono<{ Variables: CallerVars }>();
@@ -35,7 +35,11 @@ organizations.use('/invitations/*', requireCaller);
 organizations.use('/organizations/:id', requireTenant({ fromPathParam: 'id' }));
 organizations.use('/organizations/:id/*', requireTenant({ fromPathParam: 'id' }));
 
+// Responses use the full set: a legacy `viewer` row must still serialise.
 const RoleSchema = z.enum(ORG_ROLES);
+// Requests use the assignable four. This is the gate that stops anyone being
+// put into the non-assignable read-only role.
+const AssignableRoleSchema = z.enum(ASSIGNABLE_ORG_ROLES);
 
 const OrganizationSchema = z
   .object({
@@ -114,7 +118,6 @@ organizations.openapi(
         content: {
           'application/json': {
             schema: z.object({
-              id: z.string().uuid().optional(),
               name: z.string().min(1).max(200),
               slug: z.string().min(1).max(64).optional(),
               timezone: z.string().optional(),
@@ -209,6 +212,7 @@ organizations.openapi(
     summary: 'One organization',
     tags: ['Organizations'],
     security: [{ bearerAuth: [] }],
+    middleware: [requirePermission('org:read')] as const,
     request: { params: IdParam },
     responses: {
       200: { description: 'The organization', content: { 'application/json': { schema: OrganizationSchema } } },
@@ -324,7 +328,7 @@ organizations.openapi(
     middleware: [requirePermission('member:update_role')] as const,
     request: {
       params: z.object({ id: z.string().uuid(), accountId: z.string().uuid() }),
-      body: { content: { 'application/json': { schema: z.object({ role: RoleSchema }) } } },
+      body: { content: { 'application/json': { schema: z.object({ role: AssignableRoleSchema }) } } },
     },
     responses: {
       200: { description: 'Updated', content: { 'application/json': { schema: MemberSchema } } },
@@ -420,7 +424,7 @@ organizations.openapi(
       body: {
         content: {
           'application/json': {
-            schema: z.object({ email: z.string().email(), role: RoleSchema }),
+            schema: z.object({ email: z.string().email(), role: AssignableRoleSchema }),
           },
         },
       },

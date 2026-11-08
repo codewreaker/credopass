@@ -31,7 +31,13 @@ export type EventStatus = z.infer<typeof EventStatusEnum>;
 export const OrgPlanEnum = z.enum(['free', 'starter', 'pro', 'enterprise']);
 export type OrgPlan = z.infer<typeof OrgPlanEnum>;
 
-/** `owner ⊃ admin ⊃ organizer ⊃ checkin`; `viewer` is a separate read-only branch. */
+/**
+ * `owner ⊃ admin ⊃ organizer ⊃ checkin` — the four assignable roles.
+ *
+ * `viewer` stays in the enum because it is a value of the `org_role` Postgres
+ * type, the default of two columns and `normaliseRole`'s fallback. It is NOT
+ * assignable: see `ASSIGNABLE_ORG_ROLES` in the API's authz/permissions.ts.
+ */
 export const OrgRoleEnum = z.enum(['owner', 'admin', 'organizer', 'checkin', 'viewer']);
 export type OrgRole = z.infer<typeof OrgRoleEnum>;
 

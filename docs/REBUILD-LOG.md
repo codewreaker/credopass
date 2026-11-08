@@ -1882,6 +1882,74 @@ Three things in it are worth knowing without reading it:
 
 ---
 
+## 2026-11-08 (night) — the organisation model named, the roles cut, two defects found
+
+Triggered by feedback, not a bug: *"when an event is created and shared, users see 'My
+Organisation'."* The name had already been fixed once, withheld once (`cd05245`) and republished
+once (`b86ba60`) the same day. Three passes at a naming problem meant it was not a naming problem.
+
+**The diagnosis.** One `organizations` row does two incompatible jobs: it is the **tenant boundary**
+(billing, staff, people, RLS) and the **public host identity** on an invite. No single name satisfies
+both — "Kharis Church" is right for billing and wrong on an Accra-branch event page.
+
+### Decisions
+
+| | |
+|---|---|
+| **D45** | **The three concepts are account / organisation / membership, and permissions are not a fourth.** *Permissions* and *access* are not separate from membership — they **are** membership. You do not have permissions; you have a membership, and it carries a role. Written into `CLAUDE.md` and `FORENSICS.md`. |
+| **D46** | **Every public identity is its own tenant, as a peer — not a child.** "Blazers" sits beside "Israel", not under him. A sub-org hierarchy was considered and rejected: the need it answers (branches of one institution) is a *different* need from a second unrelated identity, and the hierarchy serves the first while being actively wrong for the second. Confirmed by Luma, whose Personal→Team calendar conversion happens **in place, keeping billing** — so a tenant from day one is what makes growth free. |
+| **D47** | **A group layer goes ABOVE organisations, never a scoping dimension inside them.** This is why it does not contradict **D7**. D7 forbade "a second scoping dimension to every query and every RLS policy"; grouping above adds none — `ctx.organizationId` stays singular everywhere it is today, and `app.current_org_ids()` (`drizzle/0001_rls.sql:65-72`) already returns a **set** that all policies compare with `= ANY (…)`, so a group membership widens **one function**, not sixteen policies. You can always group; you cannot easily split. Not built. |
+| **D48** | **A branch never gets its own login.** A branch is an `organizations` row; a branch head is an `account` with a membership. Shared branch logins would destroy `attendance.checked_in_by_account_id` — "who checked this guest in?" would collapse from one answer per person to one per branch. |
+| **D49** | **`viewer` becomes non-assignable rather than deleted.** It and `checkin` were near-duplicates differing on one axis each (viewer held `member:read` + `analytics:read`; checkin holds `attendance:record`), so neither contained the other — that was the cross-over, and it was the *sole* reason `ROLE_PERMISSIONS` was hand-written rather than derived. **Deviation from the plan, deliberately:** the plan said remove it outright with a migration. On implementation that is the wrong trade. `viewer` is a value of the `org_role` Postgres enum (and `ALTER TYPE … DROP VALUE` does not exist), the default of two columns, and `normaliseRole`'s fallback — a read-only default is the correct least-privilege answer. So `ASSIGNABLE_ORG_ROLES` is the four that may be granted and `ORG_ROLES` still resolves five. Request schemas use `AssignableRoleSchema`, responses use `RoleSchema`. Same UI simplification, no risky enum or default migration, and a future group-level viewer keeps its target. |
+| **D50** | **A declared permission must also be enforced, and a test says so.** See the defect below. |
+
+### Two defects found while auditing the contract
+
+**Declared ≠ enforced.** `GET /organizations/{id}` and `GET /media/recent` declared a permission and
+carried **no `requirePermission` middleware**. Every other org-scoped route does. The boot assertion
+validates the *declaration*; it cannot see whether the middleware is wired. Impact was nil — both
+permissions are held by every role, so any member could call them anyway — which is precisely why
+nobody noticed, and precisely why it would have bitten the first time either permission was
+tightened. Both fixed, and `src/test/route-enforcement.test.ts` now fails if a declaration and its
+enforcement disagree.
+
+**A client-supplied primary key.** `POST /organizations` accepted `id: z.string().uuid().optional()`
+and passed it to the insert. It could not take over an existing organisation (the PK conflict throws)
+but a client must not choose server-side identifiers, and the collision surfaced as a 500 rather than
+a declared response. Removed from the schema and from `createOrganization`'s input type. **`POST
+/events` still honours a client UUID** through a different shape — recorded, not changed.
+
+### Also
+
+- Three of 25 permissions have **no route behind them**: `series:manage`, `attendance:amend`,
+  `analytics:export`. They are granted to organizer-and-above and shipped to clients in
+  `/me/context` against no endpoint. Recorded, not removed; no test asserts the inverse direction.
+- Six permissions are held by *every* role, so they distinguish nothing and effectively mean "any
+  active member". Recorded.
+- `OrgSummary.role` is an open `z.string()` while `Member.role` is the closed enum, so
+  `/me/context` publishes the role as a free string. Recorded.
+- **`FORENSICS.md` added at the repo root** — the three concepts, all 51 endpoints with scope and
+  permission, the role matrix with the cross-over analysis, the defects, and the open investigation.
+  The API is the contract, so the contract now has one place to be read.
+- Documentation corrected: `README.md` had two dead links (`docs/API-FIRST-REBUILD.md`, archived;
+  `docs/NEXT-UI-LIST.md`, deleted) and one flatly wrong claim — that the remote Supabase instance was
+  **not** migrated, when it has been at 8/8 since 2026-11-07. Counts were stale throughout (11 tables
+  → 13, 47 adversarial tests → 52, T48 added here, 4 migrations → 8). `docs/README.md` was stamped 2026-11-06 while
+  this log carried eight entries from 2026-11-08, listed `docs/ai-sidebar/` nowhere despite its own
+  rule that everything in `docs/` must be listed, and still called B2 an open bug. `ROADMAP.md`
+  contradicted itself on B2 — the code wins; corrected.
+
+### ⚠️ Open, and deliberately not closed
+
+**Cross-account event visibility, reported 2026-11-08.** Events created on a second person's account
+became visible on the maintainer's after he created a new organisation. `membership.ts`, `tickets.ts`,
+`me.ts` and `requireTenant` were audited and are correctly scoped — **no org-scoped read path was
+found that returns another account's organisation.** Three hypotheses remain undiscriminated (the same
+Google account on both phones; claim-by-verified-email working as designed; a genuine leak), and the
+discriminator is one observation: whether the pill on those rows read "Host" or
+"Going/Registered/Went". Parked at the maintainer's instruction, with the question recorded in
+`FORENSICS.md` §8. **Not reproduced, not explained, not dismissed.**
+
 ## Conventions worth knowing
 
 1. Every route is created with `defineRoute` and declares `scope` (+ `permission` if org-scoped).

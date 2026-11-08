@@ -75,7 +75,7 @@ const slugify = (input: string): string =>
 export async function createOrganization(
   db: Database,
   accountId: string,
-  input: { id?: string; name: string; slug?: string; timezone?: string }
+  input: { name: string; slug?: string; timezone?: string }
 ): Promise<OrganizationSummary> {
   await assertCanOwnAnother(db, accountId);
 
@@ -103,13 +103,12 @@ export async function createOrganization(
 async function insertOrganization(
   db: Database,
   accountId: string,
-  input: { id?: string; name: string; slug: string }
+  input: { name: string; slug: string }
 ): Promise<OrganizationSummary> {
   return db.transaction(async (tx) => {
     const [org] = await tx
       .insert(organizations)
       .values({
-        ...(input.id ? { id: input.id } : {}),
         name: input.name,
         slug: input.slug,
         // `plan` is server-forced. A client that sends "enterprise" gets free.

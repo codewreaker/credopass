@@ -46,6 +46,7 @@ import {
   useUpdateMemberRole,
   useUpdateOrganization,
   type Member,
+  type AssignableRole,
   type Role,
 } from '@credopass/api-client';
 import { Avatar, AvatarFallback } from '@credopass/ui/components/avatar';
@@ -80,12 +81,11 @@ const TAB_LABELS: Record<AccountTab, { label: string; icon: typeof UserRound }> 
   settings: { label: 'Settings', icon: Settings },
 };
 
-const ROLES: { value: Role; label: string }[] = [
+const ROLES: { value: AssignableRole; label: string }[] = [
   { value: 'owner', label: 'Owner' },
   { value: 'admin', label: 'Admin' },
   { value: 'organizer', label: 'Organizer' },
   { value: 'checkin', label: 'Check-in' },
-  { value: 'viewer', label: 'Viewer' },
 ];
 
 export default function AccountPage() {
@@ -478,7 +478,7 @@ function MembersTab() {
     );
   }
 
-  const changeRole = async (member: Member, role: Role) => {
+  const changeRole = async (member: Member, role: AssignableRole) => {
     try {
       await updateRole.mutateAsync({ accountId: member.accountId, role });
       toast.success(`${member.displayName ?? member.email} is now ${role}`);
@@ -527,7 +527,7 @@ function MembersTab() {
                 {canUpdateRole && !lastOwner ? (
                   <Select
                     value={member.role}
-                    onValueChange={(v) => v && changeRole(member, v as Role)}
+                    onValueChange={(v) => v && changeRole(member, v as AssignableRole)}
                   >
                     <SelectTrigger className="h-8 w-32 shrink-0 rounded-full text-xs">
                       <SelectValue />
@@ -602,7 +602,7 @@ function InvitationsSection({
 }) {
   const createInvitation = useCreateInvitation(organizationId);
   const [email, setEmail] = useState('');
-  const [role, setRole] = useState<Role>('organizer');
+  const [role, setRole] = useState<AssignableRole>('organizer');
   // The token is returned once, so the link it forms only exists in this
   // component's state. Refreshing the page loses it — which is why the copy says
   // to send it now.
@@ -618,7 +618,7 @@ function InvitationsSection({
    * same request — which is the only way to recover a link that was never
    * copied, since the token is stored as a hash and there is no email (D18).
    */
-  const issue = async (to: string, as: Role) => {
+  const issue = async (to: string, as: AssignableRole) => {
     try {
       const invitation = await createInvitation.mutateAsync({ email: to.trim(), role: as });
       setLinks((current) => ({
@@ -663,7 +663,7 @@ function InvitationsSection({
             if (e.key === 'Enter') send();
           }}
         />
-        <Select value={role} onValueChange={(v) => setRole((v as Role) ?? 'organizer')}>
+        <Select value={role} onValueChange={(v) => setRole((v as AssignableRole) ?? 'organizer')}>
           <SelectTrigger className="h-10 w-full rounded-xl sm:w-36">
             <SelectValue />
           </SelectTrigger>

@@ -428,8 +428,6 @@ export interface paths {
             requestBody?: {
                 content: {
                     "application/json": {
-                        /** Format: uuid */
-                        id?: string;
                         name: string;
                         slug?: string;
                         timezone?: string;
@@ -833,7 +831,7 @@ export interface paths {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        role: "owner" | "admin" | "organizer" | "checkin" | "viewer";
+                        role: "owner" | "admin" | "organizer" | "checkin";
                     };
                 };
             };
@@ -943,7 +941,7 @@ export interface paths {
                         /** Format: email */
                         email: string;
                         /** @enum {string} */
-                        role: "owner" | "admin" | "organizer" | "checkin" | "viewer";
+                        role: "owner" | "admin" | "organizer" | "checkin";
                     };
                 };
             };

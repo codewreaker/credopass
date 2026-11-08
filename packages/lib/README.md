@@ -32,7 +32,7 @@ the client's types all follow. **Never hand-write a type or validator that dupli
 
 | Path | What's inside |
 |------|---------------|
-| `src/schemas/tables/` | **Drizzle table definitions** — the source of truth. 11 tables (see below). |
+| `src/schemas/tables/` | **Drizzle table definitions** — the source of truth. 13 tables (see below). |
 | `src/schemas/tables/index.ts` | Drizzle `relations()` + the composed `schema` object handed to the DB client. |
 | `src/schemas/enums.ts` | Shared Zod enums (event status, org plan, org role, check-in method, attendance state). |
 | `src/stores/` | Zustand stores (`appStore`, `toolbarStore`) shared by the web UI. |
@@ -44,7 +44,7 @@ the client's types all follow. **Never hand-write a type or validator that dupli
 > schemas beside each route in `services/core`, which are also what generate the OpenAPI document —
 > one definition, not two.
 
-## The data model (11 tables)
+## The data model (13 tables)
 
 The rewrite split the old `users` table three ways. That split is the whole tenancy model, so it is
 worth holding in your head:
