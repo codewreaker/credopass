@@ -1,5 +1,12 @@
 # The Copilot rail — 5-day plan (pydantic-ai · AG-UI · FastAPI)
 
+> **Read [`AGENTIC-CHAT.md`](AGENTIC-CHAT.md) alongside this.** This file is the
+> delivery shape — the stack, the adapter, the 5-day split. That one is what the
+> agent is *allowed to do*: the tool catalogue, the approval model, undo, and
+> the prompt-injection vector that `POST /public/events/{id}/register` opens up.
+> This plan treats all of that as one row in a table; it is actually the hard
+> half, and §6 there is a gate on writing any write tool.
+
 **Status: active. Recompressed 2026-09-06 from 14 days to 5.** Working days **Mon 8 – Fri 12
 September**, ~6–8h/day (~35h). Interview ~2026-09-16, so Sat 13 – Mon 15 are slack, not plan.
 

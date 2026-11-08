@@ -120,10 +120,9 @@ function PublicEventView({ event }: { event: PublicEvent }) {
         <div aria-hidden className="pointer-events-none absolute -right-6 -top-32 size-64 rounded-full border border-primary-foreground/10" />
 
         <div className="relative flex items-center gap-2">
-          {/* Absent when the host never named their organisation — the API
-              withholds a generated name rather than publishing somebody's
-              own first name to the people they invited. An empty pill would
-              be worse than no pill. */}
+          {/* Who is running this. An invitee deciding whether to turn up wants
+              to know, so it is always published — the guard is only against an
+              empty string, where a pill with nothing in it is worse than none. */}
           {event.organizationName && (
             <span className="min-w-0 truncate rounded-full bg-primary-foreground/10 px-2.5 py-1 text-[11px] font-semibold">
               {event.organizationName}

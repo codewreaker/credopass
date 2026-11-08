@@ -37,7 +37,6 @@ import type { Database } from '../db/client';
 import { deriveEventFormat, type EventFormat } from './event-format';
 import { deriveStatus, type EventStatus } from './event-status';
 import { ProblemCode, problem } from '../http/problem';
-import { isGeneratedOrganizationName } from './membership';
 import * as Pass from './pass';
 
 /** Which half of the list: what is still to come, or what already happened. */
@@ -65,15 +64,8 @@ export interface Ticket {
   meetingUrl: string | null;
   format: EventFormat;
   coverImageUrl: string | null;
-  /**
-   * Who is running it, or `null` when nobody chose a name.
-   *
-   * Same rule as the public event page, and for the same reason: this list
-   * shows an attendee the organisations of events they went to, which is
-   * exactly the audience a generated `X's organization` was leaking a host's
-   * personal name to.
-   */
-  organizationName: string | null;
+  /** Who is running it. The only thing this list says about the organisation. */
+  organizationName: string;
   /** `registered` · `attended` · `no_show` … — the recorded fact, not a guess. */
   attendanceState: AttendanceState;
   registeredAt: string | null;
@@ -156,9 +148,7 @@ export async function listTickets(
     meetingUrl: row.meetingUrl,
     format: deriveEventFormat({ locationText: row.location, meetingUrl: row.meetingUrl }),
     coverImageUrl: row.coverImageUrl,
-    organizationName: isGeneratedOrganizationName(row.organizationName)
-      ? null
-      : row.organizationName,
+    organizationName: row.organizationName,
     attendanceState: row.attendanceState,
     registeredAt: row.registeredAt?.toISOString() ?? null,
     checkInTime: row.checkInTime?.toISOString() ?? null,

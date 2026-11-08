@@ -12,6 +12,7 @@ import {
 } from '@credopass/api-client';
 import EventListView from './EventListView';
 import { useMergedEvents, type ListEvent } from './use-merged-events';
+import { HostNamePrompt } from './host-name-prompt';
 import EventCalendar from '@credopass/ui/components/event-calendar';
 import { CalendarPlus, CalendarsIcon, MapPin, Users, Clock, ScanLine, ArrowUpRight, Plus, ChevronUp, ChevronDown, Sparkles, Pencil } from 'lucide-react';
 import { useStatusFilter, useToolbarContext } from '@credopass/lib/hooks';
@@ -409,6 +410,10 @@ const EventsPage = () => {
         <div className="events-page">
             {/* Greeting, then the one filter, then the two shortcuts.
                 Three rows, each saying something the others do not (F2–F4). */}
+            {/* Before the greeting, because it is about what strangers are
+                already seeing rather than about this session. */}
+            <HostNamePrompt />
+
             <div className="events-header">
                 <div className="events-header-left">
                     <h1 className="events-header-title">

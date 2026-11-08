@@ -25,6 +25,10 @@ import {
 import type { Database } from '../db/client';
 import { ProblemCode, problem } from '../http/problem';
 import type { OrgRole } from '../authz/permissions';
+import {
+  DEFAULT_ORGANIZATION_NAME,
+  isGeneratedOrganizationName,
+} from '@credopass/lib/schemas/organization-name';
 import { DEFAULT_PLAN, orgLimitFor, type OrgPlan } from '../authz/plans';
 import { normaliseRole } from './identity';
 
@@ -183,38 +187,10 @@ async function assertCanOwnAnother(db: Database, accountId: string): Promise<voi
  * it has to be a deliberate decision about what is safe to publish, not a
  * parameter that is quietly still there.
  */
-export function defaultOrganizationName(): string {
-  return 'My organization';
-}
+export { isGeneratedOrganizationName };
 
-/**
- * Was this name generated for the owner rather than chosen by them?
- *
- * **Why a published field needs this.** `organizations.name` is the one
- * organiser-controlled string that reaches strangers — it is on the public
- * event page and on every attendee's pass. The default used to be
- * `` `${who}'s organization` ``, built from the account's first name or email
- * local part, which meant a host who never visited Settings published their
- * own name to everyone they invited. The generator was fixed (F7) but the rows
- * it had already written were left alone on purpose: renaming someone's
- * organisation is their call, not a migration's.
- *
- * That left the leak in place for every account created before the fix. This
- * closes it from the other end — the name is simply not published until
- * somebody chooses one. The row is untouched, the console still shows it, and
- * the owner can rename whenever they like.
- *
- * **It fails safe, and that direction is deliberate.** A real organisation
- * genuinely called "Dave's Organization" is suppressed too, which costs Dave a
- * label on his event page until he renames it. Publishing a personal name
- * nobody chose is the worse error, so the ambiguous case loses.
- */
-export function isGeneratedOrganizationName(name: string): boolean {
-  const trimmed = name.trim();
-  if (trimmed.toLowerCase() === defaultOrganizationName().toLowerCase()) return true;
-  // The legacy shape: anything + "'s organization". Both apostrophes, because
-  // the generator used a straight one and a rename could round-trip a curly.
-  return /^.+['’]s organization$/i.test(trimmed);
+export function defaultOrganizationName(): string {
+  return DEFAULT_ORGANIZATION_NAME;
 }
 
 /**

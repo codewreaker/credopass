@@ -43,7 +43,7 @@ const PublicEventSchema = z
     location: z.union([z.string(), z.null()]),
     meetingUrl: z.union([z.string(), z.null()]),
     format: z.enum(EVENT_FORMATS),
-    organizationName: z.union([z.string(), z.null()]),
+    organizationName: z.string(),
     coverImageUrl: z.union([z.string(), z.null()]),
     allowSelfCheckIn: z.boolean(),
     capacityRemaining: z.number().int().nullable(),

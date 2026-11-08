@@ -247,7 +247,7 @@ const TicketSchema = z
     meetingUrl: z.union([z.string(), z.null()]),
     format: z.enum(EVENT_FORMATS),
     coverImageUrl: z.union([z.string(), z.null()]),
-    organizationName: z.union([z.string(), z.null()]),
+    organizationName: z.string(),
     attendanceState: z.enum(Tickets.ATTENDANCE_STATES),
     registeredAt: z.union([z.string(), z.null()]),
     checkInTime: z.union([z.string(), z.null()]),

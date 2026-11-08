@@ -1822,6 +1822,66 @@ and the ~700MB download means organiser-side only, never on `/e/{id}` or `/p/{to
 
 ---
 
+## 2026-11-08 (evening) — the host is back, and the name gets fixed instead
+
+**The correction.** Withholding the organisation name from the public page was
+the wrong fix. Maintainer: *"I agree attendees should know who is organising the
+event. I think we need it back — the 'organisation' name is what was confusing
+it."*
+
+Right. The objection was never that invitees see a host — every events product
+shows one, because somebody deciding whether to turn up wants to know who is
+running it. The objection was that `Israel's organization` **is not a host**. It
+is a person with a noun stapled on, and it reads as a placeholder somebody
+forgot to fill in. Hiding it solved that twice over in the wrong direction: the
+invitee lost information they wanted, and the bad name stayed exactly where it
+was.
+
+So `organizationName` is published again, unconditionally, and
+`isGeneratedOrganizationName` moved to `packages/lib/src/schemas/organization-name.ts`
+where it now does a different job: it decides whether the **console nags the
+owner to choose a name**.
+
+`HostNamePrompt` sits above the greeting on `/events` — the screen a host opens
+every time, rather than Settings, where the people who need it have already
+demonstrated they do not go. It names the consequence rather than the setting
+("Your events are going out as 'Israel's organization'. That name is on every
+event page and every pass you send") because the setting is a chore and the
+consequence is a reason. Dismissible, and renaming removes it on its own since
+the predicate stops matching.
+
+The predicate now over-matches deliberately and the test says so: a real
+"Dave's Organization" gets one dismissible prompt, which is a far smaller harm
+than never prompting the accounts whose name really is a leftover. When it
+gated a published field that trade was the other way round.
+
+### The agentic copilot is specified, not built
+
+[`docs/ai-sidebar/AGENTIC-CHAT.md`](ai-sidebar/AGENTIC-CHAT.md) — design only, at
+the maintainer's request, modelled on Cloudflare's **Agent Lee** (approval-gated
+actions, undo, diagnostics, generative UI).
+
+Three things in it are worth knowing without reading it:
+
+- **The agent gets no permissions of its own.** Every tool forwards the caller's
+  real token to v1, so the role matrix that already exists is the only
+  authorization, and there is no new surface to audit.
+- **The tool catalogue is short on purpose.** Reads are generous; writes are
+  five; and there is an explicit never-list — deletes, members, invitations,
+  billing, and anything touching a pass, because a pass is a bearer credential
+  and reissuing one revokes a link held by somebody who is not in the
+  conversation.
+- **CredoPass has a prompt-injection vector Cloudflare's analogy does not.**
+  `POST /public/events/{id}/register` takes a first and last name from anyone
+  with the link, no credential. Those strings land in the attendee list, which
+  is what a `list_people` tool would feed into the model's context — so the
+  entire internet can write into the agent's prompt. Approval on every write is
+  the control that makes this survivable, which is the strongest argument for
+  keeping the write list tiny. §6 of that document is a gate: if the injection
+  story is not agreed, read-only ships and write tools do not.
+
+---
+
 ## Conventions worth knowing
 
 1. Every route is created with `defineRoute` and declares `scope` (+ `permission` if org-scoped).

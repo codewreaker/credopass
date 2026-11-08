@@ -324,14 +324,7 @@
             ]
           },
           "organizationName": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ]
+            "type": "string"
           },
           "attendanceState": {
             "type": "string",
@@ -1038,14 +1031,7 @@
             ]
           },
           "organizationName": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ]
+            "type": "string"
           },
           "coverImageUrl": {
             "anyOf": [

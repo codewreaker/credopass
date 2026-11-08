@@ -3129,7 +3129,7 @@ export interface components {
             /** @enum {string} */
             format: "in_person" | "online" | "hybrid" | "unspecified";
             coverImageUrl: string | null;
-            organizationName: string | null;
+            organizationName: string;
             /** @enum {string} */
             attendanceState: "registered" | "attended" | "no_show" | "cancelled";
             registeredAt: string | null;
@@ -3291,7 +3291,7 @@ export interface components {
             meetingUrl: string | null;
             /** @enum {string} */
             format: "in_person" | "online" | "hybrid" | "unspecified";
-            organizationName: string | null;
+            organizationName: string;
             coverImageUrl: string | null;
             allowSelfCheckIn: boolean;
             capacityRemaining: number | null;
