@@ -29,7 +29,12 @@ export interface EventRowModel {
     /** NULL for an online event, or one with no venue decided yet (B3/F16). */
     location: string | null;
     capacity: number | null;
-    organizationName?: string;
+    /**
+     * `null` is a real value here, not a missing one: the API withholds an
+     * organisation name the owner never chose rather than publishing it. The
+     * row renders no label for either case.
+     */
+    organizationName?: string | null;
     counts?: { registered: number; attended: number };
     /**
      * The poster (F14). When present the row shows a thumbnail of it INSTEAD of

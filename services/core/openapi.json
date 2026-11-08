@@ -324,7 +324,14 @@
             ]
           },
           "organizationName": {
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "attendanceState": {
             "type": "string",
@@ -859,6 +866,30 @@
           "contentType"
         ]
       },
+      "RecentAsset": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "url": {
+            "type": "string"
+          },
+          "contentType": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "url",
+          "contentType",
+          "createdAt"
+        ]
+      },
       "AttendanceResult": {
         "type": "object",
         "properties": {
@@ -1007,7 +1038,14 @@
             ]
           },
           "organizationName": {
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "coverImageUrl": {
             "anyOf": [
@@ -4283,6 +4321,75 @@
           },
           "404": {
             "description": "Upload not found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/media/recent": {
+      "get": {
+        "summary": "Recently uploaded images, newest first",
+        "tags": [
+          "Media"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 24,
+              "default": 12
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ready assets belonging to this organisation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "assets": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/RecentAsset"
+                      }
+                    }
+                  },
+                  "required": [
+                    "assets"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid token",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed to read media here",
             "content": {
               "application/problem+json": {
                 "schema": {

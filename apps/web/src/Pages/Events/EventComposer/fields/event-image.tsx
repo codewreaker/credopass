@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { useUploadImage, type UploadProgress } from '@credopass/api-client';
+import { useRecentMedia, useUploadImage, type UploadProgress } from '@credopass/api-client';
 import { AlertTriangle, Check, ImagePlus, Link2, Loader2, Trash2, Upload, X } from 'lucide-react';
 import { POSTER_TEMPLATES } from '@credopass/lib/schemas/poster-templates';
 import { Button } from '@credopass/ui/components/button';
@@ -62,6 +62,11 @@ export function EventImage({ src, onPick, className }: EventImageProps) {
   const [progress, setProgress] = useState<UploadProgress | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const upload = useUploadImage();
+
+  // Only fetched once the tray is open. Most composer sessions never open it,
+  // and this is an org-scoped request that would otherwise fire on every
+  // event anybody starts creating.
+  const { data: recents = [] } = useRecentMedia({ enabled: pickerOpen });
 
   const [localPreview, setLocalPreview] = useState<string | null>(null);
   const isDefault = !src && !localPreview;
@@ -246,6 +251,68 @@ export function EventImage({ src, onPick, className }: EventImageProps) {
               <X size={14} />
             </Button>
           </div>
+
+          {/*
+            Recents first, because an organisation that has uploaded artwork
+            before is almost always reusing it rather than browsing ours — a
+            church running the same service every Sunday wants last Sunday's
+            poster, not a new abstract one.
+
+            Selecting one points this event at the SAME stored object. It does
+            not copy it, which is the entire saving: no second upload, no
+            duplicate in the bucket.
+          */}
+          {recents.length > 0 && (
+            <>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+                Recent
+              </p>
+              <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
+                {recents.map((asset) => {
+                  const selected = src === asset.url;
+                  return (
+                    <button
+                      key={asset.id}
+                      type="button"
+                      onClick={() => applyTemplate(asset.url)}
+                      aria-pressed={selected}
+                      aria-label="Reuse a poster you uploaded before"
+                      className={cn(
+                        'relative aspect-4/5 overflow-hidden rounded-lg border-2 bg-muted transition-all',
+                        selected
+                          ? 'border-primary ring-2 ring-primary/30'
+                          : 'border-transparent hover:border-border-strong'
+                      )}
+                    >
+                      <img
+                        src={asset.url}
+                        alt=""
+                        aria-hidden
+                        loading="lazy"
+                        decoding="async"
+                        className="size-full object-cover"
+                      />
+                      {selected && (
+                        <span className="absolute inset-0 flex items-center justify-center bg-primary/25">
+                          <span className="flex size-5 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                            <Check size={12} strokeWidth={3} />
+                          </span>
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="flex items-center gap-2 pt-0.5">
+                <span className="h-px flex-1 bg-border" />
+                <span className="text-[10px] font-medium uppercase tracking-[0.1em] text-muted-foreground/70">
+                  or start from ours
+                </span>
+                <span className="h-px flex-1 bg-border" />
+              </div>
+            </>
+          )}
 
           <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
             {POSTER_TEMPLATES.map((template) => {

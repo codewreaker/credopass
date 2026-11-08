@@ -54,6 +54,15 @@ const AssetSchema = z
   })
   .openapi('Asset');
 
+const RecentAssetSchema = z
+  .object({
+    id: z.string().uuid(),
+    url: z.string(),
+    contentType: z.string(),
+    createdAt: z.string(),
+  })
+  .openapi('RecentAsset');
+
 mediaRoutes.openapi(
   defineRoute({
     method: 'post',
@@ -122,5 +131,47 @@ mediaRoutes.openapi(
     // HEADs the object rather than believing the client — see finaliseUpload.
     const asset = await Storage.finaliseUpload(db, c.get('tenant'), c.req.valid('param').id);
     return c.json(asset, 200);
+  }
+);
+
+/**
+ * Posters this organisation already has.
+ *
+ * `media:read`, not `media:upload`: listing what you already own is a read.
+ * The picker calls it so somebody creating this week's service can reuse last
+ * week's artwork instead of uploading it again — and reusing points the new
+ * event at the SAME object, so the bucket does not grow a duplicate.
+ */
+mediaRoutes.openapi(
+  defineRoute({
+    method: 'get',
+    path: '/media/recent',
+    scope: 'organization',
+    permission: 'media:read',
+    summary: "Recently uploaded images, newest first",
+    tags: ['Media'],
+    security: [{ bearerAuth: [] }],
+    request: {
+      query: z.object({
+        limit: z.coerce.number().int().min(1).max(24).default(12),
+      }),
+    },
+    responses: {
+      200: {
+        description: 'Ready assets belonging to this organisation',
+        content: {
+          'application/json': {
+            schema: z.object({ assets: z.array(RecentAssetSchema) }),
+          },
+        },
+      },
+      401: problemResponse('No valid token'),
+      403: problemResponse('Not allowed to read media here'),
+    },
+  }),
+  async (c) => {
+    const ctx = c.get('tenant');
+    const { limit } = c.req.valid('query');
+    return c.json({ assets: await Storage.recentAssets(await getDatabase(), ctx, limit) }, 200);
   }
 );

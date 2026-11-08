@@ -1738,6 +1738,90 @@ casting around it.
 
 ---
 
+## 2026-11-08 (afternoon) — a published personal name, reusable posters, and a sweeper
+
+### The organisation name was publishing the host's own name
+
+Reported as *"the shared QR code has the person who created it's organisation — an invited person
+doesn't need that information. Seems like a backend security issue."*
+
+**The QR is clean** — it encodes the `/e/{id}` URL and nothing else. The exposure is
+`organizationName` in the public payload, and the cause is older than the QR: the default used to
+be `` `${who}'s organization` ``, built from the account's first name or email local part. That
+generator was fixed to `My organization` (F7) and the rows it had already written were left alone
+on purpose, because renaming somebody's organisation is their decision. Which left every
+pre-existing account — including the maintainer's, still `Israel's organization` — publishing a
+personal name on every event page and every pass.
+
+Closed from the publishing end instead: `isGeneratedOrganizationName` withholds a name nobody
+chose, in `loadPublicEvent` (which the pass embeds) and in `/me/tickets`. The row is untouched and
+the console still shows it. Verified against the running API — an event in `Israel's organization`
+now returns `null`, one in `Kharis Church` still returns `Kharis Church`.
+
+**It fails safe, and that direction is deliberate.** A real `Dave's Organization` is suppressed
+too and loses its label until renamed. Publishing a name nobody chose is the worse error, so the
+ambiguous case loses. Seven unit tests pin both directions.
+
+> **Still open, and it is the maintainer's call:** whether the host should appear on the public
+> page at all. The argument for keeping it is that an attendee wants to know who is running the
+> event, which is why Luma shows it. Nothing is leaked either way now.
+
+### Posters can be reused instead of re-uploaded
+
+`GET /media/recent` (`media:read`, org-scoped) plus a **Recent** row above the built-in posters.
+Selecting one points the new event at the **same stored object** — it does not copy it — so a
+church running the same service weekly stops re-uploading the same artwork and the bucket stops
+growing a duplicate. Fetched only once the tray is open, and invalidated after an upload so the
+image just added is at the top.
+
+### The sweeper, and why it is not the job that was asked for
+
+The ask was "delete the R2 objects behind soft-deleted events, weekly". The query is deliberately
+not that, because **an object is not owned by an event** — and the Recents row above makes one
+object backing several events the ordinary case. Deleting on event-deletion would blank the poster
+on every other event still using it.
+
+So `sweepOrphanedMedia` asks *"does any live event still reference this object"*, per object. Two
+classes: `pending` past its TTL, and `ready` that nothing references and is older than
+`ORPHAN_GRACE_MS` (7 days). The row is soft-deleted, never dropped, and a storage delete that
+fails leaves the row alone so the next run retries — never soft-delete a row whose bytes survive.
+
+**The grace period is what makes the schedule unimportant.** An image sitting in an unsubmitted
+composer is referenced by nothing for those minutes; a week of grace means a sweep that runs
+daily, weekly, or twice because the service restarted can never take it.
+
+It runs **in the service**, daily, armed two minutes after boot — not in CI, because the sweep
+needs the production `DATABASE_URL` and the bucket credentials and CI is deliberately given
+neither. Daily rather than weekly because a timer inside a process is reset by every deploy, so a
+weekly one in a service that ships more often than weekly would mostly never fire.
+
+Six integration tests, written as the failure modes: an asset two events share survives one of them
+being deleted; a recent unattached upload is spared; one organisation's asset is not reclaimed
+because another deleted an event.
+
+### Recurring events — unchanged, and already documented
+
+No code written. [`RECURRING-EVENTS.md`](RECURRING-EVENTS.md) is the brief — the implementation was
+built and removed the same day, and §6 is the bar for un-pausing. The composer's Repeat control
+already says so on screen. The blocker is R-1: a series stops dead at the horizon and nothing says
+so.
+
+### The AI sidebar plan was restored
+
+`docs/ai-sidebar/AI-SIDEBAR-PLAN.md` had been deleted in a tree-wide refactor (`f4907dd`) while
+`services/ai-chat/src/app/settings.py` still cited it by name — the only tracked Python file in
+the repo pointed at a document that was not there. Restored, with a new §10 answering "free models
+that work in-browser".
+
+**§10's finding is a tension, not a shopping list.** The plan puts inference server-side because
+the tools forward *the caller's own token*, which is the security property the whole design rests
+on. A model in the tab cannot hold that agent loop without making every guard-rail advisory, and
+it skips AG-UI — the thing being learned — entirely. In-browser is worth having for jobs with no
+data access (summarising text the user just typed, embeddings over what is already on the page),
+and the ~700MB download means organiser-side only, never on `/e/{id}` or `/p/{token}`.
+
+---
+
 ## Conventions worth knowing
 
 1. Every route is created with `defineRoute` and declares `scope` (+ `permission` if org-scoped).

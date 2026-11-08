@@ -15,9 +15,17 @@
  * for the extra header anyway.
  */
 
-import { useMutation, type UseMutationResult } from '@tanstack/react-query';
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+  type UseMutationResult,
+  type UseQueryResult,
+} from '@tanstack/react-query';
 import { api } from '../client';
-import type { Asset } from '../types';
+import { queryKeys } from '../query-keys';
+import { useActiveOrganizationId } from '../active-organization';
+import type { Asset, RecentAsset } from '../types';
 import { unwrap } from './internal';
 import { compressImage, type CompressedImage } from '../image';
 
@@ -42,6 +50,9 @@ export interface UploadImageInput {
  * ceiling is a backstop for clients that are not ours, not the mechanism.
  */
 export function useUploadImage(): UseMutationResult<Asset, Error, UploadImageInput> {
+  const queryClient = useQueryClient();
+  const organizationId = useActiveOrganizationId();
+
   return useMutation({
     mutationFn: async ({ file, onProgress }) => {
       onProgress?.({ fraction: null, stage: 'compressing' });
@@ -77,5 +88,38 @@ export function useUploadImage(): UseMutationResult<Asset, Error, UploadImageInp
         })
       );
     },
+    onSuccess: () => {
+      // The image just uploaded is the one most likely to be picked again, so
+      // it has to be at the top of Recents the next time the tray opens —
+      // not after a 60s staleTime.
+      queryClient.invalidateQueries({
+        queryKey: ['org', organizationId ?? null, 'media', 'recent'],
+      });
+    },
+  });
+}
+
+/**
+ * Images this organisation has already uploaded, newest first.
+ *
+ * Backs the composer's "Recents" row. Selecting one points the new event at
+ * the SAME stored object — it does not copy it — which is the whole point:
+ * a church running the same service weekly stops re-uploading the same
+ * artwork and the bucket stops growing a duplicate each time.
+ *
+ * Org-scoped, so the key carries the organisation and a switch is a miss.
+ */
+export function useRecentMedia(
+  options?: { limit?: number; enabled?: boolean }
+): UseQueryResult<RecentAsset[]> {
+  const organizationId = useActiveOrganizationId();
+  const limit = options?.limit ?? 12;
+
+  return useQuery({
+    queryKey: queryKeys.recentMedia(organizationId, limit),
+    queryFn: async () =>
+      (await unwrap(api.GET('/media/recent', { params: { query: { limit } } }))).assets,
+    enabled: (options?.enabled ?? true) && !!organizationId,
+    staleTime: 60_000,
   });
 }

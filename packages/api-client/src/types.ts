@@ -51,6 +51,8 @@ export type ClaimResult = components['schemas']['ClaimResult'];
 export type MeContext = components['schemas']['MeContext'];
 export type OrgSummary = components['schemas']['OrgSummary'];
 export type Asset = components['schemas']['Asset'];
+/** An image this organisation already uploaded — `GET /media/recent`. */
+export type RecentAsset = components['schemas']['RecentAsset'];
 
 /**
  * The permission strings `/me/context` ships in `membership.permissions`.

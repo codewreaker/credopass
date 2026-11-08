@@ -16,6 +16,7 @@ import { attendance, events, organizations, people } from '@credopass/lib/schema
 import type { Database } from '../db/client';
 import { ProblemCode, problem } from '../http/problem';
 import { deriveStatus, type EventStatus } from './event-status';
+import { isGeneratedOrganizationName } from './membership';
 
 export interface PublicEvent {
   id: string;
@@ -28,7 +29,15 @@ export interface PublicEvent {
   location: string | null;
   meetingUrl: string | null;
   format: EventFormat;
-  organizationName: string;
+  /**
+   * Who is hosting — or `null` when nobody has said.
+   *
+   * Nullable because an organisation name the OWNER never chose is not
+   * published. See `isGeneratedOrganizationName`: the default used to be built
+   * from the account's own first name, so this field was quietly putting a
+   * host's personal name in front of every stranger they invited.
+   */
+  organizationName: string | null;
   /** The poster. Shown on the public page and the pass (F14). */
   coverImageUrl: string | null;
   allowSelfCheckIn: boolean;
@@ -96,7 +105,12 @@ export async function loadPublicEvent(
     location: row.location,
     meetingUrl: row.meetingUrl,
     format: deriveEventFormat({ locationText: row.location, meetingUrl: row.meetingUrl }),
-    organizationName: row.organizationName,
+    // Only a name somebody chose. A generated one is withheld rather than
+    // published — this is the single organiser-controlled string that reaches
+    // people outside the organisation.
+    organizationName: isGeneratedOrganizationName(row.organizationName)
+      ? null
+      : row.organizationName,
     coverImageUrl: row.coverImageUrl,
     allowSelfCheckIn: row.allowSelfCheckIn,
     capacityRemaining,

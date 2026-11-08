@@ -42,9 +42,21 @@ import type { EventRelationship } from '@credopass/ui/components/event-row';
  * fabricated. Anything that needs them is a host-only action and narrows on
  * `relationship === 'host'` first.
  */
-export type ListEvent = Omit<Event, 'counts' | 'organizationId' | 'shortCode'> &
+export type ListEvent = Omit<
+  Event,
+  'counts' | 'organizationId' | 'shortCode' | 'organizationName'
+> &
   Partial<Pick<Event, 'counts' | 'organizationId' | 'shortCode'>> & {
     relationship: EventRelationship;
+    /**
+     * Nullable, unlike the host-facing `Event`.
+     *
+     * A guest row's organisation comes from `/me/tickets`, which withholds a
+     * name the owner never chose rather than publishing someone's personal
+     * name to the people they invited. The row renders no label when it is
+     * null.
+     */
+    organizationName: string | null;
   };
 
 /**

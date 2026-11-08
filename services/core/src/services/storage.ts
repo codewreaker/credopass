@@ -32,9 +32,9 @@
  * oversized one. See `finaliseUpload`.
  */
 
-import { and, eq, isNull, sql } from 'drizzle-orm';
+import { and, desc, eq, isNotNull, isNull, lt, or, sql } from 'drizzle-orm';
 import { S3Client } from 'bun';
-import { assets } from '@credopass/lib/schemas/tables';
+import { assets, events } from '@credopass/lib/schemas/tables';
 import type { Database } from '../db/client';
 import type { TenantContext } from '../tenancy/context';
 import { ProblemCode, problem } from '../http/problem';
@@ -365,4 +365,208 @@ export async function countAbandonedUploads(db: Database, now: Date = new Date()
       )
     );
   return row?.n ?? 0;
+}
+
+/**
+ * The organisation's recent posters, newest first.
+ *
+ * **Why this exists.** The composer offered a built-in poster, a file upload,
+ * or a pasted URL — and nothing for the image you uploaded last week. A church
+ * running the same service every Sunday had to re-upload the same artwork for
+ * every event, which costs them a round trip and costs the bucket a duplicate
+ * object every time.
+ *
+ * Tenant-scoped like everything else (`organization_id`, explicitly — golden
+ * rule 7), and `ready` only: a `pending` row is an upload that may never have
+ * landed, and nothing user-facing may point at one.
+ *
+ * Deduplicated on the public URL. Re-selecting a recent poster for a second
+ * event points both rows at the SAME object rather than copying it, which is
+ * the entire saving — so the same asset must not appear twice in the picker.
+ */
+export async function recentAssets(
+  db: Database,
+  ctx: TenantContext,
+  limit = 12
+): Promise<Array<{ id: string; url: string; contentType: string; createdAt: string }>> {
+  const rows = await db
+    .select({
+      id: assets.id,
+      storageKey: assets.storageKey,
+      contentType: assets.contentType,
+      createdAt: assets.createdAt,
+    })
+    .from(assets)
+    .where(
+      and(
+        eq(assets.organizationId, ctx.organizationId),
+        eq(assets.status, 'ready'),
+        isNull(assets.deletedAt)
+      )
+    )
+    .orderBy(desc(assets.createdAt))
+    .limit(limit);
+
+  const seen = new Set<string>();
+  const out: Array<{ id: string; url: string; contentType: string; createdAt: string }> = [];
+  for (const row of rows) {
+    const url = publicUrlFor(row.storageKey);
+    if (seen.has(url)) continue;
+    seen.add(url);
+    out.push({
+      id: row.id,
+      url,
+      contentType: row.contentType,
+      createdAt: row.createdAt.toISOString(),
+    });
+  }
+  return out;
+}
+
+/**
+ * Reclaim storage from posters nothing points at any more.
+ *
+ * **The ask was "delete the objects behind soft-deleted events, weekly".** The
+ * query is deliberately not that, because an object is not owned by an event:
+ *
+ *   · Since the composer grew a **Recents** row, picking a previous poster
+ *     points the new event at the SAME object. Deleting that object because
+ *     one of the events referencing it was removed would blank the poster on
+ *     every other event still using it.
+ *   · The same URL can also be reached by two events in different
+ *     organisations if one was pasted as a plain link.
+ *
+ * So the question this asks is not "was this event deleted" but **"does any
+ * live event still reference this object"**. Deleting is irreversible; the
+ * reference check is the whole safety property, and it is checked per object
+ * rather than per event.
+ *
+ * Two classes are swept:
+ *
+ *   1. `pending` older than `PENDING_ASSET_TTL_MS` — a presigned URL was
+ *      handed out and never confirmed. There may be no object at all; the
+ *      delete is best-effort.
+ *   2. `ready`, unreferenced, and older than `graceMs` — the poster of an
+ *      event that has since been deleted, or an upload that was finalised and
+ *      then never attached to anything.
+ *
+ * **The grace period is what makes the schedule unimportant.** An image
+ * uploaded into a composer that has not been submitted yet is, for those few
+ * minutes, referenced by nothing. A week of grace means a sweep that runs
+ * daily, weekly, or twice because the service restarted can never take one.
+ *
+ * The row is soft-deleted, never dropped: `assets.deleted_at` is the record
+ * that this key was ours and has been reclaimed, which is what stops a later
+ * sweep trying again and what makes an accidental deletion visible.
+ */
+export interface SweepResult {
+  pendingRemoved: number;
+  orphanedRemoved: number;
+  bytesReclaimed: number;
+  /** Keys the storage provider refused to delete. Left for the next run. */
+  failed: string[];
+}
+
+export const ORPHAN_GRACE_MS = 7 * 24 * 60 * 60 * 1000;
+
+export async function sweepOrphanedMedia(
+  db: Database,
+  options: { now?: Date; graceMs?: number; dryRun?: boolean } = {}
+): Promise<SweepResult> {
+  const now = options.now ?? new Date();
+  const graceMs = options.graceMs ?? ORPHAN_GRACE_MS;
+  const dryRun = options.dryRun ?? false;
+
+  const result: SweepResult = {
+    pendingRemoved: 0,
+    orphanedRemoved: 0,
+    bytesReclaimed: 0,
+    failed: [],
+  };
+
+  const candidates = await db
+    .select({
+      id: assets.id,
+      storageKey: assets.storageKey,
+      status: assets.status,
+      byteSize: assets.byteSize,
+    })
+    .from(assets)
+    .where(
+      and(
+        isNull(assets.deletedAt),
+        or(
+          and(
+            eq(assets.status, 'pending'),
+            lt(assets.createdAt, new Date(now.getTime() - PENDING_ASSET_TTL_MS))
+          ),
+          and(
+            eq(assets.status, 'ready'),
+            lt(assets.createdAt, new Date(now.getTime() - graceMs))
+          )
+        )
+      )
+    )
+    .limit(500);
+
+  if (candidates.length === 0) return result;
+
+  /*
+    One query for every live reference, rather than one per candidate.
+
+    `cover_image_url` stores the absolute public URL, not the key, so the
+    comparison happens on the URL. Events that are soft-deleted are excluded
+    on purpose — reclaiming their posters is the point of the sweep.
+  */
+  const referenced = new Set(
+    (
+      await db
+        .select({ url: events.coverImageUrl })
+        .from(events)
+        .where(and(isNull(events.deletedAt), isNotNull(events.coverImageUrl)))
+    )
+      .map((row) => row.url)
+      .filter((url): url is string => Boolean(url))
+  );
+
+  for (const candidate of candidates) {
+    // A `pending` row was never attached to anything by definition — nothing
+    // user-facing may point at one — so it skips the reference check.
+    if (candidate.status === 'ready' && referenced.has(publicUrlFor(candidate.storageKey))) {
+      continue;
+    }
+
+    if (dryRun) {
+      if (candidate.status === 'pending') result.pendingRemoved += 1;
+      else {
+        result.orphanedRemoved += 1;
+        result.bytesReclaimed += candidate.byteSize ?? 0;
+      }
+      continue;
+    }
+
+    try {
+      // Best effort. A `pending` key usually has no object behind it, and a
+      // provider that 404s on delete has given us the outcome we wanted.
+      await storage().client.file(candidate.storageKey).delete();
+    } catch {
+      // Anything else — credentials, a network blip — leaves the row alone so
+      // the next run retries it. Never soft-delete a row whose bytes survive:
+      // that is how an object becomes unreachable AND unreclaimable.
+      if (candidate.status === 'ready') {
+        result.failed.push(candidate.storageKey);
+        continue;
+      }
+    }
+
+    await db.update(assets).set({ deletedAt: now }).where(eq(assets.id, candidate.id));
+
+    if (candidate.status === 'pending') result.pendingRemoved += 1;
+    else {
+      result.orphanedRemoved += 1;
+      result.bytesReclaimed += candidate.byteSize ?? 0;
+    }
+  }
+
+  return result;
 }

@@ -17,6 +17,7 @@ import { v1, V1_BASE_PATH } from './api/v1/core';
 import { assertRouteRegistryComplete, getRouteDeclarations } from './http/route-registry';
 import { reportSchemaAtBoot } from './db/schema-check';
 import { assertPublicAppUrl } from './config/public-url';
+import { startMediaSweep } from './jobs/media-sweep';
 
 export const app = new Hono();
 
@@ -77,6 +78,11 @@ console.log(`🔒 Route registry: ${getRouteDeclarations().length} route(s), all
 // Non-fatal: a schema/DATABASE_URL mismatch is reported loudly at boot rather
 // than as an opaque 500 on every request.
 void reportSchemaAtBoot();
+
+// Reclaim storage from posters nothing points at any more. Armed here rather
+// than in CI because the sweep needs the production database and the bucket
+// credentials, and CI is deliberately given neither.
+startMediaSweep();
 
 const port = Number(process.env.PORT) || 3000;
 

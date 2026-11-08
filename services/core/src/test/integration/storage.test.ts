@@ -17,7 +17,7 @@ import { getTestDatabase, type TestDatabase } from '../support/database';
 import * as Storage from '../../services/storage';
 import * as Events from '../../services/event';
 import { createTenantContext, type TenantContext } from '../../tenancy/context';
-import { accounts, assets, organizations } from '@credopass/lib/schemas/tables';
+import { accounts, assets, events, organizations } from '@credopass/lib/schemas/tables';
 import { POSTER_TEMPLATES } from '@credopass/lib/schemas/poster-templates';
 import { eq } from 'drizzle-orm';
 
@@ -236,5 +236,155 @@ describe('an event cover may only be ours-and-ready, or external https', () => {
         Events.createEvent(db, ctxA, { ...baseEvent(), coverImageUrl: bad })
       ).rejects.toThrow();
     }
+  });
+});
+
+/**
+ * The sweep. These are the tests that stand between a cron job and deleting a
+ * live event's poster, so they are written as the failure modes rather than
+ * the happy path.
+ *
+ * `dryRun` throughout: the decision of WHAT to delete is the dangerous part
+ * and the part worth asserting. Whether `S3Client.delete` works is MinIO's
+ * problem, and exercising it here would make these tests depend on a running
+ * bucket for no extra confidence.
+ */
+describe('sweepOrphanedMedia', () => {
+  const longAgo = () => new Date(Date.now() - 400 * 24 * 60 * 60 * 1000);
+
+  const baseEvent = () => ({
+    name: 'Sunday Service',
+    startAt: new Date(Date.now() + 86_400_000),
+    locationText: 'Main hall',
+  });
+
+  const readyAsset = async (ctx: TenantContext, createdAt: Date) => {
+    const upload = await Storage.createUpload(db, ctx, { contentType: 'image/jpeg' });
+    await db
+      .update(assets)
+      .set({ status: 'ready', readyAt: createdAt, createdAt, byteSize: 1024 })
+      .where(eq(assets.id, upload.assetId));
+    const [row] = await db.select().from(assets).where(eq(assets.id, upload.assetId));
+    return row;
+  };
+
+  it('NEVER takes an asset a live event still points at', async () => {
+    const asset = await readyAsset(ctxA, longAgo());
+    await Events.createEvent(db, ctxA, {
+      ...baseEvent(),
+      coverImageUrl: Storage.publicUrlFor(asset.storageKey),
+    });
+
+    const result = await Storage.sweepOrphanedMedia(db, { dryRun: true });
+    expect(result.orphanedRemoved).toBe(0);
+  });
+
+  it('keeps an asset SHARED by two events when only one is deleted', async () => {
+    // The Recents picker makes this ordinary: pick last week's poster for this
+    // week's event and one object backs both. Deleting the object because one
+    // of them went away would blank the other.
+    const asset = await readyAsset(ctxA, longAgo());
+    const url = Storage.publicUrlFor(asset.storageKey);
+    const keep = await Events.createEvent(db, ctxA, { ...baseEvent(), coverImageUrl: url });
+    const drop = await Events.createEvent(db, ctxA, { ...baseEvent(), coverImageUrl: url });
+
+    await db.update(events).set({ deletedAt: new Date() }).where(eq(events.id, drop.id));
+
+    const result = await Storage.sweepOrphanedMedia(db, { dryRun: true });
+    expect(result.orphanedRemoved).toBe(0);
+
+    const [survivor] = await db.select().from(events).where(eq(events.id, keep.id));
+    expect(survivor.coverImageUrl).toBe(url);
+  });
+
+  it('reclaims the poster once the LAST event referencing it is deleted', async () => {
+    const asset = await readyAsset(ctxA, longAgo());
+    const url = Storage.publicUrlFor(asset.storageKey);
+    const ev = await Events.createEvent(db, ctxA, { ...baseEvent(), coverImageUrl: url });
+    await db.update(events).set({ deletedAt: new Date() }).where(eq(events.id, ev.id));
+
+    const result = await Storage.sweepOrphanedMedia(db, { dryRun: true });
+    expect(result.orphanedRemoved).toBe(1);
+    expect(result.bytesReclaimed).toBe(1024);
+  });
+
+  it('spares a recent upload that is not attached to anything yet', async () => {
+    // Someone has the composer open and has not pressed Create. For those
+    // minutes the image is referenced by nothing, and the grace period — not
+    // the schedule — is what stops the sweep taking it.
+    await readyAsset(ctxA, new Date());
+    const result = await Storage.sweepOrphanedMedia(db, { dryRun: true });
+    expect(result.orphanedRemoved).toBe(0);
+  });
+
+  it('sweeps an abandoned pending upload without consulting references', async () => {
+    const upload = await Storage.createUpload(db, ctxA, { contentType: 'image/jpeg' });
+    await db
+      .update(assets)
+      .set({ createdAt: longAgo() })
+      .where(eq(assets.id, upload.assetId));
+
+    const result = await Storage.sweepOrphanedMedia(db, { dryRun: true });
+    expect(result.pendingRemoved).toBe(1);
+  });
+
+  it("does not reclaim one organisation's asset because another deleted an event", async () => {
+    const asset = await readyAsset(ctxA, longAgo());
+    await Events.createEvent(db, ctxA, {
+      ...baseEvent(),
+      coverImageUrl: Storage.publicUrlFor(asset.storageKey),
+    });
+    const theirs = await Events.createEvent(db, ctxB, { ...baseEvent() });
+    await db.update(events).set({ deletedAt: new Date() }).where(eq(events.id, theirs.id));
+
+    const result = await Storage.sweepOrphanedMedia(db, { dryRun: true });
+    expect(result.orphanedRemoved).toBe(0);
+  });
+});
+
+/**
+ * `recentAssets` — what the composer's Recents row is allowed to offer.
+ *
+ * It is a picker over object-storage URLs, so the tenancy question is the
+ * whole of it: one organisation must never be shown, and therefore never be
+ * able to attach, another's uploads.
+ */
+describe('recentAssets', () => {
+  const ready = async (ctx: TenantContext) => {
+    const upload = await Storage.createUpload(db, ctx, { contentType: 'image/jpeg' });
+    await db
+      .update(assets)
+      .set({ status: 'ready', readyAt: new Date() })
+      .where(eq(assets.id, upload.assetId));
+    return upload.assetId;
+  };
+
+  it("never lists another organisation's uploads", async () => {
+    await ready(ctxA);
+    const theirs = await ready(ctxB);
+
+    const mine = await Storage.recentAssets(db, ctxA);
+    expect(mine.length).toBe(1);
+    expect(mine.map((a) => a.id)).not.toContain(theirs);
+  });
+
+  it('omits pending uploads, which may have no bytes behind them', async () => {
+    await Storage.createUpload(db, ctxA, { contentType: 'image/jpeg' });
+    expect(await Storage.recentAssets(db, ctxA)).toHaveLength(0);
+  });
+
+  it('omits assets the sweeper has reclaimed', async () => {
+    const id = await ready(ctxA);
+    await db.update(assets).set({ deletedAt: new Date() }).where(eq(assets.id, id));
+    expect(await Storage.recentAssets(db, ctxA)).toHaveLength(0);
+  });
+
+  it('returns newest first and honours the limit', async () => {
+    for (let i = 0; i < 3; i += 1) await ready(ctxA);
+    const page = await Storage.recentAssets(db, ctxA, 2);
+    expect(page).toHaveLength(2);
+    expect(new Date(page[0].createdAt).getTime()).toBeGreaterThanOrEqual(
+      new Date(page[1].createdAt).getTime()
+    );
   });
 });

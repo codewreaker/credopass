@@ -102,7 +102,7 @@ export default function PassPage() {
           {event.location && (
             <p className="inline-flex items-center gap-1.5 text-sm text-primary-foreground/70">
               <MapPin size={14} />
-              {event.organizationName}, {event.location}
+              {[event.organizationName, event.location].filter(Boolean).join(', ')}
             </p>
           )}
         </div>

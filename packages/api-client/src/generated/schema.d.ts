@@ -2014,6 +2014,64 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/media/recent": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Recently uploaded images, newest first */
+        get: {
+            parameters: {
+                query?: {
+                    limit?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Ready assets belonging to this organisation */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            assets: components["schemas"]["RecentAsset"][];
+                        };
+                    };
+                };
+                /** @description No valid token */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["Problem"];
+                    };
+                };
+                /** @description Not allowed to read media here */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["Problem"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/events/{id}/register": {
         parameters: {
             query?: never;
@@ -3071,7 +3129,7 @@ export interface components {
             /** @enum {string} */
             format: "in_person" | "online" | "hybrid" | "unspecified";
             coverImageUrl: string | null;
-            organizationName: string;
+            organizationName: string | null;
             /** @enum {string} */
             attendanceState: "registered" | "attended" | "no_show" | "cancelled";
             registeredAt: string | null;
@@ -3190,6 +3248,13 @@ export interface components {
             byteSize: number;
             contentType: string;
         };
+        RecentAsset: {
+            /** Format: uuid */
+            id: string;
+            url: string;
+            contentType: string;
+            createdAt: string;
+        };
         AttendanceResult: {
             attendance: {
                 /** Format: uuid */
@@ -3226,7 +3291,7 @@ export interface components {
             meetingUrl: string | null;
             /** @enum {string} */
             format: "in_person" | "online" | "hybrid" | "unspecified";
-            organizationName: string;
+            organizationName: string | null;
             coverImageUrl: string | null;
             allowSelfCheckIn: boolean;
             capacityRemaining: number | null;

@@ -48,6 +48,12 @@ export const queryKeys = {
   person: (organizationId: OrgId, id: string) =>
     ['org', organizationId ?? null, 'people', 'detail', id] as const,
 
+  // Org-scoped: one organisation must never see another's uploads, and the
+  // key prefix is what makes switching organisation a cache miss rather than
+  // a leak.
+  recentMedia: (organizationId: OrgId, limit: number) =>
+    ['org', organizationId ?? null, 'media', 'recent', limit] as const,
+
   analytics: (organizationId: OrgId, scope: string, range: string) =>
     ['org', organizationId ?? null, 'analytics', scope, range] as const,
 
