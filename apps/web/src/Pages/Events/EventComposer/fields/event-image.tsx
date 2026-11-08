@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { useUploadImage, type UploadProgress } from '@credopass/api-client';
-import { AlertTriangle, ImagePlus, Link2, Loader2, Trash2, X } from 'lucide-react';
+import { AlertTriangle, Check, ImagePlus, Link2, Loader2, Trash2, Upload, X } from 'lucide-react';
+import { POSTER_TEMPLATES } from '@credopass/lib/schemas/poster-templates';
 import { Button } from '@credopass/ui/components/button';
 import { Input } from '@credopass/ui/components/input';
 import { cn } from '@credopass/ui/lib/utils';
@@ -46,6 +47,16 @@ const isUsableImageUrl = (value: string): boolean => {
  */
 export function EventImage({ src, onPick, className }: EventImageProps) {
   const inputRef = useRef<HTMLInputElement>(null);
+  /**
+   * The picker tray.
+   *
+   * It did not exist. "Add photo" opened a file dialog, and the only other
+   * option was pasting an https URL — two things a person making an event on
+   * their phone usually does not have, which is why almost no event in the
+   * product had a poster. The tray leads with artwork they can just take, and
+   * keeps upload and paste at the end for the people who do have their own.
+   */
+  const [pickerOpen, setPickerOpen] = useState(false);
   const [linkOpen, setLinkOpen] = useState(false);
   const [linkDraft, setLinkDraft] = useState('');
   const [progress, setProgress] = useState<UploadProgress | null>(null);
@@ -91,6 +102,7 @@ export function EventImage({ src, onPick, className }: EventImageProps) {
     try {
       const asset = await upload.mutateAsync({ file, onProgress: setProgress });
       onPick?.(asset.url);
+      setPickerOpen(false);
     } catch (error) {
       setUploadError(
         error instanceof Error ? error.message : 'That image could not be uploaded.'
@@ -111,6 +123,14 @@ export function EventImage({ src, onPick, className }: EventImageProps) {
     onPick?.(trimmed);
     setLinkDraft('');
     setLinkOpen(false);
+    setPickerOpen(false);
+  };
+
+  const applyTemplate = (path: string) => {
+    setUploadError(null);
+    setFailedSrc(null);
+    onPick?.(path);
+    setPickerOpen(false);
   };
 
   const clear = () => {
@@ -169,16 +189,12 @@ export function EventImage({ src, onPick, className }: EventImageProps) {
               )}
               <button
                 type="button"
-                onClick={() => setLinkOpen((open) => !open)}
-                className="inline-flex items-center gap-1.5 rounded-full bg-background/85 px-3 py-1.5 text-xs font-semibold shadow-sm ring-1 ring-border backdrop-blur-sm transition-colors hover:bg-background"
-              >
-                <Link2 size={13} />
-                Paste link
-              </button>
-              <button
-                type="button"
                 disabled={busy}
-                onClick={() => inputRef.current?.click()}
+                aria-expanded={pickerOpen}
+                onClick={() => {
+                  setPickerOpen((open) => !open);
+                  setLinkOpen(false);
+                }}
                 className="inline-flex items-center gap-1.5 rounded-full bg-background/85 px-3 py-1.5 text-xs font-semibold shadow-sm ring-1 ring-border backdrop-blur-sm transition-colors hover:bg-background disabled:opacity-50"
               >
                 <ImagePlus size={13} />
@@ -195,6 +211,96 @@ export function EventImage({ src, onPick, className }: EventImageProps) {
           </>
         )}
       </div>
+
+      {/*
+        The tray. Artwork first, because that is what most people need and
+        none of them have; upload and paste at the end, for the ones who
+        brought their own. "Use what we have, or upload yours", in that order.
+      */}
+      {onPick && pickerOpen && (
+        <div className="flex flex-col gap-2.5 rounded-2xl border border-border bg-card p-3">
+          <div className="flex items-center justify-between">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+              Pick a poster
+            </p>
+            <Button
+              type="button"
+              size="icon-sm"
+              variant="ghost"
+              aria-label="Close the poster picker"
+              onClick={() => setPickerOpen(false)}
+            >
+              <X size={14} />
+            </Button>
+          </div>
+
+          <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
+            {POSTER_TEMPLATES.map((template) => {
+              const selected = src === template.path;
+              return (
+                <button
+                  key={template.id}
+                  type="button"
+                  onClick={() => applyTemplate(template.path)}
+                  aria-pressed={selected}
+                  title={template.label}
+                  className={cn(
+                    'relative aspect-4/5 overflow-hidden rounded-lg border-2 transition-all',
+                    selected
+                      ? 'border-primary ring-2 ring-primary/30'
+                      : 'border-transparent hover:border-border-strong'
+                  )}
+                >
+                  <img
+                    src={template.path}
+                    alt={template.label}
+                    loading="lazy"
+                    decoding="async"
+                    className="size-full object-cover"
+                  />
+                  {selected && (
+                    <span className="absolute inset-0 flex items-center justify-center bg-primary/25">
+                      <span className="flex size-5 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                        <Check size={12} strokeWidth={3} />
+                      </span>
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="flex items-center gap-2 pt-0.5">
+            <span className="h-px flex-1 bg-border" />
+            <span className="text-[10px] font-medium uppercase tracking-[0.1em] text-muted-foreground/70">
+              or bring your own
+            </span>
+            <span className="h-px flex-1 bg-border" />
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              className="rounded-full"
+              disabled={busy}
+              onClick={() => inputRef.current?.click()}
+            >
+              <Upload size={13} /> Upload a photo
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              className="rounded-full"
+              onClick={() => setLinkOpen((open) => !open)}
+            >
+              <Link2 size={13} /> Paste a link
+            </Button>
+          </div>
+        </div>
+      )}
 
       {onPick && linkOpen && (
         <div className="flex items-center gap-2 rounded-xl border border-border bg-card p-2">
@@ -245,7 +351,7 @@ export function EventImage({ src, onPick, className }: EventImageProps) {
         <p className="px-1 text-[11px] text-muted-foreground">
           {broken
             ? 'That link did not load an image — check it, or paste another.'
-            : 'Add a photo or paste an image link. Large photos are shrunk before upload.'}
+            : 'Use one of our posters, upload a photo, or paste an image link. Large photos are shrunk before upload.'}
         </p>
       )}
     </div>

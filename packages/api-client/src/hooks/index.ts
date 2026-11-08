@@ -1,4 +1,5 @@
 export * from './use-me';
+export * from './use-tickets';
 export * from './use-organizations';
 export * from './use-events';
 export * from './use-people';

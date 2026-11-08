@@ -43,6 +43,11 @@ export type ApiQuery<P extends keyof paths, M extends keyof paths[P]> = paths[P]
 // ============================================================================
 
 export type Account = components['schemas']['Account'];
+/** One event the signed-in account is attending — `GET /me/tickets`. */
+export type Ticket = components['schemas']['Ticket'];
+export type TicketGroup = NonNullable<ApiQuery<'/me/tickets', 'get'>['group']>;
+export type TicketsResponse = ApiResponse<'/me/tickets', 'get'>;
+export type ClaimResult = components['schemas']['ClaimResult'];
 export type MeContext = components['schemas']['MeContext'];
 export type OrgSummary = components['schemas']['OrgSummary'];
 export type Asset = components['schemas']['Asset'];

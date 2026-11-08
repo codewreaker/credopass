@@ -18,6 +18,7 @@ import * as Storage from '../../services/storage';
 import * as Events from '../../services/event';
 import { createTenantContext, type TenantContext } from '../../tenancy/context';
 import { accounts, assets, organizations } from '@credopass/lib/schemas/tables';
+import { POSTER_TEMPLATES } from '@credopass/lib/schemas/poster-templates';
 import { eq } from 'drizzle-orm';
 
 // A REAL account row, not a made-up uuid: `assets.uploaded_by_account_id` is
@@ -168,6 +169,33 @@ describe('an event cover may only be ours-and-ready, or external https', () => {
 
     const event = await Events.createEvent(db, ctxA, { ...baseEvent(), coverImageUrl: url });
     expect(event.coverImageUrl).toBe(url);
+  });
+
+  /**
+   * Built-in posters. These are the one value in the column that is NOT a
+   * URL — they are root-relative paths, so a row written on localhost renders
+   * on app.credopass.com and vice versa — and the thing worth asserting is
+   * that the exemption is an allow-list and not a `/posters/` prefix rule.
+   */
+  it('accepts a built-in poster template', async () => {
+    const event = await Events.createEvent(db, ctxA, {
+      ...baseEvent(),
+      coverImageUrl: POSTER_TEMPLATES[0].path,
+    });
+    expect(event.coverImageUrl).toBe(POSTER_TEMPLATES[0].path);
+  });
+
+  it('refuses a relative path that is not a known template', async () => {
+    for (const bad of [
+      '/posters/not-a-real-one.svg',
+      '/posters/../../etc/passwd',
+      '/posters/lime-arc.svg ',
+      '/anything-else.svg',
+    ]) {
+      await expect(
+        Events.createEvent(db, ctxA, { ...baseEvent(), coverImageUrl: bad })
+      ).rejects.toThrow();
+    }
   });
 
   it('accepts an external https link and refuses http, data: and javascript:', async () => {

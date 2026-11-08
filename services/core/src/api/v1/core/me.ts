@@ -13,7 +13,11 @@ import { defineRoute, problemResponse } from '../../../http/define-route';
 import { requireCaller, type CallerVars } from '../../../middleware/caller';
 import { PERMISSIONS, ROLE_PERMISSIONS } from '../../../authz/permissions';
 import { getDatabase } from '../../../db/client';
-import { updateAccountDisplayName } from '../../../services/identity';
+import { publicAppUrl } from '../../../config/public-url';
+import { claimByVerifiedEmail, updateAccountDisplayName } from '../../../services/identity';
+import * as Tickets from '../../../services/tickets';
+import { EVENT_STATUSES } from '../../../services/event-status';
+import { EVENT_FORMATS } from '../../../services/event-format';
 
 export const me = new OpenAPIHono<{ Variables: CallerVars }>();
 
@@ -216,5 +220,184 @@ me.openapi(
       { id: updated.id, email: updated.email, displayName: updated.displayName },
       200
     );
+  }
+);
+
+// ---------------------------------------------------------------------------
+// The personal scope: my tickets. docs/API-FIRST-REBUILD.md D17, D26
+//
+// These are `scope: 'account'` for the same reason /me is, and the reason is
+// worth being explicit about because the rows they return belong to OTHER
+// organisations. They are reachable not because the caller has a role anywhere
+// — they may have none — but because `people.account_id` says those attendee
+// rows are the caller's own. Attending is not belonging (T29): nothing here
+// reads or writes `org_memberships`, and nothing here takes an
+// X-Organization-Id.
+// ---------------------------------------------------------------------------
+
+const TicketSchema = z
+  .object({
+    eventId: z.string().uuid(),
+    name: z.string(),
+    status: z.enum(EVENT_STATUSES),
+    startAt: z.string(),
+    endAt: z.string(),
+    timezone: z.string(),
+    location: z.union([z.string(), z.null()]),
+    meetingUrl: z.union([z.string(), z.null()]),
+    format: z.enum(EVENT_FORMATS),
+    coverImageUrl: z.union([z.string(), z.null()]),
+    organizationName: z.string(),
+    attendanceState: z.enum(Tickets.ATTENDANCE_STATES),
+    registeredAt: z.union([z.string(), z.null()]),
+    checkInTime: z.union([z.string(), z.null()]),
+  })
+  .openapi('Ticket');
+
+me.openapi(
+  defineRoute({
+    method: 'get',
+    path: '/me/tickets',
+    scope: 'account',
+    summary: 'Events you are attending, across every organisation',
+    tags: ['Identity'],
+    security: [{ bearerAuth: [] }],
+    request: {
+      query: z.object({
+        group: z.enum(Tickets.TICKET_GROUPS).default('upcoming'),
+      }),
+    },
+    responses: {
+      200: {
+        description: 'Your tickets, soonest first for upcoming and most recent first for past',
+        content: {
+          'application/json': {
+            schema: z.object({
+              tickets: z.array(TicketSchema),
+              counts: z.object({ upcoming: z.number().int(), past: z.number().int() }),
+            }),
+          },
+        },
+      },
+      401: problemResponse('No valid token'),
+    },
+  }),
+  async (c) => {
+    const caller = c.get('caller');
+    const { group } = c.req.valid('query');
+    const db = await getDatabase();
+
+    // Both halves every time. The switch shows a count for the side you are
+    // not on, and a screen that renders `0` while it waits for a second
+    // request is the most repeated defect in this product (UI-REDESIGN R2).
+    const [tickets, counts] = await Promise.all([
+      Tickets.listTickets(db, caller.accountId, group),
+      Tickets.ticketCounts(db, caller.accountId),
+    ]);
+
+    return c.json({ tickets, counts }, 200);
+  }
+);
+
+/**
+ * Put a pass back in the caller's hands.
+ *
+ * It MINTS a new one rather than returning the old: only the SHA-256 of a
+ * token is stored, so the link handed over at registration really is the only
+ * copy. Minting revokes the previous pass — `uq_passes_event_person_live`
+ * allows exactly one live pass per person per event, and the pass screen has
+ * always said as much.
+ */
+me.openapi(
+  defineRoute({
+    method: 'post',
+    path: '/me/tickets/{eventId}/pass',
+    scope: 'account',
+    summary: 'Reissue your own pass for an event you are attending',
+    tags: ['Identity'],
+    security: [{ bearerAuth: [] }],
+    request: { params: z.object({ eventId: z.string().uuid() }) },
+    responses: {
+      201: {
+        description: 'A fresh pass. The previous one is now revoked.',
+        content: {
+          'application/json': {
+            schema: z.object({
+              pass: z.object({
+                url: z.string(),
+                token: z.string(),
+                expiresAt: z.string(),
+              }),
+            }),
+          },
+        },
+      },
+      401: problemResponse('No valid token'),
+      404: problemResponse('You have no ticket for that event'),
+    },
+  }),
+  async (c) => {
+    const caller = c.get('caller');
+    const { eventId } = c.req.valid('param');
+    const pass = await Tickets.reissuePass(
+      await getDatabase(),
+      caller.accountId,
+      eventId,
+      publicAppUrl()
+    );
+    return c.json({ pass }, 201);
+  }
+);
+
+/**
+ * Claim registrations made before this account existed (D17, T33/T34).
+ *
+ * Someone registers for three events as a guest over a year, then signs in for
+ * the first time. Those three `people` rows have no `account_id`, so
+ * `/me/tickets` is empty and the product looks like it lost them. This links
+ * them.
+ *
+ * **Matching is on an address the ISSUER asserted, never one the caller typed.**
+ * `claimByVerifiedEmail` reads `identities.email_verified`, which until now was
+ * permanently false — Supabase sends no top-level `email_verified` claim, so
+ * the obvious read of it never fired and this endpoint would have claimed
+ * nothing. `emailVerifiedFromClaims` derives it from the provider recorded in
+ * `app_metadata` instead, which GoTrue writes and the caller cannot.
+ *
+ * It creates NO membership. Claiming a ticket is not joining an organisation
+ * (T34), and the response deliberately says only how many rows moved and how
+ * many organisations they spanned — never which ones, or whose.
+ *
+ * Idempotent: a second call claims nothing and returns zeros.
+ */
+me.openapi(
+  defineRoute({
+    method: 'post',
+    path: '/me/claim',
+    scope: 'account',
+    summary: 'Link earlier guest registrations to this account',
+    tags: ['Identity'],
+    security: [{ bearerAuth: [] }],
+    responses: {
+      200: {
+        description: 'How much was linked',
+        content: {
+          'application/json': {
+            schema: z
+              .object({
+                claimed: z.number().int(),
+                organizations: z.number().int(),
+              })
+              .openapi('ClaimResult'),
+          },
+        },
+      },
+      401: problemResponse('No valid token'),
+    },
+  }),
+  async (c) => {
+    const caller = c.get('caller');
+    const result = await claimByVerifiedEmail(await getDatabase(), caller.accountId);
+    return c.json(result, 200);
   }
 );

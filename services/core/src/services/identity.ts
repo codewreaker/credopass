@@ -62,11 +62,35 @@ export interface ResolveInput {
     family_name?: unknown;
     /** Supabase puts the provider's profile claims here. Display only. */
     user_metadata?: unknown;
+    /** Provider-controlled. The caller cannot write this one. */
+    app_metadata?: unknown;
+    /** Authentication Methods References — how this session was established. */
+    amr?: unknown;
     [k: string]: unknown;
   };
   providerKind: 'supabase' | 'oidc' | 'saml';
   orgIdentityProviderId?: string | null;
 }
+
+/**
+ * Federated providers that assert an address they themselves own or verified.
+ *
+ * Membership here is a statement about the provider's own account model, not
+ * about CredoPass: you cannot hold a Google account for an address Google has
+ * not confirmed is yours. A provider whose sign-up accepts an unconfirmed
+ * address (plain email+password) must never appear in this list.
+ */
+const ADDRESS_ASSERTING_PROVIDERS = new Set([
+  'google',
+  'github',
+  'azure',
+  'apple',
+  'gitlab',
+  'bitbucket',
+  'slack_oidc',
+  'workos',
+  'keycloak',
+]);
 
 const asString = (v: unknown): string | null =>
   typeof v === 'string' && v.trim().length > 0 ? v.trim() : null;
@@ -84,8 +108,8 @@ const asString = (v: unknown): string | null =>
  * `user_metadata` is writable by the user (`auth.updateUser({ data })`), so
  * this must stay the ONLY thing read from it: a display name is cosmetic and
  * costs nothing if someone lies about it. An identity decision is not, and
- * must never come from here — see the `emailVerified` handling below, which
- * deliberately reads the top-level claim and nothing else.
+ * must never come from here — see `emailVerifiedFromClaims` below, which reads
+ * the signed claim and the provider-written `app_metadata`, and never this.
  *
  * `given_name` is preferred when present because it is the one the greeting
  * wants; it is frequently absent, which is why the full name is kept as the
@@ -110,6 +134,58 @@ export const displayNameFromClaims = (claims: ResolveInput['claims']): string | 
         .join(' ')
     )
   );
+};
+
+/**
+ * Was this address confirmed by somebody other than its owner?
+ *
+ * **Why this is not just `claims.email_verified`.** Supabase sends no top-level
+ * `email_verified` claim — it is inside `user_metadata`, which the user writes
+ * with `auth.updateUser({ data })`. So the obvious read was permanently
+ * `false`, `identities.email_verified` was permanently `false` for every
+ * account in the product, and `claimByVerifiedEmail` could never match a row.
+ * The "My Passes" screen depends on that claim working, so it had to be fixed
+ * rather than worked around (CLAUDE.md gotcha; D17).
+ *
+ * The derivation, in order, and nothing else:
+ *
+ *   1. A top-level `email_verified: true`. The standard OIDC claim, signed by
+ *      the issuer. Honoured wherever a provider actually sends it.
+ *   2. Otherwise: the session was established through a federated provider that
+ *      owns the address it asserted, and the token carries an address. The
+ *      provider is read from `app_metadata` — which GoTrue writes and the user
+ *      cannot — and, failing that, from `amr`.
+ *
+ * `user_metadata` is never consulted. That is the whole point: a value the
+ * holder of the account can set is not evidence about the account, and letting
+ * one in here is account takeover one `updateUser` call away.
+ */
+export const emailVerifiedFromClaims = (claims: ResolveInput['claims']): boolean => {
+  if (claims.email_verified === true) return true;
+  if (!asString(claims.email)) return false;
+
+  const appMetadata =
+    typeof claims.app_metadata === 'object' && claims.app_metadata !== null
+      ? (claims.app_metadata as Record<string, unknown>)
+      : {};
+
+  const named = [
+    asString(appMetadata.provider),
+    ...(Array.isArray(appMetadata.providers)
+      ? appMetadata.providers.map((p) => asString(p))
+      : []),
+    // `amr` entries are `{ method, timestamp }` in GoTrue and bare strings in
+    // plain OIDC. Both shapes appear; read whichever is there.
+    ...(Array.isArray(claims.amr)
+      ? claims.amr.map((entry) =>
+          typeof entry === 'object' && entry !== null
+            ? asString((entry as Record<string, unknown>).provider)
+            : asString(entry)
+        )
+      : []),
+  ].filter((p): p is string => Boolean(p));
+
+  return named.some((p) => ADDRESS_ASSERTING_PROVIDERS.has(p.toLowerCase()));
 };
 
 /**
@@ -163,7 +239,7 @@ async function emailIsUnclaimed(db: Database, email: string | null): Promise<boo
  */
 export async function resolveCaller(db: Database, input: ResolveInput): Promise<Caller> {
   const email = asString(input.claims.email);
-  const emailVerified = input.claims.email_verified === true;
+  const emailVerified = emailVerifiedFromClaims(input.claims);
   const displayName = displayNameFromClaims(input.claims);
 
   const existing = await db

@@ -19,6 +19,7 @@ import { attendance, events, organizations } from '@credopass/lib/schemas/tables
 import type { Database } from '../db/client';
 import type { TenantContext } from '../tenancy/context';
 import { ProblemCode, problem } from '../http/problem';
+import { isPosterTemplatePath } from '@credopass/lib/schemas/poster-templates';
 import { deriveStatus, type EventStatus } from './event-status';
 import { deriveEventFormat, blankToNull, type EventFormat } from './event-format';
 import * as Storage from './storage';
@@ -485,6 +486,13 @@ async function assertCoverImageAllowed(
   url: string | null | undefined
 ): Promise<void> {
   if (!url) return;
+
+  // A built-in poster. Stored as a root-relative path on purpose — see
+  // packages/lib/src/schemas/poster-templates.ts — and accepted here only by
+  // exact membership of that list, never by pattern. An organiser who has no
+  // artwork picks one of these; it is not a link they supplied, so the
+  // https rule below has nothing to protect against.
+  if (isPosterTemplatePath(url)) return;
 
   if (Storage.looksLikeOwnStorage(url)) {
     if (await Storage.isOwnReadyAssetUrl(db, ctx, url)) return;

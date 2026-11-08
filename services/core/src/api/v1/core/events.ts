@@ -17,6 +17,7 @@ import {
   type CallerVars,
 } from '../../../middleware/caller';
 import { getDatabase } from '../../../db/client';
+import { isPosterTemplatePath } from '@credopass/lib/schemas/poster-templates';
 import { EVENT_STATUSES } from '../../../services/event-status';
 import { EVENT_FORMATS } from '../../../services/event-format';
 import * as Events from '../../../services/event';
@@ -249,14 +250,31 @@ const EventBody = z.object({
   requireCheckOut: z.boolean().optional(),
   allowSelfCheckIn: z.boolean().optional(),
   /**
-   * The poster, as an absolute URL, or null to clear it (F14).
+   * The poster — an absolute URL, one of the built-in template paths, or null
+   * to clear it (F14).
    *
    * Shape only here; the POLICY is in `Event.assertCoverImageAllowed`,
    * because deciding whether a URL is acceptable now needs a database read —
    * one of our own uploaded assets is allowed, and that is a tenant-scoped
    * question. Routes never query (golden rule 7).
+   *
+   * `.url()` was the whole of the shape check until the built-in posters
+   * landed; those are stored root-relative so the same row renders on
+   * localhost and in production, and a relative path is not a URL. The shape
+   * is therefore "a template path, or a URL", and which URLs are acceptable
+   * remains the service's call.
    */
-  coverImageUrl: z.union([z.string().url().max(2048), z.null()]).optional(),
+  coverImageUrl: z
+    .union([
+      z
+        .string()
+        .max(2048)
+        .refine((v) => isPosterTemplatePath(v) || URL.canParse(v), {
+          message: 'Must be an absolute URL or a built-in poster.',
+        }),
+      z.null(),
+    ])
+    .optional(),
 });
 
 const toInput = (b: z.infer<typeof EventBody>) => ({

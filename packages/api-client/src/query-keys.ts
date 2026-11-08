@@ -20,6 +20,10 @@ type OrgId = string | null | undefined;
 export const queryKeys = {
   me: () => ['me'] as const,
   meContext: (organizationId: OrgId) => ['me', 'context', organizationId ?? null] as const,
+  // Personal scope, so NOT under the `org` prefix: these rows span every
+  // organisation the account has attended anything in, and switching the
+  // active organisation must not refetch or invalidate them.
+  tickets: (group: string) => ['me', 'tickets', group] as const,
 
   organizations: () => ['organizations'] as const,
   organization: (id: string) => ['organizations', id] as const,
@@ -54,6 +58,9 @@ export const queryKeys = {
   pass: (token: string) => ['pass', token] as const,
 } as const;
 
+
+/** Both halves of the personal tickets list. */
+export const ticketsScope = () => ['me', 'tickets'] as const;
 
 /** Every event-derived cache entry: lists, summary, calendar, detail. */
 export const eventsScope = (organizationId: OrgId) =>

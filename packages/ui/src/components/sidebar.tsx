@@ -216,6 +216,10 @@ function Sidebar({
     }
     return navItems ? <BottomNav
       items={navItems}
+      // Four, not five. Each item is `min-w-14`, so a fifth pushes the pill
+      // plus the action circle past the width of a 375pt phone and the labels
+      // start colliding. The fifth folds into More.
+      maxVisibleItems={4}
       navigate={navigate}
       currentPathname={currentPathname}
       centerButton={{

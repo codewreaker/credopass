@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Zap, CheckCircle2, BarChart3, CalendarCheck } from 'lucide-react'
 import AuthPage from '@credopass/ui/components/login'
-import { GlowingQRCode } from '@credopass/ui/components/glowing-qr-code'
 import { supabase as supabaseInstance, signInWithGoogle } from '../../supabase'
 import { authErrorSearch } from '../../lib/auth-error'
 import { useNavigate, useSearch } from '@tanstack/react-router'
@@ -53,17 +52,15 @@ export default function LoginPage() {
       billboardCard={<AppShowcase />}
       billboardMaskSrc="/login-cuate.svg"
       mobileTagline="Know who actually shows up."
-      mobileBannerAside={
-        <GlowingQRCode
-          value="https://credopass.app"
-          size={40}
-          showGlow={false}
-          bgColor="var(--color-primary-foreground)"
-          fgColor="var(--color-primary)"
-          className="shrink-0 relative z-10"
-        />
-      }
+      // No QR beside the mobile lockup. It was a 40px code pointing at the
+      // marketing site, rendered on the one device that cannot scan its own
+      // screen — decoration where the eye should be travelling to the button.
       mobileExtra={<AppShowcase tone="onSurface" className="mx-auto" />}
+      // Three, and short enough to sit on ONE line at 375pt. A fourth word in
+      // any of them wraps the last chip onto a row of its own, which reads as
+      // a mistake rather than a list.
+      trust={['Free to start', 'No card', 'One tap']}
+      legal={<>We only read your name and email address from Google.</>}
       showClose={hasSession}
       onClose={() => (navigate as any)({ to: destination })}
       footerText={`© ${new Date().getFullYear()} CredoPass · Built for live events`}
@@ -74,7 +71,11 @@ export default function LoginPage() {
           (navigate as any)({ to: '/auth/error', search: authErrorSearch(error) })
         }
         title={out ? 'Signed out — see you soon' : 'Welcome back'}
-        subtitle={out ? 'You’ve been safely signed out. Sign back in whenever you’re ready.' : 'Sign in to your account to continue'}
+        subtitle={
+          out
+            ? 'You’ve been safely signed out. Sign back in whenever you’re ready.'
+            : 'Google is the only way in — one tap, no password to forget.'
+        }
       />
     </AuthScreen>
   )
