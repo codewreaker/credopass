@@ -33,10 +33,32 @@ let orgA: string;
 
 beforeAll(async () => {
   process.env.PASS_SIGNING_KEY ??= 'test-signing-key-not-for-production';
-  process.env.S3_ENDPOINT ??= 'http://localhost:9000';
-  process.env.S3_BUCKET ??= 'credopass-media-local';
-  process.env.S3_ACCESS_KEY_ID ??= 'credopass';
-  process.env.S3_SECRET_ACCESS_KEY ??= 'credopass';
+
+  /**
+   * `=`, not `??=`. The storage config is PINNED here, not defaulted.
+   *
+   * These five lines used to be `??=`, which means "unless the environment
+   * already said otherwise" — and `services/core/.env` does say otherwise the
+   * moment anyone switches local dev to R2 (D43). So the suite silently
+   * stopped testing the MinIO fixture it describes and started reading the
+   * real bucket's configuration, which is both the wrong thing to assert
+   * against and a live credential in a test run.
+   *
+   * It showed up as "accepts our own ready asset, over plain http" failing:
+   * `publicUrlFor` returned the r2.dev https URL, so the test's own premise
+   * was gone. Same class of footgun as the exported `DATABASE_URL` that beats
+   * `.env` (CLAUDE.md) — an ambient value quietly winning over the one the
+   * code in front of you names.
+   *
+   * `S3_PUBLIC_URL` is set explicitly too. Left unset it falls back to
+   * `${S3_ENDPOINT}/${S3_BUCKET}`, which is right for MinIO — but only by
+   * coincidence, and a `.env` that sets it would leak straight back in.
+   */
+  process.env.S3_ENDPOINT = 'http://localhost:9000';
+  process.env.S3_BUCKET = 'credopass-media-local';
+  process.env.S3_ACCESS_KEY_ID = 'credopass';
+  process.env.S3_SECRET_ACCESS_KEY = 'credopass';
+  process.env.S3_PUBLIC_URL = 'http://localhost:9000/credopass-media-local';
   Storage.resetStorageForTests();
   harness = await getTestDatabase();
   db = harness.db;

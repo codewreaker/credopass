@@ -1551,7 +1551,16 @@ with the artwork and keeps upload and paste at the end.
 a `/posters/` prefix** — the value of an allow-list is that it enumerates — and the integration suite
 asserts that `/posters/../../etc/passwd` and a trailing space are both refused.
 
-**Three defects surfaced on the way, all pre-existing and all now fixed:**
+**Four defects surfaced on the way, all pre-existing and all now fixed:**
+
+- **The storage integration suite was testing against the real R2 bucket.** It set its fixture with
+  `process.env.S3_* ??= …` — "unless the environment already said otherwise" — and
+  `services/core/.env` says otherwise since local dev was pointed at R2 (D43). So the suite silently
+  stopped exercising the MinIO fixture it describes, read the production bucket's configuration
+  instead, and "accepts our own ready asset, over plain http" failed because `publicUrlFor` was
+  returning the r2.dev https URL. Pinned with `=`, `S3_PUBLIC_URL` included. Same class of footgun as
+  the exported `DATABASE_URL` that beats `.env`: an ambient value quietly winning over the one named
+  in the code in front of you.
 
 - **The poster frame painted a white veil over every dark image.** `event-poster.tsx` used
   `[mask-composite:exclude] [mask:…]`, and `mask` is a shorthand: whichever order Tailwind emitted
