@@ -402,7 +402,13 @@
             "type": "string"
           },
           "plan": {
-            "type": "string"
+            "type": "string",
+            "enum": [
+              "free",
+              "starter",
+              "pro",
+              "enterprise"
+            ]
           },
           "role": {
             "type": "string",

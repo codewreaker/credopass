@@ -25,7 +25,7 @@ import {
 import type { Database } from '../db/client';
 import { ProblemCode, problem } from '../http/problem';
 import type { OrgRole } from '../authz/permissions';
-import { DEFAULT_PLAN, orgLimitFor } from '../authz/plans';
+import { DEFAULT_PLAN, orgLimitFor, type OrgPlan } from '../authz/plans';
 import { normaliseRole } from './identity';
 
 /**
@@ -45,7 +45,12 @@ export interface OrganizationSummary {
   id: string;
   name: string;
   slug: string;
-  plan: string;
+  /**
+   * The closed set, not `string`. The contract declares the enum and so does
+   * `Plan.id`; shipping it widened here is what made the upgrade screen
+   * unable to look an organisation's own plan up in the plan catalogue.
+   */
+  plan: OrgPlan;
   role: OrgRole;
 }
 

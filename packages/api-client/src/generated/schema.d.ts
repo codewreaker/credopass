@@ -3086,7 +3086,8 @@ export interface components {
             id: string;
             name: string;
             slug: string;
-            plan: string;
+            /** @enum {string} */
+            plan: "free" | "starter" | "pro" | "enterprise";
             /** @enum {string} */
             role?: "owner" | "admin" | "organizer" | "checkin" | "viewer";
         };

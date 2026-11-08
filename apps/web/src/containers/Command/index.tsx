@@ -25,6 +25,7 @@ import {
 
 import { useNavigate } from '@tanstack/react-router';
 import { SHORTCUTS, type Shortcut } from '../../hooks/shortcuts';
+import type { AccountTab } from '../../Pages/Account';
 
 /**
  * The palette does not bind any keys.
@@ -78,8 +79,12 @@ const CommandPalette: React.FC<{
   );
 
   // `/account` is three screens behind one route, so its entries carry the tab.
+  //
+  // `AccountTab`, not `string`: the route validates `tab` against a closed
+  // set, so a typo here is a search param the route silently falls back from
+  // rather than the screen the palette entry promised.
   const handleAccountTab = useCallback(
-    (tab: string) => {
+    (tab: AccountTab) => {
       onClose();
       navigate({ to: '/account', search: { tab } });
     },

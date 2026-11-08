@@ -20,7 +20,7 @@
 import { useMemo } from 'react';
 import { ArrowLeft, Check, Sparkles } from 'lucide-react';
 import { useNavigate } from '@tanstack/react-router';
-import { useOrganizations, usePlans, type Plan } from '@credopass/api-client';
+import { useOrganizations, usePlans, type Plan, type PlanId } from '@credopass/api-client';
 import { Button } from '@credopass/ui/components/button';
 import { Skeleton } from '@credopass/ui/components/skeleton';
 import { cn } from '@credopass/ui/lib/utils';
@@ -42,7 +42,10 @@ export default function UpgradePage() {
   // catalogue's own ordering rather than a hard-coded list of tier names.
   const rankOf = useMemo(() => {
     const map = new Map(plans.map((p) => [p.id, p.ownedOrgLimit]));
-    return (id: string) => map.get(id) ?? 0;
+    // `PlanId`, not `string`. The map is keyed by the catalogue's own ids, so
+    // a widened parameter would accept a tier that cannot exist and rank it 0
+    // — which reads as "this is a downgrade" rather than as the bug it is.
+    return (id: PlanId) => map.get(id) ?? 0;
   }, [plans]);
 
   const isLoading = orgsLoading || plansLoading;

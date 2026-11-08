@@ -1715,6 +1715,29 @@ hairline — over `bg-card/85` with a blur. The backing is not decoration: these
 
 ---
 
+## 2026-11-08 (later still) — `Organization.plan` was a `string` and `Plan.id` was an enum
+
+Clearing the web app's three long-standing typecheck errors turned up a real contract bug rather
+than three sloppy annotations.
+
+Two of them were simply widened parameters — the command palette typed an account tab as `string`
+when the route validates a closed set, and the QR scanner's cleanup had a branch that fell through
+without returning. The third did not go away when narrowed, because the contract itself disagreed
+with itself: `Plan.id` shipped `"free" | "starter" | "pro" | "enterprise"` while
+`Organization.plan` shipped `string`, for the same value. So the upgrade screen could not look an
+organisation's own plan up in the plan catalogue without a cast — which is exactly the kind of cast
+that hides a real mismatch later.
+
+The column has been `text({ enum: [...] })` in Drizzle all along, and `PATCH /organizations/{id}/plan`
+already declared the enum. Only `OrganizationSchema` said `z.string()`. Fixed there — one line —
+plus `OrganizationSummary.plan` in the service, then regenerated the client. **Narrowing a response
+field is not a breaking change for a client that already handled the wider type**, and nothing was
+casting around it.
+
+`apps/web` typechecks clean for the first time in a while: 3 errors → 0.
+
+---
+
 ## Conventions worth knowing
 
 1. Every route is created with `defineRoute` and declares `scope` (+ `permission` if org-scoped).

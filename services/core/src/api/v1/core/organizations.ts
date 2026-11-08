@@ -14,6 +14,7 @@
 
 import { OpenAPIHono, z } from '@hono/zod-openapi';
 import { defineRoute, problemResponse } from '../../../http/define-route';
+import { ORG_PLANS } from '../../../authz/plans';
 import {
   requireCaller,
   requirePermission,
@@ -41,7 +42,21 @@ const OrganizationSchema = z
     id: z.string().uuid(),
     name: z.string(),
     slug: z.string(),
-    plan: z.string(),
+    /**
+     * `z.enum(ORG_PLANS)`, not `z.string()`.
+     *
+     * The same value is already a closed set everywhere else it appears —
+     * `Plan.id` and `PATCH /organizations/{id}/plan` both declare the enum —
+     * so declaring it open here made one field two different types in one
+     * document. Downstream that is not cosmetic: the generated client gave
+     * `Organization.plan` as `string` and `Plan.id` as the union, so the
+     * upgrade screen could not look an organisation's own plan up in the plan
+     * catalogue without a cast.
+     *
+     * The column is `text` with a CHECK, so this narrows the contract to what
+     * the database already enforces rather than inventing a constraint.
+     */
+    plan: z.enum(ORG_PLANS),
     role: RoleSchema.optional(),
   })
   .openapi('Organization');

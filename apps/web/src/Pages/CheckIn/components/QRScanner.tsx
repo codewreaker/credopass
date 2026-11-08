@@ -96,10 +96,14 @@ export function QRScanner({ onResult, paused = false, onDecodeError, onUseManual
       void started
         .catch(() => {})
         .then(() => {
+          // Every branch returns explicitly. Two of the three resolve to
+          // nothing, and under `noImplicitReturns` an implicit fall-through
+          // beside an explicit `return scanner.stop()` is exactly the shape
+          // that hides a forgotten await.
           try {
             if (scanner.getState() === Html5QrcodeScannerState.NOT_STARTED) {
               scanner.clear();
-              return;
+              return undefined;
             }
             return scanner
               .stop()
@@ -107,6 +111,7 @@ export function QRScanner({ onResult, paused = false, onDecodeError, onUseManual
               .catch(() => {});
           } catch {
             // Raced anyway — the camera is already down, nothing to release.
+            return undefined;
           }
         });
     };
