@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TicketsRouteImport } from './routes/tickets'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as OrganizationsRouteImport } from './routes/organizations'
 import { Route as LoginRouteImport } from './routes/login'
@@ -30,6 +31,11 @@ import { Route as AttendeesNewRouteImport } from './routes/attendees/new'
 import { Route as EventsEventIdEditRouteImport } from './routes/events/$eventId_.edit'
 import { Route as AttendeesUserIdEditRouteImport } from './routes/attendees/$userId_.edit'
 
+const TicketsRoute = TicketsRouteImport.update({
+  id: '/tickets',
+  path: '/tickets',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
@@ -138,6 +144,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/organizations': typeof OrganizationsRoute
   '/profile': typeof ProfileRoute
+  '/tickets': typeof TicketsRoute
   '/attendees/new': typeof AttendeesNewRoute
   '/auth/error': typeof AuthErrorRoute
   '/checkin/$eventId': typeof CheckinEventIdRoute
@@ -160,6 +167,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/organizations': typeof OrganizationsRoute
   '/profile': typeof ProfileRoute
+  '/tickets': typeof TicketsRoute
   '/attendees/new': typeof AttendeesNewRoute
   '/auth/error': typeof AuthErrorRoute
   '/checkin/$eventId': typeof CheckinEventIdRoute
@@ -183,6 +191,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/organizations': typeof OrganizationsRoute
   '/profile': typeof ProfileRoute
+  '/tickets': typeof TicketsRoute
   '/attendees/new': typeof AttendeesNewRoute
   '/auth/error': typeof AuthErrorRoute
   '/checkin/$eventId': typeof CheckinEventIdRoute
@@ -207,6 +216,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/organizations'
     | '/profile'
+    | '/tickets'
     | '/attendees/new'
     | '/auth/error'
     | '/checkin/$eventId'
@@ -229,6 +239,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/organizations'
     | '/profile'
+    | '/tickets'
     | '/attendees/new'
     | '/auth/error'
     | '/checkin/$eventId'
@@ -251,6 +262,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/organizations'
     | '/profile'
+    | '/tickets'
     | '/attendees/new'
     | '/auth/error'
     | '/checkin/$eventId'
@@ -274,6 +286,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   OrganizationsRoute: typeof OrganizationsRoute
   ProfileRoute: typeof ProfileRoute
+  TicketsRoute: typeof TicketsRoute
   AttendeesNewRoute: typeof AttendeesNewRoute
   AuthErrorRoute: typeof AuthErrorRoute
   CheckinEventIdRoute: typeof CheckinEventIdRoute
@@ -292,6 +305,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/tickets': {
+      id: '/tickets'
+      path: '/tickets'
+      fullPath: '/tickets'
+      preLoaderRoute: typeof TicketsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/profile': {
       id: '/profile'
       path: '/profile'
@@ -442,6 +462,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   OrganizationsRoute: OrganizationsRoute,
   ProfileRoute: ProfileRoute,
+  TicketsRoute: TicketsRoute,
   AttendeesNewRoute: AttendeesNewRoute,
   AuthErrorRoute: AuthErrorRoute,
   CheckinEventIdRoute: CheckinEventIdRoute,

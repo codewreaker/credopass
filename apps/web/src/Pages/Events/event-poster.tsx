@@ -56,16 +56,28 @@ export function EventPoster({ src, eventName }: { src: string | null | undefined
         them does the work and the other costs nothing.
 
         Both are painted with the standard masked-gradient border trick —
-        `p-px` + `mask-composite: exclude` keeps the fill to the 1px frame — so
-        this is a real edge rather than a tint over the image.
+        `p-px` plus `mask-composite: exclude` keeps the fill to the 1px frame —
+        so this is a real edge rather than a tint over the image.
+
+        **Longhands, not the `mask` shorthand.** They used to read
+        `[mask-composite:exclude] [mask:…content-box,…]`, and `mask` is a
+        shorthand: whichever order Tailwind emitted the two arbitrary
+        properties in, the shorthand reset `mask-composite` back to `add`.
+        Computed style confirmed it — `mask-composite: add, add` — so the mask
+        never excluded anything and BOTH gradients painted across the whole
+        card. On a dark poster that read as a white diagonal sheen over the
+        artwork, which is not a lit edge, it is a veil. `mask-image` and
+        `mask-clip` are longhands and reset nothing, so the order stops
+        mattering. `-webkit-mask-composite: xor` is the same rule under the
+        prefixed name for older WebKit.
       */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 rounded-3xl p-px [background:linear-gradient(135deg,rgba(0,0,0,0.28),rgba(0,0,0,0.10)_35%,rgba(0,0,0,0.10)_65%,rgba(0,0,0,0.22))] [mask-composite:exclude] [mask:linear-gradient(#000_0_0)_content-box,linear-gradient(#000_0_0)]"
+        className="pointer-events-none absolute inset-0 rounded-3xl p-px [background:linear-gradient(135deg,rgba(0,0,0,0.28),rgba(0,0,0,0.10)_35%,rgba(0,0,0,0.10)_65%,rgba(0,0,0,0.22))] [mask-image:linear-gradient(#000_0_0),linear-gradient(#000_0_0)] [mask-clip:content-box,border-box] [mask-composite:exclude] [-webkit-mask-composite:xor]"
       />
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 rounded-3xl p-0.5 [background:linear-gradient(135deg,rgba(255,255,255,0.85),rgba(255,255,255,0.05)_32%,rgba(255,255,255,0.05)_68%,rgba(255,255,255,0.6))] [mask-composite:exclude] [mask:linear-gradient(#000_0_0)_content-box,linear-gradient(#000_0_0)]"
+        className="pointer-events-none absolute inset-0 rounded-3xl p-0.5 [background:linear-gradient(135deg,rgba(255,255,255,0.85),rgba(255,255,255,0.05)_32%,rgba(255,255,255,0.05)_68%,rgba(255,255,255,0.6))] [mask-image:linear-gradient(#000_0_0),linear-gradient(#000_0_0)] [mask-clip:content-box,border-box] [mask-composite:exclude] [-webkit-mask-composite:xor]"
       />
     </div>
   );

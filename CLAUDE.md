@@ -197,11 +197,26 @@ Verify a change compiles with `nx run <project>:typecheck` / `nx run <project>:b
   provider asserted and is only written when `uq_accounts_email` leaves it free; the address always
   lands on the identity row. Two provider identities for one address get two accounts — linking them
   is an unbuilt feature, not an accident.
-- **Supabase sends no top-level `email_verified` claim.** It is inside `user_metadata`, which the
-  user can write via `auth.updateUser({ data })`. `identities.email_verified` is therefore always
-  false today, and `claimByVerifiedEmail` can never match. Never trust `user_metadata` for identity
-  decisions — use `app_metadata`, or derive it from `amr`.
+- **Supabase sends no top-level `email_verified` claim** — it is inside `user_metadata`, which the
+  user can write via `auth.updateUser({ data })`. This is handled, not open:
+  `emailVerifiedFromClaims` (`services/identity.ts`) honours the signed top-level claim when a
+  provider sends one and otherwise derives verification from `app_metadata` / `amr`, against the
+  `ADDRESS_ASSERTING_PROVIDERS` allow-list. **Never trust `user_metadata` for an identity decision**
+  — display names only. `src/test/email-verified.test.ts` asserts both directions.
 - **No email exists yet.** Pass URLs and invitation links are returned in responses and must be shown on screen. Never write "check your email".
+- **A pass cannot be fetched, only reissued.** Only the token's SHA-256 is stored.
+  `POST /me/tickets/{id}/pass` mints a new one and revokes the old
+  (`uq_passes_event_person_live` allows exactly one live pass per person per event). Any UI that
+  offers it must say so.
+- **`cover_image_url` holds one of three things**: an absolute https URL, one of our own ready
+  asset URLs, or a **root-relative built-in poster path** (`/posters/*.svg`). The poster list is
+  `packages/lib/src/schemas/poster-templates.ts` and `assertCoverImageAllowed` matches it by exact
+  set membership — never widen that to a prefix test.
+- **Two scopes read events, and they must not be confused.** `/events` is organisation-scoped (what
+  you host). `/me/tickets` is account-scoped (what you attend) and filters on `people.account_id`
+  alone, across every organisation. A ticket is not a membership — nothing on that path may read or
+  write `org_memberships` (T29). Its api-client query keys deliberately sit outside the
+  `['org', id, …]` prefix, so switching organisation must not refetch or empty the list.
 - **Tailwind v4**: prefer canonical class names (`bg-linear-to-t`, not `bg-gradient-to-t`) to avoid lint warnings.
 
 ## Before saying a change is done

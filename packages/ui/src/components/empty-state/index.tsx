@@ -31,7 +31,18 @@ const EmptyState: React.FC<{
 }> = ({
     title = "No Event Found.",
     description = "You haven&apos;t created any events yet. Get started by creating your first event.",
-    action = { label: "Create Event", onClick: () => { } },
+    /**
+     * No default.
+     *
+     * It used to default to `{ label: "Create Event", onClick: () => {} }` —
+     * a button that did nothing, on every empty state that did not pass one.
+     * Two screens were already hitting it: searching attendees with no match
+     * offered "Create Event" (the caller passes `undefined` there on purpose),
+     * and so did "no passes yet", where creating an event is the opposite of
+     * what the screen is about. An empty state with nothing to do should show
+     * no button at all.
+     */
+    action,
     secondaryAction,
     link,
     icon = <UserPlus />,
@@ -50,12 +61,16 @@ const EmptyState: React.FC<{
                         {description}
                     </EmptyDescription>
                 </EmptyHeader>
-                <EmptyContent>
-                    <div className="flex gap-2">
-                        <Button onClick={action?.onClick} className={"cursor-pointer"}>{action?.icon}{action.label}</Button>
-                        {secondaryAction && <Button variant="outline" onClick={secondaryAction.onClick}>{secondaryAction.label}</Button>}
-                    </div>
-                </EmptyContent>
+                {(action || secondaryAction) && (
+                    <EmptyContent>
+                        <div className="flex gap-2">
+                            {action && (
+                                <Button onClick={action.onClick} className={"cursor-pointer"}>{action.icon}{action.label}</Button>
+                            )}
+                            {secondaryAction && <Button variant="outline" onClick={secondaryAction.onClick}>{secondaryAction.label}</Button>}
+                        </div>
+                    </EmptyContent>
+                )}
                 {link && <Button
                     variant="link"
                     className="text-muted-foreground"

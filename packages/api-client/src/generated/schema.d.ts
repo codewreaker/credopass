@@ -219,6 +219,166 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/me/tickets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Events you are attending, across every organisation */
+        get: {
+            parameters: {
+                query?: {
+                    group?: "upcoming" | "past";
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Your tickets, soonest first for upcoming and most recent first for past */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            tickets: components["schemas"]["Ticket"][];
+                            counts: {
+                                upcoming: number;
+                                past: number;
+                            };
+                        };
+                    };
+                };
+                /** @description No valid token */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["Problem"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/tickets/{eventId}/pass": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reissue your own pass for an event you are attending */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    eventId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description A fresh pass. The previous one is now revoked. */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            pass: {
+                                url: string;
+                                token: string;
+                                expiresAt: string;
+                            };
+                        };
+                    };
+                };
+                /** @description No valid token */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["Problem"];
+                    };
+                };
+                /** @description You have no ticket for that event */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["Problem"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/claim": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Link earlier guest registrations to this account */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description How much was linked */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ClaimResult"];
+                    };
+                };
+                /** @description No valid token */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["Problem"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/organizations": {
         parameters: {
             query?: never;
@@ -2896,6 +3056,30 @@ export interface components {
         };
         UpdateMeBody: {
             displayName?: string | null;
+        };
+        Ticket: {
+            /** Format: uuid */
+            eventId: string;
+            name: string;
+            /** @enum {string} */
+            status: "scheduled" | "ongoing" | "completed" | "cancelled";
+            startAt: string;
+            endAt: string;
+            timezone: string;
+            location: string | null;
+            meetingUrl: string | null;
+            /** @enum {string} */
+            format: "in_person" | "online" | "hybrid" | "unspecified";
+            coverImageUrl: string | null;
+            organizationName: string;
+            /** @enum {string} */
+            attendanceState: "registered" | "attended" | "no_show" | "cancelled";
+            registeredAt: string | null;
+            checkInTime: string | null;
+        };
+        ClaimResult: {
+            claimed: number;
+            organizations: number;
         };
         Organization: {
             /** Format: uuid */

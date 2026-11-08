@@ -83,10 +83,25 @@
   --sidebar-border: oklch(0.91 0 0);
   --sidebar-ring: oklch(93.604% 0.22511 121.257);
 
-  /* Glass effects */
-  --glass-bg: oklch(1 0 0 / 60%);
-  --glass-border: oklch(0 0 0 / 8%);
+  /* Glass effects.
+
+     The light-mode values used to be a near-white fill (60%) behind a 8% hairline
+     with the shadow hard-coded at the call site, and the floating tab bar was
+     the result: white glass on a white page, with a shadow too diffuse to draw
+     an edge. First-time users did not read it as a control at all. Opaque
+     enough to separate, a border dark enough to see, and a two-part shadow —
+     a tight contact shadow that says "this sits on top of the page" plus a
+     soft ambient one for depth. One diffuse shadow alone cannot do the first
+     job on a white background.
+
+     `--glass-shadow` is a token rather than a utility-class literal because the
+     two themes need genuinely different shadows, and a Tailwind arbitrary value
+     cannot vary by theme. */
+  --glass-bg: oklch(1 0 0 / 78%);
+  --glass-border: oklch(0 0 0 / 14%);
   --glass-blur: 16px;
+  --glass-shadow: 0 1px 2px oklch(0 0 0 / 10%), 0 6px 16px -4px oklch(0 0 0 / 18%),
+    0 18px 40px -12px oklch(0 0 0 / 22%);
 
   /* Glow effects */
   --glow-primary: oklch(93.604% 0.22511 121.257 / 25%);
@@ -161,10 +176,14 @@
   --sidebar-border: oklch(1 0 0 / 8%);
   --sidebar-ring: oklch(93.604% 0.22511 121.257);
 
-  /* Glass effects */
+  /* Glass effects. Dark mode had the easier job all along — a light fill on a
+     dark page separates itself — so the shadow stays soft and the border stays
+     a faint light hairline. The rim is brightened slightly so the pill still
+     has a top edge against a dark photo behind it. */
   --glass-bg: oklch(0.17 0.005 260 / 70%);
-  --glass-border: oklch(1 0 0 / 8%);
+  --glass-border: oklch(1 0 0 / 12%);
   --glass-blur: 20px;
+  --glass-shadow: 0 2px 6px oklch(0 0 0 / 40%), 0 10px 36px -10px oklch(0 0 0 / 55%);
 
   /* Glow effects */
   --glow-primary: oklch(93.604% 0.22511 121.257 / 20%);
@@ -342,6 +361,7 @@
     backdrop-filter: blur(var(--glass-blur));
     -webkit-backdrop-filter: blur(var(--glass-blur));
     border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
   }
 
   /* Subtle gradient borders using pseudo-element technique */

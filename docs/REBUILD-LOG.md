@@ -6,7 +6,7 @@
 >
 > Read it top to bottom to understand the system as it stands.
 
-**Status:** Phase 1 mostly complete · web app rewired onto `/api/v1/core` · **Last updated:** 2026-11-06
+**Status:** Phase 1 mostly complete · web app rewired onto `/api/v1/core` · attendee "My passes" surface landed · **Last updated:** 2026-11-08
 
 ---
 
@@ -1467,6 +1467,185 @@ delete path, no abandoned-upload sweep, and the Coolify variables are not set �
 has no bucket configured.
 
 ---
+
+---
+
+## 2026-11-08 — "My passes": the attendee finally has a screen of their own
+
+**The finding (maintainer testing).** *"You can see all the events you host, but no way to see the
+events you went to. Luma makes it very clear."* The product had exactly one list of events and it
+was the hosting list. Someone who attends events and hosts none opened CredoPass to an empty state
+offering to create their first event — while the database held every registration they had ever
+made.
+
+The surface was designed for and then deferred (D26). `people.account_id` has existed since Phase 1
+precisely for this, `claimByVerifiedEmail` was written and left unrouted, and T33/T34 were marked
+"needs `POST /me/claim`". This lands all of it.
+
+**What was built.**
+
+| | |
+|---|---|
+| `GET /me/tickets?group=upcoming\|past` | Every event this account is attending, across every organisation. Returns both counts with either group so the switch never renders a `0` it has not fetched. |
+| `POST /me/tickets/{eventId}/pass` | Reissues the caller's own pass. |
+| `POST /me/claim` | Links guest registrations made before the account existed. |
+| `services/core/src/services/tickets.ts` | The personal scope. |
+| `apps/web` `/tickets` → `Pages/Tickets` | Going ⇄ Went, the same two-position switch the hosting list uses. |
+| `NAV_ITEMS` | A second entry, "Passes". `Events` is what you host; `Passes` is what you attend. |
+
+**Three things about the scoping, since this is the first non-org read in the service.**
+
+1. These are `scope: 'account'`. They take no `X-Organization-Id` and the active-organisation
+   switcher must not filter them — the query keys deliberately sit outside the `['org', id, …]`
+   prefix for that reason.
+2. The whole of the authorization check is `people.account_id = caller`. No organisation is named
+   and none can be passed in, so the org-scoped path and this one cannot be made to produce each
+   other's rows by changing a parameter.
+3. **Attending is not belonging** (T29). Nothing here reads or writes `org_memberships`, and
+   `/me/claim` creates no membership.
+
+**A pass is reissued, never fetched.** Only the SHA-256 of a token is stored, so the link handed
+over at registration genuinely is the only copy. "Show my pass" mints a new one and revokes the old
+— `uq_passes_event_person_live` allows exactly one — which the pass screen has always said in as
+many words.
+
+---
+
+## 2026-11-08 — `email_verified` was false for every account in the product
+
+**The bug this blocks.** `resolveCaller` read `input.claims.email_verified === true`. Supabase sends
+no such top-level claim — it is inside `user_metadata` — so `identities.email_verified` was `false`
+for every row ever written, `claimByVerifiedEmail` could never match, and "My passes" would have
+shipped permanently empty for anyone who registered as a guest before signing in. CLAUDE.md
+documented the trap; nothing had yet acted on it.
+
+**The fix.** `emailVerifiedFromClaims` in `services/identity.ts`, in this order and nothing else:
+
+1. A top-level `email_verified: true` — the standard OIDC claim, signed by the issuer.
+2. Otherwise: an address is present AND the session came through a federated provider that owns the
+   address it asserted, read from `app_metadata` (which GoTrue writes and the user cannot) and
+   failing that from `amr`.
+
+`user_metadata` is never consulted, which is the whole point — a value the account holder can set
+with one `auth.updateUser({ data })` call is not evidence about the account, and admitting it here
+is account takeover one API call away. `ADDRESS_ASSERTING_PROVIDERS` is an allow-list: a provider
+whose sign-up accepts an unconfirmed address (plain email+password) is deliberately absent, and
+`src/test/email-verified.test.ts` asserts both directions.
+
+---
+
+## 2026-11-08 — Built-in event posters, and three defects found shipping them
+
+**The finding.** *"Have some pre-designed cached posters that are auto-selected when you create an
+event."* The poster slot offered two things a person making an event on their phone does not have:
+a file to upload, or an https URL to paste. So almost no event had one.
+
+**What was built.** Eight SVG posters in `apps/web/public/posters/`, listed in
+`packages/lib/src/schemas/poster-templates.ts` — the shared contract the composer renders the picker
+from and `services/core` validates against. A new event starts with one already applied (rotated per
+composer mount, so a host's events do not all look identical); "Add photo" opens a tray that leads
+with the artwork and keeps upload and paste at the end.
+
+**They are stored as root-relative paths**, not URLs, so one row renders on `localhost:5000` and
+`app.credopass.com` alike. `assertCoverImageAllowed` exempts them **by exact set membership, never by
+a `/posters/` prefix** — the value of an allow-list is that it enumerates — and the integration suite
+asserts that `/posters/../../etc/passwd` and a trailing space are both refused.
+
+**Four defects surfaced on the way, all pre-existing and all now fixed:**
+
+- **The storage integration suite was testing against the real R2 bucket.** It set its fixture with
+  `process.env.S3_* ??= …` — "unless the environment already said otherwise" — and
+  `services/core/.env` says otherwise since local dev was pointed at R2 (D43). So the suite silently
+  stopped exercising the MinIO fixture it describes, read the production bucket's configuration
+  instead, and "accepts our own ready asset, over plain http" failed because `publicUrlFor` was
+  returning the r2.dev https URL. Pinned with `=`, `S3_PUBLIC_URL` included. Same class of footgun as
+  the exported `DATABASE_URL` that beats `.env`: an ambient value quietly winning over the one named
+  in the code in front of you.
+
+- **The poster frame painted a white veil over every dark image.** `event-poster.tsx` used
+  `[mask-composite:exclude] [mask:…]`, and `mask` is a shorthand: whichever order Tailwind emitted
+  the two arbitrary properties in, it reset `mask-composite` back to `add`. Computed style confirmed
+  `mask-composite: add, add`, so the "lit edge" gradient covered the whole card instead of a 1px
+  frame. Replaced with the `mask-image` / `mask-clip` longhands, which reset nothing. This affected
+  uploaded photos too; the posters only made it impossible to miss.
+- **`EmptyState` rendered a dead "Create Event" button** whenever a caller passed no action — it was
+  the prop default, wired to `() => {}`. Two screens were hitting it: an attendee search with no
+  matches, and now "no passes yet", where creating an event is the opposite of the point. The
+  default is gone; no action means no button.
+- **The light-mode tab bar had no visible edge.** See the next entry.
+
+---
+
+## 2026-11-08 — The floating tab bar was invisible in light mode
+
+**The finding.** *"A drop shadow or blur on the bottom nav-bar — it wasn't obvious to first-time
+users."*
+
+**The cause, which was not the blur.** The shadow was a literal at the call site:
+`shadow-[0_8px_32px_-8px_oklch(0_0_0/35%)]`. A single shadow that diffuse, cast by 60%-opaque white
+glass onto a white page, behind an 8% hairline, draws no edge at all. It worked in dark mode and had
+only ever been judged there.
+
+**The fix is a token, `--glass-shadow`,** because the two themes need genuinely different shadows and
+a Tailwind arbitrary value cannot vary by theme. Light mode gets a tight contact shadow ("this sits
+on top of the page") plus a soft ambient one; dark mode keeps a soft shadow, since a light fill on a
+dark page separates itself. Light `--glass-bg` 60% → 78% and `--glass-border` 8% → 14%; dark
+`--glass-bg` is unchanged and its border goes 8% → 12%.
+
+**No palette token was touched** — no hue, no brand colour, no `--primary` / `--background` /
+`--card` / sidebar value — and `defaultTheme` is still `dark`. Only the four `--glass-*` tokens the
+tab bar is built from changed.
+
+---
+
+## 2026-11-08 — The pass screen invited signed-in people to create an account
+
+**The finding.** *"The autofill works if I'm already a member, but it was still suggesting I create
+an account, even though I had one."*
+
+Two halves, and the register form was only ever the visible half:
+
+- **`SignUpNudge` on `/p/{token}` was unconditional.** It now branches on the viewer's **local
+  session** and offers "See all my passes" instead. The original note here warned against branching
+  on whether *this address* has an account, because that would make the page an oracle for "does
+  this person use CredoPass" and, through the event link, "is this person attending this event".
+  That reasoning is untouched: no lookup happens, no request pairs a credential with the pass token,
+  the same page is served to everyone, and the branch is decided entirely in the viewer's own
+  browser.
+- **The register form prefilled silently.** It now says *"Signed in as …— we filled this in for
+  you"*, which is the only thing that distinguishes CredoPass recognising you from the browser's own
+  autofill. Still editable: registering a partner from your own phone is ordinary.
+
+**And the registration now actually attaches.** `POST /public/events/{id}/register` is
+`scope: 'public'` and takes no credential — deliberately, so registering works with no account at
+all — so the `people` row it writes has no `account_id`. The page calls `/me/claim` straight after
+when there is a session, and `SessionProvider` calls it once per account on bootstrap. Without that,
+an event you registered for while signed in would never appear under "My passes".
+
+---
+
+## 2026-11-08 — The sign-in screen, for the device people arrive on
+
+**The finding.** *"CredoPass Welcome screen needs better design work — professional, like LinkedIn
+or Luma."*
+
+The billboard was always the strong half. The phone layout was the weak one: a detached lime banner
+carrying a one-line tagline, then roughly a third of the viewport of nothing, then the heading and
+button sitting low — so the first screenful of CredoPass was a logo and a gap.
+
+- **One column, no banner.** Lockup, pitch, heading, button in a single run. The tagline is a kicker
+  rather than a second `h1`, because two competing headlines on a 390pt screen is what pushed the
+  button down in the first place.
+- **A reassurance row** — Free to start · No card · One tap — directly under the button. A screen
+  whose entire content is one OAuth button reads as a wall without it. Three items, each short
+  enough to stay on one line at 375pt; a fourth word wraps the last chip onto a row of its own and
+  looks like a mistake.
+- **Small print.** "We only read your name and email address from Google." A sign-in with no terms
+  line looks unfinished to the person evaluating this for an organisation, which is who signs up.
+- **A card on desktop,** `md` and up. The controls used to float in 800px of empty panel with
+  nothing holding them.
+- **The question-mark illustration is gone** from the form column. `/empty-state-one.svg` is a
+  figure under a large question mark, which on a sign-in page reads as "something has gone wrong".
 
 ---
 

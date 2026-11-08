@@ -18,6 +18,7 @@ import { format } from 'date-fns/format';
 import {
   hasProblemCode,
   ProblemCode,
+  useClaimTickets,
   usePublicCheckIn,
   usePublicEvent,
   usePublicRegister,
@@ -281,9 +282,19 @@ function RegisterDialog({
 }) {
   const navigate = useNavigate();
   const register = usePublicRegister(event.id);
+  const claim = useClaimTickets();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
+  /**
+   * Who the form thinks you are, when it knows.
+   *
+   * The prefill below has always worked; what was missing was SAYING so. The
+   * page filled three fields from a session and then, further down, invited
+   * the same person to create an account — so the one signal that CredoPass
+   * recognised them was indistinguishable from the browser's own autofill.
+   */
+  const [signedInAs, setSignedInAs] = useState<string | null>(null);
 
   // Soft prefill: a signed-in session already knows who this is, so a returning
   // attendee barely types.
@@ -303,6 +314,7 @@ function RegisterDialog({
       const last = meta.last_name || rest.join(' ') || '';
       if (first) setFirstName((prev) => prev || first);
       if (last) setLastName((prev) => prev || last);
+      setSignedInAs(user.email ?? (full || null));
     });
     return () => {
       cancelled = true;
@@ -324,6 +336,26 @@ function RegisterDialog({
         email: email.trim(),
       });
       toast.success("You're registered — here's your pass. Save it.");
+
+      /**
+       * Attach the registration we just made to the signed-in account.
+       *
+       * `POST /public/events/{id}/register` is `scope: 'public'` and takes no
+       * credential — deliberately, because registering must work for someone
+       * with no account at all. So the `people` row it creates has no
+       * `account_id`, and without this the event would never appear under
+       * "My passes" even for someone who was signed in the whole time.
+       *
+       * `/me/claim` links it by the address the identity provider asserted,
+       * which is the same address the form prefilled. It is awaited so the
+       * list is correct by the time they navigate to it, and swallowed on
+       * failure: the registration succeeded and the pass is in hand, so a
+       * failed link must not be reported as a failed registration.
+       */
+      if (signedInAs) {
+        await claim.mutateAsync().catch(() => undefined);
+      }
+
       // The pass URL is the only copy. Take them to it rather than leaving them
       // on a confirmation they will close.
       navigate({ to: '/p/$token', params: { token: result.pass.token } });
@@ -344,13 +376,27 @@ function RegisterDialog({
       }
       contentClassName="flex flex-col gap-3"
     >
+      {/* Said before the fields, not after them: the point is to explain why
+          they are already filled in. Still editable — someone registering a
+          partner from their own phone is an ordinary thing to do. */}
+      {signedInAs && (
+        <p className="flex items-center gap-2 rounded-xl border border-primary/25 bg-primary/5 px-3 py-2 text-xs text-muted-foreground">
+          <UserCheck size={14} className="shrink-0 text-primary" />
+          <span className="min-w-0">
+            Signed in as <span className="font-semibold text-foreground">{signedInAs}</span> — we
+            filled this in for you.
+          </span>
+        </p>
+      )}
       <div className="flex gap-2">
         <Input autoFocus placeholder="First name" value={firstName} onChange={(e) => setFirstName(e.target.value)} className="h-11 rounded-xl" />
         <Input placeholder="Last name" value={lastName} onChange={(e) => setLastName(e.target.value)} className="h-11 rounded-xl" />
       </div>
       <Input type="email" inputMode="email" placeholder="you@email.com" value={email} onChange={(e) => setEmail(e.target.value)} className="h-11 rounded-xl" />
       <p className="px-1 text-xs text-muted-foreground">
-        {`Let the host know you’re coming to “${event.name}”. We'll show your pass on the next screen — save the link, it's the only copy, and it replaces any pass you were sent before.`}
+        {signedInAs
+          ? `Let the host know you’re coming to “${event.name}”. Your pass opens next and it will be waiting under My passes.`
+          : `Let the host know you’re coming to “${event.name}”. We'll show your pass on the next screen — save the link, it's the only copy, and it replaces any pass you were sent before.`}
       </p>
     </SheetDialog>
   );

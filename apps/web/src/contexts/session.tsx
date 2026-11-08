@@ -20,6 +20,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react';
@@ -27,6 +28,7 @@ import type { Session } from '@credopass/lib/supabase';
 import {
   resolveActiveOrganization,
   useActiveOrganizationId,
+  useClaimTickets,
   useMeContext,
   type MeContext,
   type Permission,
@@ -86,6 +88,36 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       context.organizations.map((o) => o.id)
     );
   }, [context]);
+
+  /**
+   * Adopt registrations made before this account existed (D17).
+   *
+   * Someone registers for three events as a guest over a year and then signs
+   * in for the first time. Those `people` rows carry no `account_id`, so
+   * `/me/tickets` is empty and the product looks like it lost them. One call
+   * on bootstrap links the ones whose address the identity provider asserted.
+   *
+   * Here rather than on the sign-in screen because that screen is not the only
+   * way in: a session is also replayed from storage on every cold start, and
+   * an OAuth round-trip can land on any route. This runs wherever the app
+   * boots with a session.
+   *
+   * Once per account per page load. The call is idempotent and usually claims
+   * nothing, so a repeat is harmless rather than wrong — but it is also
+   * pointless, and `/me/context` re-resolves on every organisation switch.
+   */
+  const claim = useClaimTickets();
+  const claimedFor = useRef<string | null>(null);
+  const claimMutate = claim.mutate;
+  useEffect(() => {
+    const accountId = context?.account.id;
+    if (!accountId || claimedFor.current === accountId) return;
+    claimedFor.current = accountId;
+    // Fire and forget. Nothing on screen waits for it, and a failure means a
+    // guest registration stays unlinked — worth a retry next load, never worth
+    // an error toast on top of a successful sign-in.
+    claimMutate();
+  }, [context?.account.id, claimMutate]);
 
   const value = useMemo<SessionContextValue>(
     () => ({

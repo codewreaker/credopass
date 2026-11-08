@@ -256,6 +256,138 @@
           }
         }
       },
+      "Ticket": {
+        "type": "object",
+        "properties": {
+          "eventId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "scheduled",
+              "ongoing",
+              "completed",
+              "cancelled"
+            ]
+          },
+          "startAt": {
+            "type": "string"
+          },
+          "endAt": {
+            "type": "string"
+          },
+          "timezone": {
+            "type": "string"
+          },
+          "location": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "meetingUrl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "in_person",
+              "online",
+              "hybrid",
+              "unspecified"
+            ]
+          },
+          "coverImageUrl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "organizationName": {
+            "type": "string"
+          },
+          "attendanceState": {
+            "type": "string",
+            "enum": [
+              "registered",
+              "attended",
+              "no_show",
+              "cancelled"
+            ]
+          },
+          "registeredAt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "checkInTime": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "eventId",
+          "name",
+          "status",
+          "startAt",
+          "endAt",
+          "timezone",
+          "location",
+          "meetingUrl",
+          "format",
+          "coverImageUrl",
+          "organizationName",
+          "attendanceState",
+          "registeredAt",
+          "checkInTime"
+        ]
+      },
+      "ClaimResult": {
+        "type": "object",
+        "properties": {
+          "claimed": {
+            "type": "integer"
+          },
+          "organizations": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "claimed",
+          "organizations"
+        ]
+      },
       "Organization": {
         "type": "object",
         "properties": {
@@ -1595,6 +1727,198 @@
         }
       }
     },
+    "/me/tickets": {
+      "get": {
+        "summary": "Events you are attending, across every organisation",
+        "tags": [
+          "Identity"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "upcoming",
+                "past"
+              ],
+              "default": "upcoming"
+            },
+            "required": false,
+            "name": "group",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Your tickets, soonest first for upcoming and most recent first for past",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "tickets": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Ticket"
+                      }
+                    },
+                    "counts": {
+                      "type": "object",
+                      "properties": {
+                        "upcoming": {
+                          "type": "integer"
+                        },
+                        "past": {
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "upcoming",
+                        "past"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "tickets",
+                    "counts"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid token",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/tickets/{eventId}/pass": {
+      "post": {
+        "summary": "Reissue your own pass for an event you are attending",
+        "tags": [
+          "Identity"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "eventId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "A fresh pass. The previous one is now revoked.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "pass": {
+                      "type": "object",
+                      "properties": {
+                        "url": {
+                          "type": "string"
+                        },
+                        "token": {
+                          "type": "string"
+                        },
+                        "expiresAt": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "url",
+                        "token",
+                        "expiresAt"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "pass"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid token",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "You have no ticket for that event",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/claim": {
+      "post": {
+        "summary": "Link earlier guest registrations to this account",
+        "tags": [
+          "Identity"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "How much was linked",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClaimResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid token",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/organizations": {
       "post": {
         "summary": "Create an organization (you become its owner)",
@@ -2693,8 +3017,7 @@
                     "anyOf": [
                       {
                         "type": "string",
-                        "maxLength": 2048,
-                        "format": "uri"
+                        "maxLength": 2048
                       },
                       {
                         "type": "null"
@@ -3078,8 +3401,7 @@
                     "anyOf": [
                       {
                         "type": "string",
-                        "maxLength": 2048,
-                        "format": "uri"
+                        "maxLength": 2048
                       },
                       {
                         "type": "null"

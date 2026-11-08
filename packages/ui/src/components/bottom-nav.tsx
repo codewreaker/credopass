@@ -121,11 +121,20 @@ export function BottomNav({
     }
 
     // One glass recipe, used by the pill and the action button so they read as
-    // the same material. The tokens are themed (packages/ui/src/styles/globals.css).
+    // the same material. Every part of it is a themed token
+    // (packages/ui/src/styles/globals.css), the shadow included.
+    //
+    // The shadow was a literal here — `0 8px 32px -8px black/35%` — and that is
+    // why the bar was easy to miss in light mode: a single shadow that diffuse,
+    // cast by near-white glass onto a white page, draws no edge at all. It is
+    // now `--glass-shadow`, which is a tight contact shadow plus a soft ambient
+    // one in light mode and stays soft in dark, because the two backgrounds
+    // need different things and an arbitrary Tailwind value cannot vary by
+    // theme.
     const glass = cn(
         "border border-[var(--glass-border)] bg-[var(--glass-bg)]",
         "backdrop-blur-[var(--glass-blur)] backdrop-saturate-150",
-        "shadow-[0_8px_32px_-8px_oklch(0_0_0/35%)]"
+        "shadow-[var(--glass-shadow)]"
     )
 
     return (
@@ -203,7 +212,10 @@ export function BottomNav({
                         className={cn(
                             "flex size-13 shrink-0 items-center justify-center rounded-full",
                             "bg-primary text-primary-foreground",
-                            "shadow-[0_8px_32px_-8px_oklch(0_0_0/45%)]",
+                            // Lime on white needs its own contact shadow for
+                            // the same reason the pill does.
+                            "shadow-[var(--glass-shadow)]",
+                            "ring-1 ring-black/5 dark:ring-white/10",
                             "transition-transform duration-150 active:scale-95"
                         )}
                     >

@@ -18,6 +18,7 @@ import * as Storage from '../../services/storage';
 import * as Events from '../../services/event';
 import { createTenantContext, type TenantContext } from '../../tenancy/context';
 import { accounts, assets, organizations } from '@credopass/lib/schemas/tables';
+import { POSTER_TEMPLATES } from '@credopass/lib/schemas/poster-templates';
 import { eq } from 'drizzle-orm';
 
 // A REAL account row, not a made-up uuid: `assets.uploaded_by_account_id` is
@@ -32,10 +33,32 @@ let orgA: string;
 
 beforeAll(async () => {
   process.env.PASS_SIGNING_KEY ??= 'test-signing-key-not-for-production';
-  process.env.S3_ENDPOINT ??= 'http://localhost:9000';
-  process.env.S3_BUCKET ??= 'credopass-media-local';
-  process.env.S3_ACCESS_KEY_ID ??= 'credopass';
-  process.env.S3_SECRET_ACCESS_KEY ??= 'credopass';
+
+  /**
+   * `=`, not `??=`. The storage config is PINNED here, not defaulted.
+   *
+   * These five lines used to be `??=`, which means "unless the environment
+   * already said otherwise" — and `services/core/.env` does say otherwise the
+   * moment anyone switches local dev to R2 (D43). So the suite silently
+   * stopped testing the MinIO fixture it describes and started reading the
+   * real bucket's configuration, which is both the wrong thing to assert
+   * against and a live credential in a test run.
+   *
+   * It showed up as "accepts our own ready asset, over plain http" failing:
+   * `publicUrlFor` returned the r2.dev https URL, so the test's own premise
+   * was gone. Same class of footgun as the exported `DATABASE_URL` that beats
+   * `.env` (CLAUDE.md) — an ambient value quietly winning over the one the
+   * code in front of you names.
+   *
+   * `S3_PUBLIC_URL` is set explicitly too. Left unset it falls back to
+   * `${S3_ENDPOINT}/${S3_BUCKET}`, which is right for MinIO — but only by
+   * coincidence, and a `.env` that sets it would leak straight back in.
+   */
+  process.env.S3_ENDPOINT = 'http://localhost:9000';
+  process.env.S3_BUCKET = 'credopass-media-local';
+  process.env.S3_ACCESS_KEY_ID = 'credopass';
+  process.env.S3_SECRET_ACCESS_KEY = 'credopass';
+  process.env.S3_PUBLIC_URL = 'http://localhost:9000/credopass-media-local';
   Storage.resetStorageForTests();
   harness = await getTestDatabase();
   db = harness.db;
@@ -168,6 +191,33 @@ describe('an event cover may only be ours-and-ready, or external https', () => {
 
     const event = await Events.createEvent(db, ctxA, { ...baseEvent(), coverImageUrl: url });
     expect(event.coverImageUrl).toBe(url);
+  });
+
+  /**
+   * Built-in posters. These are the one value in the column that is NOT a
+   * URL — they are root-relative paths, so a row written on localhost renders
+   * on app.credopass.com and vice versa — and the thing worth asserting is
+   * that the exemption is an allow-list and not a `/posters/` prefix rule.
+   */
+  it('accepts a built-in poster template', async () => {
+    const event = await Events.createEvent(db, ctxA, {
+      ...baseEvent(),
+      coverImageUrl: POSTER_TEMPLATES[0].path,
+    });
+    expect(event.coverImageUrl).toBe(POSTER_TEMPLATES[0].path);
+  });
+
+  it('refuses a relative path that is not a known template', async () => {
+    for (const bad of [
+      '/posters/not-a-real-one.svg',
+      '/posters/../../etc/passwd',
+      '/posters/lime-arc.svg ',
+      '/anything-else.svg',
+    ]) {
+      await expect(
+        Events.createEvent(db, ctxA, { ...baseEvent(), coverImageUrl: bad })
+      ).rejects.toThrow();
+    }
   });
 
   it('accepts an external https link and refuses http, data: and javascript:', async () => {

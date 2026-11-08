@@ -12,10 +12,12 @@
  *                    where the event was going to land.
  */
 
+import { useState } from 'react';
 import { useForm } from '@tanstack/react-form';
 import { toast } from '@credopass/ui/components/sonner';
 import * as z from 'zod';
 import { useCreateEvent, useUpdateEvent, type Event } from '@credopass/api-client';
+import { POSTER_TEMPLATES } from '@credopass/lib/schemas/poster-templates';
 import { errorMessage } from '../../../lib/errors';
 
 export interface EventFormValues {
@@ -118,6 +120,9 @@ interface UseEventFormArgs {
 
 export function useEventForm({ mode, eventId, initialValues, onSaved }: UseEventFormArgs) {
   const isEditing = mode === 'edit';
+  const [initialPoster] = useState(
+    () => POSTER_TEMPLATES[Math.floor(Math.random() * POSTER_TEMPLATES.length)].path
+  );
   const createEvent = useCreateEvent();
   const updateEvent = useUpdateEvent(eventId ?? '');
   const isMutating = createEvent.isPending || updateEvent.isPending;
@@ -138,7 +143,20 @@ export function useEventForm({ mode, eventId, initialValues, onSaved }: UseEvent
       meetingUrl: initialValues?.meetingUrl ?? '',
       capacity: initialValues?.capacity ?? '',
       allowSelfCheckIn: initialValues?.allowSelfCheckIn ?? true,
-      coverImageUrl: initialValues?.coverImageUrl ?? '',
+      // A new event starts with a poster already on it.
+      //
+      // The slot used to open empty and almost always stayed that way: the
+      // only ways to fill it were a file or an https URL, and someone making
+      // an event on their phone has neither to hand. Starting from artwork
+      // makes "change it" the decision instead of "find one", and an event
+      // with a poster is the difference between an invitation that reads as a
+      // flyer and one that reads as a naked QR code.
+      //
+      // Rotated rather than fixed, so a host's events do not all look
+      // identical, and chosen once per composer mount rather than per render.
+      // Editing never substitutes one: a blank cover on an existing event is a
+      // choice its organiser made.
+      coverImageUrl: initialValues?.coverImageUrl ?? (isEditing ? '' : initialPoster),
     } as EventFormValues,
     validators: {
       // @ts-expect-error — zod schema output is narrower than the form values type

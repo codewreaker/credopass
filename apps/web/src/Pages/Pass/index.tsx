@@ -14,6 +14,7 @@
  * ask, and nothing else.
  */
 
+import { useEffect, useState } from 'react';
 import { Link, useParams } from '@tanstack/react-router';
 import { ArrowRight, CalendarCheck, CheckCircle2, Clock, MapPin, TicketX } from 'lucide-react';
 import { format } from 'date-fns/format';
@@ -22,6 +23,7 @@ import { Button } from '@credopass/ui/components/button';
 import { GlowingQRCode } from '@credopass/ui/components/glowing-qr-code';
 import { toast } from '@credopass/ui/components/sonner';
 import CredoPassLogoIcon from '../../containers/LeftSidebar/brand-icon';
+import { supabase } from '../../supabase';
 import { errorMessage, isGone, isNotFound } from '../../lib/errors';
 
 export default function PassPage() {
@@ -145,34 +147,87 @@ export default function PassPage() {
 }
 
 /**
- * The sign-up nudge (D25).
+ * The sign-up nudge (D25) — and, for someone who already signed up, the way
+ * back to their own list.
  *
- * Copy and a link. No endpoint, no lookup, and deliberately no branch on
- * whether this address already has an account — that would make the page an
- * oracle for "does this person use CredoPass", and through the event link, for
- * "is this person attending this event". The same reasoning makes
- * `POST /public/events/{id}/resend-pass` answer an identical `202` either way.
+ * **What was wrong (F-autofill).** This asked everyone to "create a free
+ * account", including people who were signed in at that moment and whose name
+ * and address the register form had just autofilled from their session. Being
+ * invited to create the account you are currently using is the clearest
+ * possible signal that an app is not paying attention.
  *
- * It sits below the pass rather than in the register dialog, where it would
- * compete with the one action that matters. And it promises only what is built:
- * an account is somewhere to keep passes, not an email that will arrive —
- * there is no NotificationService, so no copy here may imply one.
+ * The branch is on the LOCAL session and nothing else. That matters: the
+ * original note here warned against branching on whether *this address* has an
+ * account, because that would turn the page into an oracle for "does this
+ * person use CredoPass" and, through the event link, "is this person attending
+ * this event". That reasoning still holds and nothing below weakens it — the
+ * viewer's own browser already knows whether the viewer is signed in, no
+ * lookup is performed, and no request carries the pass token alongside a
+ * credential. The same page is served to everyone; only this paragraph differs,
+ * and only in the viewer's own browser.
+ *
+ * It promises only what is built: an account is somewhere to keep passes, not
+ * an email that will arrive — there is no NotificationService, so no copy here
+ * may imply one.
  */
 function SignUpNudge() {
+  // `undefined` until Supabase has replayed the persisted session. Rendering
+  // the signed-out copy during that moment would flash "create an account" at
+  // someone who has one, which is the defect being fixed.
+  const [signedIn, setSignedIn] = useState<boolean | undefined>(undefined);
+
+  useEffect(() => {
+    let cancelled = false;
+    supabase.auth.getSession().then(({ data }) => {
+      if (!cancelled) setSignedIn(!!data.session);
+    });
+
+    // Signing in happens in another tab more often than you would think — the
+    // link below opens one. Keep this in step rather than stranding the nudge.
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSignedIn(!!session);
+    });
+
+    return () => {
+      cancelled = true;
+      sub.subscription.unsubscribe();
+    };
+  }, []);
+
+  if (signedIn === undefined) return null;
+
   return (
     <div className="mt-2 w-full max-w-xs border-t border-primary-foreground/15 pt-4 text-center">
-      <p className="text-xs leading-relaxed text-primary-foreground/70">
-        Going to more of these? A free CredoPass account keeps every pass in one place, whoever is
-        running the event.
-      </p>
-      <Button
-        variant="ghost"
-        size="sm"
-        className="mt-2 rounded-full text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground"
-        render={(props) => <Link {...props} to="/login" search={{}} />}
-      >
-        Create a free account <ArrowRight size={14} />
-      </Button>
+      {signedIn ? (
+        <>
+          <p className="text-xs leading-relaxed text-primary-foreground/70">
+            This pass is in your CredoPass account, with everything else you are going to.
+          </p>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="mt-2 rounded-full text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground"
+            render={(props) => <Link {...props} to="/tickets" />}
+          >
+            See all my passes <ArrowRight size={14} />
+          </Button>
+        </>
+      ) : (
+        <>
+          <p className="text-xs leading-relaxed text-primary-foreground/70">
+            Going to more of these? A free CredoPass account keeps every pass in one place, whoever
+            is running the event.
+          </p>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="mt-2 rounded-full text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground"
+            render={(props) => <Link {...props} to="/login" search={{}} />}
+          >
+            Create a free account <ArrowRight size={14} />
+          </Button>
+        </>
+      )}
     </div>
   );
 }
