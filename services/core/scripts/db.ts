@@ -205,6 +205,69 @@ Get your account id by calling GET /me:
   console.log(`✓ ${accountId} is now an owner of "${slug}". GET /events should show its events.`);
 }
 
+/**
+ * Delete every row of tenant data, leaving the schema and the migrations alone.
+ *
+ * This is the ONE command allowed to touch a remote database, and the only one
+ * that destroys data there, so it is deliberately awkward to run: you have to
+ * type the hostname you are aimed at. An allow-list cannot help here — the
+ * whole point is to run it somewhere that is not localhost — so the safety is
+ * that the host must be stated rather than inherited from an environment
+ * variable you forgot was exported.
+ *
+ * It does NOT drop the schema. `reset` is the one that rebuilds from zero, and
+ * it still refuses anything but localhost.
+ *
+ * Accounts and identities SURVIVE. They are who people are, not data about an
+ * organisation: deleting them signs you out of a database you were about to
+ * test against, and the next authenticated request recreates them anyway.
+ * Everything hanging off `organizations` goes, which is events, people,
+ * attendance, passes, invitations, assets and memberships.
+ */
+async function wipe(confirmHost?: string): Promise<void> {
+  const client = await connect();
+
+  const counts = await client.query<{ table: string; n: string }>(`
+    SELECT 'organizations' AS table, count(*)::text AS n FROM organizations
+    UNION ALL SELECT 'events', count(*)::text FROM events
+    UNION ALL SELECT 'people', count(*)::text FROM people
+    UNION ALL SELECT 'attendance', count(*)::text FROM attendance
+    UNION ALL SELECT 'passes', count(*)::text FROM passes
+    UNION ALL SELECT 'invitations', count(*)::text FROM invitations
+    UNION ALL SELECT 'org_memberships', count(*)::text FROM org_memberships
+    UNION ALL SELECT 'assets', count(*)::text FROM assets
+    UNION ALL SELECT 'accounts (KEPT)', count(*)::text FROM accounts
+    UNION ALL SELECT 'identities (KEPT)', count(*)::text FROM identities
+  `);
+
+  console.log(`\nDatabase: ${safeUrl}`);
+  console.log(`Host:     ${host}${isLocal ? ' (local)' : '  ⚠️  REMOTE'}\n`);
+  for (const r of counts.rows) console.log(`  ${r.n.padStart(6)}  ${r.table}`);
+
+  if (confirmHost !== host) {
+    await client.end();
+    console.error(`
+Nothing was deleted.
+
+  To wipe everything above except accounts and identities, name the host:
+
+    nx run coreservice:db wipe ${host}
+
+  This cannot be undone.
+`);
+    process.exit(1);
+  }
+
+  // One statement. Every tenant table is ON DELETE CASCADE from organizations,
+  // so this is the whole wipe rather than nine deletes in a careful order.
+  const { rowCount } = await client.query(`DELETE FROM organizations`);
+  await client.end();
+
+  console.log(`\n✓ Deleted ${rowCount} organisation(s) and everything under them.`);
+  console.log('  Accounts and identities were left alone — you are still signed in.');
+  console.log('  Signing in now provisions a fresh organisation named after you.\n');
+}
+
 // ---------------------------------------------------------------------------
 
 const [command = 'status', ...args] = process.argv.slice(2);
@@ -225,8 +288,11 @@ switch (command) {
   case 'join':
     await join(args[0], args[1]);
     break;
+  case 'wipe':
+    await wipe(args[0]);
+    break;
   default:
-    console.error(`Unknown command "${command}". One of: status, migrate, reset, seed, join`);
+    console.error(`Unknown command "${command}". One of: status, migrate, reset, seed, join, wipe`);
     process.exit(1);
 }
 
