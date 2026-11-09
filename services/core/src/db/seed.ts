@@ -303,7 +303,21 @@ for (const [i, event] of myEventRows.entries()) {
   if (spec.fill === 'none' || spec.fill === undefined) continue;
 
   const started = event.startAt.getTime() <= now;
-  const take = spec.fill === 'full' ? ROLL.length : Math.ceil(ROLL.length / 3);
+
+  /**
+   * Never seed past an enforced capacity.
+   *
+   * The seed writes attendance straight to the database, so it walks around the
+   * check `AttendanceService` applies — and `fill: 'full'` on an event capped at
+   * 10 produced 12 registrations the API itself would have refused. That is not
+   * just untidy: an event already over its cap is the one event you cannot use
+   * to test what happens at the cap.
+   *
+   * Two short of capacity, so there is room to walk up to the limit by hand and
+   * watch the next person be turned away.
+   */
+  const room = spec.enforce && spec.capacity ? Math.max(spec.capacity - 2, 0) : Infinity;
+  const take = Math.min(spec.fill === 'full' ? ROLL.length : Math.ceil(ROLL.length / 3), room);
 
   const rows = roll.slice(0, take).map((person, n) => {
     // Before an event starts, nobody has arrived — the only honest state is
