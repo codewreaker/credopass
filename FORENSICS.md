@@ -294,8 +294,14 @@ Most of it. Specifically:
 ### The solo and single-site cases work today
 
 A person hosting a weekly singalong, and a single church running Sunday services with an
-invited admin team and door stewards on `checkin`, are both **fully supported**. The only
-defect was the auto-provisioned organisation name.
+invited admin team and door stewards on `checkin`, are both **fully supported**.
+
+The one defect — the auto-provisioned organisation name — was fixed on 2026-11-09.
+`defaultOrganizationName(account)` now returns the person's display name verbatim, so a solo
+host's events go out as "Israel Agyeman-Prempeh" and the slug follows
+(`israel-agyeman-prempeh`). It falls back to `My organization` only when no display name was
+asserted, which is what keeps `isGeneratedOrganizationName` and the console's rename prompt
+doing a real job rather than being dead code.
 
 ---
 

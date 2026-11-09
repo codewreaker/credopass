@@ -1950,6 +1950,46 @@ discriminator is one observation: whether the pill on those rows read "Host" or
 "Going/Registered/Went". Parked at the maintainer's instruction, with the question recorded in
 `FORENSICS.md` §8. **Not reproduced, not explained, not dismissed.**
 
+## 2026-11-09 — the host is the person, and the composer says so
+
+**D51 — a solo organisation is named after the person, with no suffix.**
+`defaultOrganizationName` takes the account again and returns `account.displayName`
+verbatim. This reverses the rule written one day earlier, which took no arguments so that
+"nothing about the account CAN reach a published field" — the right fix for the wrong
+diagnosis.
+
+The reasoning went round three times before settling, which is why it is worth writing down:
+
+1. The default was `` `${who}'s organization` ``, which is published. Replaced with the
+   literal `My organization` (F7).
+2. The name was then withheld from the public page entirely (`cd05245`).
+3. Then published again (`b86ba60`), because an invitee deciding whether to turn up wants to
+   know who is running the event.
+
+With the name published **by design**, the objection collapses. It was never that a personal
+name is published — a solo host *is* a person, and "Israel Agyeman-Prempeh" is the accurate
+host for a weekly singalong. The objection was the `'s organization` suffix, which turns a
+name into something that is not an organisation and reads as a placeholder nobody filled in.
+
+**Deviation from the plan, deliberately.** The plan said to delete `host-name-prompt.tsx` and
+retire `isGeneratedOrganizationName` on the grounds that a correct name needs no nag. Both
+are kept. `defaultOrganizationName` falls back to `My organization` when no display name was
+asserted, and legacy rows still carry `Israel's organization` — so the predicate and the
+prompt still have real work. Deleting them would have meant the rare nameless account
+publishes a placeholder with nothing to flag it. The prompt will now almost never fire, which
+is the point.
+
+Also: the composer's pill is labelled **"Hosted by"** rather than showing the name bare.
+*Organisation* is an admin word — it belongs on members, billing and settings. What matters at
+the moment of creation is the published consequence, in the words the invitee will read. This
+is the UI half of the vocabulary split recorded in `CLAUDE.md`.
+
+**Not verified.** `integration/default-organization.test.ts` was rewritten to assert the new
+behaviour (including that the fallback still trips the rename predicate) but has not run —
+Docker is not up on this machine, so the integration and adversarial suites remain unexecuted
+across both this change and the previous commit. Lint, typecheck, the 97 unit/structural tests
+and the web build all pass.
+
 ## Conventions worth knowing
 
 1. Every route is created with `defineRoute` and declares `scope` (+ `permission` if org-scoped).
