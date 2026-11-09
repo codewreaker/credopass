@@ -320,6 +320,7 @@ doing a real job rather than being dead code.
 | Account linking — two provider identities for one address get two accounts | decision first |
 | Recurring events: built, then **paused** the same day | `docs/RECURRING-EVENTS.md` |
 | QR scan check-in reported broken, never reproduced | — |
+| **Deleting a Supabase auth user orphans that person's data, irrecoverably through the UI.** An account is `(issuer, subject)`, so a deleted auth user signs back in under a NEW `sub` and gets a NEW `accounts` row with no memberships. The old organisation survives, with a membership pointing at an account nobody can authenticate as — no owner, no way in, and `deleteOrganization` needs a caller who is a member. Observed 2026-11-09. Not a bug: it follows directly from identity being `(issuer, subject)` rather than email, which is the right call. But it means **never delete an auth user to "reset" someone** — remove their membership instead, or wipe and let them re-provision. | — |
 | **A dead session renders as "you have no events", not as a sign-out.** `401` appears nowhere in `packages/api-client/src` or `apps/web/src/contexts` outside generated types — nothing catches it. When a refresh token stops working (deleting the Supabase auth user does it), every call 401s and the list renders empty. Observed 2026-11-09; signing out and in fixed it. "You have no events" and "your session is dead" are different sentences. | — |
 
 ---
