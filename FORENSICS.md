@@ -320,6 +320,7 @@ doing a real job rather than being dead code.
 | Account linking — two provider identities for one address get two accounts | decision first |
 | Recurring events: built, then **paused** the same day | `docs/RECURRING-EVENTS.md` |
 | QR scan check-in reported broken, never reproduced | — |
+| **A dead session renders as "you have no events", not as a sign-out.** `401` appears nowhere in `packages/api-client/src` or `apps/web/src/contexts` outside generated types — nothing catches it. When a refresh token stops working (deleting the Supabase auth user does it), every call 401s and the list renders empty. Observed 2026-11-09; signing out and in fixed it. "You have no events" and "your session is dead" are different sentences. | — |
 
 ---
 
