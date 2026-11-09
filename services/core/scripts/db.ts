@@ -44,20 +44,37 @@ const connect = async (): Promise<Client> => {
 };
 
 /**
- * Destructive commands only ever run against localhost.
+ * Destructive commands run against localhost freely, and anywhere else only if
+ * you NAME the host you are aimed at.
  *
- * A hostname allow-list rather than a --force flag, because a flag is something
- * you can pass by accident and a hostname is a fact about where you are aimed.
+ * Not a `--force` flag, deliberately: a flag is something you can pass by
+ * accident, alias into a script, or leave in your shell history to be re-run
+ * without thinking. A hostname is a fact about where you are aimed, and you
+ * cannot type it without knowing it.
+ *
+ * So there is a way through — there has to be, the moment you have a staging or
+ * a production database that genuinely needs emptying — but it is a sentence
+ * you have to mean.
  */
-const refuseRemote = (command: string): void => {
+const requireHost = (command: string, confirmHost?: string): void => {
   if (isLocal) return;
+
+  if (confirmHost && confirmHost === host) {
+    console.warn(`\n⚠️  ${command.toUpperCase()} on a REMOTE database: ${host}\n`);
+    return;
+  }
+
   console.error(`
 REFUSING TO ${command.toUpperCase()}.
 
-  DATABASE_URL points at:  ${host}
-  Destructive commands only run against: ${LOCAL_HOSTS.join(', ')}
+  DATABASE_URL points at:  ${host}   ⚠️  NOT LOCAL
+  ${command === 'reset' ? 'This DROPS THE SCHEMA and replays every migration.' : 'This deletes data.'}
 
-Point DATABASE_URL at your local database first.
+  Running it here anyway means naming the host:
+
+    nx run coreservice:db ${command} ${host}
+
+  Or point DATABASE_URL at your local database instead.
 `);
   process.exit(1);
 };
@@ -132,8 +149,8 @@ async function migrate(): Promise<void> {
   console.log('✓ migrations applied');
 }
 
-async function reset(): Promise<void> {
-  refuseRemote('reset');
+async function reset(confirmHost?: string): Promise<void> {
+  requireHost('reset', confirmHost);
   const client = await connect();
 
   const { rows } = await client.query<{ tablename: string }>(
@@ -165,8 +182,17 @@ async function reset(): Promise<void> {
   await status();
 }
 
+/**
+ * Seeding is NOT guarded, deliberately.
+ *
+ * The guards exist in proportion to what the command can cost you. The worst a
+ * seed can do is add rows to an account that already exists — noise, cleaned up
+ * by a wipe. `reset` drops the schema and `wipe` deletes everything, and
+ * neither is undoable. Guarding all three equally would have taught you to type
+ * the hostname by reflex, which is exactly how the guard on the two that matter
+ * stops being read.
+ */
 async function seed(): Promise<void> {
-  refuseRemote('seed');
   await import('../src/db/seed');
 }
 
@@ -244,17 +270,13 @@ async function wipe(confirmHost?: string): Promise<void> {
   console.log(`Host:     ${host}${isLocal ? ' (local)' : '  ⚠️  REMOTE'}\n`);
   for (const r of counts.rows) console.log(`  ${r.n.padStart(6)}  ${r.table}`);
 
-  if (confirmHost !== host) {
+  if (!isLocal && confirmHost !== host) {
     await client.end();
-    console.error(`
-Nothing was deleted.
-
-  To wipe everything above except accounts and identities, name the host:
-
-    nx run coreservice:db wipe ${host}
-
-  This cannot be undone.
-`);
+    requireHost('wipe', confirmHost);
+  }
+  if (isLocal && confirmHost !== host) {
+    await client.end();
+    console.error(`\nNothing was deleted. Confirm with:\n\n    nx run coreservice:db wipe ${host}\n`);
     process.exit(1);
   }
 
@@ -280,7 +302,7 @@ switch (command) {
     await migrate();
     break;
   case 'reset':
-    await reset();
+    await reset(args[0]);
     break;
   case 'seed':
     await seed();
