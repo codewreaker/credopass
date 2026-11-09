@@ -32,6 +32,7 @@ import { useIsMobile } from '@credopass/ui/hooks/use-mobile';
 import { Button } from '@credopass/ui/components/button';
 import { useCan, useGreetingName, useSession } from '../../contexts/session';
 import { errorMessage } from '../../lib/errors';
+import { getCachedPass, rememberPass } from '../../pass-cache';
 
 /** Lime spotlight hero — surfaces the next ongoing/scheduled event with quick actions. */
 const HERO_COLLAPSED_KEY = 'credopass:events-hero-collapsed';
@@ -372,8 +373,20 @@ const EventsPage = () => {
      * 404 for an event they hold no attendance row on.
      */
     const handleViewPass = useCallback(async (eventId: string) => {
+        // The token this device was already handed. Reopening your own ticket
+        // should not invalidate the link sitting in your messages, and most
+        // opens are exactly that. The pass screen still verifies it with the
+        // server before drawing anything, so a stale one costs a redirect
+        // rather than a QR that will not scan.
+        const cached = getCachedPass(eventId);
+        if (cached) {
+            navigate({ to: '/p/$token', params: { token: cached.token } });
+            return;
+        }
+
         try {
             const pass = await reissuePass.mutateAsync(eventId);
+            rememberPass(eventId, pass.token, pass.expiresAt);
             toast.success('New pass issued — any earlier link you saved has stopped working.');
             navigate({ to: '/p/$token', params: { token: pass.token } });
         } catch (error) {

@@ -255,7 +255,18 @@ export const EventRow: React.FC<{
      * the hook both existed; nothing called them. So the row offers the same
      * swipe gesture a host gets, with the one control a guest can actually use.
      */
-    const canViewPass = isGuest && !!onViewPass;
+    /**
+     * ...but only while a pass could still work.
+     *
+     * A pass expires 24 hours after the event ends (`defaultExpiry`), so
+     * reissuing one for something that finished last week mints a token that is
+     * born dead: a write, a revocation, and a screen reading "this pass is no
+     * longer valid". Offering the control there is offering a button whose only
+     * outcome is an error, so finished and cancelled rows do not get it —
+     * §2.9, hide what the answer is no to.
+     */
+    const passUsable = event.status === 'scheduled' || event.status === 'ongoing';
+    const canViewPass = isGuest && !!onViewPass && passUsable;
     const swipeEnabled = canManage || canViewPass;
 
     /**
