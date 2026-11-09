@@ -97,7 +97,32 @@ describe('T29-T30 — attending is not belonging', () => {
 
 describe('T31-T34 — the personal scope', () => {
   // Needs GET /me/tickets — the personal ticket list is not built.
-  it.todo('T31 · /me/tickets returns only mine, but across ALL organisations', () => {});
+  it('T31 · /me/tickets returns only mine, but across ALL organisations', async () => {
+    // Written 2026-11-09. This was an `it.todo` naming a missing route, but
+    // /me/tickets has existed for some time — the stub outlived its reason, so
+    // the one guarantee the personal scope rests on was going unasserted.
+    const C = await newTenant('C');
+    const cEventId = await newEvent(C);
+
+    const mine = `mine-${crypto.randomUUID()}@example.test`;
+    await registerFor(bEventId, { email: mine });
+    await registerFor(cEventId, { email: mine });
+    // Somebody else, in an organisation I appear in. Must not surface.
+    await registerFor(bEventId, { email: `notmine-${crypto.randomUUID()}@example.test` });
+
+    const me = await newAccount({ label: 'multi', email: mine, emailVerified: true });
+    await request(me, 'POST', '/me/claim', { organizationId: null });
+
+    const res = await request(me, 'GET', '/me/tickets', { organizationId: null });
+    expect(res.status).toBe(200);
+
+    const { tickets } = await res.json();
+    // BOTH organisations — the list is account-scoped and takes no org — and
+    // nothing belonging to anyone else.
+    expect(tickets.map((t: { eventId: string }) => t.eventId).sort()).toEqual(
+      [bEventId, cEventId].sort()
+    );
+  });
 
   // Needs PATCH /attendance/{id} — the attendance write route is not built.
   it.todo('T32 · the self branch is READ-ONLY — PATCHing my own attendance row → 403', () => {});
@@ -105,7 +130,26 @@ describe('T31-T34 — the personal scope', () => {
   // Needs POST /me/claim. `claimByVerifiedEmail` EXISTS in services/identity.ts
   // and is tested at the service level; what is missing is only the route that
   // exposes it. T33/T34 stay todo because the endpoint is the thing under test.
-  it.todo('T33 · /me/claim with an UNVERIFIED email links nothing', () => {});
+  it('T33 · /me/claim with an UNVERIFIED email links nothing', async () => {
+    // Written 2026-11-09, and this one earns its place twice over: it is the
+    // guard on the only path by which one account can come to hold another
+    // person's attendee rows. Matching must be on an address the ISSUER
+    // asserted, never one the caller typed, or claiming becomes a way to
+    // harvest somebody else's tickets by registering under their address.
+    const email = `unverified-${crypto.randomUUID()}@example.test`;
+    await registerFor(bEventId, { email });
+
+    const stranger = await newAccount({ label: 'unverified', email, emailVerified: false });
+
+    const res = await request(stranger, 'POST', '/me/claim', { organizationId: null });
+    expect(res.status).toBe(200);
+    expect(await res.json()).toMatchObject({ claimed: 0, organizations: 0 });
+
+    // The consequence, asserted separately from the count: nothing reached the
+    // ticket list either.
+    const tickets = await request(stranger, 'GET', '/me/tickets', { organizationId: null });
+    expect((await tickets.json()).tickets).toHaveLength(0);
+  });
   it.todo(
     'T34 · /me/claim with a verified email links matching rows, case-insensitively, and grants no membership'
   , () => {});

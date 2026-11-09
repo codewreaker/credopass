@@ -286,8 +286,11 @@ Most of it. Specifically:
   **set**, and every RLS policy compares `organization_id = ANY (…)`. The RLS design is
   therefore already prepared for a caller spanning several organisations — a group membership
   would widen **one function**, not every policy.
-- 404-not-403 discipline, with a **52-test** adversarial suite
-  (`services/core/src/test/adversarial/` — 29 + 14 + 9).
+- 404-not-403 discipline, with an adversarial suite of **52 declared tests — but only 42
+  execute**; the other 10 are `it.todo` stubs (`services/core/src/test/adversarial/`). The
+  file headers say stubs name routes that "do not exist yet", which has gone stale: T15
+  (analytics scoping), T16 (presigned upload key prefix) and T26 (cross-tenant media asset)
+  all name routes that shipped since. Quoting "52 tests" overstates the cover.
 - `people.account_id` exists, giving cross-organisation person identity a join key.
 - One merged events list (hosted + attending) on `/events`.
 
@@ -369,8 +372,28 @@ organisation.**
    *attendee* of, never her attendee lists, people or analytics.
 3. **A genuine scoping leak.** Unsupported by the audit, but not excluded.
 
-**The discriminator is one observation.** On those rows, did the poster pill read **"Host"**,
-or **"Going" / "Registered" / "Went"**? `packages/ui/src/components/event-row/index.tsx`
+### Narrowed 2026-11-09, by implementing two stale stubs
+
+T31 and T33 were `it.todo` stubs even though `/me/tickets` and `/me/claim` had long shipped —
+so the two assertions that bear directly on this report were not being made. Both are now
+written and **both pass**:
+
+- **T33** — an account holding an **unverified** address matching a `people` row claims
+  **nothing** (`claimed: 0`), and its ticket list stays empty. So claiming cannot be used to
+  harvest another person's tickets by registering under their address.
+- **T31** — `/me/tickets` returns the caller's rows across **every** organisation and nobody
+  else's, including a second person registered in an organisation the caller also appears in.
+
+**What this rules out:** the unverified-email variant of hypothesis 2, and a broad
+`/me/tickets` leak.
+
+**What it does NOT rule out:** hypothesis 2 proper. The maintainer's Google address *is*
+verified, so if his wife entered it on an attendee row, the claim is legitimate, the ticket is
+genuinely his, and the product is behaving exactly as designed. That is still the most likely
+explanation and it is still not a tenancy breach — it is the product question below.
+
+**The discriminator is still one observation.** On those rows, did the poster pill read
+**"Host"**, or **"Going" / "Registered" / "Went"**? `packages/ui/src/components/event-row/index.tsx`
 renders it from `relationship`, and `use-merged-events.ts` sets `host` *only* for rows from
 the org-scoped `/events`. A Going-type pill means hypothesis 2 and no breach. A **Host** pill
 means hypothesis 3 — stop everything and find it.

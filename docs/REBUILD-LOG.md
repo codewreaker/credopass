@@ -1990,6 +1990,39 @@ Docker is not up on this machine, so the integration and adversarial suites rema
 across both this change and the previous commit. Lint, typecheck, the 97 unit/structural tests
 and the web build all pass.
 
+## 2026-11-09 (later) — the suites run, and two stale stubs get written
+
+Docker was down for the previous two commits, so the integration and adversarial suites had
+not executed. They have now. **All green: 97 unit/structural, 136 integration, and the
+adversarial suite at 0 fail.** Nothing in the role reduction, the enforcement fix or the
+Stage 0 rename regressed, and `integration/default-organization.test.ts` — rewritten blind —
+passes.
+
+**The adversarial suite is smaller than its headline number.** 52 tests are declared; **42
+execute and 10 are `it.todo` stubs**. The file headers justify stubs as naming routes that
+"do not exist yet", and that has gone stale — T15 (analytics scoping), T16 (presigned upload
+key prefix) and T26 (cross-tenant media asset) all name routes that have since shipped.
+"the 52-test adversarial suite" overstated the cover, so README and FORENSICS now say what
+actually runs.
+
+**T31 and T33 written, and they matter.** Both were stubs despite `/me/tickets` and
+`/me/claim` having long shipped — which meant the two assertions bearing directly on the open
+cross-account report were not being made at all:
+
+- **T33** — an account holding an **unverified** address matching a `people` row claims
+  nothing and its ticket list stays empty. Claiming cannot harvest another person's tickets
+  by registering under their address.
+- **T31** — `/me/tickets` returns the caller's rows across every organisation and nobody
+  else's, including a second person registered in an organisation the caller also appears in.
+
+This narrows the open investigation without closing it. It rules out the unverified-email
+variant and a broad `/me/tickets` leak. It does **not** rule out the main hypothesis: the
+maintainer's Google address is verified, so if his wife entered it on an attendee row the
+claim is legitimate and the ticket genuinely his. Still waiting on the one observation that
+decides it — whether the pill on those rows read "Host" or "Going/Registered/Went".
+
+Eight stubs remain. Several are now implementable and are worth a pass of their own.
+
 ## Conventions worth knowing
 
 1. Every route is created with `defineRoute` and declares `scope` (+ `permission` if org-scoped).

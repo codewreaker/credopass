@@ -137,7 +137,7 @@ sequenceDiagram
 
 So an account reaches an organisation **only** through a membership, and you do not "have permissions" — you have a membership, and it carries one of four roles: `owner` ⊃ `admin` ⊃ `organizer` ⊃ `checkin`. Full endpoint-by-endpoint detail is in [**FORENSICS.md**](FORENSICS.md).
 
-> ⚠️ **RLS is currently inert on the API path.** The membership-scoped policies in `services/core/drizzle/0001_rls.sql` exist and are correct, but the API connects as `postgres`, which is `BYPASSRLS` — so today tenancy rests on exactly one layer: the explicit `ctx.organizationId` predicate every domain service applies, which the 52-test adversarial suite polices. Switching to the `credopass_api` role requires wiring `SET LOCAL app.account_id` per transaction first. The ordered fix is [`docs/DATABASE-MIGRATION.md` §6](docs/DATABASE-MIGRATION.md).
+> ⚠️ **RLS is currently inert on the API path.** The membership-scoped policies in `services/core/drizzle/0001_rls.sql` exist and are correct, but the API connects as `postgres`, which is `BYPASSRLS` — so today tenancy rests on exactly one layer: the explicit `ctx.organizationId` predicate every domain service applies, which the adversarial suite polices — 52 declared, of which **42 execute and 10 are `it.todo` stubs** for routes that mostly do now exist. Switching to the `credopass_api` role requires wiring `SET LOCAL app.account_id` per transaction first. The ordered fix is [`docs/DATABASE-MIGRATION.md` §6](docs/DATABASE-MIGRATION.md).
 
 ## Data model
 
@@ -301,7 +301,7 @@ nx run coreservice:dev:down    # stop everything
 ```bash
 nx run coreservice:verify             # lint + typecheck + unit tests — all must pass
 nx run coreservice:test:integration   # services against real Postgres (starts its own DB)
-nx run coreservice:test:adversarial   # the 52-test tenancy suite
+nx run coreservice:test:adversarial   # tenancy: 42 executing, 10 todo stubs
 ```
 
 ## Everyday commands
