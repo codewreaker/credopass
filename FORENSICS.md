@@ -345,7 +345,27 @@ adversarial suite must **grow** with it.
 
 ---
 
-## 8. ⚠️ Open investigation — cross-account event visibility
+## 8. ✅ CLOSED — cross-account event visibility was not a breach
+
+**Reported 2026-11-08. Resolved 2026-11-09: hypothesis 2, confirmed by the maintainer.**
+
+The pill on those rows read **"Went"**, not "Host" — so they arrived through the
+account-scoped ticket path, not through any organisation scope. He had registered for the
+events himself, which makes the `people` row genuinely his, the claim legitimate and the
+ticket correctly listed. **No tenancy boundary was crossed.**
+
+What the audit below found still holds, and T31/T33 (written during this investigation) now
+assert the two guarantees it rests on. The one thing worth keeping from it is the product
+observation, which is real and unaddressed: **anyone who puts your verified address on an
+attendee row causes their event to appear in your list the moment you sign in.** That is
+`/me/claim` working exactly as designed, and whether a claimed ticket should need the account
+holder's confirmation rather than being linked silently at bootstrap is still an open
+product question — not a security one.
+
+The original analysis is kept below, unedited, because the reasoning is what made the
+discriminating question cheap to answer.
+
+---
 
 **Reported 2026-11-08. Not reproduced, not explained, not closed.**
 

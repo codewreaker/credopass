@@ -2023,6 +2023,43 @@ decides it — whether the pill on those rows read "Host" or "Going/Registered/W
 
 Eight stubs remain. Several are now implementable and are worth a pass of their own.
 
+## 2026-11-09 (evening) — the cross-account report closes, and two list fixes
+
+**The cross-account report was not a breach.** The pill on those rows read "Went", so they
+came through the account-scoped ticket path and not through any organisation scope — the
+maintainer had registered for the events himself, which makes the `people` row his, the claim
+legitimate and the listing correct. `FORENSICS.md` §8 is marked closed with the original
+analysis kept, because the reasoning is what made the question cheap to answer.
+
+What survives it is a product question, not a security one: **anyone who puts your verified
+address on an attendee row causes their event to appear in your list the moment you sign in.**
+That is `/me/claim` working as designed (D17). Whether a claimed ticket should need the
+holder's confirmation rather than being linked silently at bootstrap is still open.
+
+**Two fixes from using the app** (`63fcda8`):
+
+- **The bottom pill now says one thing: Host.** It used to carry the whole relationship, which
+  put two indicators on a row saying overlapping things — a "Going" pill beside a "scheduled"
+  badge is the same fact twice. "Went" beside "scheduled" was the same fact twice *and wrong*:
+  `relationshipFor` derived `went` from the attendance row without asking whether the event had
+  happened. Local data confirmed it — "Test Event for Claude" starts 11 Nov with
+  `attendance_state` already `attended`. Both halves fixed: the pill carries only what the
+  status badge cannot, and `went` now requires the event to be past.
+- **An attended event gets a Pass action.** A pass is shown once and only its SHA-256 is
+  stored, so the only way back is to mint a new one. `POST /me/tickets/{id}/pass` and
+  `useReissuePass` both existed and **nothing in the web app called either** — the only route
+  back to your own QR was to register again. Guest rows now take the same swipe gesture a host
+  row does, revealing one control instead of three.
+
+**Noted, not fixed:** the reissued pass URL comes back on port 5000 (`publicAppUrl`), which
+AirPlay holds, so the link is dead in local dev. Worth checking `PUBLIC_APP_URL` is right in
+production before anyone relies on a reissued link.
+
+**Also found while setting up:** the local dev database was simply not running, which is why
+sign-in "didn't know who I am" — the API boots and serves a degraded shell rather than saying
+the database is unreachable. `nx run coreservice:dev:up` fixed it. A boot that cannot reach
+its database should probably be louder than a greeting with no name in it.
+
 ## Conventions worth knowing
 
 1. Every route is created with `defineRoute` and declares `scope` (+ `permission` if org-scoped).
