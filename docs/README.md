@@ -1,6 +1,6 @@
 # CredoPass docs — start here
 
-**Last reviewed: 2026-11-06.**
+**Last reviewed: 2026-11-08.**
 
 Three questions, three files. Everything else is reference.
 
@@ -38,23 +38,24 @@ Nothing is "in progress" unless someone is actually working on it today.
 
 | | Work | Where it is specified | Size |
 |---|---|---|---|
-| 🔴 | The composer shows "No organization" as a loading state | [`NEXT-PHASE-PLAN.md`](NEXT-PHASE-PLAN.md) §5.2 | S |
 | ⬜ | RLS is inert on the API path — the API connects as `postgres` and bypasses it | [`DATABASE-MIGRATION.md`](DATABASE-MIGRATION.md) §6 · [`ROADMAP.md`](ROADMAP.md) stage 5g | M |
 | ⬜ | No data migration from the pre-rewrite `users` table | [`DATABASE-MIGRATION.md`](DATABASE-MIGRATION.md) §5.4 · [`ROADMAP.md`](ROADMAP.md) stage 5g | M |
 | ⬜ | `/analytics` draws the full dashboard from placeholder numbers, under a "these are made up" banner | [`ROADMAP.md`](ROADMAP.md) stage 5c (was U1) | S |
 | ⬜ | QR scan check-in is reported broken, never reproduced | [`ROADMAP.md`](ROADMAP.md) stage 2 (was U2) | M |
-| ⬜ | A check-in does not reach other screens — polling, then SSE | [`LIVE-UPDATES.md`](LIVE-UPDATES.md) | M→L |
+| ⬜ | A check-in does not reach other screens — **5s polling shipped** (`use-attendance.ts`); SSE has not | [`LIVE-UPDATES.md`](LIVE-UPDATES.md) | M |
 | ⬜ | No email exists. Pass and invitation links must be shown on screen | [`archive/API-FIRST-REBUILD.md`](archive/API-FIRST-REBUILD.md) D18 | M |
 | ⬜ | Account linking: two provider identities for one email get two accounts | [`../CLAUDE.md`](../CLAUDE.md) gotchas | — decision first |
+| 🔴 | **Cross-account event visibility, reported 2026-11-08 — not reproduced, not explained.** Discriminating question recorded | [`../FORENSICS.md`](../FORENSICS.md) §8 | — investigate first |
+| ⬜ | `POST /events` still honours a client-supplied UUID (the same shape was removed from `POST /organizations`) | [`../FORENSICS.md`](../FORENSICS.md) §4 | S |
 
 ### Planned, not started
 
 | | Work | Where it is specified |
 |---|---|---|
-| ⬜ | Online events, optional location, offline handling, posters, first-run, chat panel | [`NEXT-PHASE-PLAN.md`](NEXT-PHASE-PLAN.md) §5 |
+| ⬜ | Offline handling, first-run, chat panel. **Online events, optional location and posters shipped 2026-11-07/08** (migrations `0004`, `0007`) | [`NEXT-PHASE-PLAN.md`](NEXT-PHASE-PLAN.md) §5 |
 | ⬜ | The paid public API, webhooks, test mode, `pii_mode` | [`NEXT-PHASE-PLAN.md`](NEXT-PHASE-PLAN.md) Parts A |
-| ⬜ | Phases 4–7: domain events, recurrence, media, real analytics, enterprise SSO | [`ROADMAP.md`](ROADMAP.md) stages 3–4 · [`archive/API-FIRST-REBUILD.md`](archive/API-FIRST-REBUILD.md) phase map |
-| ⬜ | The AI chat panel — `services/ai-chat` (pydantic-ai) + an AG-UI client in the web app | [`NEXT-PHASE-PLAN.md`](NEXT-PHASE-PLAN.md) §5.7 |
+| ⬜ | Phases 4–7: domain events, real analytics, enterprise SSO. **Media shipped** (R2 live, `assets`, `0006`); **recurrence was built then paused** the same day | [`ROADMAP.md`](ROADMAP.md) stages 3–4 · [`RECURRING-EVENTS.md`](RECURRING-EVENTS.md) · [`archive/API-FIRST-REBUILD.md`](archive/API-FIRST-REBUILD.md) phase map |
+| ⬜ | The AI chat panel — `services/ai-chat` **now exists on disk** (early, not wired up) + an AG-UI client in the web app | [`ai-sidebar/AI-SIDEBAR-PLAN.md`](ai-sidebar/AI-SIDEBAR-PLAN.md) · [`NEXT-PHASE-PLAN.md`](NEXT-PHASE-PLAN.md) §5.7 |
 
 Legend: 🔴 confirmed bug · 🟡 in progress · ⬜ not started · S ≤ ½ day · M 1–3 days · L a week+
 
@@ -67,6 +68,7 @@ Legend: 🔴 confirmed bug · 🟡 in progress · ⬜ not started · S ≤ ½ da
 | File | What it is | Trust |
 |---|---|---|
 | [`../CLAUDE.md`](../CLAUDE.md) | The system now, and the golden rules | **Authoritative** |
+| [`../FORENSICS.md`](../FORENSICS.md) | **What the system *is*** — the three concepts, all 51 endpoints with scope and permission, the role matrix, the defects and the open investigation | **Authoritative on the contract** |
 | [`REBUILD-LOG.md`](REBUILD-LOG.md) | What happened, in order | **Authoritative — wins over any plan** |
 | [`DATABASE-MIGRATION.md`](DATABASE-MIGRATION.md) | How to change the schema; local, test and remote | Reference, current |
 | [`STORAGE.md`](STORAGE.md) | **Object storage** — how S3 and presigned uploads work, how to provision the production bucket, and the gotchas | Reference, current |
@@ -74,7 +76,9 @@ Legend: 🔴 confirmed bug · 🟡 in progress · ⬜ not started · S ≤ ½ da
 | [`ROADMAP.md`](ROADMAP.md) | **The ordered plan** — six stages, the 2026-11-07 feedback as F1–F13, D39–D42 | **Plan — start here** |
 | [`NEXT-PHASE-PLAN.md`](NEXT-PHASE-PLAN.md) | Public API, data ownership, product backlog. D31–D38 | Plan; B1 shipped, rest not built |
 | [`UI-REDESIGN.md`](UI-REDESIGN.md) | The measured 375×812 walk of all 20 routes. R1–R7 | Evidence; R1 and R4 shipped |
-| [`LIVE-UPDATES.md`](LIVE-UPDATES.md) | Why a check-in doesn't reach other screens. D27–D30 | Plan |
+| [`LIVE-UPDATES.md`](LIVE-UPDATES.md) | Why a check-in doesn't reach other screens. D27–D30 | Plan; the polling half shipped |
+| [`ai-sidebar/AI-SIDEBAR-PLAN.md`](ai-sidebar/AI-SIDEBAR-PLAN.md) | The AI sidebar — the plan | Plan; not built |
+| [`ai-sidebar/AGENTIC-CHAT.md`](ai-sidebar/AGENTIC-CHAT.md) | The agentic chat design, and the permissions it would need | Plan; not built |
 
 ### Archived — kept for the decision record
 

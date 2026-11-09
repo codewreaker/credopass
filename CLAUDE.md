@@ -64,6 +64,35 @@ packages/ui           web design system (Base UI + Tailwind v4)
 packages/ui-mobile    React Native design system
 ```
 
+## The model: three concepts, and only three
+
+*Permissions* and *access* are not separate things from membership — they **are** membership.
+
+| Concept | Its one job |
+|---|---|
+| **Account** | **Who you are.** A Google login, `(issuer, subject)`. One per human; carries no org, no role, no plan. |
+| **Organisation** | **Who the event is from**, and the container holding its events, attendees and bill. A hard boundary — a row in another org returns **404**, not 403. |
+| **Membership** | **Which organisations you may touch, and how much.** The link, carrying a role. The *only* permission system. |
+
+An account reaches an organisation **only** through a membership. Creating an organisation writes
+exactly two rows (the org, and an `owner` membership) and produces a fully independent tenant — not a
+filtering layer. It shares nothing with the creator's other organisations.
+
+**Four assignable roles**, a strict chain: `owner` ⊃ `admin` ⊃ `organizer` ⊃ `checkin`.
+`ASSIGNABLE_ORG_ROLES` is what may be granted; `ORG_ROLES` additionally contains **`viewer`**, which
+is **not assignable** but is still resolvable — it is a value of the `org_role` Postgres enum, the
+default of `org_memberships.role` and `org_identity_providers.default_role`, and `normaliseRole`'s
+fallback. So a response may carry it and nothing may assign it: request schemas use
+`AssignableRoleSchema`, responses use `RoleSchema`. Do not "tidy" it out of the enum —
+`ALTER TYPE … DROP VALUE` does not exist.
+
+**UI vocabulary:** on an event or invite the user-facing word is **"Host"**; on admin screens
+(members, billing, settings) it is **"Organisation"**. A solo user should meet neither.
+
+**[`FORENSICS.md`](FORENSICS.md) is the contract reference** — all 51 endpoints with scope and
+permission, the role matrix, the known defects and the open investigations. Read it before changing
+a route, a role or a permission.
+
 ## Golden rules (violating these breaks conventions)
 
 1. **Schema is the single source of truth.** Drizzle tables in `packages/lib/src/schemas/tables/` drive the migrations, the API's request validation, the OpenAPI document and every client type. To change the model: edit the table → `cd services/core && bunx drizzle-kit generate` → read the SQL → `nx run coreservice:migrate` → `nx run api-client:generate`. Full procedure, including the remote cutover: [`docs/DATABASE-MIGRATION.md`](docs/DATABASE-MIGRATION.md). **Never** hand-write a type or validator that duplicates a table.
@@ -78,12 +107,17 @@ packages/ui-mobile    React Native design system
 These are enforced by code, not by convention. Breaking one fails the build, the lint, or the boot.
 
 1. **Every route is created with `defineRoute`.** It declares `scope` and — for `scope: 'organization'` — a `permission`. Getting this wrong is a TypeScript error, and a bad declaration that slips through crashes the service on startup.
-2. **Errors are `ProblemError`.** Throw from `src/http/problem.ts`. Never `c.json({ error })`, never `HTTPException`.
-3. **Never hand-write OpenAPI.** The doc at `/api/v1/openapi.json` is generated from the same Zod schemas that validate requests.
-4. **Handlers never build a `TenantContext`.** Only the tenant middleware does. The type is branded so you can't fake one, and lint blocks the import.
-5. **Domain services import no framework.** Nothing under `src/services/` may import `hono`. Lint blocks it.
-6. **A resource in another tenant returns 404, not 403.** 403 means "your tenant, wrong role". Never leak that a row exists.
-7. **Every tenant-scoped query filters on `ctx.organizationId` explicitly. Routes never query; services do.** (There was a `db/scoped.ts` meant to enforce this. Nothing imported it — all ten services filtered by hand — so it was deleted rather than left as a rule the code did not follow.)
+2. **A declared permission must also be enforced.** `defineRoute` records `permission` and the boot
+   assertion validates the *declaration*; the actual check is a separate
+   `middleware: [requirePermission('...')]` line, which the boot assertion cannot see. Two routes had
+   drifted. `src/test/route-enforcement.test.ts` now fails if a `scope: 'organization'` route declares
+   one permission and enforces another, or none.
+3. **Errors are `ProblemError`.** Throw from `src/http/problem.ts`. Never `c.json({ error })`, never `HTTPException`.
+4. **Never hand-write OpenAPI.** The doc at `/api/v1/openapi.json` is generated from the same Zod schemas that validate requests.
+5. **Handlers never build a `TenantContext`.** Only the tenant middleware does. The type is branded so you can't fake one, and lint blocks the import.
+6. **Domain services import no framework.** Nothing under `src/services/` may import `hono`. Lint blocks it.
+7. **A resource in another tenant returns 404, not 403.** 403 means "your tenant, wrong role". Never leak that a row exists.
+8. **Every tenant-scoped query filters on `ctx.organizationId` explicitly. Routes never query; services do.** (There was a `db/scoped.ts` meant to enforce this. Nothing imported it — all ten services filtered by hand — so it was deleted rather than left as a rule the code did not follow.)
 
 ## Where things live
 

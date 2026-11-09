@@ -17,6 +17,7 @@ import {
   createOrganization,
   defaultOrganizationName,
   ensureDefaultOrganization,
+  isGeneratedOrganizationName,
 } from '../../services/membership';
 import { orgMemberships, organizations } from '@credopass/lib/schemas/tables';
 import { accounts } from '@credopass/lib/schemas/tables';
@@ -48,16 +49,35 @@ afterAll(async () => {
 
 describe('defaultOrganizationName', () => {
   /**
-   * These used to assert "Israel's organization" and "Ada's organization".
-   * The name is PUBLISHED — it is on the public event page and on every
-   * attendee's pass — so a default nobody chose was putting the organiser's
-   * personal first name in front of strangers (F7).
+   * This went round twice. It used to assert "Israel's organization", then
+   * that nothing about the account could reach the field at all. Both were
+   * answers to the wrong question.
+   *
+   * The name is PUBLISHED, deliberately (`b86ba60`) — an invitee wants to know
+   * who is running the event. A solo host IS a person, so their own name is
+   * the correct host. What was wrong was the `'s organization` suffix, which
+   * read as a placeholder nobody had filled in.
    */
-  it('never names the organisation after the person', () => {
-    // It takes no arguments at all now, which is the strongest form of this
-    // guarantee: nothing about the account CAN reach a published field.
-    expect(defaultOrganizationName()).toBe('My organization');
-    expect(defaultOrganizationName.length).toBe(0);
+  it('names the organisation after the person, with no suffix', () => {
+    expect(defaultOrganizationName({ displayName: 'Israel Agyeman-Prempeh' })).toBe(
+      'Israel Agyeman-Prempeh'
+    );
+  });
+
+  it("never appends 's organization", () => {
+    const name = defaultOrganizationName({ displayName: 'Ada Lovelace' });
+    expect(name).toBe('Ada Lovelace');
+    expect(isGeneratedOrganizationName(name)).toBe(false);
+  });
+
+  it('falls back to the generic name when there is no display name', () => {
+    // And the fallback must still trip the rename prompt, which is the whole
+    // reason the predicate survives.
+    for (const displayName of [null, '', '   ']) {
+      const name = defaultOrganizationName({ displayName });
+      expect(name).toBe('My organization');
+      expect(isGeneratedOrganizationName(name)).toBe(true);
+    }
   });
 });
 
@@ -66,7 +86,9 @@ describe('ensureDefaultOrganization', () => {
     const account = await newAccount('Israel Agyeman-Prempeh', 'israel@example.test');
 
     const org = await ensureDefaultOrganization(db, account);
-    expect(org?.name).toBe('My organization');
+    expect(org?.name).toBe('Israel Agyeman-Prempeh');
+    // The slug follows the name, so it is readable rather than a collision hash.
+    expect(org?.slug).toBe('israel-agyeman-prempeh');
     expect(org?.role).toBe('owner');
     expect(org?.plan).toBe('free');
 

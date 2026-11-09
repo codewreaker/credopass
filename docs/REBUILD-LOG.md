@@ -1882,6 +1882,184 @@ Three things in it are worth knowing without reading it:
 
 ---
 
+## 2026-11-08 (night) — the organisation model named, the roles cut, two defects found
+
+Triggered by feedback, not a bug: *"when an event is created and shared, users see 'My
+Organisation'."* The name had already been fixed once, withheld once (`cd05245`) and republished
+once (`b86ba60`) the same day. Three passes at a naming problem meant it was not a naming problem.
+
+**The diagnosis.** One `organizations` row does two incompatible jobs: it is the **tenant boundary**
+(billing, staff, people, RLS) and the **public host identity** on an invite. No single name satisfies
+both — "Kharis Church" is right for billing and wrong on an Accra-branch event page.
+
+### Decisions
+
+| | |
+|---|---|
+| **D45** | **The three concepts are account / organisation / membership, and permissions are not a fourth.** *Permissions* and *access* are not separate from membership — they **are** membership. You do not have permissions; you have a membership, and it carries a role. Written into `CLAUDE.md` and `FORENSICS.md`. |
+| **D46** | **Every public identity is its own tenant, as a peer — not a child.** "Blazers" sits beside "Israel", not under him. A sub-org hierarchy was considered and rejected: the need it answers (branches of one institution) is a *different* need from a second unrelated identity, and the hierarchy serves the first while being actively wrong for the second. Confirmed by Luma, whose Personal→Team calendar conversion happens **in place, keeping billing** — so a tenant from day one is what makes growth free. |
+| **D47** | **A group layer goes ABOVE organisations, never a scoping dimension inside them.** This is why it does not contradict **D7**. D7 forbade "a second scoping dimension to every query and every RLS policy"; grouping above adds none — `ctx.organizationId` stays singular everywhere it is today, and `app.current_org_ids()` (`drizzle/0001_rls.sql:65-72`) already returns a **set** that all policies compare with `= ANY (…)`, so a group membership widens **one function**, not sixteen policies. You can always group; you cannot easily split. Not built. |
+| **D48** | **A branch never gets its own login.** A branch is an `organizations` row; a branch head is an `account` with a membership. Shared branch logins would destroy `attendance.checked_in_by_account_id` — "who checked this guest in?" would collapse from one answer per person to one per branch. |
+| **D49** | **`viewer` becomes non-assignable rather than deleted.** It and `checkin` were near-duplicates differing on one axis each (viewer held `member:read` + `analytics:read`; checkin holds `attendance:record`), so neither contained the other — that was the cross-over, and it was the *sole* reason `ROLE_PERMISSIONS` was hand-written rather than derived. **Deviation from the plan, deliberately:** the plan said remove it outright with a migration. On implementation that is the wrong trade. `viewer` is a value of the `org_role` Postgres enum (and `ALTER TYPE … DROP VALUE` does not exist), the default of two columns, and `normaliseRole`'s fallback — a read-only default is the correct least-privilege answer. So `ASSIGNABLE_ORG_ROLES` is the four that may be granted and `ORG_ROLES` still resolves five. Request schemas use `AssignableRoleSchema`, responses use `RoleSchema`. Same UI simplification, no risky enum or default migration, and a future group-level viewer keeps its target. |
+| **D50** | **A declared permission must also be enforced, and a test says so.** See the defect below. |
+
+### Two defects found while auditing the contract
+
+**Declared ≠ enforced.** `GET /organizations/{id}` and `GET /media/recent` declared a permission and
+carried **no `requirePermission` middleware**. Every other org-scoped route does. The boot assertion
+validates the *declaration*; it cannot see whether the middleware is wired. Impact was nil — both
+permissions are held by every role, so any member could call them anyway — which is precisely why
+nobody noticed, and precisely why it would have bitten the first time either permission was
+tightened. Both fixed, and `src/test/route-enforcement.test.ts` now fails if a declaration and its
+enforcement disagree.
+
+**A client-supplied primary key.** `POST /organizations` accepted `id: z.string().uuid().optional()`
+and passed it to the insert. It could not take over an existing organisation (the PK conflict throws)
+but a client must not choose server-side identifiers, and the collision surfaced as a 500 rather than
+a declared response. Removed from the schema and from `createOrganization`'s input type. **`POST
+/events` still honours a client UUID** through a different shape — recorded, not changed.
+
+### Also
+
+- Three of 25 permissions have **no route behind them**: `series:manage`, `attendance:amend`,
+  `analytics:export`. They are granted to organizer-and-above and shipped to clients in
+  `/me/context` against no endpoint. Recorded, not removed; no test asserts the inverse direction.
+- Six permissions are held by *every* role, so they distinguish nothing and effectively mean "any
+  active member". Recorded.
+- `OrgSummary.role` is an open `z.string()` while `Member.role` is the closed enum, so
+  `/me/context` publishes the role as a free string. Recorded.
+- **`FORENSICS.md` added at the repo root** — the three concepts, all 51 endpoints with scope and
+  permission, the role matrix with the cross-over analysis, the defects, and the open investigation.
+  The API is the contract, so the contract now has one place to be read.
+- Documentation corrected: `README.md` had two dead links (`docs/API-FIRST-REBUILD.md`, archived;
+  `docs/NEXT-UI-LIST.md`, deleted) and one flatly wrong claim — that the remote Supabase instance was
+  **not** migrated, when it has been at 8/8 since 2026-11-07. Counts were stale throughout (11 tables
+  → 13, 47 adversarial tests → 52, T48 added here, 4 migrations → 8). `docs/README.md` was stamped 2026-11-06 while
+  this log carried eight entries from 2026-11-08, listed `docs/ai-sidebar/` nowhere despite its own
+  rule that everything in `docs/` must be listed, and still called B2 an open bug. `ROADMAP.md`
+  contradicted itself on B2 — the code wins; corrected.
+
+### ⚠️ Open, and deliberately not closed
+
+**Cross-account event visibility, reported 2026-11-08.** Events created on a second person's account
+became visible on the maintainer's after he created a new organisation. `membership.ts`, `tickets.ts`,
+`me.ts` and `requireTenant` were audited and are correctly scoped — **no org-scoped read path was
+found that returns another account's organisation.** Three hypotheses remain undiscriminated (the same
+Google account on both phones; claim-by-verified-email working as designed; a genuine leak), and the
+discriminator is one observation: whether the pill on those rows read "Host" or
+"Going/Registered/Went". Parked at the maintainer's instruction, with the question recorded in
+`FORENSICS.md` §8. **Not reproduced, not explained, not dismissed.**
+
+## 2026-11-09 — the host is the person, and the composer says so
+
+**D51 — a solo organisation is named after the person, with no suffix.**
+`defaultOrganizationName` takes the account again and returns `account.displayName`
+verbatim. This reverses the rule written one day earlier, which took no arguments so that
+"nothing about the account CAN reach a published field" — the right fix for the wrong
+diagnosis.
+
+The reasoning went round three times before settling, which is why it is worth writing down:
+
+1. The default was `` `${who}'s organization` ``, which is published. Replaced with the
+   literal `My organization` (F7).
+2. The name was then withheld from the public page entirely (`cd05245`).
+3. Then published again (`b86ba60`), because an invitee deciding whether to turn up wants to
+   know who is running the event.
+
+With the name published **by design**, the objection collapses. It was never that a personal
+name is published — a solo host *is* a person, and "Israel Agyeman-Prempeh" is the accurate
+host for a weekly singalong. The objection was the `'s organization` suffix, which turns a
+name into something that is not an organisation and reads as a placeholder nobody filled in.
+
+**Deviation from the plan, deliberately.** The plan said to delete `host-name-prompt.tsx` and
+retire `isGeneratedOrganizationName` on the grounds that a correct name needs no nag. Both
+are kept. `defaultOrganizationName` falls back to `My organization` when no display name was
+asserted, and legacy rows still carry `Israel's organization` — so the predicate and the
+prompt still have real work. Deleting them would have meant the rare nameless account
+publishes a placeholder with nothing to flag it. The prompt will now almost never fire, which
+is the point.
+
+Also: the composer's pill is labelled **"Hosted by"** rather than showing the name bare.
+*Organisation* is an admin word — it belongs on members, billing and settings. What matters at
+the moment of creation is the published consequence, in the words the invitee will read. This
+is the UI half of the vocabulary split recorded in `CLAUDE.md`.
+
+**Not verified.** `integration/default-organization.test.ts` was rewritten to assert the new
+behaviour (including that the fallback still trips the rename predicate) but has not run —
+Docker is not up on this machine, so the integration and adversarial suites remain unexecuted
+across both this change and the previous commit. Lint, typecheck, the 97 unit/structural tests
+and the web build all pass.
+
+## 2026-11-09 (later) — the suites run, and two stale stubs get written
+
+Docker was down for the previous two commits, so the integration and adversarial suites had
+not executed. They have now. **All green: 97 unit/structural, 136 integration, and the
+adversarial suite at 0 fail.** Nothing in the role reduction, the enforcement fix or the
+Stage 0 rename regressed, and `integration/default-organization.test.ts` — rewritten blind —
+passes.
+
+**The adversarial suite is smaller than its headline number.** 52 tests are declared; **42
+execute and 10 are `it.todo` stubs**. The file headers justify stubs as naming routes that
+"do not exist yet", and that has gone stale — T15 (analytics scoping), T16 (presigned upload
+key prefix) and T26 (cross-tenant media asset) all name routes that have since shipped.
+"the 52-test adversarial suite" overstated the cover, so README and FORENSICS now say what
+actually runs.
+
+**T31 and T33 written, and they matter.** Both were stubs despite `/me/tickets` and
+`/me/claim` having long shipped — which meant the two assertions bearing directly on the open
+cross-account report were not being made at all:
+
+- **T33** — an account holding an **unverified** address matching a `people` row claims
+  nothing and its ticket list stays empty. Claiming cannot harvest another person's tickets
+  by registering under their address.
+- **T31** — `/me/tickets` returns the caller's rows across every organisation and nobody
+  else's, including a second person registered in an organisation the caller also appears in.
+
+This narrows the open investigation without closing it. It rules out the unverified-email
+variant and a broad `/me/tickets` leak. It does **not** rule out the main hypothesis: the
+maintainer's Google address is verified, so if his wife entered it on an attendee row the
+claim is legitimate and the ticket genuinely his. Still waiting on the one observation that
+decides it — whether the pill on those rows read "Host" or "Going/Registered/Went".
+
+Eight stubs remain. Several are now implementable and are worth a pass of their own.
+
+## 2026-11-09 (evening) — the cross-account report closes, and two list fixes
+
+**The cross-account report was not a breach.** The pill on those rows read "Went", so they
+came through the account-scoped ticket path and not through any organisation scope — the
+maintainer had registered for the events himself, which makes the `people` row his, the claim
+legitimate and the listing correct. `FORENSICS.md` §8 is marked closed with the original
+analysis kept, because the reasoning is what made the question cheap to answer.
+
+What survives it is a product question, not a security one: **anyone who puts your verified
+address on an attendee row causes their event to appear in your list the moment you sign in.**
+That is `/me/claim` working as designed (D17). Whether a claimed ticket should need the
+holder's confirmation rather than being linked silently at bootstrap is still open.
+
+**Two fixes from using the app** (`63fcda8`):
+
+- **The bottom pill now says one thing: Host.** It used to carry the whole relationship, which
+  put two indicators on a row saying overlapping things — a "Going" pill beside a "scheduled"
+  badge is the same fact twice. "Went" beside "scheduled" was the same fact twice *and wrong*:
+  `relationshipFor` derived `went` from the attendance row without asking whether the event had
+  happened. Local data confirmed it — "Test Event for Claude" starts 11 Nov with
+  `attendance_state` already `attended`. Both halves fixed: the pill carries only what the
+  status badge cannot, and `went` now requires the event to be past.
+- **An attended event gets a Pass action.** A pass is shown once and only its SHA-256 is
+  stored, so the only way back is to mint a new one. `POST /me/tickets/{id}/pass` and
+  `useReissuePass` both existed and **nothing in the web app called either** — the only route
+  back to your own QR was to register again. Guest rows now take the same swipe gesture a host
+  row does, revealing one control instead of three.
+
+**Noted, not fixed:** the reissued pass URL comes back on port 5000 (`publicAppUrl`), which
+AirPlay holds, so the link is dead in local dev. Worth checking `PUBLIC_APP_URL` is right in
+production before anyone relies on a reissued link.
+
+**Also found while setting up:** the local dev database was simply not running, which is why
+sign-in "didn't know who I am" — the API boots and serves a degraded shell rather than saying
+the database is unreachable. `nx run coreservice:dev:up` fixed it. A boot that cannot reach
+its database should probably be louder than a greeting with no name in it.
+
 ## Conventions worth knowing
 
 1. Every route is created with `defineRoute` and declares `scope` (+ `permission` if org-scoped).

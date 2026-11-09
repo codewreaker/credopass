@@ -150,8 +150,12 @@ describe('T1-T10 — the baseline from MULTI-TENANCY.md §5', () => {
     expect(list.status).toBe(401);
   });
 
-  it('T9 · a viewer attempting any write gets 403 insufficient_permission', async () => {
-    const viewer = await joinAs(A, 'viewer');
+  it('T9 · a read-only role attempting any write gets 403 insufficient_permission', async () => {
+    // `checkin`, not `viewer`: viewer is no longer assignable, and `checkin` is
+    // now the least-privileged role anyone can actually be given. It holds
+    // `attendance:record` and nothing else that writes, so `event:create` is
+    // exactly the boundary this proves.
+    const viewer = await joinAs(A, 'checkin');
     // The body is VALID. An invalid one would 400 on validation and the test
     // would pass for the wrong reason, proving nothing about the role.
     const res = await request(viewer, 'POST', '/events', {
@@ -303,7 +307,7 @@ describe('T20-T23 — the users split, and membership invariants', () => {
   it('T22 · accepting an invitation issued to another email → 403 invitation_mismatch', async () => {
     const invite = await request(B, 'POST', `/organizations/${B.organizationId}/invitations`, {
       idempotencyKey: crypto.randomUUID(),
-      body: { email: 'someone-else@example.com', role: 'viewer' },
+      body: { email: 'someone-else@example.com', role: 'checkin' },
     });
     expect(invite.status).toBe(201);
     const { token } = await invite.json();
@@ -317,10 +321,28 @@ describe('T20-T23 — the users split, and membership invariants', () => {
 
   it('T23 · the last owner cannot demote themselves → 409 last_owner', async () => {
     const res = await request(A, 'PATCH', `/organizations/${A.organizationId}/members/${A.accountId}`, {
-      body: { role: 'viewer' },
+      body: { role: 'organizer' },
     });
     expect(res.status).toBe(409);
     expect(await problemCode(res)).toBe('last_owner');
+  });
+
+  it('T48 · viewer cannot be assigned through the API, though rows may hold it', async () => {
+    // The role survives in the `org_role` enum, as two column defaults and as
+    // `normaliseRole`'s fallback — but nothing may grant it. Both request paths
+    // use `AssignableRoleSchema`, so both refuse before any service runs.
+    const invite = await request(A, 'POST', `/organizations/${A.organizationId}/invitations`, {
+      idempotencyKey: crypto.randomUUID(),
+      body: { email: `viewer-${crypto.randomUUID()}@example.test`, role: 'viewer' },
+      skipContract: true,
+    });
+    expect(invite.status).toBe(400);
+
+    const demote = await request(A, 'PATCH', `/organizations/${A.organizationId}/members/${A.accountId}`, {
+      body: { role: 'viewer' },
+      skipContract: true,
+    });
+    expect(demote.status).toBe(400);
   });
 });
 

@@ -127,13 +127,23 @@ sequenceDiagram
 - **A resource in another tenant returns 404, not 403.** 403 means "your tenant, wrong role". Never leak that a row exists.
 - **There is no guest tier and no device tier.** A door tablet is a person signed in with the `checkin` role.
 
-> ⚠️ **RLS is currently inert on the API path.** The membership-scoped policies in `services/core/drizzle/0001_rls.sql` exist and are correct, but the API connects as `postgres`, which is `BYPASSRLS` — so today tenancy rests on exactly one layer: the explicit `ctx.organizationId` predicate every domain service applies, which the 47-test adversarial suite polices. Switching to the `credopass_api` role requires wiring `SET LOCAL app.account_id` per transaction first. The ordered fix is [`docs/DATABASE-MIGRATION.md` §6](docs/DATABASE-MIGRATION.md).
+**Three concepts, and only three.** *Permissions* and *access* are not separate things from membership — they **are** membership:
+
+| Concept | Its one job |
+|---|---|
+| **Account** | **Who you are.** A Google login, identified as `(issuer, subject)`. One per human; it carries no org, no role, no plan. |
+| **Organisation** | **Who the event is from**, and the container holding its events, attendees and bill. A hard boundary. |
+| **Membership** | **Which organisations you may touch, and how much.** The link between the two, carrying a role. The *only* permission system. |
+
+So an account reaches an organisation **only** through a membership, and you do not "have permissions" — you have a membership, and it carries one of four roles: `owner` ⊃ `admin` ⊃ `organizer` ⊃ `checkin`. Full endpoint-by-endpoint detail is in [**FORENSICS.md**](FORENSICS.md).
+
+> ⚠️ **RLS is currently inert on the API path.** The membership-scoped policies in `services/core/drizzle/0001_rls.sql` exist and are correct, but the API connects as `postgres`, which is `BYPASSRLS` — so today tenancy rests on exactly one layer: the explicit `ctx.organizationId` predicate every domain service applies, which the adversarial suite polices — 52 declared, of which **42 execute and 10 are `it.todo` stubs** for routes that mostly do now exist. Switching to the `credopass_api` role requires wiring `SET LOCAL app.account_id` per transaction first. The ordered fix is [`docs/DATABASE-MIGRATION.md` §6](docs/DATABASE-MIGRATION.md).
 
 ## Data model
 
-Eleven tables, all hanging off `organizations`. The rewrite split the old `users` table three ways — **`accounts`** (the login), **`identities`** (the credential proving it), **`people`** (the record an *organisation* keeps about someone). Full column-level detail and the ER diagram are in the **[lib package guide](packages/lib/README.md#the-data-model-11-tables)**.
+Thirteen tables, all hanging off `organizations`. The rewrite split the old `users` table three ways — **`accounts`** (the login), **`identities`** (the credential proving it), **`people`** (the record an *organisation* keeps about someone). Full column-level detail and the ER diagram are in the **[lib package guide](packages/lib/README.md#the-data-model-13-tables)**.
 
-`accounts` · `identities` · `organizations` · `org_memberships` · `people` · `events` · `attendance` · `passes` · `invitations` · `org_domains` · `org_identity_providers`
+`accounts` · `identities` · `organizations` · `org_memberships` · `people` · `events` · `event_series` · `attendance` · `passes` · `invitations` · `assets` · `org_domains` · `org_identity_providers`
 
 ## Tech stack
 
@@ -157,15 +167,18 @@ credopass/
 │   ├── mobile/      → Expo / React Native companion
 │   └── website/     → marketing site + /how-it-works                   (Vercel)
 ├── services/
-│   └── core/        → Hono API, /api/v1/core                            (Coolify)
+│   ├── core/        → Hono API, /api/v1/core                            (Coolify)
+│   └── ai-chat/     → Python AI sidebar service (early, not wired up)
 ├── packages/
 │   ├── lib/         → schemas, types, enums, stores, theme, auth  ← the core
 │   ├── api-client/  → typed TanStack Query hooks (the ONLY way apps get data)
 │   ├── ui/          → web design system (Base UI + Tailwind v4)
 │   └── ui-mobile/   → React Native design system
-├── docs/            → the rebuild plan, the log, the migration guide
+├── docs/            → the log, the roadmap, the migration + storage guides
 ├── docker/          → Postgres + MinIO + the test database
 ├── .github/         → CI/CD workflows
+├── scripts/         → repo hooks (post-merge)
+├── tools/           → setup + reset helpers
 └── nx.json, package.json, tsconfig.base.json
 ```
 
@@ -175,12 +188,13 @@ The repo has been rebuilt API-first. What that meant, and what is left:
 
 | Document | Read it to understand… |
 |---|---|
-| 📐 [**API-FIRST-REBUILD**](docs/API-FIRST-REBUILD.md) | The plan — decisions, target schema, the full endpoint list, the phases. |
+| 📐 [**API-FIRST-REBUILD**](docs/archive/API-FIRST-REBUILD.md) | The plan — decisions, target schema, the full endpoint list, the phases. |
+| 🗺️ [**ROADMAP**](docs/ROADMAP.md) | The ordered plan: stages, the maintainer's testing feedback, the live decision list. |
+| 🔬 [**FORENSICS**](FORENSICS.md) | What the system *is* — the three concepts, all 51 endpoints with their scope and permission, the role matrix, and the open investigations. |
 | 📓 [**REBUILD-LOG**](docs/REBUILD-LOG.md) | What was **actually** built, decided differently, or broke. Updated at the end of every phase. |
 | 🖥️ [**API-SECOND-REBUILD**](docs/archive/API-SECOND-REBUILD.md) | Moving the web app onto `/api/v1/core`. |
 | 🚪 [**API-THIRD-REBUILD**](docs/archive/API-THIRD-REBUILD.md) | The sign-up funnel (D20–D26): no guest tier, no device tokens, no onboarding screen. |
 | 🗄️ [**DATABASE-MIGRATION**](docs/DATABASE-MIGRATION.md) | How to get the schema onto a database — local, test, and the remote Supabase cutover. |
-| 📋 [**NEXT-UI-LIST**](docs/NEXT-UI-LIST.md) | The open UI backlog. |
 
 **The two largest open items** are both in `DATABASE-MIGRATION.md`: the `users` → `accounts` + `people` data migration has not been written, and RLS is not yet live on the API path.
 
@@ -190,7 +204,7 @@ The repo has been rebuilt API-first. What that meant, and what is left:
 
 | Guide | Read it to understand… |
 |-------|------------------------|
-| 🧠 [`packages/lib`](packages/lib/README.md) | The schema-first core: the 11 tables, and how types and validation are derived. **The best first read.** |
+| 🧠 [`packages/lib`](packages/lib/README.md) | The schema-first core: the 13 tables, and how types and validation are derived. **The best first read.** |
 | 🔌 [`packages/api-client`](packages/api-client/README.md) | How apps read and write — typed hooks over a generated contract. |
 | 🎨 [`packages/ui`](packages/ui/README.md) | The web design system, the house style, Base UI conventions. |
 | 📱 [`packages/ui-mobile`](packages/ui-mobile/README.md) | The React Native design system. |
@@ -226,7 +240,7 @@ bun start        # web + API together
 
 | What | Where |
 |---|---|
-| Web app | http://localhost:5000 (AirPlay often takes 5000 — check the terminal, it's usually 5001) |
+| Web app | http://localhost:5000 (AirPlay often takes 5000 — check the terminal; it lands on 5001, sometimes 5002–5003) |
 | API | http://localhost:8080/api/v1/core |
 | **API docs + client** | **http://localhost:8080/api/v1/core/docs** |
 | MinIO console | http://localhost:9001 |
@@ -264,7 +278,7 @@ Three containers, all managed by nx — you shouldn't need raw `docker` commands
 nx run coreservice:db status
 ```
 
-A healthy local database has **11 tables, 11 RLS policies, 4 migrations recorded**, and a `credopass_api` role with `bypassrls: false`.
+A healthy local database has **13 tables, 13 RLS policies, 8 migrations recorded**, and a `credopass_api` role with `bypassrls: false`.
 
 ```bash
 nx run coreservice:dev:up      # postgres + minio (+ creates the media bucket)
@@ -280,14 +294,14 @@ nx run coreservice:dev:down    # stop everything
 
 `db reset` and `db seed` **refuse to run against any host that isn't localhost.** That is a hostname allow-list, not a `--force` flag, because a flag is something you can pass by accident and a hostname is a fact about where you are aimed.
 
-**Which database am I pointed at?** `services/core/.env` → `DATABASE_URL`. Local is the default. The remote Supabase instance has *not* been migrated for the rebuild, so pointing at it makes `/api/v1/core` return 500 on everything — and the API says so at boot rather than leaving you to guess. Read [`docs/DATABASE-MIGRATION.md`](docs/DATABASE-MIGRATION.md) before changing it.
+**Which database am I pointed at?** `services/core/.env` → `DATABASE_URL`. Local is the default. The remote Supabase instance **is** migrated — 8 applied / 8 on disk, verified 2026-11-07 — but `migrate` is the only command allowed to run against it, and `nx run coreservice:db status` flags it as `⚠️ REMOTE` before you do. The API prints the real host at boot. Read [`docs/DATABASE-MIGRATION.md`](docs/DATABASE-MIGRATION.md) before changing it.
 
 ### Checking your work
 
 ```bash
 nx run coreservice:verify             # lint + typecheck + unit tests — all must pass
 nx run coreservice:test:integration   # services against real Postgres (starts its own DB)
-nx run coreservice:test:adversarial   # the 47-test tenancy suite
+nx run coreservice:test:adversarial   # tenancy: 42 executing, 10 todo stubs
 ```
 
 ## Everyday commands
@@ -320,9 +334,9 @@ flowchart LR
     CR --> Api["api.credopass.com/api/v1/core"]
 ```
 
-**Two independent paths, and only one of them is GitHub Actions.**
+**Two independent deploy paths, and only one of them is GitHub Actions.** (There is a third workflow, `supabase-cron.yml`, which only keeps the Supabase project awake.)
 
-- **Frontends → Vercel, direct.** Vercel's own Git integration builds and deploys on every push; nothing in `.github/workflows/` is involved. `ci-web.yml` still exists but is **disabled** in GitHub Actions — if you are looking for why a web deploy did or did not happen, look in the Vercel dashboard, not the Actions tab. `apps/web/vercel.json` proxies `/api/*` to the API and adds security headers; `apps/website/vercel.json` does the SPA fallback + API proxy.
+- **Frontends → Vercel, direct.** Vercel's own Git integration builds and deploys on every push; nothing in `.github/workflows/` is involved. `ci-web.yml` still exists; its triggers are live in the file, so if it is off it is off in the GitHub dashboard, which the repo cannot tell you. Either way, if you are looking for why a web deploy did or did not happen, look in the Vercel dashboard, not the Actions tab. (Its `paths:` filter still watches `packages/validation/**`, which does not exist — so it would not fire on a real web change anyway.) `apps/web/vercel.json` proxies `/api/*` to the API and adds security headers; `apps/website/vercel.json` does the SPA fallback + API proxy.
 - **API → Coolify on Hetzner.** `.github/workflows/ci-api.yml` builds `services/core/Dockerfile`, pushes `ghcr.io/codewreaker/credopass-core:latest`, then calls the Coolify deploy webhook. It is triggered by a push to `main`/`develop` touching `services/core/**` or `packages/lib/**` — there is no local deploy command.
 - CI/CD workflows and required secrets are documented in [`.github/workflows/`](.github/workflows/README.md).
 - **Every database the code runs against must be migrated before the code ships.** Adding a column is not additive at runtime.

@@ -19,7 +19,40 @@ export const PERMISSIONS = [
 
 export type Permission = (typeof PERMISSIONS)[number];
 
-export const ORG_ROLES = ['owner', 'admin', 'organizer', 'checkin', 'viewer'] as const;
+/**
+ * The roles a human may be GIVEN. Four, and they are a strict chain:
+ * `owner ⊃ admin ⊃ organizer ⊃ checkin`.
+ *
+ * `viewer` is deliberately absent. It and `checkin` were near-duplicates that
+ * differed on one axis each — viewer held `member:read` + `analytics:read` that
+ * checkin lacks, checkin holds `attendance:record` that viewer lacks — so
+ * neither contained the other and no scenario wanted the difference. Offering
+ * both was the cross-over.
+ */
+export const ASSIGNABLE_ORG_ROLES = ['owner', 'admin', 'organizer', 'checkin'] as const;
+export type AssignableOrgRole = (typeof ASSIGNABLE_ORG_ROLES)[number];
+
+/**
+ * Every role the system can RESOLVE, which is the assignable four plus
+ * `viewer`.
+ *
+ * `viewer` is kept — and kept out of `ASSIGNABLE_ORG_ROLES` — for three
+ * reasons, none of them nostalgia:
+ *
+ *   · It is a value of the `org_role` Postgres enum. `ALTER TYPE ... DROP
+ *     VALUE` does not exist, so removing it means recreating the type and
+ *     rewriting every dependent column.
+ *   · It is the DEFAULT of two columns (`org_memberships.role`,
+ *     `org_identity_providers.default_role`) and the fallback in
+ *     `normaliseRole`. A read-only default is the right least-privilege
+ *     answer; deleting the role would leave those pointing at nothing.
+ *   · It is the read-only projection a future group-level viewer resolves to
+ *     inside a member organisation.
+ *
+ * So rows may still hold it and the API may still return it. Nothing may
+ * assign it: the request schemas use `ASSIGNABLE_ORG_ROLES`.
+ */
+export const ORG_ROLES = [...ASSIGNABLE_ORG_ROLES, 'viewer'] as const;
 export type OrgRole = (typeof ORG_ROLES)[number];
 
 /**

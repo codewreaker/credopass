@@ -5,6 +5,7 @@ import {
     ProblemCode,
     useCancelEvent,
     useDeleteEvent,
+    useReissuePass,
     useEventsCalendar,
     useEventsSummary,
     useOrganizations,
@@ -12,7 +13,7 @@ import {
 } from '@credopass/api-client';
 import EventListView from './EventListView';
 import { useMergedEvents, type ListEvent } from './use-merged-events';
-import { HostNamePrompt } from './host-name-prompt';
+import { AnnouncementBanner } from './announcement-banner';
 import EventCalendar from '@credopass/ui/components/event-calendar';
 import { CalendarPlus, CalendarsIcon, MapPin, Users, Clock, ScanLine, ArrowUpRight, Plus, ChevronUp, ChevronDown, Sparkles, Pencil } from 'lucide-react';
 import { useStatusFilter, useToolbarContext } from '@credopass/lib/hooks';
@@ -31,6 +32,7 @@ import { useIsMobile } from '@credopass/ui/hooks/use-mobile';
 import { Button } from '@credopass/ui/components/button';
 import { useCan, useGreetingName, useSession } from '../../contexts/session';
 import { errorMessage } from '../../lib/errors';
+import { getCachedPass, rememberPass } from '../../pass-cache';
 
 /** Lime spotlight hero — surfaces the next ongoing/scheduled event with quick actions. */
 const HERO_COLLAPSED_KEY = 'credopass:events-hero-collapsed';
@@ -342,6 +344,7 @@ const EventsPage = () => {
 
     const cancelEvent = useCancelEvent();
     const deleteEvent = useDeleteEvent();
+    const reissuePass = useReissuePass();
 
     const handleCreateEvent = useCallback(() => {
         navigate({ to: '/events/new' });
@@ -355,6 +358,41 @@ const EventsPage = () => {
     const handleViewAttendees = useCallback((eventId: string) => {
         navigate({ to: '/attendees', search: { eventId } });
     }, [navigate]);
+
+    /**
+     * Put an attendee's pass back in their hands.
+     *
+     * It MINTS a new pass rather than fetching the old one, because the old one
+     * is genuinely not retrievable: only its SHA-256 is stored, and
+     * `uq_passes_event_person_live` allows exactly one live pass per person per
+     * event, so issuing revokes the previous link. The toast says so — the
+     * person may have saved the earlier URL, and it has just stopped working.
+     *
+     * Guest rows only. A host reaching here would be a bug: their row offers
+     * edit, attendees and delete instead, and `/me/tickets/{id}/pass` answers
+     * 404 for an event they hold no attendance row on.
+     */
+    const handleViewPass = useCallback(async (eventId: string) => {
+        // The token this device was already handed. Reopening your own ticket
+        // should not invalidate the link sitting in your messages, and most
+        // opens are exactly that. The pass screen still verifies it with the
+        // server before drawing anything, so a stale one costs a redirect
+        // rather than a QR that will not scan.
+        const cached = getCachedPass(eventId);
+        if (cached) {
+            navigate({ to: '/p/$token', params: { token: cached.token } });
+            return;
+        }
+
+        try {
+            const pass = await reissuePass.mutateAsync(eventId);
+            rememberPass(eventId, pass.token, pass.expiresAt);
+            toast.success('New pass issued — any earlier link you saved has stopped working.');
+            navigate({ to: '/p/$token', params: { token: pass.token } });
+        } catch (error) {
+            toast.error(errorMessage(error, 'Could not reissue your pass'));
+        }
+    }, [reissuePass, navigate]);
 
     /**
      * Delete, falling back to cancel.
@@ -412,7 +450,7 @@ const EventsPage = () => {
                 Three rows, each saying something the others do not (F2–F4). */}
             {/* Before the greeting, because it is about what strangers are
                 already seeing rather than about this session. */}
-            <HostNamePrompt />
+            <AnnouncementBanner />
 
             <div className="events-header">
                 <div className="events-header-left">
@@ -490,6 +528,7 @@ const EventsPage = () => {
                                 onEditEvent={handleEditEvent}
                                 onDeleteEvent={handleDeleteEvent}
                                 onViewAttendees={handleViewAttendees}
+                                onViewPass={handleViewPass}
                                 selectedStatus={selectedStatuses}
                                 timezone
                                 activeGroup={activeGroup}

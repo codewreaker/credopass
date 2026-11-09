@@ -151,6 +151,7 @@ mediaRoutes.openapi(
     summary: "Recently uploaded images, newest first",
     tags: ['Media'],
     security: [{ bearerAuth: [] }],
+    middleware: [requirePermission('media:read')] as const,
     request: {
       query: z.object({
         limit: z.coerce.number().int().min(1).max(24).default(12),

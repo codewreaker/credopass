@@ -15,7 +15,13 @@ import { Building2 } from 'lucide-react';
 import { useActiveOrganizationName, useSession } from '../../../contexts/session';
 
 /**
- * Which organization this event will belong to.
+ * Who this event will go out as.
+ *
+ * Labelled "Hosted by", not "Organization", deliberately. The word
+ * *organisation* is an admin word — it belongs on members, billing and
+ * settings. What matters here is the published consequence: this name is what
+ * an invitee reads on the public event page and on their pass, so the composer
+ * should say so in the words the invitee will see.
  *
  * Read-only, and that is the point: `POST /events` has no `organizationId`
  * field — the tenant comes from `X-Organization-Id`. A picker here would let
@@ -32,6 +38,7 @@ function OrganizationPill() {
   return (
     <span className="inline-flex items-center gap-1.5 rounded-full bg-primary-foreground/10 px-3 py-1.5 text-xs font-semibold">
       <Building2 size={13} />
+      <span className="opacity-70">Hosted by</span>
       {name === null ? (
         <span
           aria-hidden

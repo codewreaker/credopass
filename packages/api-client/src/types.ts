@@ -71,7 +71,27 @@ export type Permission = NonNullable<
   NonNullable<MeContext['membership']>['permissions']
 >[number];
 
+/**
+ * Every role a member row may HOLD, which includes the non-assignable `viewer`:
+ * it is still a value of the `org_role` Postgres enum, still the default of two
+ * columns, and still what an unrecognised role resolves to — so a response may
+ * carry it and anything rendering a member must handle it.
+ */
 export type Role = components['schemas']['Member']['role'];
+
+/**
+ * The roles a member may be GIVEN — the assignable four, `owner` through
+ * `checkin`.
+ *
+ * Derived from the role-change request body rather than restated, so it narrows
+ * automatically with the contract. `viewer` is absent by design: it and
+ * `checkin` were near-duplicates differing on one axis each, which is why
+ * offering both was the cross-over worth removing.
+ */
+export type AssignableRole = ApiBody<
+  '/organizations/{id}/members/{accountId}',
+  'patch'
+>['role'];
 
 // ============================================================================
 // Organizations

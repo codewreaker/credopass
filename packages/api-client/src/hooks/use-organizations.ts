@@ -17,6 +17,7 @@ import { api } from '../client';
 import { queryKeys } from '../query-keys';
 import type {
   ApiBody,
+  AssignableRole,
   Invitation,
   InvitationCreated,
   Member,
@@ -108,7 +109,7 @@ export function useMembers(organizationId: string | undefined): UseQueryResult<M
 /** 409 `last_owner` — the only owner can be neither demoted nor removed. */
 export function useUpdateMemberRole(
   organizationId: string
-): UseMutationResult<Member, Error, { accountId: string; role: Role }> {
+): UseMutationResult<Member, Error, { accountId: string; role: AssignableRole }> {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ accountId, role }) =>
@@ -161,7 +162,7 @@ export function useInvitations(
  */
 export function useCreateInvitation(
   organizationId: string
-): UseMutationResult<InvitationCreated, Error, { email: string; role: Role }> {
+): UseMutationResult<InvitationCreated, Error, { email: string; role: AssignableRole }> {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (body) =>

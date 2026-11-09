@@ -14,24 +14,68 @@
  * ask, and nothing else.
  */
 
-import { useEffect, useState } from 'react';
-import { Link, useParams } from '@tanstack/react-router';
+import { useEffect, useRef, useState } from 'react';
+import { Link, useNavigate, useParams } from '@tanstack/react-router';
 import { ArrowRight, CalendarCheck, CheckCircle2, Clock, MapPin, TicketX } from 'lucide-react';
 import { format } from 'date-fns/format';
-import { usePass, usePassCheckIn } from '@credopass/api-client';
+import { usePass, usePassCheckIn, useReissuePass } from '@credopass/api-client';
 import { Button } from '@credopass/ui/components/button';
 import { GlowingQRCode } from '@credopass/ui/components/glowing-qr-code';
 import { toast } from '@credopass/ui/components/sonner';
 import CredoPassLogoIcon from '../../containers/LeftSidebar/brand-icon';
 import { supabase } from '../../supabase';
 import { errorMessage, isGone, isNotFound } from '../../lib/errors';
+import { eventForToken, forgetPass, rememberPass } from '../../pass-cache';
 
 export default function PassPage() {
   const { token } = useParams({ from: '/p/$token' });
   const { data: view, isLoading, error } = usePass(token);
   const checkIn = usePassCheckIn(token);
 
-  if (isLoading) {
+  /**
+   * A pass this device remembered, which the server has since revoked.
+   *
+   * The device cannot know when that happens — reissuing on another phone
+   * revokes this one silently — so the cache is a hint and this is what makes
+   * being wrong about it cheap. `410` means the token WAS real and is finished,
+   * which is the only case worth recovering: mint a replacement and swap the
+   * URL under them.
+   *
+   * Three guards, and each refuses a different mistake:
+   *   · `isGone` only. A `404` is a token that was never ours — a tampered
+   *     link, or one somebody else was sent — and minting a pass for it would
+   *     be issuing against a stranger's ticket.
+   *   · `eventForToken` returns null unless THIS device was handed this token,
+   *     for the same reason.
+   *   · the ref fires once. If the fresh pass also fails, the screen says so
+   *     rather than looping.
+   */
+  const navigate = useNavigate();
+  const reissue = useReissuePass();
+  const recovered = useRef(false);
+  const recovering = reissue.isPending;
+
+  useEffect(() => {
+    if (view || !error || recovered.current) return;
+    if (!isGone(error)) return;
+
+    const eventId = eventForToken(token);
+    if (!eventId) return;
+
+    recovered.current = true;
+    reissue.mutate(eventId, {
+      onSuccess: (pass) => {
+        rememberPass(eventId, pass.token, pass.expiresAt);
+        // `replace`, so Back does not return to a dead token.
+        navigate({ to: '/p/$token', params: { token: pass.token }, replace: true });
+      },
+      // The ticket is gone too, not just the pass. Drop the entry so the next
+      // attempt starts clean, and let the normal empty state explain it.
+      onError: () => forgetPass(eventId),
+    });
+  }, [view, error, token, reissue, navigate]);
+
+  if (isLoading || recovering) {
     return (
       <div className="flex min-h-svh items-center justify-center bg-background">
         <div className="size-6 animate-spin rounded-full border-2 border-border border-t-primary" />

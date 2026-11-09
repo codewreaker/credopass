@@ -75,7 +75,7 @@ const slugify = (input: string): string =>
 export async function createOrganization(
   db: Database,
   accountId: string,
-  input: { id?: string; name: string; slug?: string; timezone?: string }
+  input: { name: string; slug?: string; timezone?: string }
 ): Promise<OrganizationSummary> {
   await assertCanOwnAnother(db, accountId);
 
@@ -103,13 +103,12 @@ export async function createOrganization(
 async function insertOrganization(
   db: Database,
   accountId: string,
-  input: { id?: string; name: string; slug: string }
+  input: { name: string; slug: string }
 ): Promise<OrganizationSummary> {
   return db.transaction(async (tx) => {
     const [org] = await tx
       .insert(organizations)
       .values({
-        ...(input.id ? { id: input.id } : {}),
         name: input.name,
         slug: input.slug,
         // `plan` is server-forced. A client that sends "enterprise" gets free.
@@ -165,32 +164,44 @@ async function assertCanOwnAnother(db: Database, accountId: string): Promise<voi
 }
 
 /**
- * The name a brand-new account's organisation gets.
+ * The name a brand-new account's organisation gets: **the person's own display
+ * name**, verbatim.
  *
- * **It used to be `Israel's organization` — built from the account's first
- * name — and that is published.** The organisation name appears on the public
- * event page and on every attendee's pass (`PublicEvent.organizationName`), so
- * a default nobody chose put the organiser's personal first name in front of
- * strangers, on the one screen attendees actually see. It also looked like a
- * placeholder, because it was one (F7).
+ * This reverses the previous rule, which took no arguments so that "nothing
+ * about the account CAN reach a published field". That was the right fix for
+ * the wrong diagnosis, and the history is worth keeping because the reasoning
+ * went round twice:
  *
- * `My organization` says the same thing to the only person who sees it before
- * it is renamed — the owner, in their own console — and discloses nothing to
- * anybody else. The Settings tab renames it, and the composer's pill shows it,
- * so the prompt to change it is already where it needs to be.
+ *   · The original default was `` `${who}'s organization` ``, which is
+ *     published — it is on the public event page and on every attendee's pass
+ *     (F7). So it was replaced with the literal `My organization`.
+ *   · Then the name was withheld from the public page altogether (`cd05245`),
+ *     and then published again (`b86ba60`), because an invitee deciding
+ *     whether to turn up genuinely wants to know who is running the event.
  *
- * **Only affects organisations created after this change.** Existing rows keep
- * the name they have; renaming them is the owner's call, not a migration's.
+ * With the name published **by design**, the objection collapses. It was never
+ * that a personal name is published — a solo host IS a person, and
+ * "Israel Agyeman-Prempeh" is the correct, accurate host for a weekly
+ * singalong. The objection was the `'s organization` suffix, which turned a
+ * name into a thing that is not an organisation and reads as a placeholder
+ * somebody forgot to fill in.
  *
- * It takes no arguments any more, deliberately: nothing about the account may
- * reach a published field by default. If a better suggestion is ever wanted,
- * it has to be a deliberate decision about what is safe to publish, not a
- * parameter that is quietly still there.
+ * So: use the display name as the host name, with no suffix and no decoration.
+ * One `organizations` row is both the tenant boundary and the public host
+ * identity, and this is the only value that is honest as both.
+ *
+ * **Falls back to `My organization` when there is no display name**, which
+ * keeps `isGeneratedOrganizationName` and the console's rename prompt doing a
+ * real job for that case instead of being dead code. Google is the only
+ * provider and always asserts a name, so the fallback should be rare.
+ *
+ * **Only affects organisations created from now on.** Existing rows keep the
+ * name they have; renaming them is the owner's call, not a migration's.
  */
 export { isGeneratedOrganizationName };
 
-export function defaultOrganizationName(): string {
-  return DEFAULT_ORGANIZATION_NAME;
+export function defaultOrganizationName(account: { displayName: string | null }): string {
+  return account.displayName?.trim() || DEFAULT_ORGANIZATION_NAME;
 }
 
 /**
@@ -243,7 +254,7 @@ export async function ensureDefaultOrganization(
 
     if (existing.length > 0) return null;
 
-    const name = defaultOrganizationName();
+    const name = defaultOrganizationName(account);
     const base = slugify(name);
 
     let slug = base;
