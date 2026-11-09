@@ -1,5 +1,5 @@
 import {
-    MapPin, Users, MoreVertical, Clock, Pencil, Trash2,
+    MapPin, Users, MoreVertical, Clock, Pencil, Trash2, QrCode,
     ClockCheck, CalendarClock, ClockAlert
 } from 'lucide-react';
 
@@ -222,10 +222,12 @@ export const EventRow: React.FC<{
     onDelete?: (eventId: string) => void;
     /** Opens the attendee list scoped to this event. Omit to hide the action. */
     onViewAttendees?: (eventId: string) => void;
+    /** Guest rows only: reissue and open this person's pass. */
+    onViewPass?: (eventId: string) => void;
     isMobile?: boolean;
     compact?: boolean;
     timezone?: boolean;
-}> = ({ event, onNavigate, onEdit, onDelete, onViewAttendees, timezone, isMobile = false, compact = false }) => {
+}> = ({ event, onNavigate, onEdit, onDelete, onViewAttendees, onViewPass, timezone, isMobile = false, compact = false }) => {
     const startDate = event.startAt ? new Date(event.startAt) : null;
 
     /**
@@ -243,6 +245,18 @@ export const EventRow: React.FC<{
      */
     const isGuest = event.relationship != null && event.relationship !== 'host';
     const canManage = !isGuest;
+
+    /**
+     * A guest row is not actionless, though — it has exactly one action.
+     *
+     * The pass is the whole reason an attendee opens this product, and it was
+     * unreachable: a pass is shown once at registration and only its SHA-256 is
+     * stored, so the only way back to it is to mint a new one. The endpoint and
+     * the hook both existed; nothing called them. So the row offers the same
+     * swipe gesture a host gets, with the one control a guest can actually use.
+     */
+    const canViewPass = isGuest && !!onViewPass;
+    const swipeEnabled = canManage || canViewPass;
 
     /**
      * Which square is showing, and therefore whether the meta line has to
@@ -267,7 +281,7 @@ export const EventRow: React.FC<{
 
     const {
         offsetX, isSwiped, actionWidth, reset, toggle, onTouchStart, onTouchMove, onTouchEnd
-    } = useSwipeToReveal(onViewAttendees ? 3 : 2);
+    } = useSwipeToReveal(canManage ? (onViewAttendees ? 3 : 2) : 1);
 
 
     const handleClick = () => {
@@ -294,6 +308,12 @@ export const EventRow: React.FC<{
         onViewAttendees?.(event.id);
     };
 
+    const handleViewPass = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        reset();
+        onViewPass?.(event.id);
+    };
+
     const timeString = startDate
         ? startDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
         : '';
@@ -313,7 +333,21 @@ export const EventRow: React.FC<{
             ? `${event.capacity}`
             : 'Unlimited';
 
-    const relationship = event.relationship ? RELATIONSHIP[event.relationship] : null;
+    /**
+     * The pill says ONE thing: that this row is yours to run.
+     *
+     * It used to carry the full relationship — Going, Registered, Went, Missed
+     * — which put two indicators on one row saying overlapping things: a
+     * "Going" pill beside a "scheduled" badge is the same fact twice, and a
+     * "Went" pill beside "scheduled" was the same fact twice AND wrong, since
+     * `went` was derived from the attendance row without asking whether the
+     * event had actually happened yet.
+     *
+     * The status badge on the other end already carries where the event is in
+     * its life. What it cannot carry is whether you are running it, so that is
+     * the one thing left here.
+     */
+    const relationship = event.relationship === 'host' ? RELATIONSHIP.host : null;
 
     const rowContent = (
         <>
@@ -392,6 +426,15 @@ export const EventRow: React.FC<{
     return (
         <div className="swipeable-row group" data-compact={compact ? "true" : undefined}>
             {/* Action buttons revealed behind the row — only mount when swiping */}
+            {canViewPass && offsetX !== 0 && (
+                <div className="swipeable-actions" style={{ width: actionWidth }}>
+                    <button type="button" className="swipe-action swipe-action-member" onClick={handleViewPass}>
+                        <QrCode size={18} />
+                        <span>Pass</span>
+                    </button>
+                </div>
+            )}
+
             {canManage && offsetX !== 0 && (
                 <div className="swipeable-actions" style={{ width: actionWidth }}>
                     {onViewAttendees && (
@@ -416,15 +459,15 @@ export const EventRow: React.FC<{
                 type="button"
                 className="event-row swipeable-content group-data-[compact]:gap-2.5 group-data-[compact]:px-2.5 group-data-[compact]:py-2"
                 onClick={handleClick}
-                onTouchStart={isMobile && canManage ? onTouchStart : undefined}
-                onTouchMove={isMobile && canManage ? onTouchMove : undefined}
-                onTouchEnd={isMobile && canManage ? onTouchEnd : undefined}
+                onTouchStart={isMobile && swipeEnabled ? onTouchStart : undefined}
+                onTouchMove={isMobile && swipeEnabled ? onTouchMove : undefined}
+                onTouchEnd={isMobile && swipeEnabled ? onTouchEnd : undefined}
                 style={{ transform: `translateX(${offsetX}px)` }}
             >
                 {rowContent}
 
                 {/* More button — desktop click trigger, hidden on mobile */}
-                {!isMobile && canManage && (
+                {!isMobile && swipeEnabled && (
                     <div
                         className="event-row-more"
                         role="button"

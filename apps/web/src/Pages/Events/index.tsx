@@ -5,6 +5,7 @@ import {
     ProblemCode,
     useCancelEvent,
     useDeleteEvent,
+    useReissuePass,
     useEventsCalendar,
     useEventsSummary,
     useOrganizations,
@@ -342,6 +343,7 @@ const EventsPage = () => {
 
     const cancelEvent = useCancelEvent();
     const deleteEvent = useDeleteEvent();
+    const reissuePass = useReissuePass();
 
     const handleCreateEvent = useCallback(() => {
         navigate({ to: '/events/new' });
@@ -355,6 +357,29 @@ const EventsPage = () => {
     const handleViewAttendees = useCallback((eventId: string) => {
         navigate({ to: '/attendees', search: { eventId } });
     }, [navigate]);
+
+    /**
+     * Put an attendee's pass back in their hands.
+     *
+     * It MINTS a new pass rather than fetching the old one, because the old one
+     * is genuinely not retrievable: only its SHA-256 is stored, and
+     * `uq_passes_event_person_live` allows exactly one live pass per person per
+     * event, so issuing revokes the previous link. The toast says so — the
+     * person may have saved the earlier URL, and it has just stopped working.
+     *
+     * Guest rows only. A host reaching here would be a bug: their row offers
+     * edit, attendees and delete instead, and `/me/tickets/{id}/pass` answers
+     * 404 for an event they hold no attendance row on.
+     */
+    const handleViewPass = useCallback(async (eventId: string) => {
+        try {
+            const pass = await reissuePass.mutateAsync(eventId);
+            toast.success('New pass issued — any earlier link you saved has stopped working.');
+            navigate({ to: '/p/$token', params: { token: pass.token } });
+        } catch (error) {
+            toast.error(errorMessage(error, 'Could not reissue your pass'));
+        }
+    }, [reissuePass, navigate]);
 
     /**
      * Delete, falling back to cancel.
@@ -490,6 +515,7 @@ const EventsPage = () => {
                                 onEditEvent={handleEditEvent}
                                 onDeleteEvent={handleDeleteEvent}
                                 onViewAttendees={handleViewAttendees}
+                                onViewPass={handleViewPass}
                                 selectedStatus={selectedStatuses}
                                 timezone
                                 activeGroup={activeGroup}

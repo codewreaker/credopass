@@ -57,9 +57,15 @@ export type ListEvent = Omit<Event, 'counts' | 'organizationId' | 'shortCode'> &
  * only thing actually known.
  */
 const relationshipFor = (ticket: Ticket): EventRelationship => {
-  if (ticket.attendanceState === 'attended') return 'went';
-  if (ticket.attendanceState === 'no_show') return 'missed';
   const isPast = ticket.status === 'completed' || ticket.status === 'cancelled';
+
+  // `attended` is a fact about the attendance row, not about the calendar.
+  // Checking in early — or a door that checks people in before the start time
+  // — set it on an event days away, and this returned `went`, which told the
+  // attendee they had been to something that has not happened. Past tense
+  // requires the event to actually be past.
+  if (ticket.attendanceState === 'attended') return isPast ? 'went' : 'going';
+  if (ticket.attendanceState === 'no_show') return 'missed';
   return isPast ? 'registered' : 'going';
 };
 

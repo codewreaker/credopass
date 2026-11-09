@@ -32,6 +32,8 @@ interface EventListViewProps {
     onEditEvent: (event: ListEvent) => void;
     onDeleteEvent: (event: ListEvent) => void;
     onViewAttendees?: (eventId: string) => void;
+    /** Guest rows only: reissue and open this person's pass. */
+    onViewPass?: (eventId: string) => void;
     timezone?: boolean
     /** Which group the switch is on — lets the empty state nudge to the other one. */
     activeGroup?: 'upcoming' | 'past';
@@ -61,6 +63,7 @@ const EventListView: React.FC<EventListViewProps> = ({
     onEditEvent,
     onDeleteEvent,
     onViewAttendees,
+    onViewPass,
     timezone = false,
     activeGroup,
     onShowPast,
@@ -153,6 +156,7 @@ const EventListView: React.FC<EventListViewProps> = ({
                                     if (target) onDeleteEvent(target);
                                 }}
                                 onViewAttendees={onViewAttendees}
+                                onViewPass={onViewPass}
                                 isMobile={isMobile}
                                 timezone={timezone}
                             />
